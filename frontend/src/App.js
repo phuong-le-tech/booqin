@@ -5,8 +5,22 @@ import { useEffect, useState } from 'react';
 function App() {
   const [square, setSquare] = useState(null);
   useEffect(() => {
-    fetch('reactTest').then(response => response.json()).then(data => setSquare(data)).catch(e => console.error("Error : ",e))
+    fetch('/reactTest')
+        .then(response => {
+            console.log('Response received:', response);
+            return response.json()
+        })
+        .then(data => {
+          console.log('Data received:', data);
+          setSquare(data);
+        })
+        .catch(e => console.error("Error : ",e))
   }, []);
+
+  if (!square) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="App">
       <header className="App-header">
@@ -20,7 +34,7 @@ function App() {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Learn React {square.size}
+          Learn React {square.color} & {square.size}
         </a>
       </header>
     </div>
