@@ -1,4 +1,4 @@
-package fr.uge.bookin;
+package fr.uge.booqIn;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
