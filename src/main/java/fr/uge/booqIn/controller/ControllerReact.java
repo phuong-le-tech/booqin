@@ -1,4 +1,4 @@
-package fr.uge.booqIn.Controller;
+package fr.uge.booqIn.controller;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.web.bind.annotation.GetMapping;

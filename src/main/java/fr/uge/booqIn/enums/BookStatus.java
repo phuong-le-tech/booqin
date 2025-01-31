@@ -1,4 +1,4 @@
-package fr.uge.booqIn.Enum;
+package fr.uge.booqIn.enums;
 
 public enum BookStatus {
   AVAILABLE,
