@@ -1,6 +1,6 @@
-package fr.uge.booqIn.Entity;
+package fr.uge.booqIn.entity;
 
-import fr.uge.booqIn.Enum.BookStatus;
+import fr.uge.booqIn.enums.BookStatus;
 import jakarta.persistence.*;
 
 @Entity
