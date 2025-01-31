@@ -1,4 +1,4 @@
-package fr.uge.booqIn.Entity;
+package fr.uge.booqIn.entity;
 
 import jakarta.persistence.Embeddable;
 

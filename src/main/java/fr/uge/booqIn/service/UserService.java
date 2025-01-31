@@ -1,4 +1,4 @@
-package fr.uge.booqIn.Service;
+package fr.uge.booqIn.service;
 
 import org.springframework.stereotype.Service;
 
