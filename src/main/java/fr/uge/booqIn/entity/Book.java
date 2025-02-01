@@ -27,7 +27,7 @@ public class Book {
 
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "publication_date")
-  private Date publicationDate;
+  private String publicationDate;
 
   @ManyToMany
   private List<Collection> collections;
@@ -43,8 +43,9 @@ public class Book {
   public Book() {
   }
 
-  public Book(String title, String isbn, String description, Date publicationDate) {
+  public Book(String title, String author, String isbn, String description, String publicationDate) {
     this.title = title;
+    this.author = author;
     this.isbn = isbn;
     this.description = description;
     this.publicationDate = publicationDate;
@@ -70,7 +71,7 @@ public class Book {
     return description;
   }
 
-  public Date getPublicationDate() {
+  public String getPublicationDate() {
     return publicationDate;
   }
 
@@ -102,7 +103,7 @@ public class Book {
     this.description = description;
   }
 
-  public void setPublicationDate(Date publicationDate) {
+  public void setPublicationDate(String publicationDate) {
     this.publicationDate = publicationDate;
   }
 
