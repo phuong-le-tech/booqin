@@ -7,7 +7,7 @@ import java.util.Date;
 import java.util.List;
 
 @Entity
-public class Collection {
+public class BookCollection {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,10 +36,10 @@ public class Collection {
   @Column(name = "updated_at")
   private Date updatedAt = new Date();
 
-  public Collection() {
+  public BookCollection() {
   }
 
-  public Collection(String name, String description, User owner) {
+  public BookCollection(String name, String description, User owner) {
     this.title = name;
     this.description = description;
     this.owner = owner;
