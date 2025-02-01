@@ -1,5 +1,6 @@
 package fr.uge.booqIn.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.util.Date;
@@ -23,9 +24,11 @@ public class User {
   private String role;
 
   @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
+  @JsonIgnore
   private List<ToLendBook> booksToLend;
 
-  @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
+  @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL )
+  @JsonIgnore
   private List<Collection> collections;
 
   @Temporal(TemporalType.TIMESTAMP)
