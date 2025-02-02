@@ -22,10 +22,11 @@ public class CollectionController {
   }
 
   @PostMapping("/create")
-  public BookCollection createCollection(BookCollection bookCollection) {
+  public ResponseEntity<BookCollection> createCollection(@RequestBody BookCollection bookCollection) {
     logger.info("✅ Collection created !");
-    return collectionService.createCollection(bookCollection);
+    return ResponseEntity.ok(collectionService.createCollection(bookCollection));
   }
+
 
   @GetMapping("/{id}")
   public ResponseEntity<BookCollection> getCollection(@PathVariable Long id) {

@@ -2,6 +2,7 @@ package fr.uge.booqIn.entity;
 
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -31,11 +32,11 @@ public class Book {
 
   @ManyToMany
   @JoinTable(
-          name = "book_collection",
+          name = "collection_books",
           joinColumns = @JoinColumn(name = "book_id"),
           inverseJoinColumns = @JoinColumn(name = "collection_id")
   )
-  private List<BookCollection> collections;
+  private List<BookCollection> collections = new ArrayList<>();
 
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "created_at", nullable = false, updatable = false)
@@ -50,6 +51,14 @@ public class Book {
 
   public Book(String title, String isbn, String description, Date publicationDate) {
     this.title = title;
+    this.isbn = isbn;
+    this.description = description;
+    this.publicationDate = publicationDate;
+  }
+
+  public Book(String title, String author, String isbn, String description, Date publicationDate) {
+    this.title = title;
+    this.author = author;
     this.isbn = isbn;
     this.description = description;
     this.publicationDate = publicationDate;
@@ -91,6 +100,10 @@ public class Book {
     return updatedAt;
   }
 
+  public void setId(Long id) {
+    this.id = id;
+  }
+
   public void setTitle(String title) {
     this.title = title;
   }
@@ -124,14 +137,18 @@ public class Book {
   }
 
   public void addCollection(BookCollection collection) {
+    if (collections == null) {
+      collections = new ArrayList<>();
+    }
+    // empecher les doublons ?
     collections.add(collection);
     collection.getBooks().add(this);
   }
 
   public void removeCollection(BookCollection collection) {
-    collections.remove(collection);
-    collection.getBooks().remove(this);
+    if (collection != null && collection.getBooks() != null) {
+      collections.remove(collection);
+      collection.getBooks().remove(this);
+    }
   }
-
-
 }

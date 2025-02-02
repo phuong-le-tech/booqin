@@ -76,14 +76,14 @@ public class CollectionService {
     return collectionRepository.save(collection);
   }
 
-//  @Transactional
-//  public BookCollection addBookToCollection(Long collectionId, Book book) {
-//    var collection = getCollectionById(collectionId);
-//    //verifyOwnership(collection, ...);
-//    collection.addBook(book);
-//    collection.setUpdatedAt(new Date());
-//    return collectionRepository.save(collection);
-//  }
+  @Transactional
+  public BookCollection addBookToCollection(Long collectionId, Book book, User currentUser) {
+    var collection = getCollectionById(collectionId);
+    verifyOwnership(collection, currentUser);
+    collection.addBook(book);
+    collection.setUpdatedAt(new Date());
+    return collectionRepository.save(collection);
+  }
 
   @Transactional
   public BookCollection removeBookFromCollection(Long collectionId, Long bookId, User currentUser) {

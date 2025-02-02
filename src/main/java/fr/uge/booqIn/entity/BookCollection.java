@@ -77,6 +77,10 @@ public class BookCollection {
     return updatedAt;
   }
 
+  public void setId(Long id) {
+    this.id = id;
+  }
+
   public void setTitle(String name) {
     this.title = name;
   }
@@ -106,6 +110,9 @@ public class BookCollection {
   }
 
   public void addBook(Book book) {
+    if (book.getCollections() == null) {
+      book.setCollections(new ArrayList<>()); // ✅ Ajoute une vérification de null
+    }
     books.add(book);
     book.getCollections().add(this);
   }

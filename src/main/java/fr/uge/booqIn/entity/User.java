@@ -139,6 +139,10 @@ public class User implements UserDetails {
     this.password = password;
   }
 
+  public void setId(long id) {
+    this.id = id;
+  }
+
   public void setRole(UserRole role) {
     this.role = role;
   }
@@ -167,5 +171,4 @@ public class User implements UserDetails {
   public void removeCollection(BookCollection collection) {
     collections.remove(collection);
   }
-
 }
