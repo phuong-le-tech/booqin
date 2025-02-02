@@ -32,8 +32,8 @@ public class SecurityConfig {
     http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
-                    .requestMatchers("/h2-console/**").permitAll() //TODO Db accessible que en admin => .requestMatchers("/h2-console/**").hasRole("ADMIN")
-                    .requestMatchers("/auth/**", "/home").permitAll()
+                    .requestMatchers("/h2-console/**").permitAll() //TODO Db accessible que en admin
+                    .requestMatchers("/auth/**", "/home", "/favicon.ico", "/static/**").permitAll()
                     .requestMatchers(
                             "/api/v1/auth/signup",
                             "/api/v1/auth/signin"
