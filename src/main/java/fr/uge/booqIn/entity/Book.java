@@ -30,7 +30,7 @@ public class Book {
   private String publicationDate;
 
   @ManyToMany
-  private List<Collection> collections;
+  private List<BookCollection> collections;
 
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "created_at", nullable = false, updatable = false)
@@ -75,7 +75,7 @@ public class Book {
     return publicationDate;
   }
 
-  public List<Collection> getCollections() {
+  public List<BookCollection> getCollections() {
     return collections;
   }
 
@@ -107,7 +107,7 @@ public class Book {
     this.publicationDate = publicationDate;
   }
 
-  public void setCollections(List<Collection> collections) {
+  public void setCollections(List<BookCollection> collections) {
     this.collections = collections;
   }
 
@@ -119,12 +119,12 @@ public class Book {
     this.updatedAt = updatedAt;
   }
 
-  public void addCollection(Collection collection) {
+  public void addCollection(BookCollection collection) {
     collections.add(collection);
     collection.getBooks().add(this);
   }
 
-  public void removeCollection(Collection collection) {
+  public void removeCollection(BookCollection collection) {
     collections.remove(collection);
     collection.getBooks().remove(this);
   }

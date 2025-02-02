@@ -1,0 +1,40 @@
+package fr.uge.booqIn.config;
+
+import fr.uge.booqIn.entity.User;
+import fr.uge.booqIn.enums.UserRole;
+import fr.uge.booqIn.factory.UserFactory;
+import fr.uge.booqIn.repository.UserRepository;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.stream.IntStream;
+
+@Configuration
+public class DataLoader {
+
+    @Bean
+    CommandLineRunner initDatabase(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        return args -> {
+            if (userRepository.findByEmail("admin@booqin.com").isEmpty()) {
+                User admin = UserFactory.createUser(passwordEncoder, UserRole.ADMIN);
+                admin.setEmail("admin@booqin.com");
+                admin.setPassword(passwordEncoder.encode("admin123"));
+                userRepository.save(admin);
+                System.out.println("✅ Admin user created: admin@booqin.com / admin123");
+            } else {
+                System.out.println("ℹ️ Admin user already exists.");
+            }
+            if (userRepository.count() <= 1) {
+                IntStream.range(0, 10).forEach(i -> {
+                    User user = UserFactory.createUser(passwordEncoder, UserRole.USER);
+                    userRepository.save(user);
+                });
+                System.out.println("✅ 10 test users have been created.");
+            } else {
+                System.out.println("ℹ️ Test users already exist.");
+            }
+        };
+    }
+}
