@@ -30,6 +30,11 @@ public class Book {
   private Date publicationDate;
 
   @ManyToMany
+  @JoinTable(
+          name = "book_collection",
+          joinColumns = @JoinColumn(name = "book_id"),
+          inverseJoinColumns = @JoinColumn(name = "collection_id")
+  )
   private List<BookCollection> collections;
 
   @Temporal(TemporalType.TIMESTAMP)
