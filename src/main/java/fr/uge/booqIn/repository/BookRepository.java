@@ -1,4 +1,4 @@
-package fr.uge.booqIn.Repository;
+package fr.uge.booqIn.repository;
 
 import org.springframework.stereotype.Repository;
 
