@@ -33,7 +33,7 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/h2-console/**").permitAll() //TODO Db accessible que en admin
-                    .requestMatchers("/auth/**", "/home").permitAll()
+                    .requestMatchers("/auth/**", "/home", "/favicon.ico", "/static/**").permitAll()
                     .requestMatchers(
                             "/api/v1/auth/signup",
                             "/api/v1/auth/signin"
@@ -43,13 +43,13 @@ public class SecurityConfig {
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authenticationProvider(authenticationProvider)
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-            .formLogin(login -> login
+/*            .formLogin(login -> login
                     .loginPage("/auth/signin")
                     .loginProcessingUrl("/auth/signin")
                     .defaultSuccessUrl("/home", true)
                     .failureUrl("/auth/signin?error=true")
                     .permitAll()
-            )
+            )*/
             .logout(logout -> logout
                     .logoutUrl("/logout")
                     .logoutSuccessUrl("/home")
