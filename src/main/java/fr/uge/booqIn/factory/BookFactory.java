@@ -20,14 +20,7 @@ public class BookFactory {
     String author = faker.name().name();
     String isbn = faker.number().digits(10);
     String description = faker.lorem().sentence();
-    Date publicationDate = faker.date().past(100, TimeUnit.DAYS);
-
-    Address address = new Address(
-            String.valueOf(random.nextInt(200) + 1),
-            faker.address().streetName(),
-            faker.address().city(),
-            faker.address().zipCode()
-    );
+    String publicationDate = faker.date().past(100, TimeUnit.DAYS).toString();
 
     return new Book(title, author, isbn, description, publicationDate);
   }

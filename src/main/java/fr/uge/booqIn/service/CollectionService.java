@@ -28,8 +28,8 @@ public class CollectionService {
     if (bookCollection.getBooks() == null) {
       bookCollection.setBooks(new ArrayList<>());
     }
-    bookCollection.setCreatedAt(new Date());
-    bookCollection.setUpdatedAt(new Date());
+    bookCollection.setCreatedAt(new Date().toString());
+    bookCollection.setUpdatedAt(new Date().toString());
     return collectionRepository.save(bookCollection);
   }
 
@@ -72,7 +72,7 @@ public class CollectionService {
             .orElseThrow(() -> new IllegalArgumentException("Book not found"));
 
     collection.addBook(book);
-    collection.setUpdatedAt(new Date());
+    collection.setUpdatedAt(new Date().toString());
     return collectionRepository.save(collection);
   }
 
@@ -81,7 +81,7 @@ public class CollectionService {
     var collection = getCollectionById(collectionId);
     verifyOwnership(collection, currentUser);
     collection.addBook(book);
-    collection.setUpdatedAt(new Date());
+    collection.setUpdatedAt(new Date().toString());
     return collectionRepository.save(collection);
   }
 
@@ -93,7 +93,7 @@ public class CollectionService {
             .orElseThrow(() -> new IllegalArgumentException("Book not found"));
 
     collection.removeBook(book);
-    collection.setUpdatedAt(new Date());
+    collection.setUpdatedAt(new Date().toString());
     return collectionRepository.save(collection);
   }
 

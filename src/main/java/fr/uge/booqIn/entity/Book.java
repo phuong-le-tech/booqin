@@ -3,7 +3,6 @@ package fr.uge.booqIn.entity;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @Entity
@@ -28,7 +27,7 @@ public class Book {
 
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "publication_date")
-  private Date publicationDate;
+  private String publicationDate;
 
   @ManyToMany
   @JoinTable(
@@ -40,23 +39,23 @@ public class Book {
 
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "created_at", nullable = false, updatable = false)
-  private Date createdAt = new Date();
+  private String createdAt = "";
 
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "updated_at")
-  private Date updatedAt = new Date();
+  private String updatedAt = "";
 
   public Book() {
   }
 
-  public Book(String title, String isbn, String description, Date publicationDate) {
+  public Book(String title, String isbn, String description, String publicationDate) {
     this.title = title;
     this.isbn = isbn;
     this.description = description;
     this.publicationDate = publicationDate;
   }
 
-  public Book(String title, String author, String isbn, String description, Date publicationDate) {
+  public Book(String title, String author, String isbn, String description, String publicationDate) {
     this.title = title;
     this.author = author;
     this.isbn = isbn;
@@ -84,7 +83,7 @@ public class Book {
     return description;
   }
 
-  public Date getPublicationDate() {
+  public String getPublicationDate() {
     return publicationDate;
   }
 
@@ -92,11 +91,11 @@ public class Book {
     return collections;
   }
 
-  public Date getCreatedAt() {
+  public String getCreatedAt() {
     return createdAt;
   }
 
-  public Date getUpdatedAt() {
+  public String getUpdatedAt() {
     return updatedAt;
   }
 
@@ -120,7 +119,7 @@ public class Book {
     this.description = description;
   }
 
-  public void setPublicationDate(Date publicationDate) {
+  public void setPublicationDate(String publicationDate) {
     this.publicationDate = publicationDate;
   }
 
@@ -128,11 +127,11 @@ public class Book {
     this.collections = collections;
   }
 
-  public void setCreatedAt(Date createdAt) {
+  public void setCreatedAt(String createdAt) {
     this.createdAt = createdAt;
   }
 
-  public void setUpdatedAt(Date updatedAt) {
+  public void setUpdatedAt(String updatedAt) {
     this.updatedAt = updatedAt;
   }
 
