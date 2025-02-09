@@ -25,11 +25,6 @@ public class GoogleBooksAdapter implements BookFetcher {
 
     @Override
     public List<Book> searchByPublisher(String publisher) {
-        return List.of();
-    }
-
-    @Override
-    public List<Book> searchByPublishedDate(String publishedDate) {
-        return googleBooksAPI.searchByPublishedDate(publishedDate);
+        return googleBooksAPI.searchByPublisher(publisher);
     }
 }

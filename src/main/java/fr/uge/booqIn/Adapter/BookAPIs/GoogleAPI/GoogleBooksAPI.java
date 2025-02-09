@@ -5,14 +5,12 @@ import fr.uge.booqIn.entity.Book;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class GoogleBooksAPI implements BookFetcher {
     private static final String API_URL = "https://www.googleapis.com/books/v1/volumes?q=";
+    private static final String SUFFIX_URL = "&langRestrict=en";
     private final WebClient webClient = WebClient.create();
 
     @Override
@@ -35,34 +33,47 @@ public class GoogleBooksAPI implements BookFetcher {
         return searchBooks("inpublisher:" + publisher);
     }
 
-    @Override
-    public List<Book> searchByPublishedDate(String publishedDate) {
-        return searchBooks("inpublisher:" + publishedDate);
-    }
 
     private List<Book> searchBooks(String query) {
         String url = API_URL + query;
         System.out.println("URL: " + url);
-        Mono<GoogleBooksResponse> responseMono = webClient.get()
-                .uri(url)
-                .retrieve()
-                .bodyToMono(GoogleBooksResponse.class);
 
-        GoogleBooksResponse response = responseMono.block();
-        return response.items.stream()
-                .map(this::convertToBook)
-                .collect(Collectors.toList());
+        try {
+            Mono<GoogleBooksResponse> responseMono = webClient.get()
+                    .uri(url + SUFFIX_URL)
+                    .retrieve()
+                    .bodyToMono(GoogleBooksResponse.class);
+
+            GoogleBooksResponse response = responseMono.blockOptional().orElse(null);
+
+            if (response == null || response.items == null) {
+                System.out.println("Empty response.");
+                return List.of();
+            }
+
+            return response.items.stream()
+                    .map(this::convertToBook)
+                    .collect(Collectors.toList());
+
+        } catch (Exception e) {
+            System.out.println("Error while fetching books: " + e.getMessage());
+            return List.of();
+        }
     }
+
 
     private Book convertToBook(BookItem item) {
         VolumeInfo volumeInfo = item.volumeInfo;
         System.out.println("CONVERTING BOOK: " + volumeInfo);
-        var book = new Book(
-                volumeInfo.title,
-                volumeInfo.authors != null && !volumeInfo.authors.isEmpty() ? String.valueOf(volumeInfo.authors) : "",
-                "ISBN TODO",
-                volumeInfo.description != null ? volumeInfo.description : "",
-                volumeInfo.publishedDate != null ? volumeInfo.publishedDate : null
+
+        Book book = new Book(
+                volumeInfo.title(),
+                (volumeInfo.authors() != null && !volumeInfo.authors().isEmpty())
+                        ? String.join(", ", volumeInfo.authors())
+                        : "",
+                volumeInfo.industryIdentifiers(),
+                volumeInfo.description() != null ? volumeInfo.description() : "",
+                volumeInfo.publishedDate()
         );
         System.out.println("CONVERTED BOOK: " + book);
         return book;

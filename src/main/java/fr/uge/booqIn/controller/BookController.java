@@ -13,10 +13,8 @@ import java.util.List;
 @RequestMapping("/books")
 public class BookController {
     private final BookService bookService;
-    private final BookService openApi;
 
     public BookController() {
-        this.openApi = new BookService("open");
         this.bookService = new BookService("google");
     }
 
@@ -41,13 +39,4 @@ public class BookController {
         return bookService.searchByPublisher(publisher);
     }
 
-    @GetMapping("/searchByPublishedDate")
-    public List<Book> searchByPublishedDate(@RequestParam String publishedDate) {
-        return bookService.searchByPublishedDate(publishedDate);
-    }
-
-    @GetMapping("/searchA")
-    public List<Book> searchA(@RequestParam String a){
-        return openApi.searchByAuthor(a);
-    }
 }
