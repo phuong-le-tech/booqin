@@ -22,7 +22,6 @@ public class BookController {
 
     @GetMapping("/searchByTitle")
     public List<Book> searchByTitle(@RequestParam String title) {
-        System.out.println("RECHERCHE PAR TITRE " + title);
         return bookService.searchByTitle(title);
     }
 
@@ -46,8 +45,8 @@ public class BookController {
         return bookService.searchByPublishedDate(publishedDate);
     }
 
-    @GetMapping("/searchA")
-    public List<Book> searchA(@RequestParam String a){
-        return openApi.searchByAuthor(a);
+    @GetMapping("/searchAuthorOpen")
+        public List<Book> searchA(@RequestParam String author){
+        return openApi.searchByAuthor(author);
     }
 }
