@@ -15,9 +15,28 @@ const SignIn = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post("/api/v1/auth/signin", formData);
-            console.log("Token:", response.data.token);
+            const response = await axios.post("/api/v1/auth/signin", formData, {
+                withCredentials: true, // Active l'envoi des cookies
+            });
+            console.log("response", response.headers);
+            // POUR TESTER
             alert("Connexion réussie !");
+
+            const cookies = response.headers["set-cookie"];
+            if (!cookies) {
+                console.error("❌ Aucun cookie JWT reçu !");
+                return;
+            }
+            console.log("🔹 Cookies reçus :", cookies);
+
+            console.log("🔹 Test de la route protégée...");
+
+            const testResponse = await axios.get(`/api/v1/auth/user/test`, {
+                headers: { Cookie: cookies.join("; ") }, // Envoie les cookies
+                withCredentials: true
+            });
+
+            console.log("✅ Réponse de la route test :", testResponse.data);
             navigate("/home");
         } catch (error) {
             setError("Échec de la connexion. Vérifie tes identifiants.");

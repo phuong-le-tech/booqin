@@ -3,6 +3,8 @@ package fr.uge.booqIn.controller.api;
 import fr.uge.booqIn.dto.auth.JwtDto;
 import fr.uge.booqIn.dto.auth.SignInDto;
 import fr.uge.booqIn.dto.auth.SignUpDto;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.service.AuthService;
@@ -22,9 +24,18 @@ public class AuthController {
   }
 
   @PostMapping("/signin")
-  public  ResponseEntity<JwtDto> signIn(@RequestBody @Valid SignInDto data) {
+  public  ResponseEntity<String> signIn(@RequestBody @Valid SignInDto data, HttpServletResponse response) {
     String token = authService.signIn(data);
-    return ResponseEntity.ok(new JwtDto(token));
+
+    Cookie jwtCookie = new Cookie("jwt", token);
+    jwtCookie.setHttpOnly(true);  // Empêche l'accès via JavaScript (sécurité contre XSS)
+    jwtCookie.setSecure(false);     // Active le cookie uniquement en HTTPS
+    jwtCookie.setPath("/");        // Disponible sur toute l'application
+    jwtCookie.setMaxAge(24 * 60 * 60); // Expiration en 1 jour
+
+    response.addCookie(jwtCookie);
+
+    return ResponseEntity.ok().body("Connexion réussie !");
   }
 
   @PostMapping("/signup")

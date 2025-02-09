@@ -6,6 +6,7 @@ import fr.uge.booqIn.dto.auth.SignInDto;
 import fr.uge.booqIn.dto.auth.SignUpDto;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.service.AuthService;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -13,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.util.Objects;
 
@@ -34,13 +36,21 @@ class AuthControllerTest {
 
   @Test
   void testSignIn() {
+    // GIVEN
     SignInDto signInDto = new SignInDto("user@example.com", "password123");
     when(authService.signIn(signInDto)).thenReturn("mocked-jwt-token");
 
-    ResponseEntity<JwtDto> response = authController.signIn(signInDto);
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    ResponseEntity<?> result = authController.signIn(signInDto, response);
 
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertEquals("mocked-jwt-token", Objects.requireNonNull(response.getBody()).token());
+    assertEquals(HttpStatus.OK, result.getStatusCode());
+
+    Cookie jwtCookie = response.getCookie("jwt");
+    assertNotNull(jwtCookie, "Le cookie JWT doit être présent.");
+    assertEquals("mocked-jwt-token", jwtCookie.getValue(), "Le token doit correspondre au mock.");
+    assertTrue(jwtCookie.isHttpOnly(), "Le cookie doit être HttpOnly.");
+    assertEquals("/", jwtCookie.getPath(), "Le cookie doit être accessible globalement.");
+    assertEquals(24 * 60 * 60, jwtCookie.getMaxAge(), "Le cookie doit expirer dans 1 jour.");
   }
 
   @Test
