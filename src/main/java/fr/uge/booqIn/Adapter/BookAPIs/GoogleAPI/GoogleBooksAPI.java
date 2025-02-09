@@ -2,6 +2,7 @@ package fr.uge.booqIn.Adapter.BookAPIs.GoogleAPI;
 
 import fr.uge.booqIn.Adapter.BookAPIs.BookFetcher;
 import fr.uge.booqIn.entity.Book;
+import fr.uge.booqIn.singleton.WebClientSingleton;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -11,7 +12,7 @@ import java.util.stream.Collectors;
 public class GoogleBooksAPI implements BookFetcher {
     private static final String API_URL = "https://www.googleapis.com/books/v1/volumes?q=";
     private static final String SUFFIX_URL = "&langRestrict=en";
-    private final WebClient webClient = WebClient.create();
+    private final WebClient webClient = WebClientSingleton.getInstance();
 
     @Override
     public List<Book> searchByTitle(String title) {
