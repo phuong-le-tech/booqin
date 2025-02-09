@@ -1,5 +1,6 @@
 package fr.uge.booqIn.service;
 
+import fr.uge.booqIn.entity.Collection;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -43,4 +44,20 @@ public class UserService {
     return userRepository.save(user);
   }
 
+  public User updateUser(User user) {
+    return userRepository.save(user);
+  }
+  
+  public void addCollectionToUser(User user, Collection collection) {
+    if (user.getCollections() == null) {
+      user.setCollections(new ArrayList<>());
+    } else if (user.getCollections().contains(collection)) {
+      return;
+    }
+    user.addCollection(collection);
+  }
+  
+  public void removeCollectionFromUser(User user, Collection collection) {
+    user.removeCollection(collection);
+  }
 }
