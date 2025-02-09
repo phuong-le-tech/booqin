@@ -1,5 +1,6 @@
 package fr.uge.booqIn.entity;
 
+import fr.uge.booqIn.Adapter.BookAPIs.GoogleAPI.IndustryIdentifier;
 import jakarta.persistence.*;
 
 import java.util.Date;
@@ -9,9 +10,13 @@ import java.util.List;
 public class Book {
 
   @Id
-  @Column(nullable = false)
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+  @Column()
+  private String ibsn10;
+
+  @Id
+  @Column
+  private String ibsn13;
+
 
   @Column(nullable = false)
   private String title;
@@ -19,8 +24,6 @@ public class Book {
   @Column(nullable = false)
   private String author;
 
-  @Column(nullable = false)
-  private String isbn;
 
   @Column(nullable = false)
   private String description;
@@ -43,16 +46,29 @@ public class Book {
   public Book() {
   }
 
-  public Book(String title, String author, String isbn, String description, String publicationDate) {
+  private String extractIdentifier(List<IndustryIdentifier> identifiers, String type) {
+    return identifiers.stream()
+            .filter(id -> type.equalsIgnoreCase(id.type()))
+            .map(IndustryIdentifier::identifier)
+            .findFirst()
+            .orElseThrow(() -> new IllegalArgumentException("Identifier de type " + type + " non trouvé"));
+  }
+
+  public Book(String title, String author, List<IndustryIdentifier> industryIdentifiers, String description, String publicationDate) {
     this.title = title;
     this.author = author;
-    this.isbn = isbn;
+    this.ibsn10 = extractIdentifier(industryIdentifiers, "ISBN_10");
+    this.ibsn13 = extractIdentifier(industryIdentifiers, "ISBN_13");
     this.description = description;
     this.publicationDate = publicationDate;
   }
 
-  public Long getId() {
-    return id;
+  public String getIbsn10() {
+    return ibsn10;
+  }
+
+  public String getIbsn13() {
+    return ibsn13;
   }
 
   public String getTitle() {
@@ -61,10 +77,6 @@ public class Book {
 
   public String getAuthor() {
     return author;
-  }
-
-  public String getIsbn() {
-    return isbn;
   }
 
   public String getDescription() {
@@ -93,10 +105,6 @@ public class Book {
 
   public void setAuthor(String author) {
     this.author = author;
-  }
-
-  public void setIsbn(String isbn) {
-    this.isbn = isbn;
   }
 
   public void setDescription(String description) {
@@ -129,5 +137,15 @@ public class Book {
     collection.getBooks().remove(this);
   }
 
-
+  @Override
+  public String toString() {
+    return "Book{" +
+            "ibsn10='" + ibsn10 + '\'' +
+            ", ibsn13='" + ibsn13 + '\'' +
+            ", title='" + title + '\'' +
+            ", author='" + author + '\'' +
+            ", description='" + description + '\'' +
+            ", publicationDate='" + publicationDate + '\'' +
+            '}';
+  }
 }
