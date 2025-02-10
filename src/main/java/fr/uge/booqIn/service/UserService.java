@@ -19,7 +19,7 @@ public class UserService {
   }
   @Transactional
   public Optional<User> findByEmail(String email) {
-    return Optional.ofNullable(userRepository.findByPersonEmail(email));
+    return userRepository.findByEmail(email);
   }
   @Transactional
   public Optional<User> getUserById(Long id) {
