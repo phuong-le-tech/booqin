@@ -1,35 +1,51 @@
 package fr.uge.booqIn.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import fr.uge.booqIn.enums.UserRole;
+import jakarta.persistence.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
 @Entity
 @Table(name="users")
-public class User {
+public class User implements UserDetails {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Embedded
-  private Person person;
+  @Column(nullable = false)
+  private String fistName;
+
+  @Column(nullable = false)
+  private String lastName;
+
+  @Column(nullable = false, unique = true)
+  private String email;
 
   @Column(nullable = false)
   private String password;
 
-  @Column(nullable = false)
-  private String role;
+  @Embedded
+  private Address address;
+
+  @Enumerated(EnumType.STRING)
+  private UserRole role;
 
   @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
   @JsonIgnore
   private List<ToLendBook> booksToLend;
 
-  @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL )
-  @JsonIgnore
-  private List<Collection> collections;
+
+  @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
+  private List<BookCollection> collections;
+
 
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "created_at", nullable = false, updatable = false)
@@ -42,9 +58,12 @@ public class User {
   public User() {
   }
 
-  public User(Person person, String password, String role) {
-    this.person = person;
+  public User(String fistName, String lastName, String email, String password, Address address, UserRole role) {
+    this.fistName = fistName;
+    this.lastName = lastName;
+    this.email = email;
     this.password = password;
+    this.address = address;
     this.role = role;
   }
 
@@ -52,15 +71,40 @@ public class User {
     return id;
   }
 
-  public Person getPerson() {
-    return person;
+  public String getFistName() {
+    return fistName;
+  }
+
+  public String getLastName() {
+    return lastName;
+  }
+
+  public String getEmail() {
+    return email;
+  }
+
+  public Address getAddress() {
+    return address;
+  }
+
+  @Override
+  public Collection<? extends GrantedAuthority> getAuthorities() {
+    if (this.role == UserRole.ADMIN) {
+      return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ROLE_USER"));
+    }
+    return List.of(new SimpleGrantedAuthority("ROLE_USER"));
   }
 
   public String getPassword() {
     return password;
   }
 
-  public String getRole() {
+  @Override
+  public String getUsername() {
+    return email;
+  }
+
+  public UserRole getRole() {
     return role;
   }
 
@@ -68,7 +112,7 @@ public class User {
     return booksToLend;
   }
 
-  public List<Collection> getCollections() {
+  public List<BookCollection> getCollections() {
     return collections;
   }
 
@@ -80,15 +124,27 @@ public class User {
     return updatedAt;
   }
 
-  public void setPerson(Person person) {
-    this.person = person;
+  public void setFistName(String fistName) {
+    this.fistName = fistName;
+  }
+
+  public void setLastName(String lastName) {
+    this.lastName = lastName;
+  }
+
+  public void setEmail(String email) {
+    this.email = email;
+  }
+
+  public void setAddress(Address address) {
+    this.address = address;
   }
 
   public void setPassword(String password) {
     this.password = password;
   }
 
-  public void setRole(String role) {
+  public void setRole(UserRole role) {
     this.role = role;
   }
 
@@ -96,7 +152,7 @@ public class User {
     this.booksToLend = toBorrowBooks;
   }
 
-  public void setCollections(List<Collection> collections) {
+  public void setCollections(List<BookCollection> collections) {
     this.collections = collections;
   }
 
@@ -108,12 +164,12 @@ public class User {
     this.updatedAt = updatedAt;
   }
 
-  public void addCollection(Collection collection) {
+  public void addCollection(BookCollection collection) {
     collections.add(collection);
     collection.setOwner(this);
   }
 
-  public void removeCollection(Collection collection) {
+  public void removeCollection(BookCollection collection) {
     collections.remove(collection);
   }
 
