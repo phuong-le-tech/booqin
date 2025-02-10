@@ -1,5 +1,7 @@
 package fr.uge.booqIn.entity;
 
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import fr.uge.booqIn.enums.UserRole;
 import jakarta.persistence.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -39,8 +41,10 @@ public class User implements UserDetails {
   @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
   private List<ToLendBook> booksToLend;
 
+
   @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
   private List<BookCollection> collections;
+
 
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "created_at", nullable = false, updatable = false)
