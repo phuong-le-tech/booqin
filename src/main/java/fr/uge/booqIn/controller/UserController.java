@@ -51,9 +51,7 @@ public class UserController {
       Optional<User> user = userService.getUserById(id);
       if (user.isPresent()) {
       var collection = bookCollectionService.getCollectionById(collectionId);
-        if (collection.isPresent()) {
-            userService.addCollectionToUser(user.get(), collection.get());
-        }
+          collection.ifPresent(bookCollection -> userService.addCollectionToUser(user.get(), bookCollection));
       }
     }
     @DeleteMapping("/{id}/collections/{collectionId}")

@@ -39,7 +39,6 @@ public class User implements UserDetails {
   private UserRole role;
 
   @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
-  @JsonIgnore
   private List<ToLendBook> booksToLend;
 
 
