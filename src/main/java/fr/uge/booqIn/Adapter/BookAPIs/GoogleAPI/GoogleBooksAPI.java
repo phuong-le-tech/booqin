@@ -29,11 +29,6 @@ public class GoogleBooksAPI implements BookFetcher {
         return searchBooks("isbn:" + isbn);
     }
 
-    @Override
-    public List<Book> searchByPublisher(String publisher) {
-        return searchBooks("inpublisher:" + publisher);
-    }
-
 
     private List<Book> searchBooks(String query) {
         String url = API_URL + query;

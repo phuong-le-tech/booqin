@@ -6,11 +6,14 @@ import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.singleton.WebClientSingleton;
 import org.springframework.web.reactive.function.client.WebClient;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class OpenAPI implements BookFetcher {
     private static final String API_URL = "https://openlibrary.org/search.json?";
     private static final String FIELDS = "&fields=title,author_name,isbn,first_publish_year,description&language=eng";
     private final WebClient webClient = WebClientSingleton.getInstance();
+
+    private final static Logger logger = Logger.getLogger(OpenAPI.class.toString());
 
     @Override
     public List<Book> searchByTitle(String title) {
@@ -27,13 +30,10 @@ public class OpenAPI implements BookFetcher {
         return searchBooks("isbn=" + isbn);
     }
 
-    @Override
-    public List<Book> searchByPublisher(String publisher) {
-        return searchBooks("q=publisher:"+publisher);
-    }
 
     private List<Book> searchBooks(String query) {
         String url = API_URL + query + FIELDS;
+        logger.info(url);
         OpenLibraryResponse response = webClient.get()
                 .uri(url)
                 .retrieve()

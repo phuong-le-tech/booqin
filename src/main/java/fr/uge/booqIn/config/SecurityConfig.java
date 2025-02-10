@@ -30,8 +30,8 @@ public class SecurityConfig {
           AuthenticationProvider authenticationProvider
   ) throws Exception {
     http
-            .csrf(AbstractHttpConfigurer::disable)
-            .authorizeHttpRequests(auth -> auth
+            .csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+            /*.authorizeHttpRequests(auth -> auth
                     .requestMatchers("/h2-console/**").permitAll() //TODO Db accessible que en admin
                     .requestMatchers("/auth/**", "/home", "/favicon.ico", "/static/**").permitAll()
                     .requestMatchers(
@@ -39,7 +39,7 @@ public class SecurityConfig {
                             "/api/v1/auth/signin"
                     ).permitAll()
                     .anyRequest().authenticated()
-            )
+            )*/
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authenticationProvider(authenticationProvider)
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
