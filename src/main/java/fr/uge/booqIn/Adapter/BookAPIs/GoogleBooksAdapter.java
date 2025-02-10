@@ -23,8 +23,4 @@ public class GoogleBooksAdapter implements BookFetcher {
         return googleBooksAPI.searchByIsbn(isbn);
     }
 
-    @Override
-    public List<Book> searchByPublisher(String publisher) {
-        return googleBooksAPI.searchByPublisher(publisher);
-    }
 }

@@ -34,9 +34,6 @@ public class BookController {
         return bookService.searchByIsbn(isbn);
     }
 
-    @GetMapping("/searchByPublisher")
-    public List<Book> searchByPublisher(@RequestParam String publisher) {
-        return bookService.searchByPublisher(publisher);
-    }
+
 
 }

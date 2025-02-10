@@ -22,8 +22,4 @@ public class OpenApiAdapter implements BookFetcher {
     return List.of();
   }
 
-  @Override
-  public List<Book> searchByPublisher(String publisher) {
-    return List.of();
   }
-}
