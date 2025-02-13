@@ -13,21 +13,21 @@ public class Book {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column
+    @Column(length = 5000)
     private String isbn10;
 
-    @Column
+    @Column(length = 5000)
     private String isbn13;
 
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 5000)
     private String title;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 5000)
     private String author;
 
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 5000)
     private String description;
 
     @Temporal(TemporalType.TIMESTAMP)

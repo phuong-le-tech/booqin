@@ -14,12 +14,11 @@ public class OpenApiAdapter implements BookFetcher {
 
   @Override
   public List<Book> searchByAuthor(String author) {
-    return List.of();
+    return openAPI.searchByAuthor(author);
   }
 
   @Override
   public List<Book> searchByIsbn(String isbn) {
-    return List.of();
+    return openAPI.searchByIsbn(isbn);
   }
-
-  }
+}
