@@ -9,143 +9,141 @@ import java.util.List;
 @Entity
 public class Book {
 
-  @Id
-  @Column()
-  private String ibsn10;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-  @Id
-  @Column
-  private String ibsn13;
+    @Column
+    private String isbn10;
 
-
-  @Column(nullable = false)
-  private String title;
-
-  @Column(nullable = false)
-  private String author;
+    @Column
+    private String isbn13;
 
 
-  @Column(nullable = false)
-  private String description;
+    @Column(nullable = false)
+    private String title;
 
-  @Temporal(TemporalType.TIMESTAMP)
-  @Column(name = "publication_date")
-  private String publicationDate;
+    @Column(nullable = false)
+    private String author;
 
-  @ManyToMany
-  private List<BookCollection> collections;
 
-  @Temporal(TemporalType.TIMESTAMP)
-  @Column(name = "created_at", nullable = false, updatable = false)
-  private Date createdAt = new Date();
+    @Column(nullable = false)
+    private String description;
 
-  @Temporal(TemporalType.TIMESTAMP)
-  @Column(name = "updated_at")
-  private Date updatedAt = new Date();
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "publication_date")
+    private String publicationDate;
 
-  public Book() {
-  }
+    @ManyToMany
+    private List<BookCollection> collections;
 
-  private String extractIdentifier(List<IndustryIdentifier> identifiers, String type) {
-    return identifiers.stream()
-            .filter(id -> type.equalsIgnoreCase(id.type()))
-            .map(IndustryIdentifier::identifier)
-            .findFirst()
-            .orElseThrow(() -> new IllegalArgumentException("Identifier de type " + type + " non trouvé"));
-  }
 
-  public Book(String title, String author, List<IndustryIdentifier> industryIdentifiers, String description, String publicationDate) {
-    this.title = title;
-    this.author = author;
-    this.ibsn10 = extractIdentifier(industryIdentifiers, "ISBN_10");
-    this.ibsn13 = extractIdentifier(industryIdentifiers, "ISBN_13");
-    this.description = description;
-    this.publicationDate = publicationDate;
-  }
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Date createdAt = new Date();
 
-  public String getIbsn10() {
-    return ibsn10;
-  }
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "updated_at")
+    private Date updatedAt = new Date();
 
-  public String getIbsn13() {
-    return ibsn13;
-  }
+    public Book() {
+    }
 
-  public String getTitle() {
-    return title;
-  }
+    public Book(String isbn10, String isbn13, String title, String author, String description, String publicationDate) {
+        this.title = title;
+        this.author = author;
+        this.isbn10 = isbn10;
+        this.isbn13 = isbn13;
+        this.description = description;
+        this.publicationDate = publicationDate;
+    }
 
-  public String getAuthor() {
-    return author;
-  }
+    public Long getId() {
+        return id;
+    }
+    public String getIsbn10() {
+        return isbn10;
+    }
 
-  public String getDescription() {
-    return description;
-  }
+    public String getIsbn13() {
+        return isbn13;
+    }
 
-  public String getPublicationDate() {
-    return publicationDate;
-  }
+    public String getTitle() {
+        return title;
+    }
 
-  public List<BookCollection> getCollections() {
-    return collections;
-  }
+    public String getAuthor() {
+        return author;
+    }
 
-  public Date getCreatedAt() {
-    return createdAt;
-  }
+    public String getDescription() {
+        return description;
+    }
 
-  public Date getUpdatedAt() {
-    return updatedAt;
-  }
+    public String getPublicationDate() {
+        return publicationDate;
+    }
 
-  public void setTitle(String title) {
-    this.title = title;
-  }
+    public List<BookCollection> getCollections() {
+        return collections;
+    }
 
-  public void setAuthor(String author) {
-    this.author = author;
-  }
+    public Date getCreatedAt() {
+        return createdAt;
+    }
 
-  public void setDescription(String description) {
-    this.description = description;
-  }
+    public Date getUpdatedAt() {
+        return updatedAt;
+    }
 
-  public void setPublicationDate(String publicationDate) {
-    this.publicationDate = publicationDate;
-  }
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
-  public void setCollections(List<BookCollection> collections) {
-    this.collections = collections;
-  }
+    public void setAuthor(String author) {
+        this.author = author;
+    }
 
-  public void setCreatedAt(Date createdAt) {
-    this.createdAt = createdAt;
-  }
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-  public void setUpdatedAt(Date updatedAt) {
-    this.updatedAt = updatedAt;
-  }
+    public void setPublicationDate(String publicationDate) {
+        this.publicationDate = publicationDate;
+    }
 
-  public void addCollection(BookCollection collection) {
-    collections.add(collection);
-    collection.getBooks().add(this);
-  }
+    public void setCollections(List<BookCollection> collections) {
+        this.collections = collections;
+    }
 
-  public void removeCollection(BookCollection collection) {
-    collections.remove(collection);
-    collection.getBooks().remove(this);
-  }
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
 
-  @Override
-  public String toString() {
-    return "Book{" +
-            "ibsn10='" + ibsn10 + '\'' +
-            ", ibsn13='" + ibsn13 + '\'' +
-            ", title='" + title + '\'' +
-            ", author='" + author + '\'' +
-            ", description='" + description + '\'' +
-            ", publicationDate='" + publicationDate + '\'' +
-            '}';
-  }
+    public void setUpdatedAt(Date updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public void addCollection(BookCollection collection) {
+        collections.add(collection);
+        collection.getBooks().add(this);
+    }
+
+    public void removeCollection(BookCollection collection) {
+        collections.remove(collection);
+        collection.getBooks().remove(this);
+    }
+
+    @Override
+    public String toString() {
+        return "Book{" +
+                "isbn10='" + isbn10 + '\'' +
+                ", isbn13='" + isbn13 + '\'' +
+                ", title='" + title + '\'' +
+                ", author='" + author + '\'' +
+                ", description='" + description + '\'' +
+                ", publicationDate='" + publicationDate + '\'' +
+                '}';
+    }
 }

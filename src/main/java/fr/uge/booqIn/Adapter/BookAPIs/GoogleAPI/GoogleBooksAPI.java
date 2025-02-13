@@ -59,19 +59,18 @@ public class GoogleBooksAPI implements BookFetcher {
 
 
     private Book convertToBook(BookItem item) {
-        VolumeInfo volumeInfo = item.volumeInfo;
-        System.out.println("CONVERTING BOOK: " + volumeInfo);
-
-        Book book = new Book(
+        var volumeInfo = item.volumeInfo;
+        var industryIdentifiers = volumeInfo.industryIdentifiers();
+        // TODO : Manage ISBN
+        return new Book(
+                null,
+                null,
                 volumeInfo.title(),
                 (volumeInfo.authors() != null && !volumeInfo.authors().isEmpty())
                         ? String.join(", ", volumeInfo.authors())
                         : "",
-                volumeInfo.industryIdentifiers(),
                 volumeInfo.description() != null ? volumeInfo.description() : "",
                 volumeInfo.publishedDate()
         );
-        System.out.println("CONVERTED BOOK: " + book);
-        return book;
     }
 }
