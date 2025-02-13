@@ -1,9 +1,11 @@
 package fr.uge.booqIn.controller.api;
 
-import fr.uge.booqIn.dto.auth.JwtDto;
-import fr.uge.booqIn.dto.auth.SignInDto;
-import fr.uge.booqIn.dto.auth.SignUpDto;
+import fr.uge.booqIn.dto.auth.AuthResponse;
+import fr.uge.booqIn.dto.auth.LoginDto;
+import fr.uge.booqIn.dto.auth.RegisterDto;
+import fr.uge.booqIn.service.JwtService;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import fr.uge.booqIn.entity.User;
@@ -18,36 +20,114 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
   private final AuthService authService;
-
-  public AuthController(AuthService authService) {
+  private final JwtService jwtService;
+  public AuthController(AuthService authService, JwtService jwtService) {
     this.authService = authService;
+    this.jwtService = jwtService;
   }
 
-  @PostMapping("/signin")
-  public  ResponseEntity<String> signIn(@RequestBody @Valid SignInDto data, HttpServletResponse response) {
-    String token = authService.signIn(data);
+  @PostMapping("/login")
+  public ResponseEntity<String> login(@RequestBody @Valid LoginDto data, HttpServletResponse response) {
+    AuthResponse tokens = authService.login(data);
 
-    Cookie jwtCookie = new Cookie("jwt", token);
-    jwtCookie.setHttpOnly(true);  // Empêche l'accès via JavaScript (sécurité contre XSS)
-    jwtCookie.setSecure(false);     // Active le cookie uniquement en HTTPS
-    jwtCookie.setPath("/");        // Disponible sur toute l'application
-    jwtCookie.setMaxAge(24 * 60 * 60); // Expiration en 1 jour
+    Cookie jwtCookie = new Cookie("jwt", tokens.accessToken());
+    jwtCookie.setHttpOnly(true);
+    jwtCookie.setSecure(false); // set true if you use HTTPS
+    jwtCookie.setPath("/");
+    jwtCookie.setMaxAge(30 * 60); // 30 minutes
+
+    Cookie refreshCookie = new Cookie("jwt-refresh", tokens.refreshToken());
+    refreshCookie.setHttpOnly(true);
+    refreshCookie.setSecure(false); // set true if you use HTTPS
+    refreshCookie.setPath("/");
+    refreshCookie.setMaxAge(7 * 24 * 60 * 60); // 7 days
 
     response.addCookie(jwtCookie);
+    response.addCookie(refreshCookie);
 
     return ResponseEntity.ok().body("Connexion réussie !");
   }
 
-  @PostMapping("/signup")
-  public ResponseEntity<?> signUp(@RequestBody @Valid SignUpDto signUpDto) {
+  @PostMapping("/register")
+  public ResponseEntity<?> signUp(@RequestBody @Valid RegisterDto registerDto) {
     User user;
     try {
-      user = authService.signUp(signUpDto);
+      user = authService.register(registerDto);
     } catch (IllegalArgumentException e) {
       return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
     }
     return ResponseEntity.status(HttpStatus.CREATED).body(user);
   }
+
+  @PostMapping("/logout")
+  public ResponseEntity<String> logout(HttpServletResponse response) {
+    // 1. Overwrite the jwt cookie with an empty value and set maxAge to 0
+    Cookie jwtCookie = new Cookie("jwt", null);
+    jwtCookie.setHttpOnly(true);
+    jwtCookie.setSecure(false);
+    jwtCookie.setPath("/");
+    jwtCookie.setMaxAge(0); // remove cookie immediately
+
+    // 2. Overwrite the refresh cookie likewise
+    Cookie refreshCookie = new Cookie("jwt-refresh", null);
+    refreshCookie.setHttpOnly(true);
+    refreshCookie.setSecure(false);
+    refreshCookie.setPath("/");
+    refreshCookie.setMaxAge(0);
+
+    response.addCookie(jwtCookie);
+    response.addCookie(refreshCookie);
+
+    // 3. (Optional) If you store refresh tokens in DB, remove / invalidate them here
+    // refreshTokenRepository.invalidate(...);
+
+    return ResponseEntity.ok("Logged out successfully");
+  }
+
+  @PostMapping("/refresh")
+  public ResponseEntity<?> refreshToken(HttpServletRequest request, HttpServletResponse response) {
+    String refreshToken = null;
+    if (request.getCookies() != null) {
+      for (Cookie cookie : request.getCookies()) {
+        if ("jwt-refresh".equals(cookie.getName())) {
+          refreshToken = cookie.getValue();
+        }
+      }
+    }
+
+    if (refreshToken == null) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Refresh token is missing");
+    }
+
+    try {
+      String username = jwtService.extractUsername(refreshToken);
+
+      // Usually you would check whether this refresh token
+      // is still valid in DB (if you stored it).
+      // For example: refreshTokenRepository.findByToken(refreshToken)
+
+      // If valid, generate new access token
+      String newAccessToken = jwtService.generateAccessToken(username);
+
+      // Optionally, you can rotate the refresh token as well:
+      // String newRefreshToken = jwtService.generateRefreshToken(username);
+      // and store it again in the cookie.
+
+      Cookie jwtCookie = new Cookie("jwt", newAccessToken);
+      jwtCookie.setHttpOnly(true);
+      jwtCookie.setSecure(false);
+      jwtCookie.setPath("/");
+      jwtCookie.setMaxAge(30 * 60); // 30 minutes
+
+      response.addCookie(jwtCookie);
+
+      return ResponseEntity.ok().body("Access Token refreshed successfully");
+    } catch (Exception e) {
+      // e.g. token might be expired or invalid
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid refresh token");
+    }
+  }
+
 
   @GetMapping("/user/test")
   @PreAuthorize("hasAuthority('ROLE_USER')")

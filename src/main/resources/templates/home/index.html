@@ -2,16 +2,16 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Accueil</title>
 </head>
 <body>
-<h1>Bienvenue sur BooqIn</h1>
-<a href="/auth/signin">
-    <button>Login</button>
-</a>
-<a href="/auth/signup">
-    <button>Sign Up</button>
-</a>
+<h1>Bienvenue dans l'app</h1>
+<p>Vous êtes connecté !</p>
+<!-- Optional: A button to manually refresh token -->
+<form action="#" th:action="@{/auth/refresh}" method="post">
+    <button type="submit">Rafraîchir le token</button>
+</form>
+
+<!-- Optionally a logout link that clears cookies or invalidates them. -->
 </body>
 </html>

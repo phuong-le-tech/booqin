@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import AuthServices from "../../services/AuthService.js";
 
-const SignUp = () => {
+const Register = () => {
     const [formData, setFormData] = useState({
         firstName: "",
         lastName: "",
@@ -21,7 +21,6 @@ const SignUp = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-
         if (["streetNumber", "streetName", "city", "postalCode"].includes(name)) {
             setFormData({ ...formData, address: { ...formData.address, [name]: value } });
         } else {
@@ -32,13 +31,14 @@ const SignUp = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.post("/api/v1/auth/signup", formData);
+            await AuthServices.register(formData);
             alert("Inscription réussie !");
-            navigate("/signin");
+            navigate("/login");
         } catch (error) {
             setError("Échec de l'inscription. Vérifie tes informations.");
         }
     };
+
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4">
@@ -53,7 +53,7 @@ const SignUp = () => {
                             type="text"
                             name="firstName"
                             placeholder="Prénom"
-                            className="w-full p-3 border border-gray-300 rounded-md text-gray-800 focus:ring-2 focus:ring-green-500 focus:outline-none"
+                            className="w-full p-3 border border-gray-300 rounded-md text-gray-800"
                             onChange={handleChange}
                             required
                         />
@@ -64,7 +64,7 @@ const SignUp = () => {
                             type="text"
                             name="lastName"
                             placeholder="Nom"
-                            className="w-full p-3 border border-gray-300 rounded-md text-gray-800 focus:ring-2 focus:ring-green-500 focus:outline-none"
+                            className="w-full p-3 border border-gray-300 rounded-md text-gray-800"
                             onChange={handleChange}
                             required
                         />
@@ -75,7 +75,7 @@ const SignUp = () => {
                             type="email"
                             name="email"
                             placeholder="Email"
-                            className="w-full p-3 border border-gray-300 rounded-md text-gray-800 focus:ring-2 focus:ring-green-500 focus:outline-none"
+                            className="w-full p-3 border border-gray-300 rounded-md text-gray-800"
                             onChange={handleChange}
                             required
                         />
@@ -86,7 +86,7 @@ const SignUp = () => {
                             type="password"
                             name="password"
                             placeholder="Mot de passe"
-                            className="w-full p-3 border border-gray-300 rounded-md text-gray-800 focus:ring-2 focus:ring-green-500 focus:outline-none"
+                            className="w-full p-3 border border-gray-300 rounded-md text-gray-800"
                             onChange={handleChange}
                             required
                         />
@@ -101,7 +101,7 @@ const SignUp = () => {
                                 type="text"
                                 name="streetNumber"
                                 placeholder="Numéro de rue"
-                                className="w-full p-3 border border-gray-300 rounded-md text-gray-800 focus:ring-2 focus:ring-green-500 focus:outline-none"
+                                className="w-full p-3 border border-gray-300 rounded-md text-gray-800"
                                 onChange={handleChange}
                                 value={formData.address.streetNumber}
                                 required
@@ -113,7 +113,7 @@ const SignUp = () => {
                                 type="text"
                                 name="streetName"
                                 placeholder="Nom de rue"
-                                className="w-full p-3 border border-gray-300 rounded-md text-gray-800 focus:ring-2 focus:ring-green-500 focus:outline-none"
+                                className="w-full p-3 border border-gray-300 rounded-md text-gray-800"
                                 onChange={handleChange}
                                 value={formData.address.streetName}
                                 required
@@ -125,7 +125,7 @@ const SignUp = () => {
                                 type="text"
                                 name="city"
                                 placeholder="Ville"
-                                className="w-full p-3 border border-gray-300 rounded-md text-gray-800 focus:ring-2 focus:ring-green-500 focus:outline-none"
+                                className="w-full p-3 border border-gray-300 rounded-md text-gray-800"
                                 onChange={handleChange}
                                 value={formData.address.city}
                                 required
@@ -137,7 +137,7 @@ const SignUp = () => {
                                 type="text"
                                 name="postalCode"
                                 placeholder="Code Postal"
-                                className="w-full p-3 border border-gray-300 rounded-md text-gray-800 focus:ring-2 focus:ring-green-500 focus:outline-none"
+                                className="w-full p-3 border border-gray-300 rounded-md text-gray-800"
                                 onChange={handleChange}
                                 value={formData.address.postalCode}
                                 required
@@ -147,14 +147,14 @@ const SignUp = () => {
 
                     <button
                         type="submit"
-                        className="w-full bg-green-500 text-white p-3 rounded-md font-semibold text-lg hover:bg-green-600 transition focus:ring-2 focus:ring-green-500"
+                        className="w-full bg-green-500 text-white p-3 rounded-md font-semibold text-lg hover:bg-green-600 transition"
                     >
                         S'inscrire
                     </button>
                 </form>
                 <p className="text-center mt-4 text-gray-700">
                     Déjà un compte ?{" "}
-                    <a href="/signin" className="text-green-600 font-semibold hover:underline">
+                    <a href="/Login" className="text-green-600 font-semibold hover:underline">
                         Connecte-toi ici
                     </a>
                 </p>
@@ -163,4 +163,4 @@ const SignUp = () => {
     );
 };
 
-export default SignUp;
+export default Register;

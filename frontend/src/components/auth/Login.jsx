@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import AuthService from "../../services/AuthService.js";
 
-const SignIn = () => {
+const Login = () => {
     const [formData, setFormData] = useState({ login: "", password: "" });
     const [error, setError] = useState("");
-    const [showPassword, setShowPassword] = useState(false); // Nouvel état
+    const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -15,34 +15,18 @@ const SignIn = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post("/api/v1/auth/signin", formData, {
-                withCredentials: true, // Active l'envoi des cookies
-            });
-            console.log("response", response.headers);
-            // POUR TESTER
+            await AuthService.login(formData);
             alert("Connexion réussie !");
 
-            const cookies = response.headers["set-cookie"];
-            if (!cookies) {
-                console.error("❌ Aucun cookie JWT reçu !");
-                return;
-            }
-            console.log("🔹 Cookies reçus :", cookies);
+            // You can test any protected route if you want
+            // const testResponse = await axiosInstance.get("/v1/auth/admin/test");
+            // console.log("Réponse admin test :", testResponse.data);
 
-            console.log("🔹 Test de la route protégée...");
-
-            const testResponse = await axios.get(`/api/v1/auth/user/test`, {
-                headers: { Cookie: cookies.join("; ") }, // Envoie les cookies
-                withCredentials: true
-            });
-
-            console.log("✅ Réponse de la route test :", testResponse.data);
             navigate("/home");
         } catch (error) {
             setError("Échec de la connexion. Vérifie tes identifiants.");
         }
     };
-
     return (
         <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 to-blue-300 px-4">
             <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg">
@@ -103,7 +87,7 @@ const SignIn = () => {
 
                 <p className="text-center mt-6 text-gray-600">
                     Pas encore de compte ?{" "}
-                    <a href="/signup" className="text-blue-600 hover:underline font-medium">
+                    <a href="/Register" className="text-blue-600 hover:underline font-medium">
                         Inscris-toi ici
                     </a>
                 </p>
@@ -112,4 +96,4 @@ const SignIn = () => {
     );
 };
 
-export default SignIn;
+export default Login;

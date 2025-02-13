@@ -1,7 +1,8 @@
 package fr.uge.booqIn.service;
 
-import fr.uge.booqIn.dto.auth.SignInDto;
-import fr.uge.booqIn.dto.auth.SignUpDto;
+import fr.uge.booqIn.dto.auth.AuthResponse;
+import fr.uge.booqIn.dto.auth.LoginDto;
+import fr.uge.booqIn.dto.auth.RegisterDto;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.repository.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -29,7 +30,7 @@ public class AuthService {
     this.jwtService = jwtService;
   }
 
-  public User signUp(SignUpDto signUpDto) {
+  public User register(RegisterDto signUpDto) {
     userRepository.findByEmail(signUpDto.email()).ifPresent(u -> {
       throw new IllegalArgumentException("Email already taken");
     });
@@ -45,7 +46,7 @@ public class AuthService {
     return userRepository.save(user);
   }
 
-  public String signIn(SignInDto signInDto) {
+  public AuthResponse login(LoginDto signInDto) {
     UsernamePasswordAuthenticationToken authToken =
             new UsernamePasswordAuthenticationToken(
                     signInDto.login(),
@@ -54,6 +55,13 @@ public class AuthService {
 
     var authResult = authenticationManager.authenticate(authToken);
     var user = (User) authResult.getPrincipal();
-    return jwtService.generateToken(user.getUsername());
+
+    String accessToken = jwtService.generateAccessToken(user.getUsername());
+    String refreshToken = jwtService.generateRefreshToken(user.getUsername());
+
+    // (Optional) store the refresh token in DB if you want to track/invalidate them
+    // e.g. storeRefreshToken(user, refreshToken);
+
+    return new AuthResponse(accessToken, refreshToken);
   }
 }

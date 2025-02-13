@@ -35,8 +35,8 @@ public class SecurityConfig {
                     .requestMatchers("/h2-console/**").permitAll() //TODO Db accessible que en admin
                     .requestMatchers("/auth/**", "/home", "/favicon.ico", "/static/**").permitAll()
                     .requestMatchers(
-                            "/api/v1/auth/signup",
-                            "/api/v1/auth/signin"
+                            "/api/v1/auth/register",
+                            "/api/v1/auth/login"
                     ).permitAll()
                     .anyRequest().authenticated()
             )
@@ -44,10 +44,10 @@ public class SecurityConfig {
             .authenticationProvider(authenticationProvider)
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
 /*            .formLogin(login -> login
-                    .loginPage("/auth/signin")
-                    .loginProcessingUrl("/auth/signin")
+                    .loginPage("/auth/login")
+                    .loginProcessingUrl("/auth/login")
                     .defaultSuccessUrl("/home", true)
-                    .failureUrl("/auth/signin?error=true")
+                    .failureUrl("/auth/login?error=true")
                     .permitAll()
             )*/
             .logout(logout -> logout
