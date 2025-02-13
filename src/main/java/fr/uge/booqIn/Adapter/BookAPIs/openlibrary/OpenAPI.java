@@ -54,6 +54,7 @@ public class OpenAPI implements BookFetcher {
         String author = doc.author_name() != null && !doc.author_name().isEmpty()
                 ? String.join(", ", doc.author_name())
                 : "Unknown Author";
+        // TODO : Change the way to get the ISBN
         List<IndustryIdentifier> isbn = doc.isbn() != null && !doc.isbn().isEmpty()
                 ? doc.isbn().stream().map(is -> new IndustryIdentifier("ISBN_"+is.length(),is)).toList()
                 : List.of();
@@ -64,7 +65,7 @@ public class OpenAPI implements BookFetcher {
                 ? String.valueOf(doc.first_publish_year())
                 : "";
 
-        return new Book(title, author, isbn, description, publicationDate);
+        return new Book(null, null, title, author, description, publicationDate);
     }
 
     private String splitAndAdd(String s) {
