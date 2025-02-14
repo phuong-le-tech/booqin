@@ -2,11 +2,15 @@ package fr.uge.booqIn.Adapter.BookAPIs.openlibrary;
 
 import fr.uge.booqIn.Adapter.BookAPIs.BookFetcher;
 import fr.uge.booqIn.Adapter.BookAPIs.GoogleAPI.IndustryIdentifier;
+import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.singleton.WebClientSingleton;
 import org.springframework.web.reactive.function.client.WebClient;
+
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class OpenAPI implements BookFetcher {
     private static final String API_URL = "https://openlibrary.org/search.json?";
@@ -51,21 +55,20 @@ public class OpenAPI implements BookFetcher {
 
     private Book convertToBook(Doc doc) {
         String title = doc.title() != null ? doc.title() : "No Title";
-        String author = doc.author_name() != null && !doc.author_name().isEmpty()
-                ? String.join(", ", doc.author_name())
-                : "Unknown Author";
-        // TODO : Change the way to get the ISBN
-        List<IndustryIdentifier> isbn = doc.isbn() != null && !doc.isbn().isEmpty()
-                ? doc.isbn().stream().map(is -> new IndustryIdentifier("ISBN_"+is.length(),is)).toList()
-                : List.of();
-        String description = doc.description() != null
-                ? doc.description()
-                : "";
-        String publicationDate = doc.first_publish_year() != null
-                ? String.valueOf(doc.first_publish_year())
-                : "";
+        Set<Author> authors = doc.author_name() != null && !doc.author_name().isEmpty()
+                ? doc.author_name().stream().map(authorName -> new Author(authorName, "")).collect(Collectors.toSet())
+                : Set.of();
+        String description = doc.description() != null ? doc.description() : "";
+        String publicationDate = doc.first_publish_year() != null ? String.valueOf(doc.first_publish_year()) : "";
 
-        return new Book(null, null, title, author, description, publicationDate);
+        return new Book(
+                null,
+                null,
+                title,
+                authors,
+                description,
+                publicationDate
+        );
     }
 
     private String splitAndAdd(String s) {
