@@ -1,12 +1,14 @@
 package fr.uge.booqIn.Adapter.BookAPIs.GoogleAPI;
 
 import fr.uge.booqIn.Adapter.BookAPIs.BookFetcher;
+import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.singleton.WebClientSingleton;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class GoogleBooksAPI implements BookFetcher {
@@ -60,17 +62,19 @@ public class GoogleBooksAPI implements BookFetcher {
 
     private Book convertToBook(BookItem item) {
         var volumeInfo = item.volumeInfo;
-        var industryIdentifiers = volumeInfo.industryIdentifiers();
-        // TODO : Manage ISBN
+        Set<Author> authors = volumeInfo.authors() != null && !volumeInfo.authors().isEmpty()
+                ? volumeInfo.authors().stream().map(authorName -> new Author(authorName, "")).collect(Collectors.toSet())
+                : Set.of();
+        String description = volumeInfo.description() != null ? volumeInfo.description() : "";
+        String publicationDate = volumeInfo.publishedDate();
+
         return new Book(
                 null,
                 null,
                 volumeInfo.title(),
-                (volumeInfo.authors() != null && !volumeInfo.authors().isEmpty())
-                        ? String.join(", ", volumeInfo.authors())
-                        : "",
-                volumeInfo.description() != null ? volumeInfo.description() : "",
-                volumeInfo.publishedDate()
+                authors,
+                description,
+                publicationDate
         );
     }
 }
