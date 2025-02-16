@@ -92,4 +92,24 @@ public class CollectionController {
       return ResponseEntity.badRequest().build();
     }
   }
+
+  @PatchMapping("/{id}")
+  public ResponseEntity<BookCollection> updateCollection(
+          @PathVariable Long id,
+          @AuthenticationPrincipal User currentUser,
+          @RequestBody BookCollection updatedCollection
+  ) {
+    try {
+      logger.info("User " + currentUser.getId() + " requested to update collection " + id);
+      BookCollection collection = collectionService.updateCollection(id, currentUser, updatedCollection);
+      logger.info("✅ Collection \" + id + \" successfully updated");
+      return ResponseEntity.ok(collection);
+    } catch (AccessDeniedException e) {
+      logger.warning("❌ Access denied for updating collection " + id);
+      return ResponseEntity.status(403).build();
+    } catch (IllegalArgumentException e) {
+      logger.warning("❌ Error updating collection " + id + ": " + e.getMessage());
+      return ResponseEntity.badRequest().build();
+    }
+  }
 }

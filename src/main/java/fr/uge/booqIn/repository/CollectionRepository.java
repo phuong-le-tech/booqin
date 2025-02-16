@@ -11,4 +11,5 @@ public interface CollectionRepository extends JpaRepository<BookCollection, Long
   Optional<BookCollection> findByTitle(String title);
   List<BookCollection> findByOwner(User owner);
   List<BookCollection> findByIsPublicTrue();
+  Optional<BookCollection> findByIdAndOwner(Long id, User owner);
 }

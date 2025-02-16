@@ -102,6 +102,24 @@ public class CollectionService {
     return collectionRepository.findByIsPublicTrue();
   }
 
+  @Transactional
+  public BookCollection updateCollection(Long id, User currentUser, BookCollection updatedCollection) {
+    //var collection = getCollectionById(id);
+    var collection = collectionRepository.findByIdAndOwner(id, currentUser)
+            .orElseThrow(() -> new IllegalArgumentException("Collection to update not found"));
+    verifyOwnership(collection, currentUser);
+
+    if (updatedCollection.getTitle() != null) {
+      collection.setTitle(updatedCollection.getTitle());
+    }
+    if (updatedCollection.getDescription() != null) {
+      collection.setDescription(updatedCollection.getDescription());
+    }
+    collection.setPublic(updatedCollection.isPublic());
+    collection.setUpdatedAt(new Date().toString());
+    return collectionRepository.save(collection);
+  }
+
   private void verifyOwnership(BookCollection collection, User user) {
     if (!collection.getOwner().equals(user)) {
       throw new AccessDeniedException("You don't have permission to modify this collection");
