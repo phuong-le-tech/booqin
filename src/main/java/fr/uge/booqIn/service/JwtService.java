@@ -21,17 +21,20 @@ public class JwtService {
   @Value("${security.jwt.token.secret-key}")
   private String SECRET;
 
-  public String generateToken(String userName) {
-    Map<String, Object> claims = new HashMap<>();
-    return createToken(claims, userName);
+  public String generateAccessToken(String username) {
+    return createToken(new HashMap<>(), username, 1000 * 60 * 30);
   }
 
-  private String createToken(Map<String, Object> claims, String userName) {
+  public String generateRefreshToken(String username) {
+    return createToken(new HashMap<>(), username, 1000L * 60 * 60 * 24 * 7);
+  }
+
+  private String createToken(Map<String, Object> claims, String subject, long expirationMillis) {
     return Jwts.builder()
             .setClaims(claims)
-            .setSubject(userName)
-            .setIssuedAt(new Date())
-            .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 30)) // Token valid for 30 minutes
+            .setSubject(subject)
+            .setIssuedAt(new Date(System.currentTimeMillis()))
+            .setExpiration(new Date(System.currentTimeMillis() + expirationMillis))
             .signWith(getSignKey(), SignatureAlgorithm.HS256)
             .compact();
   }
