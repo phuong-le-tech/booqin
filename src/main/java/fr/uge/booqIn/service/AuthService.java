@@ -1,11 +1,15 @@
 package fr.uge.booqIn.service;
 
-import fr.uge.booqIn.dto.auth.SignInDto;
-import fr.uge.booqIn.dto.auth.SignUpDto;
+import fr.uge.booqIn.dto.auth.AuthResponse;
+import fr.uge.booqIn.dto.auth.LoginDto;
+import fr.uge.booqIn.dto.auth.RegisterDto;
+import fr.uge.booqIn.dto.auth.UserMeDto;
 import fr.uge.booqIn.entity.User;
+import fr.uge.booqIn.enums.UserRole;
 import fr.uge.booqIn.repository.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -29,7 +33,7 @@ public class AuthService {
     this.jwtService = jwtService;
   }
 
-  public User signUp(SignUpDto signUpDto) {
+  public User register(RegisterDto signUpDto) {
     userRepository.findByEmail(signUpDto.email()).ifPresent(u -> {
       throw new IllegalArgumentException("Email already taken");
     });
@@ -40,12 +44,12 @@ public class AuthService {
             signUpDto.email(),
             passwordEncoder.encode(signUpDto.password()),
             signUpDto.address(),
-            signUpDto.role()
+            /*signUpDto.role()*/ UserRole.USER
     );
     return userRepository.save(user);
   }
 
-  public String signIn(SignInDto signInDto) {
+  public AuthResponse login(LoginDto signInDto) {
     UsernamePasswordAuthenticationToken authToken =
             new UsernamePasswordAuthenticationToken(
                     signInDto.login(),
@@ -54,6 +58,25 @@ public class AuthService {
 
     var authResult = authenticationManager.authenticate(authToken);
     var user = (User) authResult.getPrincipal();
-    return jwtService.generateToken(user.getUsername());
+
+    String accessToken = jwtService.generateAccessToken(user.getUsername());
+    String refreshToken = jwtService.generateRefreshToken(user.getUsername());
+
+    return new AuthResponse(accessToken, refreshToken);
+  }
+
+  public UserMeDto getCurrentUser(Authentication authentication) {
+    if (authentication == null || !authentication.isAuthenticated()) {
+      System.out.println("User is not authenticated");
+      throw new IllegalStateException("User is not authenticated");
+    }
+    User user = (User) authentication.getPrincipal();
+
+    return new UserMeDto(
+            user.getId(),
+            user.getFirstName(),
+            user.getLastName(),
+            user.getEmail()
+    );
   }
 }

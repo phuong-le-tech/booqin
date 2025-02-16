@@ -1,17 +1,28 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accueil</title>
+    <title>Accueil (Session)</title>
 </head>
 <body>
-<h1>Bienvenue sur BooqIn</h1>
-<a href="/auth/signin">
-    <button>Login</button>
-</a>
-<a href="/auth/signup">
-    <button>Sign Up</button>
-</a>
+<h1>Accueil</h1>
+
+<!-- SI connecté -->
+<div th:if="${isAuthenticated}">
+    <p>Vous êtes connecté en tant que <strong th:text="${username}">User</strong>.</p>
+    <form th:action="@{/logout}" method="post">
+        <button type="submit">Se déconnecter</button>
+    </form>
+</div>
+
+<!-- SI pas connecté -->
+<div th:unless="${isAuthenticated}">
+    <p>Vous n'êtes pas connecté.</p>
+    <p>
+        <a th:href="@{/auth/login}">Se connecter</a> |
+        <a th:href="@{/auth/register}">S'inscrire</a>
+    </p>
+</div>
+
 </body>
 </html>

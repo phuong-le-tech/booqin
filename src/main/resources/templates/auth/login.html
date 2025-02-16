@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Connexion (Session)</title>
+</head>
+<body>
+<h1>Connexion</h1>
+
+<!-- Affiche l'erreur si présente -->
+<div th:if="${error}">
+    <p th:text="Gérer l'erreur ici" style="color:red;"></p>
+</div>
+
+<!-- Spring Security attend par défaut un POST sur /auth/login avec "username" et "password" -->
+<form th:action="@{/auth/login}" method="post">
+    <label for="username">Email :</label>
+    <!-- name="username" (et non "login") -->
+    <input type="text" id="username" name="username" required/><br/><br/>
+
+    <label for="password">Mot de passe :</label>
+    <!-- name="password" -->
+    <input type="password" id="password" name="password" required/><br/><br/>
+
+    <button type="submit">Se connecter</button>
+</form>
+
+<p>Pas de compte ? <a th:href="@{/auth/register}">Inscrivez-vous</a></p>
+</body>
+</html>
