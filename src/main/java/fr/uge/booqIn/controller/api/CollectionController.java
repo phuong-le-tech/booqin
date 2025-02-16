@@ -31,7 +31,14 @@ public class CollectionController {
 
   @GetMapping("/{id}")
   public ResponseEntity<BookCollection> getCollection(@PathVariable Long id) {
-    return ResponseEntity.ok(collectionService.getCollectionById(id));
+    try {
+      logger.info("✅ Collection fetched: " + id);
+      var collection = collectionService.getCollectionById(id);
+      return collection.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    } catch (IllegalArgumentException e) {
+      logger.warning("❌ Error fetching collection: " + e.getMessage());
+      return ResponseEntity.badRequest().build();
+    }
   }
 
   @DeleteMapping("/{id}")

@@ -8,11 +8,11 @@ import fr.uge.booqIn.repository.CollectionRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CollectionService {
@@ -34,9 +34,9 @@ public class CollectionService {
   }
 
   @Transactional
-  public BookCollection getCollectionById(Long id) {
-    return collectionRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Collection not found"));
+  public Optional<BookCollection> getCollectionById(Long id) {
+    return Optional.ofNullable(collectionRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Collection not found")));
   }
 
   @Transactional
@@ -51,7 +51,7 @@ public class CollectionService {
 
   @Transactional
   public void deleteCollection(Long id, User currentUser) {
-    var collection = getCollectionById(id);
+    var collection = getCollectionById(id).orElseThrow(() -> new IllegalArgumentException("Collection not found"));
     verifyOwnership(collection, currentUser);
     for (Book book : collection.getBooks()) {
       book.getCollections().remove(collection);
@@ -66,7 +66,7 @@ public class CollectionService {
 
   @Transactional
   public BookCollection addBookToCollection(Long collectionId, Long bookId, User currentUser) {
-    var collection = getCollectionById(collectionId);
+    var collection = getCollectionById(collectionId).orElseThrow(() -> new IllegalArgumentException("Collection not found"));
     verifyOwnership(collection, currentUser);
     var book = bookRepository.findById(bookId)
             .orElseThrow(() -> new IllegalArgumentException("Book not found"));
@@ -78,7 +78,7 @@ public class CollectionService {
 
   @Transactional
   public BookCollection addBookToCollection(Long collectionId, Book book, User currentUser) {
-    var collection = getCollectionById(collectionId);
+    var collection = getCollectionById(collectionId).orElseThrow(() -> new IllegalArgumentException("Collection not found"));
     verifyOwnership(collection, currentUser);
     collection.addBook(book);
     collection.setUpdatedAt(new Date().toString());
@@ -87,7 +87,7 @@ public class CollectionService {
 
   @Transactional
   public BookCollection removeBookFromCollection(Long collectionId, Long bookId, User currentUser) {
-    var collection = getCollectionById(collectionId);
+    var collection = getCollectionById(collectionId).orElseThrow(() -> new IllegalArgumentException("Collection not found"));
     verifyOwnership(collection, currentUser);
     var book = bookRepository.findById(bookId)
             .orElseThrow(() -> new IllegalArgumentException("Book not found"));

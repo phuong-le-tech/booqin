@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -62,7 +63,7 @@ public class CollectionControllerTest {
     collection.setId(1L);
     collection.setTitle("Test Collection");
 
-    when(collectionService.getCollectionById(1L)).thenReturn(collection);
+    when(collectionService.getCollectionById(1L)).thenReturn(Optional.of(collection));
     ResponseEntity<BookCollection> response = collectionController.getCollection(1L);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());

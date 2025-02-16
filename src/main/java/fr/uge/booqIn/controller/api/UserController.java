@@ -1,5 +1,5 @@
-package fr.uge.booqIn.controller.api;
-import fr.uge.booqIn.service.BookCollectionService;
+package fr.uge.booqIn.controller;
+import fr.uge.booqIn.service.CollectionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import fr.uge.booqIn.entity.User;
@@ -13,9 +13,9 @@ import java.util.Optional;
 public class UserController {
   private static final Logger logger = LoggerFactory.getLogger(UserController.class);
   private final UserService userService;
-  private final BookCollectionService bookCollectionService;
+  private final CollectionService bookCollectionService;
   
-  public UserController(UserService userService, BookCollectionService bookCollectionService) {
+  public UserController(UserService userService, CollectionService bookCollectionService) {
     this.userService = userService;
     this.bookCollectionService = bookCollectionService;
       logger.info("✅ UserController chargé !");

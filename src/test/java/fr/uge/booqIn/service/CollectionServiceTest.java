@@ -8,13 +8,11 @@ import fr.uge.booqIn.factory.BookFactory;
 import fr.uge.booqIn.factory.UserFactory;
 import fr.uge.booqIn.repository.BookRepository;
 import fr.uge.booqIn.repository.CollectionRepository;
-import fr.uge.booqIn.service.CollectionService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
