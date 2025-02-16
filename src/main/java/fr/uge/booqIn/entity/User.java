@@ -19,7 +19,7 @@ public class User implements UserDetails {
   private Long id;
 
   @Column(nullable = false)
-  private String fistName;
+  private String firstName;
 
   @Column(nullable = false)
   private String lastName;
@@ -54,7 +54,7 @@ public class User implements UserDetails {
   }
 
   public User(String fistName, String lastName, String email, String password, Address address, UserRole role) {
-    this.fistName = fistName;
+    this.firstName = fistName;
     this.lastName = lastName;
     this.email = email;
     this.password = password;
@@ -66,8 +66,8 @@ public class User implements UserDetails {
     return id;
   }
 
-  public String getFistName() {
-    return fistName;
+  public String getFirstName() {
+    return firstName;
   }
 
   public String getLastName() {
@@ -119,8 +119,8 @@ public class User implements UserDetails {
     return updatedAt;
   }
 
-  public void setFistName(String fistName) {
-    this.fistName = fistName;
+  public void setFirstName(String fistName) {
+    this.firstName = fistName;
   }
 
   public void setLastName(String lastName) {

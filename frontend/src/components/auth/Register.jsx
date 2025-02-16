@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthServices from "../../services/AuthService.js";
+import { toast } from "react-toastify";
 
 const Register = () => {
     const [formData, setFormData] = useState({
@@ -16,7 +17,6 @@ const Register = () => {
         },
         role: "USER",
     });
-    const [error, setError] = useState("");
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -32,10 +32,11 @@ const Register = () => {
         e.preventDefault();
         try {
             await AuthServices.register(formData);
-            alert("Inscription réussie !");
+            toast.success("Inscription réussie !");
             navigate("/login");
         } catch (error) {
-            setError("Échec de l'inscription. Vérifie tes informations.");
+            const errMsg = error.message || "Échec de l'inscription. Vérifie tes informations.";
+            toast.error(errMsg);
         }
     };
 
@@ -44,7 +45,6 @@ const Register = () => {
         <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4">
             <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-lg border border-gray-200">
                 <h2 className="text-3xl font-bold text-center text-gray-800">Inscription</h2>
-                {error && <p className="text-red-600 text-center mt-2">{error}</p>}
                 <form onSubmit={handleSubmit} className="mt-6 space-y-4">
                     {/* Informations personnelles */}
                     <div>

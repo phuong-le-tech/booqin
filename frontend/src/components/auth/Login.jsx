@@ -1,8 +1,13 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import AuthService from "../../services/AuthService.js";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import AuthService from '../../services/AuthService';
+import { useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';
 
 const Login = () => {
+    const { setUser } = useContext(AuthContext);
     const [formData, setFormData] = useState({ login: "", password: "" });
     const [error, setError] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -16,17 +21,15 @@ const Login = () => {
         e.preventDefault();
         try {
             await AuthService.login(formData);
-            alert("Connexion réussie !");
-
-            // You can test any protected route if you want
-            // const testResponse = await axiosInstance.get("/v1/auth/admin/test");
-            // console.log("Réponse admin test :", testResponse.data);
-
+            const userResponse = await AuthService.fetchCurrentUser(); // TODO On fait 2 requetes, bizarre
+            setUser(userResponse);
+            toast.success("Connexion réussie !");
             navigate("/home");
         } catch (error) {
-            setError("Échec de la connexion. Vérifie tes identifiants.");
+            toast.error("Échec de la connexion. Vérifie tes identifiants.");
         }
     };
+
     return (
         <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 to-blue-300 px-4">
             <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg">

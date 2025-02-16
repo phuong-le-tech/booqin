@@ -1,27 +1,30 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Connexion</title>
+    <title>Connexion (Session)</title>
 </head>
 <body>
 <h1>Connexion</h1>
 
-<!-- Show error if present -->
-<div th:if="${error}" style="color: red;">
-    <p th:text="${error}"></p>
+<!-- Affiche l'erreur si présente -->
+<div th:if="${error}">
+    <p th:text="Gérer l'erreur ici" style="color:red;"></p>
 </div>
 
-<form action="#" th:action="@{/auth/login}" th:object="${loginDto}" method="post">
-    <label for="login">Email :</label>
-    <input type="email" id="login" th:field="*{login}" required />
+<!-- Spring Security attend par défaut un POST sur /auth/login avec "username" et "password" -->
+<form th:action="@{/auth/login}" method="post">
+    <label for="username">Email :</label>
+    <!-- name="username" (et non "login") -->
+    <input type="text" id="username" name="username" required/><br/><br/>
 
     <label for="password">Mot de passe :</label>
-    <input type="password" id="password" th:field="*{password}" required />
+    <!-- name="password" -->
+    <input type="password" id="password" name="password" required/><br/><br/>
 
     <button type="submit">Se connecter</button>
 </form>
 
-<p>Pas encore de compte ? <a th:href="@{/auth/register}">Inscrivez-vous ici</a></p>
+<p>Pas de compte ? <a th:href="@{/auth/register}">Inscrivez-vous</a></p>
 </body>
 </html>

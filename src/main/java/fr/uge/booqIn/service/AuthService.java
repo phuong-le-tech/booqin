@@ -3,10 +3,13 @@ package fr.uge.booqIn.service;
 import fr.uge.booqIn.dto.auth.AuthResponse;
 import fr.uge.booqIn.dto.auth.LoginDto;
 import fr.uge.booqIn.dto.auth.RegisterDto;
+import fr.uge.booqIn.dto.auth.UserMeDto;
 import fr.uge.booqIn.entity.User;
+import fr.uge.booqIn.enums.UserRole;
 import fr.uge.booqIn.repository.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -41,7 +44,7 @@ public class AuthService {
             signUpDto.email(),
             passwordEncoder.encode(signUpDto.password()),
             signUpDto.address(),
-            signUpDto.role()
+            /*signUpDto.role()*/ UserRole.USER
     );
     return userRepository.save(user);
   }
@@ -59,9 +62,21 @@ public class AuthService {
     String accessToken = jwtService.generateAccessToken(user.getUsername());
     String refreshToken = jwtService.generateRefreshToken(user.getUsername());
 
-    // (Optional) store the refresh token in DB if you want to track/invalidate them
-    // e.g. storeRefreshToken(user, refreshToken);
-
     return new AuthResponse(accessToken, refreshToken);
+  }
+
+  public UserMeDto getCurrentUser(Authentication authentication) {
+    if (authentication == null || !authentication.isAuthenticated()) {
+      System.out.println("User is not authenticated");
+      throw new IllegalStateException("User is not authenticated");
+    }
+    User user = (User) authentication.getPrincipal();
+
+    return new UserMeDto(
+            user.getId(),
+            user.getFirstName(),
+            user.getLastName(),
+            user.getEmail()
+    );
   }
 }
