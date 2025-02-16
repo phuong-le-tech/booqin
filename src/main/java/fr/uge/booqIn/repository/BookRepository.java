@@ -13,8 +13,10 @@ public interface BookRepository extends JpaRepository<Book, Long> {
   @Query("select b from Book b where b.title = :title")
   List<Book> findBooksByTitle(String title);
 
-  @Query("select b from Book b where b.author = :author")
+  @Query("SELECT b FROM Book b JOIN b.authors a "
+          + "WHERE a.firstName = :author OR a.lastName = :author")
   List<Book> findBooksByAuthor(String author);
+
 
   @Query("select b from Book b where b.isbn10 = :isbn or b.isbn13 = :isbn")
   Optional<Book> findByIsbn10OrIsbn13(String isbn);

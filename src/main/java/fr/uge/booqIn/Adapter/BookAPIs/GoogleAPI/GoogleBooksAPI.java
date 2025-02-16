@@ -68,9 +68,20 @@ public class GoogleBooksAPI implements BookFetcher {
         String description = volumeInfo.description() != null ? volumeInfo.description() : "";
         String publicationDate = volumeInfo.publishedDate();
 
+        String isbn10 = null;
+        String isbn13 = null;
+        if (volumeInfo.industryIdentifiers() != null) {
+            for (var identifier : volumeInfo.industryIdentifiers()) {
+                if ("ISBN_10".equals(identifier.type())) {
+                    isbn10 = identifier.identifier();
+                } else if ("ISBN_13".equals(identifier.type())) {
+                    isbn13 = identifier.identifier();
+                }
+            }
+        }
         return new Book(
-                null,
-                null,
+                isbn10,
+                isbn13,
                 volumeInfo.title(),
                 authors,
                 description,

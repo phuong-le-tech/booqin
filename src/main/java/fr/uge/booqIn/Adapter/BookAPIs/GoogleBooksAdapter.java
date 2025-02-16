@@ -22,5 +22,4 @@ public class GoogleBooksAdapter implements BookFetcher {
     public List<Book> searchByIsbn(String isbn) {
         return googleBooksAPI.searchByIsbn(isbn);
     }
-
 }
