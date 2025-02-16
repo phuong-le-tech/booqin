@@ -1,13 +1,8 @@
 package fr.uge.booqIn.factory;
 
 import com.github.javafaker.Faker;
-import fr.uge.booqIn.entity.Address;
 import fr.uge.booqIn.entity.Book;
-import fr.uge.booqIn.entity.User;
-import fr.uge.booqIn.enums.UserRole;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.Date;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 

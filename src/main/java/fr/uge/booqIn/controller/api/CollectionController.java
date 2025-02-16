@@ -8,6 +8,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.logging.Logger;
 
 @RestController
@@ -77,6 +78,18 @@ public class CollectionController {
     } catch (AccessDeniedException e) {
       logger.warning("❌ Access denied: " + e.getMessage());
       return ResponseEntity.status(403).build();
+    }
+  }
+
+  @GetMapping("/public")
+  public ResponseEntity<List<BookCollection>> getPublicCollections() {
+    try {
+      var collections = collectionService.getPublicCollections();
+      logger.info("✅ Public collections fetched ! (" + collections.size() + " collections");
+      return ResponseEntity.ok(collections);
+    } catch (IllegalArgumentException e) {
+      logger.warning("❌ Error fetching public collections: " + e.getMessage());
+      return ResponseEntity.badRequest().build();
     }
   }
 }

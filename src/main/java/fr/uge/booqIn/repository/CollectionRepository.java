@@ -10,4 +10,5 @@ import java.util.Optional;
 public interface CollectionRepository extends JpaRepository<BookCollection, Long> {
   Optional<BookCollection> findByTitle(String title);
   List<BookCollection> findByOwner(User owner);
+  List<BookCollection> findByIsPublicTrue();
 }

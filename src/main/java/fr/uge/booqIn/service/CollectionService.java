@@ -97,6 +97,11 @@ public class CollectionService {
     return collectionRepository.save(collection);
   }
 
+  @Transactional
+  public List<BookCollection> getPublicCollections() {
+    return collectionRepository.findByIsPublicTrue();
+  }
+
   private void verifyOwnership(BookCollection collection, User user) {
     if (!collection.getOwner().equals(user)) {
       throw new AccessDeniedException("You don't have permission to modify this collection");
