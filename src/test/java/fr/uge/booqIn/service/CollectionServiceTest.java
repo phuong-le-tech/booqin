@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
@@ -41,7 +42,7 @@ public class CollectionServiceTest {
   @Test
   void testBookInitialization() {
     Book book = BookFactory.createBook();
-    assertNotNull(book.getCollections(), "La liste collections ne doit pas être null");
+    assertNotNull(book.getCollections(), "The collections list should be initialized and not null");
   }
 
   @Test
@@ -56,7 +57,7 @@ public class CollectionServiceTest {
     when(collectionRepository.save(any(BookCollection.class))).thenReturn(collection);
 
     BookCollection updatedCollection = collectionService.addBookToCollection(1L, 1L, user);
-    assertNotNull(updatedCollection, "La collection mise à jour ne doit pas être null");
+    assertNotNull(updatedCollection, "The updated collection should not be null");
     assertTrue(updatedCollection.getBooks().contains(book));
   }
 
@@ -78,5 +79,49 @@ public class CollectionServiceTest {
     assertTrue(retrievedCollections.contains(publicCollection2));
     logger.info("✅ Public collections retrieved successfully (" + retrievedCollections.size() + " collections)");
     verify(collectionRepository, times(1)).findByIsPublicTrue();
+  }
+
+  @Test
+  void testUpdateCollection() {
+    logger.info("Testing collection update...");
+    User owner = UserFactory.createUser(passwordEncoder, UserRole.USER);
+    owner.setId(1L);
+    BookCollection collection = new BookCollection("Title", "Description", owner);
+    collection.setId(1L);
+    collection.setPublic(false);
+
+    BookCollection updatedData = new BookCollection();
+    updatedData.setTitle("New Title");
+    updatedData.setDescription("New Description");
+    updatedData.setPublic(true);
+    when(collectionRepository.findByIdAndOwner(1L, owner)).thenReturn(Optional.of(collection));
+    when(collectionRepository.save(any(BookCollection.class))).thenReturn(collection);
+
+    BookCollection updatedCollection = collectionService.updateCollection(1L, owner, updatedData);
+    assertNotNull(updatedCollection);
+    assertEquals("New Title", updatedCollection.getTitle());
+    assertEquals("New Description", updatedCollection.getDescription());
+    assertTrue(updatedCollection.isPublic());
+    logger.info("✅ Collection " + updatedCollection.getId() + " successfully updated in service test");
+    verify(collectionRepository, times(1)).save(collection);
+  }
+
+  @Test
+  void testUpdateCollectionAccessDenied() {
+    logger.info("Testing access denied for updating a collection...");
+    User owner = UserFactory.createUser(passwordEncoder, UserRole.USER);
+    owner.setId(1L);
+    User otherUser = UserFactory.createUser(passwordEncoder, UserRole.USER);
+    otherUser.setId(2L);
+    BookCollection collection = new BookCollection("Title", "Description", owner);
+    collection.setId(1L);
+
+    when(collectionRepository.findByIdAndOwner(1L, otherUser)).thenReturn(Optional.empty());
+    assertThrows(IllegalArgumentException.class, () -> {
+      collectionService.updateCollection(1L, otherUser, new BookCollection());
+    });
+
+    logger.info("❌ Correctly handled access denial: Collection not found for non-owner");
+    verify(collectionRepository, never()).save(any(BookCollection.class));
   }
 }

@@ -146,4 +146,31 @@ public class CollectionControllerTest {
     logger.info("✅ Public Collections Fetched Successfully (" + response.getBody().size() + " collections)");
     verify(collectionService, times(1)).getPublicCollections();
   }
+
+  @Test
+  void testUpdateCollection() {
+    logger.info("Testing collection update via controller");
+    BookCollection collection = new BookCollection();
+    collection.setId(1L);
+    collection.setTitle("Old Title");
+    collection.setDescription("Old Description");
+    User mockUser = UserFactory.createUser(passwordEncoder, UserRole.USER);
+    mockUser.setId(1L);
+
+    BookCollection updatedCollection = new BookCollection();
+    updatedCollection.setTitle("New Title");
+    updatedCollection.setDescription("New Description");
+    updatedCollection.setPublic(true);
+    when(collectionService.updateCollection(1L, mockUser, updatedCollection)).thenReturn(updatedCollection);
+    ResponseEntity<BookCollection> response = collectionController.updateCollection(1L, mockUser, updatedCollection);
+
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertNotNull(response.getBody());
+    assertEquals("New Title", response.getBody().getTitle());
+    assertEquals("New Description", response.getBody().getDescription());
+    assertTrue(response.getBody().isPublic());
+
+    logger.info("Collection successfully updated via controller test");
+    verify(collectionService, times(1)).updateCollection(1L, mockUser, updatedCollection);
+  }
 }
