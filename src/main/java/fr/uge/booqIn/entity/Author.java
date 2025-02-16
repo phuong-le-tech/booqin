@@ -12,12 +12,12 @@ public class Author {
     private Long id;
 
     @Column(name = "first_name")
-    private String firtName;
+    private String firstName;
 
     @Column(name = "last_name")
     private String lastName;
 
-    @ManyToMany(mappedBy = "author")
+    @ManyToMany
     @JoinTable(
             name = "author_book",
             joinColumns = @JoinColumn(name = "author_id"),
@@ -28,8 +28,8 @@ public class Author {
     public Author() {
     }
 
-    public Author(String firtName, String lastName) {
-        this.firtName = firtName;
+    public Author(String firstName, String lastName) {
+        this.firstName = firstName;
         this.lastName = lastName;
     }
 
@@ -37,12 +37,12 @@ public class Author {
         return id;
     }
 
-    public String getFirtName() {
-        return firtName;
+    public String getFirstName() {
+        return firstName;
     }
 
-    public void setFirtName(String firtName) {
-        this.firtName = firtName;
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
     }
 
     public String getLastName() {
