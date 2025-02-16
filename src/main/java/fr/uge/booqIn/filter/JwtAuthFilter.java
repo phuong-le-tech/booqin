@@ -4,6 +4,7 @@ import fr.uge.booqIn.service.JwtService;
 import fr.uge.booqIn.service.UserDetailsServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -33,12 +34,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                   HttpServletResponse response,
                                   FilterChain filterChain
   ) throws ServletException, IOException {
-    String authHeader = request.getHeader("Authorization");
-    String token = null;
+    String token = getTokenFromCookies(request);
     String username = null;
 
-    if (authHeader != null && authHeader.startsWith("Bearer ")) {
-      token = authHeader.substring(7);
+    if (token != null) {
       username = jwtService.extractUsername(token);
     }
 
@@ -56,7 +55,19 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         SecurityContextHolder.getContext().setAuthentication(authToken);
       }
     }
+
     filterChain.doFilter(request, response);
+  }
+
+  private String getTokenFromCookies(HttpServletRequest request) {
+    if (request.getCookies() != null) {
+      for (Cookie cookie : request.getCookies()) {
+        if ("jwt".equals(cookie.getName())) {
+          return cookie.getValue();
+        }
+      }
+    }
+    return null;
   }
 }
 

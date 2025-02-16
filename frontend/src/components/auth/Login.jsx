@@ -1,11 +1,16 @@
-import React, { useState } from "react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import AuthService from '../../services/AuthService';
+import { useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';
 
-const SignIn = () => {
+const Login = () => {
+    const { setUser } = useContext(AuthContext);
     const [formData, setFormData] = useState({ login: "", password: "" });
     const [error, setError] = useState("");
-    const [showPassword, setShowPassword] = useState(false); // Nouvel état
+    const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -15,12 +20,13 @@ const SignIn = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post("/api/v1/auth/signin", formData);
-            console.log("Token:", response.data.token);
-            alert("Connexion réussie !");
+            await AuthService.login(formData);
+            const userResponse = await AuthService.fetchCurrentUser(); // TODO On fait 2 requetes, bizarre
+            setUser(userResponse);
+            toast.success("Connexion réussie !");
             navigate("/home");
         } catch (error) {
-            setError("Échec de la connexion. Vérifie tes identifiants.");
+            toast.error("Échec de la connexion. Vérifie tes identifiants.");
         }
     };
 
@@ -84,7 +90,7 @@ const SignIn = () => {
 
                 <p className="text-center mt-6 text-gray-600">
                     Pas encore de compte ?{" "}
-                    <a href="/signup" className="text-blue-600 hover:underline font-medium">
+                    <a href="/Register" className="text-blue-600 hover:underline font-medium">
                         Inscris-toi ici
                     </a>
                 </p>
@@ -93,4 +99,4 @@ const SignIn = () => {
     );
 };
 
-export default SignIn;
+export default Login;
