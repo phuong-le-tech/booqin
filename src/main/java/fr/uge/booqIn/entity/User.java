@@ -1,6 +1,5 @@
 package fr.uge.booqIn.entity;
 
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import fr.uge.booqIn.enums.UserRole;
 import jakarta.persistence.*;
@@ -13,7 +12,7 @@ import java.util.Date;
 import java.util.List;
 
 @Entity
-@Table(name="users")
+@Table(name = "users")
 public class User implements UserDetails {
 
   @Id
@@ -21,7 +20,7 @@ public class User implements UserDetails {
   private Long id;
 
   @Column(nullable = false)
-  private String fistName;
+  private String firstName;
 
   @Column(nullable = false)
   private String lastName;
@@ -41,10 +40,8 @@ public class User implements UserDetails {
   @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
   private List<ToLendBook> booksToLend;
 
-
   @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
   private List<BookCollection> collections;
-
 
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "created_at", nullable = false, updatable = false)
@@ -58,7 +55,7 @@ public class User implements UserDetails {
   }
 
   public User(String fistName, String lastName, String email, String password, Address address, UserRole role) {
-    this.fistName = fistName;
+    this.firstName = fistName;
     this.lastName = lastName;
     this.email = email;
     this.password = password;
@@ -71,7 +68,7 @@ public class User implements UserDetails {
   }
 
   public String getFistName() {
-    return fistName;
+    return firstName;
   }
 
   public String getLastName() {
@@ -123,8 +120,8 @@ public class User implements UserDetails {
     return updatedAt;
   }
 
-  public void setFistName(String fistName) {
-    this.fistName = fistName;
+  public void setFirstName(String fistName) {
+    this.firstName = fistName;
   }
 
   public void setLastName(String lastName) {
@@ -171,5 +168,20 @@ public class User implements UserDetails {
   public void removeCollection(BookCollection collection) {
     collections.remove(collection);
   }
-
+  
+  @Override
+  public String toString() {
+    return "User{" +
+            "id=" + id +
+            ", fistName='" + firstName + '\'' +
+            ", lastName='" + lastName + '\'' +
+            ", email='" + email + '\'' +
+            ", address=" + address +
+            ", role=" + role +
+            ", booksToLend=" + booksToLend +
+            ", collections=" + collections +
+            ", createdAt=" + createdAt +
+            ", updatedAt=" + updatedAt +
+            '}';
+  }
 }

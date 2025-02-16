@@ -5,6 +5,7 @@ import fr.uge.booqIn.entity.BookCollection;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.repository.UserRepository;
 import jakarta.transaction.Transactional;
+import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -24,8 +25,14 @@ public class UserService {
   }
   @Transactional
   public Optional<User> getUserById(Long id) {
-    return userRepository.findById(id);
+    Optional<User> user = userRepository.findById(id);
+    user.ifPresent(u -> {
+      Hibernate.initialize(u.getBooksToLend());
+      Hibernate.initialize(u.getCollections());
+    });
+    return user;
   }
+
   
 
   

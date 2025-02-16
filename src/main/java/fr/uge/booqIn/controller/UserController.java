@@ -1,9 +1,11 @@
 package fr.uge.booqIn.controller;
+
+import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.service.BookCollectionService;
+import fr.uge.booqIn.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import fr.uge.booqIn.entity.User;
-import fr.uge.booqIn.service.UserService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
@@ -18,52 +20,42 @@ public class UserController {
   public UserController(UserService userService, BookCollectionService bookCollectionService) {
     this.userService = userService;
     this.bookCollectionService = bookCollectionService;
-      logger.info("✅ UserController chargé !");
+    logger.info("✅ UserController chargé !");
   }
   
   @PostMapping("/register")
-  public User registerUser(@RequestBody User user) {
+  public ResponseEntity<?> registerUser(@RequestBody User user) {
     logger.info("📩 Requête POST reçue : registerUser");
-    return userService.saveUser(user);
+    if (userService.findByEmail(user.getEmail()).isPresent()) {
+      return ResponseEntity.badRequest().body("⚠️ Email déjà utilisé !");
+    }
+    User savedUser = userService.saveUser(user);
+    return ResponseEntity.ok(savedUser);
   }
   
   @GetMapping("/{id}")
-  public Optional<User> getUserByEmail(@PathVariable Long id) {
-    logger.info("🔍 Recherche utilisateur avec email: " + id);
-    return userService.getUserById(id);
+  public ResponseEntity<?> getUserById(@PathVariable Long id) {
+    logger.info("🔍 Recherche utilisateur avec ID: " + id);
+    Optional<User> user = userService.getUserById(id);
+    return user.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
   }
-
-    @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable Long id) {
-      logger.info("🗑️ Suppression de l'utilisateur avec id: " + id);
-      userService.deleteUser(id);
+  
+  @DeleteMapping("/{id}")
+  public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+    logger.info("🗑️ Suppression de l'utilisateur avec id: " + id);
+    if (userService.getUserById(id).isEmpty()) {
+      return ResponseEntity.notFound().build();
     }
-
-    @PutMapping
-    public User updateUser(@RequestBody User user) {
-      logger.info("🔄 Mise à jour de l'utilisateur avec id: " + user.getId());
-      return userService.updateUser(user);
+    userService.deleteUser(id);
+    return ResponseEntity.ok("🗑️ Utilisateur supprimé !");
+  }
+  
+  @PutMapping
+  public ResponseEntity<?> updateUser(@RequestBody User user) {
+    logger.info("🔄 Mise à jour de l'utilisateur avec id: " + user.getId());
+    if (userService.getUserById(user.getId()).isEmpty()) {
+      return ResponseEntity.notFound().build();
     }
-
-    @PostMapping("/{id}/collections/{collectionId}")
-    public void addCollectionToUser(@PathVariable Long id, @RequestBody Long collectionId) {
-      logger.info("📩 Requête POST reçue : addCollectionToUser");
-      Optional<User> user = userService.getUserById(id);
-      if (user.isPresent()) {
-      var collection = bookCollectionService.getCollectionById(collectionId);
-          collection.ifPresent(bookCollection -> userService.addCollectionToUser(user.get(), bookCollection));
-      }
-    }
-    @DeleteMapping("/{id}/collections/{collectionId}")
-    public void removeCollectionFromUser(@PathVariable Long id, @PathVariable Long collectionId) {
-      logger.info("🗑️ Suppression de la collection avec id: " + collectionId + " de l'utilisateur avec id: " + id);
-      Optional<User> user = userService.getUserById(id);
-      if (user.isPresent()) {
-        var collection = bookCollectionService.getCollectionById(collectionId);
-        if (collection.isPresent()) {
-          userService.removeCollectionFromUser(user.get(), collection.get());
-          userService.updateUser(user.get());
-        }
-      }
-    }
+    return ResponseEntity.ok(userService.updateUser(user));
+  }
 }
