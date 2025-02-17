@@ -12,5 +12,4 @@ public class BooqInApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(BooqInApplication.class, args);
 	}
-
 }

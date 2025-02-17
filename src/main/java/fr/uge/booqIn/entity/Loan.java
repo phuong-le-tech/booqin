@@ -2,8 +2,6 @@ package fr.uge.booqIn.entity;
 
 import jakarta.persistence.*;
 
-import java.util.Date;
-
 @Entity
 public class Loan {
 
@@ -16,16 +14,16 @@ public class Loan {
 
   @Temporal(TemporalType.TIMESTAMP)
   @Column(nullable = false)
-  private Date loanDate = new Date();
+  private String loanDate = "";
 
   @Temporal(TemporalType.TIMESTAMP)
   @Column(nullable = false)
-  private Date returnDate;
+  private String returnDate;
 
   public Loan() {
   }
 
-  public Loan(User borrower, Date returnDate) {
+  public Loan(User borrower, String returnDate) {
     this.borrower = borrower;
     this.returnDate = returnDate;
   }
@@ -38,11 +36,11 @@ public class Loan {
     return borrower;
   }
 
-  public Date getLoanDate() {
+  public String getLoanDate() {
     return loanDate;
   }
 
-  public Date getReturnDate() {
+  public String getReturnDate() {
     return returnDate;
   }
 
@@ -50,11 +48,11 @@ public class Loan {
     this.borrower = borrower;
   }
 
-  public void setReturnDate(Date returnDate) {
+  public void setReturnDate(String returnDate) {
     this.returnDate = returnDate;
   }
 
-  public void setLoanDate(Date loanDate) {
+  public void setLoanDate(String loanDate) {
     this.loanDate = loanDate;
   }
 }
