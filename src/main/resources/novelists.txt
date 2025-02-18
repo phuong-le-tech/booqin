@@ -10,7 +10,7 @@ Hailey Abbott
 Mary Abbott
 Megan Abbott
 Shirley Abbott
-Shana Ab�
+Shana Abe
 Louise Abeita
 Robert H. Abel
 Joan Abelove
@@ -41,7 +41,7 @@ Kelli Russell Agodon
 Conrad Aiken
 Hiag Akmakjian
 Mitch Albom
-Kathleen Alcal�
+Kathleen Alcalé
 Louisa May Alcott
 Isabella Macdonald Alden
 Clifford Lindsey Alderman
@@ -70,7 +70,7 @@ V. C. Andrews
 Tina McElroy Ansa
 A. Manette Ansay
 Donald Antrim
-Gloria E. Anzald�a
+Gloria E. Anzaldúa
 Allen Appel
 Benjamin Appel
 Max Apple
@@ -217,7 +217,7 @@ Max Brand
 Giannina Braschi
 Richard Brautigan
 Kate Braverman
-Anna de Br�mont
+Anna de Brémont
 Sandra Bretting
 Matt Briggs
 David Brin
@@ -509,13 +509,13 @@ Ann Fairbairn
 Janet Ayer Fairbank
 Amber Fallon
 John Fante
-Richard Fari�a
-Philip Jos� Farmer
+Richard Fariña
+Philip José Farmer
 James T. Farrell
 Howard Fast
 William Faulkner
 Jessie Redmon Fauset
-J�rgen Fauth
+Jürgen Fauth
 Kenneth Fearing
 Raymond Federman
 Raymond E. Feist
@@ -586,7 +586,7 @@ Zona Gale
 Paul Gallico
 Robert Gandt
 Ernest K. Gann
-Cristina Garc�a
+Cristina García
 John Reynolds Gardiner
 Erle Stanley Gardner
 John Gardner
@@ -854,7 +854,7 @@ Richard Kalich
 Stuart M. Kaminsky
 Joseph Kanon
 MacKinlay Kantor
-Vim Kar�nine
+Vim Karénine
 Jan Karon
 Alma Katsu
 Illana Katz
@@ -1173,7 +1173,7 @@ Katherine Neville
 Fae Myenne Ng
 John Nichols
 Kerry Nietz
-Ana�s Nin
+Anaïs Nin
 Larry Niven
 Lewis Nordan
 Charles Nordhoff
@@ -1569,7 +1569,7 @@ Aaron Louis Tordini
 Alessandra Torre
 Nick Tosches
 Paul A. Toth
-Albion W. Tourg�e
+Albion W. Tourgée
 Arthur Train
 Clara Augusta Jones Trask
 Lawrence Treat
@@ -1592,7 +1592,7 @@ James Ramsey Ullman
 Douglas Unger
 John Updike
 Leon Uris
-Lu�s Alberto Urrea
+Luis Alberto Urrea
 Lois Utz
 S. S. Van Dine
 Andrew Vachss

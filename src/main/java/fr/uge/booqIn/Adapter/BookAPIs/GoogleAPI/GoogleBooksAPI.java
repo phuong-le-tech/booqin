@@ -7,7 +7,10 @@ import fr.uge.booqIn.singleton.WebClientSingleton;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -23,7 +26,7 @@ public class GoogleBooksAPI implements BookFetcher {
 
     @Override
     public List<Book> searchByAuthor(String author) {
-        return searchBooks("inauthor:" + author);
+        return searchBooks("inauthor:" + URLEncoder.encode(author, StandardCharsets.UTF_8));
     }
 
     @Override
@@ -68,17 +71,9 @@ public class GoogleBooksAPI implements BookFetcher {
         String description = volumeInfo.description() != null ? volumeInfo.description() : "";
         String publicationDate = volumeInfo.publishedDate();
 
-        String isbn10 = null;
-        String isbn13 = null;
-        if (volumeInfo.industryIdentifiers() != null) {
-            for (var identifier : volumeInfo.industryIdentifiers()) {
-                if ("ISBN_10".equals(identifier.type())) {
-                    isbn10 = identifier.identifier();
-                } else if ("ISBN_13".equals(identifier.type())) {
-                    isbn13 = identifier.identifier();
-                }
-            }
-        }
+        String isbn10 = getIdentifier(volumeInfo.industryIdentifiers(),"ISBN_10");
+        String isbn13 = getIdentifier(volumeInfo.industryIdentifiers(),"ISBN_13");
+
         return new Book(
                 isbn10,
                 isbn13,
@@ -87,5 +82,13 @@ public class GoogleBooksAPI implements BookFetcher {
                 description,
                 publicationDate
         );
+    }
+    private String getIdentifier(List<IndustryIdentifier> industryIdentifiers, String type){
+        return Optional.ofNullable(industryIdentifiers)
+                .flatMap(identifiers -> identifiers.stream()
+                        .filter(identifier -> type.equals(identifier.type()))
+                        .map(IndustryIdentifier::identifier)
+                        .findFirst())
+                .orElse(null);
     }
 }

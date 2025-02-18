@@ -1,7 +1,6 @@
 package fr.uge.booqIn.Adapter.BookAPIs.openlibrary;
 
 import fr.uge.booqIn.Adapter.BookAPIs.BookFetcher;
-import fr.uge.booqIn.Adapter.BookAPIs.GoogleAPI.IndustryIdentifier;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.singleton.WebClientSingleton;
@@ -60,15 +59,23 @@ public class OpenAPI implements BookFetcher {
                 : Set.of();
         String description = doc.description() != null ? doc.description() : "";
         String publicationDate = doc.first_publish_year() != null ? String.valueOf(doc.first_publish_year()) : "";
+        // récupérer le premier isbn a 10 caracteres et le premier isbn a 13 caracteres
 
         return new Book(
-                null,
-                null,
+                getFirstIsbn(doc.isbn(),10),
+                getFirstIsbn(doc.isbn(),13),
                 title,
                 authors,
                 description,
                 publicationDate
         );
+    }
+
+    private String getFirstIsbn(List<String> isbns, int length) {
+        return isbns.stream()
+                .filter(isbn -> isbn.length() == length)
+                .findFirst()
+                .orElse(null);
     }
 
     private String splitAndAdd(String s) {
