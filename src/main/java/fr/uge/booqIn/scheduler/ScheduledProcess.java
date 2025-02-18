@@ -21,7 +21,7 @@ public class ScheduledProcess {
     this.bookService = bookService;
   }
 
-  @Scheduled(cron = "0 */3 * * * *")
+  @Scheduled(cron = "0 0 0 * * *")
   public void askAPI() {
     List<String> authors = authorIterator.getNextBatch();
 
@@ -36,8 +36,8 @@ public class ScheduledProcess {
     for (String author : authors) {
       List<Book> googleBooks = googleBooksFetcher.searchByAuthor(author);
       List<Book> openApiBooks = openApiFetcher.searchByAuthor(author);
-      // Process the books as needed
       googleBooks.forEach(bookService::save);
+      openApiBooks.forEach(bookService::save);
     }
   }
 }

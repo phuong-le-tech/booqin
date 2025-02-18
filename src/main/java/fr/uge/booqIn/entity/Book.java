@@ -1,6 +1,5 @@
     package fr.uge.booqIn.entity;
 
-    import fr.uge.booqIn.Adapter.BookAPIs.GoogleAPI.IndustryIdentifier;
     import jakarta.persistence.*;
 
     import java.util.Date;

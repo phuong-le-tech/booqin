@@ -2,6 +2,7 @@ package fr.uge.booqIn.scheduler;
 
 import fr.uge.booqIn.repository.BookService;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -13,7 +14,9 @@ import java.util.logging.Logger;
 @Component
 public class NovelistsBean implements InitializingBean {
   private static final Logger logger = Logger.getLogger(NovelistsBean.class.getName());
-  private static final String FILE_PATH = "src/main/java/fr/uge/booqIn/scheduler/novelists.txt";
+
+  @Value("${novelists.file.path}")
+  private String FILE_PATH;
   private List<String> novelists;
 
 
