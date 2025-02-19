@@ -56,7 +56,6 @@ public class CollectionControllerTest {
     verify(collectionService, times(1)).createCollection(collection);
   }
 
-
   @Test
   void testGetCollection() {
     BookCollection collection = new BookCollection();

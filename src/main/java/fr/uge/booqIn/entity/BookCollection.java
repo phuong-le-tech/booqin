@@ -35,6 +35,18 @@ public class BookCollection {
   @Column(name = "updated_at")
   private String updatedAt = "";
 
+  @Column(columnDefinition = "boolean default false")
+  private boolean isSmart = false;
+
+  @Enumerated(EnumType.STRING)
+  private CollectionType collectionType = CollectionType.NORMAL;
+
+  public enum CollectionType {
+    NORMAL, // basic collection
+    SMART,  // defined by criteria, by user
+    GLOBAL  // generated automatically
+  }
+
   public BookCollection() {
   }
 
@@ -66,6 +78,10 @@ public class BookCollection {
 
   public boolean isPublic() {
     return isPublic;
+  }
+
+  public boolean isSmart() {
+    return isSmart;
   }
 
   public String getCreatedAt() {
@@ -106,6 +122,10 @@ public class BookCollection {
 
   public void setUpdatedAt(String updatedAt) {
     this.updatedAt = updatedAt;
+  }
+
+  public void setSmart(boolean isSmart) {
+    this.isSmart = isSmart;
   }
 
   public void addBook(Book book) {

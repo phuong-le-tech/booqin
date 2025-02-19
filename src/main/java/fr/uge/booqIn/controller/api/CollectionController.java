@@ -1,8 +1,10 @@
 package fr.uge.booqIn.controller.api;
 
+import fr.uge.booqIn.dto.model.SmartCollectionDTORequest;
 import fr.uge.booqIn.entity.BookCollection;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.service.CollectionService;
+import fr.uge.booqIn.service.SmartCollectionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,9 +18,11 @@ import java.util.logging.Logger;
 public class CollectionController {
   private static final Logger logger = Logger.getLogger(CollectionController.class.getName());
   private final CollectionService collectionService;
+  private final SmartCollectionService smartCollectionService;
 
-  public CollectionController(CollectionService collectionService) {
+  public CollectionController(CollectionService collectionService, SmartCollectionService smartCollectionService) {
     this.collectionService = collectionService;
+    this.smartCollectionService = smartCollectionService;
     logger.info("✅ CollectionService loaded !");
   }
 
@@ -27,7 +31,6 @@ public class CollectionController {
     logger.info("✅ Collection created !");
     return ResponseEntity.ok(collectionService.createCollection(bookCollection));
   }
-
 
   @GetMapping("/{id}")
   public ResponseEntity<BookCollection> getCollection(@PathVariable Long id) {
@@ -119,4 +122,43 @@ public class CollectionController {
       return ResponseEntity.badRequest().build();
     }
   }
+
+  @PostMapping("/smart")
+  public ResponseEntity<BookCollection> createSmartCollection(
+          @RequestBody SmartCollectionDTORequest request,
+          @AuthenticationPrincipal User currentUser
+  ) {
+    try {
+      var collection = smartCollectionService.createSmartCollection(currentUser, request);
+      logger.info("✅ Smart collection created: " + collection.getTitle());
+      return ResponseEntity.ok(collection);
+    } catch (Exception e) {
+      logger.warning("❌ Error creating smart collection: " + e.getMessage());
+      return ResponseEntity.badRequest().build();
+    }
+  }
+
+  @GetMapping("/smart")
+  public ResponseEntity<List<BookCollection>> getSmartCollections() {
+    try {
+      var collections = smartCollectionService.getSmartCollections();
+      logger.info("✅ Smart collections fetched ! (" + collections.size() + " collections");
+      return ResponseEntity.ok(collections);
+    } catch (IllegalArgumentException e) {
+      logger.warning("❌ Error fetching smart collections: " + e.getMessage());
+      return ResponseEntity.badRequest().build();
+    }
+  }
+
+//  @GetMapping("/automatic}")
+//  public ResponseEntity<BookCollection> getAutomaticCollection(
+//          @AuthenticationPrincipal User currentUser
+//  ) {
+//    try {
+//      var collection = ...
+//      return ResponseEntity.ok(collection);
+//    } catch (Exception e) {
+//      return ResponseEntity.badRequest().build();
+//    }
+//  }
 }
