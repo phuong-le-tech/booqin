@@ -51,7 +51,7 @@ public class GoogleBooksAPI implements BookFetcher {
             }
 
             return responseMono.items.stream()
-                    .map(b -> convertToBook(b))
+                    .map(this::convertToBook)
                     .collect(Collectors.toList());
 
         } catch (Exception e) {

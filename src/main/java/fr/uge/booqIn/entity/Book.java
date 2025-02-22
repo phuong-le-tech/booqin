@@ -11,6 +11,84 @@
     @Entity
     public class Book {
 
+        private Book(Builder builder) {
+            this.id = builder.id;
+            this.isbns = builder.isbns;
+            this.title = builder.title;
+            this.authors = builder.authors;
+            this.description = builder.description;
+            this.publicationDate = builder.publicationDate;
+            this.collections = builder.collections;
+            this.createdAt = builder.createdAt;
+            this.updatedAt = builder.updatedAt;
+        }
+
+        public static class Builder {
+            private Long id;
+            private Set<String> isbns = new HashSet<>();
+            private String title;
+            private Set<Author> authors = new HashSet<>();
+            private String description;
+            private String publicationDate;
+            private List<BookCollection> collections;
+            private Date createdAt = new Date();
+            private Date updatedAt = new Date();
+
+            public Builder id(Long id) {
+                this.id = id;
+                return this;
+            }
+
+            public Builder isbns(List<String> isbns) {
+                if (isbns != null){
+                    this.isbns = new HashSet<>(isbns);
+                }
+                else {
+                    this.isbns = new HashSet<>();
+                }
+                return this;
+            }
+
+            public Builder title(String title) {
+                this.title = title;
+                return this;
+            }
+
+            public Builder authors(Set<Author> authors) {
+                this.authors = authors;
+                return this;
+            }
+
+            public Builder description(String description) {
+                this.description = description;
+                return this;
+            }
+
+            public Builder publicationDate(String publicationDate) {
+                this.publicationDate = publicationDate;
+                return this;
+            }
+
+            public Builder collections(List<BookCollection> collections) {
+                this.collections = collections;
+                return this;
+            }
+
+            public Builder createdAt(Date createdAt) {
+                this.createdAt = createdAt;
+                return this;
+            }
+
+            public Builder updatedAt(Date updatedAt) {
+                this.updatedAt = updatedAt;
+                return this;
+            }
+
+            public Book build() {
+                return new Book(this);
+            }
+        }
+
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;

@@ -6,6 +6,8 @@ import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.singleton.WebClientSingleton;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -21,12 +23,12 @@ public class OpenAPI implements BookFetcher {
 
     @Override
     public List<Book> searchByTitle(String title) {
-        return searchBooks("title=" + splitAndAdd(title));
+        return searchBooks("title=" + URLEncoder.encode(title, StandardCharsets.UTF_8));
     }
 
     @Override
     public List<Book> searchByAuthor(String author) {
-        return searchBooks("author=" + splitAndAdd(author));
+        return searchBooks("author=" + URLEncoder.encode(author, StandardCharsets.UTF_8));
     }
 
     @Override
@@ -61,19 +63,8 @@ public class OpenAPI implements BookFetcher {
                 : Set.of();
         String description = doc.description() != null ? doc.description() : "";
         String publicationDate = doc.first_publish_year() != null ? String.valueOf(doc.first_publish_year()) : "";
-
-        var b = new Book(
-                title,
-                authors,
-                description,
-                publicationDate
-        );
-        b.setIsbns(doc.isbn() != null ? new HashSet<>(doc.isbn()) : new HashSet<>());
-        return b;
-    }
-
-
-    private String splitAndAdd(String s) {
-        return String.join("+", s.split(" "));
+        Book.Builder builder = new Book.Builder();
+        builder.title(title).authors(authors).description(description).publicationDate(publicationDate).isbns(doc.isbn());
+        return builder.build();
     }
 }

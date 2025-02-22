@@ -30,13 +30,13 @@ public class ScheduledProcess {
       return;
     }
 
-    //BookFetcher googleBooksFetcher = BookFetcherFactory.adapter("google");
+    BookFetcher googleBooksFetcher = BookFetcherFactory.adapter("google");
     BookFetcher openApiFetcher = BookFetcherFactory.adapter("open");
 
     for (String author : authors) {
-      //List<Book> googleBooks = googleBooksFetcher.searchByAuthor(author);
+      List<Book> googleBooks = googleBooksFetcher.searchByAuthor(author);
       List<Book> openApiBooks = openApiFetcher.searchByAuthor(author);
-      //googleBooks.forEach(bookService::save);
+      googleBooks.forEach(bookService::save);
       openApiBooks.forEach(bookService::save);
     }
   }
