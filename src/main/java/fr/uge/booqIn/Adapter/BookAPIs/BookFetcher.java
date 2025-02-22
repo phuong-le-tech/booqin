@@ -8,6 +8,4 @@ public interface BookFetcher {
     List<Book> searchByTitle(String title);
     List<Book> searchByAuthor(String author);
     List<Book> searchByIsbn(String isbn);
-    List<Book> searchByPublisher(String publisher);
-    List<Book> searchByPublishedDate(String publishedDate);
 }

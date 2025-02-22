@@ -27,11 +27,5 @@ public class BookService implements BookFetcher {
         return bookFetcher.searchByIsbn(isbn);
     }
 
-    public List<Book> searchByPublisher(String publisher) {
-        return bookFetcher.searchByPublisher(publisher);
-    }
 
-    public List<Book> searchByPublishedDate(String publishedDate) {
-        return bookFetcher.searchByPublishedDate(publishedDate);
-    }
 }

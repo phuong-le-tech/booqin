@@ -1,19 +1,23 @@
 package fr.uge.booqIn.Adapter.BookAPIs.GoogleAPI;
 
 import fr.uge.booqIn.Adapter.BookAPIs.BookFetcher;
+import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
+import fr.uge.booqIn.singleton.WebClientSingleton;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class GoogleBooksAPI implements BookFetcher {
     private static final String API_URL = "https://www.googleapis.com/books/v1/volumes?q=";
-    private final WebClient webClient = WebClient.create();
+    private static final String SUFFIX_URL = "&langRestrict=en";
+    private final WebClient webClient = WebClientSingleton.getInstance();
 
     @Override
     public List<Book> searchByTitle(String title) {
@@ -22,7 +26,7 @@ public class GoogleBooksAPI implements BookFetcher {
 
     @Override
     public List<Book> searchByAuthor(String author) {
-        return searchBooks("inauthor:" + author);
+        return searchBooks("inauthor:" + URLEncoder.encode(author, StandardCharsets.UTF_8));
     }
 
     @Override
@@ -30,41 +34,61 @@ public class GoogleBooksAPI implements BookFetcher {
         return searchBooks("isbn:" + isbn);
     }
 
-    @Override
-    public List<Book> searchByPublisher(String publisher) {
-        return searchBooks("inpublisher:" + publisher);
-    }
-
-    @Override
-    public List<Book> searchByPublishedDate(String publishedDate) {
-        return searchBooks("inpublisher:" + publishedDate);
-    }
 
     private List<Book> searchBooks(String query) {
         String url = API_URL + query;
         System.out.println("URL: " + url);
-        Mono<GoogleBooksResponse> responseMono = webClient.get()
-                .uri(url)
-                .retrieve()
-                .bodyToMono(GoogleBooksResponse.class);
 
-        GoogleBooksResponse response = responseMono.block();
-        return response.items.stream()
-                .map(this::convertToBook)
-                .collect(Collectors.toList());
+        try {
+            GoogleBooksResponse responseMono = webClient.get()
+                    .uri(url + SUFFIX_URL)
+                    .retrieve()
+                    .bodyToMono(GoogleBooksResponse.class).block();
+
+            if (responseMono == null || responseMono.items == null) {
+                System.out.println("Empty responseMono.");
+                return List.of();
+            }
+
+            return responseMono.items.stream()
+                    .map(this::convertToBook)
+                    .collect(Collectors.toList());
+
+        } catch (Exception e) {
+            System.out.println("Error while fetching books: " + e.getMessage());
+            return List.of();
+        }
     }
 
+
     private Book convertToBook(BookItem item) {
-        VolumeInfo volumeInfo = item.volumeInfo;
-        System.out.println("CONVERTING BOOK: " + volumeInfo);
-        var book = new Book(
-                volumeInfo.title,
-                volumeInfo.authors != null && !volumeInfo.authors.isEmpty() ? String.valueOf(volumeInfo.authors) : "",
-                "ISBN TODO",
-                volumeInfo.description != null ? volumeInfo.description : "",
-                volumeInfo.publishedDate != null ? volumeInfo.publishedDate : null
+        var volumeInfo = item.volumeInfo;
+        Set<Author> authors = volumeInfo.authors() != null && !volumeInfo.authors().isEmpty()
+                ? volumeInfo.authors().stream().map(authorName -> new Author(authorName, "")).collect(Collectors.toSet())
+                : Set.of();
+        String description = volumeInfo.description() != null ? volumeInfo.description() : "";
+        String publicationDate = volumeInfo.publishedDate();
+
+        String isbn10 = getIdentifier(volumeInfo.industryIdentifiers(),"ISBN_10");
+        String isbn13 = getIdentifier(volumeInfo.industryIdentifiers(),"ISBN_13");
+
+        var b = new Book(
+                volumeInfo.title(),
+                authors,
+                description,
+                publicationDate
         );
-        System.out.println("CONVERTED BOOK: " + book);
-        return book;
+        b.addIsbn(isbn10);
+        b.addIsbn(isbn13);
+        return b;
+    }
+
+    private String getIdentifier(List<IndustryIdentifier> industryIdentifiers, String type){
+        return Optional.ofNullable(industryIdentifiers)
+                .flatMap(identifiers -> identifiers.stream()
+                        .filter(identifier -> type.equals(identifier.type()))
+                        .map(IndustryIdentifier::identifier)
+                        .findFirst())
+                .orElse(null);
     }
 }
