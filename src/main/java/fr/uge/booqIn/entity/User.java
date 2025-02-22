@@ -9,7 +9,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
 @Entity
@@ -48,11 +47,11 @@ public class User implements UserDetails {
 
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "created_at", nullable = false, updatable = false)
-  private Date createdAt = new Date();
+  private String createdAt = "";
 
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "updated_at")
-  private Date updatedAt = new Date();
+  private String updatedAt = "";
 
   public User() {
   }
@@ -115,11 +114,11 @@ public class User implements UserDetails {
     return collections;
   }
 
-  public Date getCreatedAt() {
+  public String getCreatedAt() {
     return createdAt;
   }
 
-  public Date getUpdatedAt() {
+  public String getUpdatedAt() {
     return updatedAt;
   }
 
@@ -143,6 +142,10 @@ public class User implements UserDetails {
     this.password = password;
   }
 
+  public void setId(long id) {
+    this.id = id;
+  }
+
   public void setRole(UserRole role) {
     this.role = role;
   }
@@ -155,11 +158,11 @@ public class User implements UserDetails {
     this.collections = collections;
   }
 
-  public void setCreatedAt(Date createdAt) {
+  public void setCreatedAt(String createdAt) {
     this.createdAt = createdAt;
   }
 
-  public void setUpdatedAt(Date updatedAt) {
+  public void setUpdatedAt(String updatedAt) {
     this.updatedAt = updatedAt;
   }
 
@@ -171,5 +174,4 @@ public class User implements UserDetails {
   public void removeCollection(BookCollection collection) {
     collections.remove(collection);
   }
-
 }

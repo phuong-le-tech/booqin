@@ -1,0 +1,128 @@
+package fr.uge.booqIn.service;
+
+import fr.uge.booqIn.entity.Book;
+import fr.uge.booqIn.entity.BookCollection;
+import fr.uge.booqIn.entity.User;
+import fr.uge.booqIn.repository.BookRepository;
+import fr.uge.booqIn.repository.CollectionRepository;
+import jakarta.transaction.Transactional;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class CollectionService {
+  private final CollectionRepository collectionRepository;
+  private final BookRepository bookRepository;
+
+  public CollectionService(CollectionRepository collectionRepository, BookRepository bookRepository) {
+    this.collectionRepository = collectionRepository;
+    this.bookRepository = bookRepository;
+  }
+
+  public BookCollection createCollection(BookCollection bookCollection) {
+    if (bookCollection.getBooks() == null) {
+      bookCollection.setBooks(new ArrayList<>());
+    }
+    bookCollection.setCreatedAt(new Date().toString());
+    bookCollection.setUpdatedAt(new Date().toString());
+    return collectionRepository.save(bookCollection);
+  }
+
+  @Transactional
+  public Optional<BookCollection> getCollectionById(Long id) {
+    return Optional.ofNullable(collectionRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Collection not found")));
+  }
+
+  @Transactional
+  public BookCollection getCollectionByTitle(String title) {
+    return collectionRepository.findByTitle(title)
+            .orElseThrow(() -> new IllegalArgumentException("Collection not found"));
+  }
+
+  public void deleteCollection(Long id) {
+    collectionRepository.deleteById(id);
+  }
+
+  @Transactional
+  public void deleteCollection(Long id, User currentUser) {
+    var collection = getCollectionById(id).orElseThrow(() -> new IllegalArgumentException("Collection not found"));
+    verifyOwnership(collection, currentUser);
+    for (Book book : collection.getBooks()) {
+      book.getCollections().remove(collection);
+    }
+    collectionRepository.delete(collection);
+  }
+
+  @Transactional
+  public List<BookCollection> getUserCollections(User user) {
+    return collectionRepository.findByOwner(user);
+  }
+
+  @Transactional
+  public BookCollection addBookToCollection(Long collectionId, Long bookId, User currentUser) {
+    var collection = getCollectionById(collectionId).orElseThrow(() -> new IllegalArgumentException("Collection not found"));
+    verifyOwnership(collection, currentUser);
+    var book = bookRepository.findById(bookId)
+            .orElseThrow(() -> new IllegalArgumentException("Book not found"));
+
+    collection.addBook(book);
+    collection.setUpdatedAt(new Date().toString());
+    return collectionRepository.save(collection);
+  }
+
+  @Transactional
+  public BookCollection addBookToCollection(Long collectionId, Book book, User currentUser) {
+    var collection = getCollectionById(collectionId).orElseThrow(() -> new IllegalArgumentException("Collection not found"));
+    verifyOwnership(collection, currentUser);
+    collection.addBook(book);
+    collection.setUpdatedAt(new Date().toString());
+    return collectionRepository.save(collection);
+  }
+
+  @Transactional
+  public BookCollection removeBookFromCollection(Long collectionId, Long bookId, User currentUser) {
+    var collection = getCollectionById(collectionId).orElseThrow(() -> new IllegalArgumentException("Collection not found"));
+    verifyOwnership(collection, currentUser);
+    var book = bookRepository.findById(bookId)
+            .orElseThrow(() -> new IllegalArgumentException("Book not found"));
+
+    collection.removeBook(book);
+    collection.setUpdatedAt(new Date().toString());
+    return collectionRepository.save(collection);
+  }
+
+  @Transactional
+  public List<BookCollection> getPublicCollections() {
+    return collectionRepository.findByIsPublicTrue();
+  }
+
+  @Transactional
+  public BookCollection updateCollection(Long id, User currentUser, BookCollection updatedCollection) {
+    //var collection = getCollectionById(id);
+    var collection = collectionRepository.findByIdAndOwner(id, currentUser)
+            .orElseThrow(() -> new IllegalArgumentException("Collection to update not found"));
+    verifyOwnership(collection, currentUser);
+
+    if (updatedCollection.getTitle() != null) {
+      collection.setTitle(updatedCollection.getTitle());
+    }
+    if (updatedCollection.getDescription() != null) {
+      collection.setDescription(updatedCollection.getDescription());
+    }
+    collection.setPublic(updatedCollection.isPublic());
+    collection.setUpdatedAt(new Date().toString());
+    return collectionRepository.save(collection);
+  }
+
+  private void verifyOwnership(BookCollection collection, User user) {
+    if (!collection.getOwner().equals(user)) {
+      throw new AccessDeniedException("You don't have permission to modify this collection");
+    }
+  }
+}

@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,15 +25,16 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityConfig {
 
- @Bean
+  /*
+  @Bean
   public SecurityFilterChain securityFilterChain(
           HttpSecurity http,
           JwtAuthFilter jwtAuthFilter,
           AuthenticationProvider authenticationProvider
   ) throws Exception {
     http
-            .csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
-            /*.authorizeHttpRequests(auth -> auth
+            .csrf(AbstractHttpConfigurer::disable)
+            .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/h2-console/**").permitAll() //TODO Db accessible que en admin
                     .requestMatchers("/auth/**", "/home", "/favicon.ico", "/static/**").permitAll()
                     .requestMatchers(
@@ -40,7 +42,7 @@ public class SecurityConfig {
                             "/api/v1/auth/login"
                     ).permitAll()
                     .anyRequest().authenticated()
-            )*/
+            )
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authenticationProvider(authenticationProvider)
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
@@ -56,11 +58,12 @@ public class SecurityConfig {
                     .logoutSuccessUrl("/home")
                     .permitAll()
             )
-            .headers(headers -> headers.frameOptions().disable()); // sinon le navigateur bloque l'affichage de la console h2 mais a change
+            //.headers(headers -> headers.frameOptions().disable()); // sinon le navigateur bloque l'affichage de la console h2 mais a change
+            .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
     ;
 
     return http.build();
-  }
+  }*/
 
   @Bean
   @Order(1)
