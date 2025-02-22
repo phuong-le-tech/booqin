@@ -40,20 +40,18 @@ public class GoogleBooksAPI implements BookFetcher {
         System.out.println("URL: " + url);
 
         try {
-            Mono<GoogleBooksResponse> responseMono = webClient.get()
+            GoogleBooksResponse responseMono = webClient.get()
                     .uri(url + SUFFIX_URL)
                     .retrieve()
-                    .bodyToMono(GoogleBooksResponse.class);
+                    .bodyToMono(GoogleBooksResponse.class).block();
 
-            GoogleBooksResponse response = responseMono.blockOptional().orElse(null);
-
-            if (response == null || response.items == null) {
-                System.out.println("Empty response.");
+            if (responseMono == null || responseMono.items == null) {
+                System.out.println("Empty responseMono.");
                 return List.of();
             }
 
-            return response.items.stream()
-                    .map(this::convertToBook)
+            return responseMono.items.stream()
+                    .map(b -> convertToBook(b))
                     .collect(Collectors.toList());
 
         } catch (Exception e) {
@@ -74,15 +72,17 @@ public class GoogleBooksAPI implements BookFetcher {
         String isbn10 = getIdentifier(volumeInfo.industryIdentifiers(),"ISBN_10");
         String isbn13 = getIdentifier(volumeInfo.industryIdentifiers(),"ISBN_13");
 
-        return new Book(
-                isbn10,
-                isbn13,
+        var b = new Book(
                 volumeInfo.title(),
                 authors,
                 description,
                 publicationDate
         );
+        b.addIsbn(isbn10);
+        b.addIsbn(isbn13);
+        return b;
     }
+
     private String getIdentifier(List<IndustryIdentifier> industryIdentifiers, String type){
         return Optional.ofNullable(industryIdentifiers)
                 .flatMap(identifiers -> identifiers.stream()

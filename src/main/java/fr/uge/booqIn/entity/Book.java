@@ -3,8 +3,10 @@
     import jakarta.persistence.*;
 
     import java.util.Date;
+    import java.util.HashSet;
     import java.util.List;
     import java.util.Set;
+    import java.util.stream.Collectors;
 
     @Entity
     public class Book {
@@ -13,11 +15,16 @@
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;
 
-        @Column(length = 5000)
-        private String isbn10;
 
-        @Column(length = 5000)
-        private String isbn13;
+        @ElementCollection
+        @CollectionTable(
+                name = "book_isbn",
+                joinColumns = @JoinColumn(name = "book_id"),
+                uniqueConstraints = @UniqueConstraint(columnNames = "isbn") ,
+                indexes = @Index(name = "idx_isbn", columnList = "isbn")
+        )
+        @Column(name = "isbn", unique = true)
+        private Set<String> isbns = new HashSet<>();
 
 
         @Column(nullable = false, length = 5000)
@@ -49,24 +56,15 @@
         public Book() {
         }
 
-        public Book(String isbn10, String isbn13, String title, Set<Author> authors, String description, String publicationDate) {
+        public Book(String title, Set<Author> authors, String description, String publicationDate) {
             this.title = title;
             this.authors = authors;
-            this.isbn10 = isbn10;
-            this.isbn13 = isbn13;
             this.description = description;
             this.publicationDate = publicationDate;
         }
 
         public Long getId() {
             return id;
-        }
-        public String getIsbn10() {
-            return isbn10;
-        }
-
-        public String getIsbn13() {
-            return isbn13;
         }
 
         public String getTitle() {
@@ -135,11 +133,22 @@
             collection.getBooks().remove(this);
         }
 
+        public Set<String> getIsbns() {
+            return isbns;
+        }
+
+        public void setIsbns(Set<String> isbns) {
+            this.isbns.addAll(isbns);
+        }
+
+        public void addIsbn(String isbn){
+            if(isbn != null) this.isbns.add(isbn);
+        }
+
         @Override
         public String toString() {
             return "Book{" +
-                    "isbn10='" + isbn10 + '\'' +
-                    ", isbn13='" + isbn13 + '\'' +
+                    String.join(",", isbns)+
                     ", title='" + title + '\'' +
                     ", authors='" + authors+ '\'' +
                     ", description='" + description + '\'' +

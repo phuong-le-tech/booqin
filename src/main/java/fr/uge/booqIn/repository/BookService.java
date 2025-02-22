@@ -2,11 +2,13 @@ package fr.uge.booqIn.repository;
 
 
 import fr.uge.booqIn.entity.Book;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class BookService {
@@ -17,9 +19,13 @@ public class BookService {
         this.bookRepository = bookRepository;
     }
 
-    public Book save(Book toSave){
+    @Transactional
+    public void save(Book toSave){
         Objects.requireNonNull(toSave);
-        return bookRepository.save(toSave);
+        boolean b = toSave.getIsbns().stream().filter(e -> findByIsbn(e).isPresent()).toList().isEmpty();
+        if(b) {
+            bookRepository.save(toSave);
+        }
     }
 
     public void delete(Book book){
@@ -47,7 +53,7 @@ public class BookService {
 
     public Optional<Book> findByIsbn(String isbn) {
         Objects.requireNonNull(isbn);
-        return bookRepository.findByIsbn10OrIsbn13(isbn);
+        return bookRepository.findBookByIsbnInSet(isbn);
     }
 
     public List<Book> findByPublishedYear(String publishedDate) {

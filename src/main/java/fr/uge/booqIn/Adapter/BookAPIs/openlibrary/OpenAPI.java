@@ -6,6 +6,7 @@ import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.singleton.WebClientSingleton;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -48,6 +49,7 @@ public class OpenAPI implements BookFetcher {
         }
 
         return response.docs().stream()
+                .filter(doc -> doc.isbn() != null && !doc.isbn().isEmpty())
                 .map(this::convertToBook)
                 .toList();
     }
@@ -59,24 +61,17 @@ public class OpenAPI implements BookFetcher {
                 : Set.of();
         String description = doc.description() != null ? doc.description() : "";
         String publicationDate = doc.first_publish_year() != null ? String.valueOf(doc.first_publish_year()) : "";
-        // récupérer le premier isbn a 10 caracteres et le premier isbn a 13 caracteres
 
-        return new Book(
-                getFirstIsbn(doc.isbn(),10),
-                getFirstIsbn(doc.isbn(),13),
+        var b = new Book(
                 title,
                 authors,
                 description,
                 publicationDate
         );
+        b.setIsbns(doc.isbn() != null ? new HashSet<>(doc.isbn()) : new HashSet<>());
+        return b;
     }
 
-    private String getFirstIsbn(List<String> isbns, int length) {
-        return isbns.stream()
-                .filter(isbn -> isbn.length() == length)
-                .findFirst()
-                .orElse(null);
-    }
 
     private String splitAndAdd(String s) {
         return String.join("+", s.split(" "));

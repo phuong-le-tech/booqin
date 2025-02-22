@@ -17,9 +17,8 @@ public interface BookRepository extends JpaRepository<Book, Long> {
           + "WHERE a.firstName = :author OR a.lastName = :author")
   List<Book> findBooksByAuthor(String author);
 
-
-  @Query("select b from Book b where b.isbn10 = :isbn or b.isbn13 = :isbn")
-  Optional<Book> findByIsbn10OrIsbn13(String isbn);
+  @Query("SELECT b FROM Book b JOIN b.isbns i WHERE i = :isbn")
+  Optional<Book> findBookByIsbnInSet(String isbn);
 
   @Query("select b from Book b where b.publicationDate = :publishedDate")
   List<Book> findByPublishedYear(String publishedDate);
