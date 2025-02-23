@@ -1,0 +1,36 @@
+package fr.uge.booqIn.scheduler;
+
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.logging.Logger;
+
+@Component
+public class NovelistsBean implements InitializingBean {
+  private static final Logger logger = Logger.getLogger(NovelistsBean.class.getName());
+
+  @Value("${novelists.file.path}")
+  private String FILE_PATH;
+  private List<String> novelists;
+
+
+
+  @Override
+  public void afterPropertiesSet() throws Exception {
+    try (var stream = Files.lines(Paths.get(FILE_PATH))) {
+      novelists = stream.toList();
+    } catch (IOException ioe) {
+      logger.severe("Error initializing authors: " + ioe.getMessage());
+      throw new RuntimeException("Failed to initialize novelists", ioe);
+    }
+  }
+
+  public List<String> getNovelists() {
+    return novelists;
+  }
+}

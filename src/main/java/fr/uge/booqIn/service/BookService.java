@@ -1,37 +1,69 @@
 package fr.uge.booqIn.service;
 
-import fr.uge.booqIn.Adapter.BookAPIs.BookFetcher;
-import fr.uge.booqIn.Adapter.BookAPIs.BookFetcherFactory;
+
 import fr.uge.booqIn.entity.Book;
+import fr.uge.booqIn.repository.BookRepository;
+import jakarta.transaction.Transactional;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
-public class BookService implements BookFetcher {
-    private final BookFetcher bookFetcher;
+@Service
+public class BookService {
 
-    public BookService(String api) {
-        Objects.requireNonNull(api);
-        this.bookFetcher = BookFetcherFactory.adapter(api);
+    private final BookRepository bookRepository;
+
+    public BookService(BookRepository bookRepository) {
+        this.bookRepository = bookRepository;
     }
 
-    public List<Book> searchByTitle(String title) {
-        return bookFetcher.searchByTitle(title);
+    @Transactional
+    public void save(Book toSave){
+        Objects.requireNonNull(toSave);
+        System.out.println(toSave);
+        boolean b = toSave.getIsbns().stream().filter(e -> findByIsbn(e).isPresent()).toList().isEmpty();
+        if(b) {
+            bookRepository.save(toSave);
+        }
     }
 
-    public List<Book> searchByAuthor(String author) {
-        return bookFetcher.searchByAuthor(author);
+    public void delete(Book book){
+        Objects.requireNonNull(book);
+        bookRepository.delete(book);
     }
 
-    public List<Book> searchByIsbn(String isbn) {
-        return bookFetcher.searchByIsbn(isbn);
+    public Optional<Book> findById(Long id){
+        return bookRepository.findById(id);
     }
 
-    public List<Book> searchByPublisher(String publisher) {
-        return bookFetcher.searchByPublisher(publisher);
+    public List<Book> findAll(){
+        return bookRepository.findAll();
     }
 
-    public List<Book> searchByPublishedDate(String publishedDate) {
-        return bookFetcher.searchByPublishedDate(publishedDate);
+    public List<Book> findBooksByTitle(String title) {
+        Objects.requireNonNull(title);
+        return bookRepository.findBooksByTitle(title);
     }
+
+    public List<Book> findBooksByAuthor(String author) {
+        Objects.requireNonNull(author);
+        return bookRepository.findBooksByAuthor(author);
+    }
+
+    public Optional<Book> findByIsbn(String isbn) {
+        Objects.requireNonNull(isbn);
+        return bookRepository.findBookByIsbnInSet(isbn);
+    }
+
+    public List<Book> findByPublishedYear(String publishedDate) {
+        Objects.requireNonNull(publishedDate);
+        return bookRepository.findByPublishedYear(publishedDate);
+    }
+
+    public List<Book> saveAll(Iterable<Book> books){
+        return bookRepository.saveAll(books);
+    }
+
 }

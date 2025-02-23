@@ -3,6 +3,7 @@ package fr.uge.booqIn.entity;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Entity
@@ -29,11 +30,11 @@ public class BookCollection {
 
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "created_at", nullable = false, updatable = false)
-  private String createdAt = "";
+  private Date createdAt;
 
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "updated_at")
-  private String updatedAt = "";
+  private Date updatedAt;
 
   @Column(columnDefinition = "boolean default false")
   private boolean isSmart = false;
@@ -84,11 +85,11 @@ public class BookCollection {
     return isSmart;
   }
 
-  public String getCreatedAt() {
+  public Date getCreatedAt() {
     return createdAt;
   }
 
-  public String getUpdatedAt() {
+  public Date getUpdatedAt() {
     return updatedAt;
   }
 
@@ -116,11 +117,11 @@ public class BookCollection {
     this.isPublic = isPublic;
   }
 
-  public void setCreatedAt(String createdAt) {
+  public void setCreatedAt(Date createdAt) {
     this.createdAt = createdAt;
   }
 
-  public void setUpdatedAt(String updatedAt) {
+  public void setUpdatedAt(Date updatedAt) {
     this.updatedAt = updatedAt;
   }
 

@@ -1,4 +1,4 @@
-package fr.uge.booqIn.factory;
+package fr.uge.booqIn.factory.fixture;
 
 import com.github.javafaker.Faker;
 import fr.uge.booqIn.entity.Address;

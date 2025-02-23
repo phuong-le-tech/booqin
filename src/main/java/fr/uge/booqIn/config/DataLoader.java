@@ -2,7 +2,7 @@ package fr.uge.booqIn.config;
 
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.UserRole;
-import fr.uge.booqIn.factory.UserFactory;
+import fr.uge.booqIn.factory.fixture.UserFactory;
 import fr.uge.booqIn.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
