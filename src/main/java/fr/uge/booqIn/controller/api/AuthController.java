@@ -33,16 +33,14 @@ public class AuthController {
   @PostMapping("/login")
   public ResponseEntity<ApiResponse<AuthResponse>> login(
           @RequestBody @Valid LoginDto data,
-          HttpServletResponse response
-  ) {
+          HttpServletResponse response) {
     AuthResponse tokens = authService.login(data);
 
     addCookie(response, "jwt", tokens.accessToken(), 30 * 60);
     addCookie(response, "jwt-refresh", tokens.refreshToken(), 7 * 24 * 60 * 60);
 
     return ResponseEntity.ok(
-            ApiResponse.success("Connexion réussie !", tokens)
-    );
+            ApiResponse.success("Connexion réussie !", tokens));
   }
 
   @PostMapping("/register")
@@ -60,15 +58,13 @@ public class AuthController {
     addCookie(response, "jwt-refresh", null, 0);
 
     return ResponseEntity.ok(
-            ApiResponse.success("Logged out successfully", null)
-    );
+            ApiResponse.success("Logged out successfully", null));
   }
 
   @PostMapping("/refresh")
   public ResponseEntity<ApiResponse<String>> refreshToken(
           HttpServletRequest request,
-          HttpServletResponse response
-  ) {
+          HttpServletResponse response) {
     String refreshToken = getCookieValue(request, "jwt-refresh");
 
     if (refreshToken == null) {
@@ -84,8 +80,7 @@ public class AuthController {
       addCookie(response, "jwt", newAccessToken, 30 * 60);
 
       return ResponseEntity.ok(
-              ApiResponse.success("Access Token refreshed successfully", newAccessToken)
-      );
+              ApiResponse.success("Access Token refreshed successfully", newAccessToken));
     } catch (Exception e) {
       return ResponseEntity
               .status(HttpStatus.UNAUTHORIZED)
@@ -97,13 +92,14 @@ public class AuthController {
   public ResponseEntity<ApiResponse<UserMeDto>> me(Authentication authentication) {
     UserMeDto userMeDto = authService.getCurrentUser(authentication);
     return ResponseEntity.ok(
-            ApiResponse.success("Current user data", userMeDto)
-    );
+            ApiResponse.success("Current user data", userMeDto));
   }
 
-    /* =======================
-       Méthodes utilitaires
-       ======================= */
+  /*
+   * =======================
+   * Méthodes utilitaires
+   * =======================
+   */
 
   private void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
     Cookie cookie = new Cookie(name, value);
