@@ -1,4 +1,6 @@
-package fr.uge.booqIn.dto.model;
+package fr.uge.booqIn.dto.bookCollection;
+
+import fr.uge.booqIn.dto.user.UserDTO;
 
 import java.util.List;
 

@@ -10,7 +10,6 @@ export const AuthProvider = ({ children }) => {
         const fetchUser = async () => {
             try {
                 const currentUser = await AuthService.fetchCurrentUser();
-                console.log("Current user:", currentUser);
                 setUser(currentUser);
             } catch (error) {
                 // If not logged in or token invalid, do nothing
@@ -18,7 +17,7 @@ export const AuthProvider = ({ children }) => {
             }
         };
 
-        fetchUser();
+        fetchUser().then(r => console.log("User fetched:", r));
     }, []);
 
     return (
