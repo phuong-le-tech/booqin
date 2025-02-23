@@ -1,7 +1,7 @@
 package fr.uge.booqIn.controller;
 
 import fr.uge.booqIn.entity.Book;
-import fr.uge.booqIn.repository.BookService;
+import fr.uge.booqIn.service.BookService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;

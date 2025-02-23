@@ -3,7 +3,7 @@ package fr.uge.booqIn.scheduler;
 import fr.uge.booqIn.Adapter.BookAPIs.BookFetcher;
 import fr.uge.booqIn.Adapter.BookAPIs.BookFetcherFactory;
 import fr.uge.booqIn.entity.Book;
-import fr.uge.booqIn.repository.BookService;
+import fr.uge.booqIn.service.BookService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -20,8 +20,8 @@ public class ScheduledProcess {
     this.authorIterator = new AuthorIterator(novelistsBean, 15);
     this.bookService = bookService;
   }
-  
-  @Scheduled(cron = "* * 0 * * *")
+
+  @Scheduled(cron = "0 */1 * * * *")
   public void askAPI() {
     List<String> authors = authorIterator.getNextBatch();
 

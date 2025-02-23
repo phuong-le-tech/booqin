@@ -1,4 +1,4 @@
-package fr.uge.booqIn.dto.model;
+package fr.uge.booqIn.dto.book;
 
 public record BookDTO(
         Long id,

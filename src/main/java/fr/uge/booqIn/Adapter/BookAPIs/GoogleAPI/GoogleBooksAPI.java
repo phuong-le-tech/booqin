@@ -45,12 +45,12 @@ public class GoogleBooksAPI implements BookFetcher {
                     .retrieve()
                     .bodyToMono(GoogleBooksResponse.class).block();
 
-            if (responseMono == null || responseMono.items == null) {
+            if (responseMono == null || responseMono.items() == null) {
                 System.out.println("Empty responseMono.");
                 return List.of();
             }
 
-            return responseMono.items.stream()
+            return responseMono.items().stream()
                     .map(this::convertToBook)
                     .collect(Collectors.toList());
 
@@ -62,7 +62,7 @@ public class GoogleBooksAPI implements BookFetcher {
 
 
     private Book convertToBook(BookItem item) {
-        var volumeInfo = item.volumeInfo;
+        var volumeInfo = item.volumeInfo();
         Set<Author> authors = volumeInfo.authors() != null && !volumeInfo.authors().isEmpty()
                 ? volumeInfo.authors().stream().map(authorName -> new Author(authorName, "")).collect(Collectors.toSet())
                 : Set.of();
