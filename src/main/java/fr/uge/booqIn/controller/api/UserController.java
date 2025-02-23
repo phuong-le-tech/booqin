@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/v1/users")
 public class UserController {
 
   private static final Logger logger = LoggerFactory.getLogger(UserController.class);
@@ -35,10 +35,10 @@ public class UserController {
 
     Optional<UserShow> userDtoOpt = userService.findById(id);
     return userDtoOpt.map(userShow ->
-            ResponseEntity.ok(ApiResponse.success("User found", userShow)))
+                    ResponseEntity.ok(ApiResponse.success("User found", userShow)))
             .orElseGet(() -> ResponseEntity
-            .status(HttpStatus.NOT_FOUND)
-            .body(ApiResponse.error("User not found")));
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("User not found")));
   }
 
   @DeleteMapping("/{id}")
