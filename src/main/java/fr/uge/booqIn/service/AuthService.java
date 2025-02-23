@@ -25,8 +25,7 @@ public class AuthService {
           UserRepository userRepository,
           PasswordEncoder passwordEncoder,
           AuthenticationManager authenticationManager,
-          JwtService jwtService
-  ) {
+          JwtService jwtService) {
     this.userRepository = userRepository;
     this.passwordEncoder = passwordEncoder;
     this.authenticationManager = authenticationManager;
@@ -44,17 +43,14 @@ public class AuthService {
             signUpDto.email(),
             passwordEncoder.encode(signUpDto.password()),
             signUpDto.address(),
-            /*signUpDto.role()*/ UserRole.USER
-    );
+            /* signUpDto.role() */ UserRole.USER);
     return userRepository.save(user);
   }
 
   public AuthResponse login(LoginDto signInDto) {
-    UsernamePasswordAuthenticationToken authToken =
-            new UsernamePasswordAuthenticationToken(
-                    signInDto.login(),
-                    signInDto.password()
-            );
+    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+            signInDto.login(),
+            signInDto.password());
 
     var authResult = authenticationManager.authenticate(authToken);
     var user = (User) authResult.getPrincipal();
@@ -76,7 +72,6 @@ public class AuthService {
             user.getId(),
             user.getFirstName(),
             user.getLastName(),
-            user.getEmail()
-    );
+            user.getEmail());
   }
 }
