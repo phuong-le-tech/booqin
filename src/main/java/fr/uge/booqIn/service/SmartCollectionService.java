@@ -5,7 +5,7 @@ import fr.uge.booqIn.entity.BookCollection;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.factory.CriteriaStrategyFactory;
 import fr.uge.booqIn.repository.BookRepository;
-import fr.uge.booqIn.repository.CollectionRepository;
+import fr.uge.booqIn.repository.BookCollectionRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -15,12 +15,12 @@ import java.util.stream.Collectors;
 
 @Service
 public class SmartCollectionService {
-  private final CollectionRepository collectionRepository;
+  private final BookCollectionRepository bookCollectionRepository;
   private final BookRepository bookRepository;
   private final CriteriaStrategyFactory strategyFactory;
 
-  public SmartCollectionService(CollectionRepository collectionRepository, BookRepository bookRepository, CriteriaStrategyFactory strategyFactory) {
-    this.collectionRepository = collectionRepository;
+  public SmartCollectionService(BookCollectionRepository bookCollectionRepository, BookRepository bookRepository, CriteriaStrategyFactory strategyFactory) {
+    this.bookCollectionRepository = bookCollectionRepository;
     this.bookRepository = bookRepository;
     this.strategyFactory = strategyFactory;
   }
@@ -29,7 +29,7 @@ public class SmartCollectionService {
   @Transactional
   public BookCollection createSmartCollection(BookCollection bookCollection) {
     bookCollection.setSmart(true);
-    return collectionRepository.save(bookCollection);
+    return bookCollectionRepository.save(bookCollection);
   }
 
   @Transactional
@@ -44,18 +44,18 @@ public class SmartCollectionService {
     // on va remplir cette collection avec les livres correspondant à la stratégie
     var matchingBooks = bookRepository.findAll().stream().filter(strategy::satisfy).collect(Collectors.toList());
     collection.setBooks(matchingBooks);
-    return collectionRepository.save(collection);
+    return bookCollectionRepository.save(collection);
   }
 
   @Scheduled(fixedRate = 24 * 3600 * 1000)  // every day
   public void updateSmartCollections() {
-    var smartCollections = collectionRepository.findByIsSmart(true);
-    smartCollections.stream().map(this::createSmartCollection).forEach(collectionRepository::save);
+    var smartCollections = bookCollectionRepository.findByIsSmart(true);
+    smartCollections.stream().map(this::createSmartCollection).forEach(bookCollectionRepository::save);
   }
 
   @Transactional
   public List<BookCollection> getSmartCollections() {
-    List<BookCollection> smartCollections = collectionRepository.findByIsSmart(true);
+    List<BookCollection> smartCollections = bookCollectionRepository.findByIsSmart(true);
     //List<BookCollection> smartCollections = collectionRepository.findSmartCollections();
     if (smartCollections.isEmpty()) {
       throw new IllegalArgumentException("No smart collections found");

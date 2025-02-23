@@ -1,13 +1,21 @@
 package fr.uge.booqIn.repository;
 
 import fr.uge.booqIn.entity.BookCollection;
+import fr.uge.booqIn.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
 import java.util.Optional;
 
-@Repository
-public interface BookCollectionRepository extends JpaRepository<BookCollection,Long> {
-    Optional<BookCollection> findById(Long id);
-
+public interface BookCollectionRepository extends JpaRepository<BookCollection, Long> {
+  Optional<BookCollection> findById(Long id);
+  Optional<BookCollection> findByTitle(String title);
+  List<BookCollection> findByOwner(User owner);
+  List<BookCollection> findByIsPublicTrue();
+  Optional<BookCollection> findByIdAndOwner(Long id, User owner);
+  //List<BookCollection> findByType(User owner);
+  List<BookCollection> findByIsSmart(boolean isSmart);
+  @Query("SELECT c FROM BookCollection c WHERE c.isPublic = true AND c.isSmart = true")
+  List<BookCollection> findSmartCollections();
 }

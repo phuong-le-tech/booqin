@@ -1,11 +1,13 @@
 package fr.uge.booqIn.factory;
 
+import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.strategy.collection.AuthorCriteriaStrategy;
 import fr.uge.booqIn.strategy.collection.CollectionCriteriaStrategy;
 import fr.uge.booqIn.strategy.collection.PublicationDateCriteriaStrategy;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Factory component for creating {@link CollectionCriteriaStrategy} instances based on a map of criteria.
@@ -48,7 +50,7 @@ public class CriteriaStrategyFactory {
    */
   private CollectionCriteriaStrategy createSingleStrategy(Map.Entry<String, Object> entry) {
     return switch (entry.getKey()) {
-      case "author" -> new AuthorCriteriaStrategy((String) entry.getValue());
+      case "author" -> new AuthorCriteriaStrategy((Set<Author>) entry.getValue());
       case "maxYearsOld" -> new PublicationDateCriteriaStrategy((Integer) entry.getValue());
       default -> book -> true;
     };

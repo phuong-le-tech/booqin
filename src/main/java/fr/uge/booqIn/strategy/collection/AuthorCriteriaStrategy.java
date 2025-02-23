@@ -1,16 +1,21 @@
 package fr.uge.booqIn.strategy.collection;
 
+import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 
-public class AuthorCriteriaStrategy implements CollectionCriteriaStrategy {
-  private final String authorName;
+import java.util.HashSet;
+import java.util.Set;
 
-  public AuthorCriteriaStrategy(String authorName) {
-    this.authorName = authorName;
+public class AuthorCriteriaStrategy implements CollectionCriteriaStrategy {
+  private Set<Author> authors = new HashSet<>();
+
+  public AuthorCriteriaStrategy(Set<Author> authors) {
+    this.authors = authors;
   }
+
 
   @Override
   public boolean satisfy(Book book) {
-    return book.getAuthor().equals(authorName);
+    return book.getAuthors().containsAll(authors);
   }
 }

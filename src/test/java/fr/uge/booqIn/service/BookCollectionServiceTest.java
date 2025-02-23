@@ -7,7 +7,7 @@ import fr.uge.booqIn.enums.UserRole;
 import fr.uge.booqIn.factory.fixture.BookFactory;
 import fr.uge.booqIn.factory.fixture.UserFactory;
 import fr.uge.booqIn.repository.BookRepository;
-import fr.uge.booqIn.repository.CollectionRepository;
+import fr.uge.booqIn.repository.BookCollectionRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,7 +28,7 @@ import static org.mockito.Mockito.*;
 public class BookCollectionServiceTest {
 
   @Mock
-  private CollectionRepository collectionRepository;
+  private BookCollectionRepository bookCollectionRepository;
 
   @Mock
   private BookRepository bookRepository;
@@ -58,9 +58,9 @@ public class BookCollectionServiceTest {
     BookCollection collection = new BookCollection("My Collection", "Description", user);
     Book book = BookFactory.createBook();
 
-    when(collectionRepository.findById(1L)).thenReturn(Optional.of(collection));
+    when(bookCollectionRepository.findById(1L)).thenReturn(Optional.of(collection));
     when(bookRepository.findById(1L)).thenReturn(Optional.of(book));
-    when(collectionRepository.save(any(BookCollection.class))).thenReturn(collection);
+    when(bookCollectionRepository.save(any(BookCollection.class))).thenReturn(collection);
 
     // Appel du service
     Optional<BookCollection> updatedCollectionOpt = bookCollectionService.addBookToCollection(1L, 1L, user);
@@ -80,12 +80,12 @@ public class BookCollectionServiceTest {
     User user = UserFactory.createUser(passwordEncoder, UserRole.USER);
 
     // On simule qu'on ne trouve pas la collection
-    when(collectionRepository.findById(999L)).thenReturn(Optional.empty());
+    when(bookCollectionRepository.findById(999L)).thenReturn(Optional.empty());
 
     Optional<BookCollection> result = bookCollectionService.addBookToCollection(999L, 1L, user);
     assertTrue(result.isEmpty(), "Should return an empty Optional if collection not found");
     verify(bookRepository, never()).findById(anyLong());  // aucune recherche de livre
-    verify(collectionRepository, never()).save(any(BookCollection.class));
+    verify(bookCollectionRepository, never()).save(any(BookCollection.class));
   }
 
   /**
@@ -96,12 +96,12 @@ public class BookCollectionServiceTest {
     User user = UserFactory.createUser(passwordEncoder, UserRole.USER);
     BookCollection collection = new BookCollection("My Collection", "Desc", user);
 
-    when(collectionRepository.findById(1L)).thenReturn(Optional.of(collection));
+    when(bookCollectionRepository.findById(1L)).thenReturn(Optional.of(collection));
     when(bookRepository.findById(2L)).thenReturn(Optional.empty());
 
     Optional<BookCollection> result = bookCollectionService.addBookToCollection(1L, 2L, user);
     assertTrue(result.isEmpty(), "Should be empty if book not found");
-    verify(collectionRepository, never()).save(any(BookCollection.class));
+    verify(bookCollectionRepository, never()).save(any(BookCollection.class));
   }
 
   /**
@@ -113,7 +113,7 @@ public class BookCollectionServiceTest {
     User other = UserFactory.createUser(passwordEncoder, UserRole.USER);
     BookCollection collection = new BookCollection("My Collection", "Desc", owner);
 
-    when(collectionRepository.findById(1L)).thenReturn(Optional.of(collection));
+    when(bookCollectionRepository.findById(1L)).thenReturn(Optional.of(collection));
 
     // L'opération doit lever AccessDeniedException,
     // car other n'est pas propriétaire
@@ -122,7 +122,7 @@ public class BookCollectionServiceTest {
     });
 
     verify(bookRepository, never()).findById(anyLong());
-    verify(collectionRepository, never()).save(any(BookCollection.class));
+    verify(bookCollectionRepository, never()).save(any(BookCollection.class));
   }
 
   /**
@@ -141,14 +141,14 @@ public class BookCollectionServiceTest {
 
     List<BookCollection> publicCollections = List.of(publicCollection1, publicCollection2);
 
-    when(collectionRepository.findByIsPublicTrue()).thenReturn(publicCollections);
+    when(bookCollectionRepository.findByIsPublicTrue()).thenReturn(publicCollections);
 
     List<BookCollection> retrievedCollections = bookCollectionService.getPublicCollections();
     assertNotNull(retrievedCollections);
     assertEquals(2, retrievedCollections.size());
     assertTrue(retrievedCollections.contains(publicCollection1));
     assertTrue(retrievedCollections.contains(publicCollection2));
-    verify(collectionRepository, times(1)).findByIsPublicTrue();
+    verify(bookCollectionRepository, times(1)).findByIsPublicTrue();
   }
 
   /**
@@ -170,8 +170,8 @@ public class BookCollectionServiceTest {
     updatedData.setPublic(true);
 
     // On simule que la collection existe
-    when(collectionRepository.findById(1L)).thenReturn(Optional.of(collection));
-    when(collectionRepository.save(any(BookCollection.class))).thenReturn(collection);
+    when(bookCollectionRepository.findById(1L)).thenReturn(Optional.of(collection));
+    when(bookCollectionRepository.save(any(BookCollection.class))).thenReturn(collection);
 
     // Appel
     Optional<BookCollection> updatedOpt = bookCollectionService.updateCollection(1L, owner, updatedData);
@@ -182,7 +182,7 @@ public class BookCollectionServiceTest {
     assertEquals("New Title", updatedCollection.getTitle());
     assertEquals("New Description", updatedCollection.getDescription());
     assertTrue(updatedCollection.isPublic());
-    verify(collectionRepository, times(1)).save(collection);
+    verify(bookCollectionRepository, times(1)).save(collection);
   }
 
   /**
@@ -194,12 +194,12 @@ public class BookCollectionServiceTest {
     User owner = UserFactory.createUser(passwordEncoder, UserRole.USER);
     owner.setId(1L);
 
-    when(collectionRepository.findById(999L)).thenReturn(Optional.empty());
+    when(bookCollectionRepository.findById(999L)).thenReturn(Optional.empty());
 
     Optional<BookCollection> result = bookCollectionService.updateCollection(999L, owner, new BookCollection());
     assertTrue(result.isEmpty(), "Should return empty Optional if collection does not exist");
 
-    verify(collectionRepository, never()).save(any(BookCollection.class));
+    verify(bookCollectionRepository, never()).save(any(BookCollection.class));
   }
 
   /**
@@ -220,12 +220,12 @@ public class BookCollectionServiceTest {
 
     // On simule qu'on trouve bien la collection,
     // mais verifyOwnership va lever AccessDeniedException
-    when(collectionRepository.findById(1L)).thenReturn(Optional.of(collection));
+    when(bookCollectionRepository.findById(1L)).thenReturn(Optional.of(collection));
 
     assertThrows(AccessDeniedException.class, () -> {
       bookCollectionService.updateCollection(1L, otherUser, new BookCollection());
     });
 
-    verify(collectionRepository, never()).save(any(BookCollection.class));
+    verify(bookCollectionRepository, never()).save(any(BookCollection.class));
   }
 }

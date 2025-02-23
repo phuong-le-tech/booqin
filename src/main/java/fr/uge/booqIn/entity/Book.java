@@ -2,11 +2,7 @@ package fr.uge.booqIn.entity;
 
 import jakarta.persistence.*;
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
 
 @Entity
 public class Book {
@@ -30,7 +26,7 @@ public class Book {
     private Set<Author> authors = new HashSet<>();
     private String description;
     private String publicationDate;
-    private List<BookCollection> collections;
+    private List<BookCollection> collections = new ArrayList<>();
     private Date createdAt = new Date();
     private Date updatedAt = new Date();
 
@@ -119,7 +115,7 @@ public class Book {
   private String publicationDate;
 
   @ManyToMany
-  private List<BookCollection> collections;
+  private List<BookCollection> collections = new ArrayList<>();
 
 
   @Temporal(TemporalType.TIMESTAMP)
@@ -201,13 +197,21 @@ public class Book {
   }
 
   public void addCollection(BookCollection collection) {
+    if (collections == null) {
+      collections = new ArrayList<>();
+    }
+    // empecher les doublons ?
     collections.add(collection);
     collection.getBooks().add(this);
+
   }
 
   public void removeCollection(BookCollection collection) {
-    collections.remove(collection);
-    collection.getBooks().remove(this);
+    if (collection != null && collection.getBooks() != null) {
+      collections.remove(collection);
+      collection.getBooks().remove(this);
+    }
+
   }
 
   public Set<String> getIsbns() {

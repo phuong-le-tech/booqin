@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${collection.title} + ' - Details'">Collection Details</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body class="bg-gray-100 p-8">
+<div class="max-w-4xl mx-auto">
+    <h1 class="text-3xl font-bold text-gray-900 mb-6" th:text="${collection.title}">Collection Title</h1>
+    <p class="text-gray-600 mb-8" th:text="${collection.description}">Collection Description</p>
+
+    <h2 class="text-2xl font-semibold text-gray-900 mb-4">Books in This Collection</h2>
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <ul class="divide-y divide-gray-200">
+            <li th:each="book : ${collection.books}" class="px-6 py-4 hover:bg-gray-50">
+                <span class="text-sm font-medium text-gray-900" th:text="${book.title}">Book Title</span> -
+                <span class="text-sm text-gray-500">
+                        Authors:
+                        <span th:each="author, iterStat : ${book.authors}">
+                            <span th:text="${author}">Author Name</span>
+                            <span th:if="${!iterStat.last}">, </span>
+                        </span>
+                    </span> -
+                <span class="text-sm text-gray-500" th:text="${book.publicationDate}">Publication Date</span>
+            </li>
+        </ul>
+    </div>
+
+    <a href="/collections" class="mt-6 inline-block text-indigo-600 hover:text-indigo-900">Back to List</a>
+</div>
+</body>
+</html>

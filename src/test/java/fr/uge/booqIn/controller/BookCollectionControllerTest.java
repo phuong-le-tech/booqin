@@ -72,7 +72,7 @@ public class BookCollectionControllerTest {
    * Test de la récupération d'une collection existante.
    */
   @Test
-  void testGetCollection_Found() {
+  void testGetCollectionFound() {
     BookCollection collection = new BookCollection();
     collection.setId(1L);
     collection.setTitle("Test Collection");
@@ -97,7 +97,7 @@ public class BookCollectionControllerTest {
    * Test de la récupération d'une collection inexistante.
    */
   @Test
-  void testGetCollection_NotFound() {
+  void testGetCollectionNotFound() {
     when(bookCollectionService.findCollectionById(999L)).thenReturn(Optional.empty());
 
     ResponseEntity<ApiResponse<BookCollection>> response = bookCollectionController.getCollection(999L);
@@ -122,7 +122,7 @@ public class BookCollectionControllerTest {
     mockUser.setId(1L);
 
     doReturn(Optional.of(new BookCollection())).when(bookCollectionService).findCollectionById(1L);
-    doNothing().when(bookCollectionService).deleteCollection(1L, mockUser);
+    when(bookCollectionService.deleteCollection(1L, mockUser)).thenReturn(Optional.of(new BookCollection()));
 
     ResponseEntity<ApiResponse<Void>> response = bookCollectionController.deleteCollection(1L, mockUser);
 
