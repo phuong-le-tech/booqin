@@ -27,6 +27,9 @@ public class Cart {
 
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
+    
+    @Column(nullable = true)
+    private String paymentIntentId;
 
     public Cart(User user, Statut statut, List<Book> books) {
         this.user = user;
@@ -59,6 +62,13 @@ public class Cart {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+    
+    public void getPaymentIntentId(String paymentIntentId) {
+        this.paymentIntentId = paymentIntentId;
+    }
+    public String setPaymentIntentId() {
+        return paymentIntentId;
     }
     
     @Override

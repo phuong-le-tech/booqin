@@ -1,10 +1,14 @@
 package fr.uge.booqIn.service;
 
 import com.stripe.Stripe;
+import com.stripe.model.Event;
 import com.stripe.model.PaymentIntent;
 import com.stripe.param.PaymentIntentCreateParams;
 import fr.uge.booqIn.entity.Cart;
+import fr.uge.booqIn.enums.Statut;
+import fr.uge.booqIn.repository.CartRepository;
 import jakarta.annotation.PostConstruct;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -15,14 +19,18 @@ public class StripeService {
     private String stripeSecretKey;
 
     private static final double SHIPPING_COST = 5.99;
+    private  CartRepository cartRepository = null;
     
     @PostConstruct
     public void init() {
         Stripe.apiKey = stripeSecretKey;
+        
     }
     
-    public StripeService() {
+    
+    public StripeService(CartRepository cartRepository) {
         Stripe.apiKey = stripeSecretKey;
+        this.cartRepository = cartRepository;
     }
 
     public PaymentIntent createPaymentIntent(Cart cart) {
@@ -59,4 +67,42 @@ public class StripeService {
             throw new RuntimeException("Erreur lors de l'annulation du paiement", e);
         }
     }
+
+    public void handlePaymentSuccess(String paymentIntentId) {
+        Cart cart = cartRepository.findByPaymentIntentId(paymentIntentId)
+                .orElseThrow(() -> new RuntimeException("Panier introuvable pour cet identifiant"));
+        cart.setStatut(Statut.CONFIRMED);
+        cartRepository.save(cart);
+    }
+    
+ 
+    public void handlePaymentFailure(String paymentIntentId) {
+        Cart cart = cartRepository.findByPaymentIntentId(paymentIntentId)
+                .orElseThrow(() -> new RuntimeException("Panier introuvable pour cet identifiant"));
+        cart.setStatut(Statut.CANCELLED);
+        cartRepository.save(cart);
+    }
+    @Transactional
+    public void processWebhookEvent(Event event) {
+        switch (event.getType()) {
+            case "payment_intent.succeeded":
+                PaymentIntent intentSucceeded = (PaymentIntent) event.getDataObjectDeserializer()
+                        .getObject().orElse(null);
+                if (intentSucceeded != null) {
+                    handlePaymentSuccess(intentSucceeded.getId());
+                }
+                break;
+            case "payment_intent.payment_failed":
+                PaymentIntent intentFailed = (PaymentIntent) event.getDataObjectDeserializer()
+                        .getObject().orElse(null);
+                if (intentFailed != null) {
+                    handlePaymentFailure(intentFailed.getId());
+                }
+                break;
+            // à voir pour d'autres types d'événements
+            default:
+                break;
+        }
+    }
+    
 }
