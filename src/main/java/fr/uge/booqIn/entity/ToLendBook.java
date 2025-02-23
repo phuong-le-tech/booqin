@@ -10,7 +10,7 @@ public class ToLendBook {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   private User owner;
 
   @ManyToOne

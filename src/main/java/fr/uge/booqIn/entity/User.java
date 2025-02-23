@@ -1,18 +1,18 @@
 package fr.uge.booqIn.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import fr.uge.booqIn.enums.UserRole;
 import jakarta.persistence.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
 @Entity
-@Table(name = "users")
+@Table(name="users")
 public class User implements UserDetails {
 
   @Id
@@ -37,11 +37,12 @@ public class User implements UserDetails {
   @Enumerated(EnumType.STRING)
   private UserRole role;
 
-  @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
-  private List<ToLendBook> booksToLend;
+  @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  private List<ToLendBook> booksToLend = new ArrayList<>();
 
   @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
-  private List<BookCollection> collections;
+  private List<BookCollection> collections = new ArrayList<>();
+
 
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "created_at", nullable = false, updatable = false)
@@ -67,7 +68,7 @@ public class User implements UserDetails {
     return id;
   }
 
-  public String getFistName() {
+  public String getFirstName() {
     return firstName;
   }
 
@@ -140,6 +141,10 @@ public class User implements UserDetails {
     this.password = password;
   }
 
+  public void setId(long id) {
+    this.id = id;
+  }
+
   public void setRole(UserRole role) {
     this.role = role;
   }
@@ -167,21 +172,5 @@ public class User implements UserDetails {
 
   public void removeCollection(BookCollection collection) {
     collections.remove(collection);
-  }
-  
-  @Override
-  public String toString() {
-    return "User{" +
-            "id=" + id +
-            ", fistName='" + firstName + '\'' +
-            ", lastName='" + lastName + '\'' +
-            ", email='" + email + '\'' +
-            ", address=" + address +
-            ", role=" + role +
-            ", booksToLend=" + booksToLend +
-            ", collections=" + collections +
-            ", createdAt=" + createdAt +
-            ", updatedAt=" + updatedAt +
-            '}';
   }
 }

@@ -30,11 +30,11 @@ public class BookCollection {
 
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "created_at", nullable = false, updatable = false)
-  private Date createdAt = new Date();
+  private Date createdAt;
 
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "updated_at")
-  private Date updatedAt = new Date();
+  private Date updatedAt;
 
   public BookCollection() {
   }
@@ -77,6 +77,10 @@ public class BookCollection {
     return updatedAt;
   }
 
+  public void setId(Long id) {
+    this.id = id;
+  }
+
   public void setTitle(String name) {
     this.title = name;
   }
@@ -106,6 +110,9 @@ public class BookCollection {
   }
 
   public void addBook(Book book) {
+    if (book.getCollections() == null) {
+      book.setCollections(new ArrayList<>()); // ✅ Ajoute une vérification de null
+    }
     books.add(book);
     book.getCollections().add(this);
   }
