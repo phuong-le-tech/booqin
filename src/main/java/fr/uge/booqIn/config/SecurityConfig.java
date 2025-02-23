@@ -13,7 +13,6 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,8 +24,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityConfig {
 
-  /*
-  @Bean
+/*  @Bean
   public SecurityFilterChain securityFilterChain(
           HttpSecurity http,
           JwtAuthFilter jwtAuthFilter,
@@ -58,8 +56,7 @@ public class SecurityConfig {
                     .logoutSuccessUrl("/home")
                     .permitAll()
             )
-            //.headers(headers -> headers.frameOptions().disable()); // sinon le navigateur bloque l'affichage de la console h2 mais a change
-            .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
+            .headers(headers -> headers.frameOptions().disable()); // sinon le navigateur bloque l'affichage de la console h2 mais a change
     ;
 
     return http.build();

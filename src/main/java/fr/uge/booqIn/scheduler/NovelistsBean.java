@@ -1,6 +1,5 @@
 package fr.uge.booqIn.scheduler;
 
-import fr.uge.booqIn.repository.BookService;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;

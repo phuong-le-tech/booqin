@@ -1,4 +1,4 @@
-package fr.uge.booqIn.dto.model;
+package fr.uge.booqIn.dto.user;
 
 import fr.uge.booqIn.entity.Address;
 import fr.uge.booqIn.enums.UserRole;

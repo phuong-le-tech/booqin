@@ -1,14 +1,14 @@
 package fr.uge.booqIn.entity;
 
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import fr.uge.booqIn.enums.UserRole;
 import jakarta.persistence.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 @Entity
@@ -37,21 +37,20 @@ public class User implements UserDetails {
   @Enumerated(EnumType.STRING)
   private UserRole role;
 
-  @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
-  private List<ToLendBook> booksToLend;
+  @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  private List<ToLendBook> booksToLend = new ArrayList<>();
 
-
   @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
-  private List<BookCollection> collections;
+  private List<BookCollection> collections = new ArrayList<>();
 
 
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "created_at", nullable = false, updatable = false)
-  private String createdAt = "";
+  private Date createdAt = new Date();
 
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "updated_at")
-  private String updatedAt = "";
+  private Date updatedAt = new Date();
 
   public User() {
   }
@@ -114,11 +113,11 @@ public class User implements UserDetails {
     return collections;
   }
 
-  public String getCreatedAt() {
+  public Date getCreatedAt() {
     return createdAt;
   }
 
-  public String getUpdatedAt() {
+  public Date getUpdatedAt() {
     return updatedAt;
   }
 
@@ -158,11 +157,11 @@ public class User implements UserDetails {
     this.collections = collections;
   }
 
-  public void setCreatedAt(String createdAt) {
+  public void setCreatedAt(Date createdAt) {
     this.createdAt = createdAt;
   }
 
-  public void setUpdatedAt(String updatedAt) {
+  public void setUpdatedAt(Date updatedAt) {
     this.updatedAt = updatedAt;
   }
 

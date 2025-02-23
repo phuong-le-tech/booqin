@@ -21,7 +21,7 @@ axiosInstance.interceptors.response.use(
 
                     await axiosInstance.post("/v1/auth/refresh");
 
-                    return axiosInstance(originalRequest);
+                    return axiosInstance.request(originalRequest);
                 }
             } catch (refreshError) {
                 window.location.href = "/login";
