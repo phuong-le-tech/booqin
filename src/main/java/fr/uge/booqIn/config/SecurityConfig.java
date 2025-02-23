@@ -95,28 +95,27 @@ public class SecurityConfig {
   public SecurityFilterChain webSecurityFilterChain(HttpSecurity http,
                                                     AuthenticationProvider authenticationProvider) throws Exception {
     http
-            // On applique cette config pour tout le reste (/**), sauf /api/** qui matche déjà au-dessus
-            .securityMatcher("/**")
-            .csrf(AbstractHttpConfigurer::disable)
-            .authorizeHttpRequests(auth -> auth
-                    .requestMatchers("/auth/**", "/home", "/h2-console/**", "/static/**", "/favicon.ico").permitAll()
-                    .anyRequest().authenticated()
-            )
-            .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-            .authenticationProvider(authenticationProvider)
-            .formLogin(login -> login
-                    .loginPage("/auth/login")
-                    .loginProcessingUrl("/auth/login")
-                    .defaultSuccessUrl("/home", true)
-                    .failureUrl("/auth/login?error=true")
-                    .permitAll()
-            )
-            .logout(logout -> logout
-                    .logoutUrl("/logout") // ou "/auth/logout"
-                    .logoutSuccessUrl("/home")
-                    .permitAll()
-            )
-            .headers(headers -> headers.frameOptions().disable());
+        .securityMatcher("/**")
+        .csrf(AbstractHttpConfigurer::disable)
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers("/auth/**", "/home", "/h2-console/**", "/static/**", "/favicon.ico", "/books", "/books/search").permitAll()
+            .anyRequest().authenticated()
+        )
+        .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+        .authenticationProvider(authenticationProvider)
+        .formLogin(login -> login
+            .loginPage("/auth/login")
+            .loginProcessingUrl("/auth/login")
+            .defaultSuccessUrl("/home", true)
+            .failureUrl("/auth/login?error=true")
+            .permitAll()
+        )
+        .logout(logout -> logout
+            .logoutUrl("/logout")
+            .logoutSuccessUrl("/home")
+            .permitAll()
+        )
+        .headers(headers -> headers.frameOptions().sameOrigin());
 
     return http.build();
   }

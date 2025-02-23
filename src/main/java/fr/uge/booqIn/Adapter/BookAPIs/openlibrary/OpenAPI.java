@@ -8,6 +8,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -58,13 +59,23 @@ public class OpenAPI implements BookFetcher {
 
     private Book convertToBook(Doc doc) {
         String title = doc.title() != null ? doc.title() : "No Title";
-        Set<Author> authors = doc.author_name() != null && !doc.author_name().isEmpty()
-                ? doc.author_name().stream().map(authorName -> new Author(authorName, "")).collect(Collectors.toSet())
-                : Set.of();
+        Set<Author> authors = new HashSet<>();
+        if (doc.author_name() != null && !doc.author_name().isEmpty()) {
+            authors = doc.author_name().stream()
+                .map(name -> {
+                    String[] parts = name.split(" ", 2);
+                    return new Author(parts[0], parts.length > 1 ? parts[1] : "");
+                })
+                .collect(Collectors.toSet());
+        }
         String description = doc.description() != null ? doc.description() : "";
         String publicationDate = doc.first_publish_year() != null ? String.valueOf(doc.first_publish_year()) : "";
-        Book.Builder builder = new Book.Builder();
-        builder.title(title).authors(authors).description(description).publicationDate(publicationDate).isbns(doc.isbn());
-        return builder.build();
+        return new Book.Builder()
+            .title(title)
+            .authors(authors)
+            .description(description)
+            .publicationDate(publicationDate)
+            .isbns(doc.isbn())
+            .build();
     }
 }

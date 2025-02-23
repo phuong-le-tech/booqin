@@ -107,7 +107,12 @@ public class Book {
   @Column(nullable = false, length = 5000)
   private String title;
 
-  @ManyToMany(mappedBy = "books")
+  @ManyToMany
+  @JoinTable(
+      name = "book_author",
+      joinColumns = @JoinColumn(name = "book_id"),
+      inverseJoinColumns = @JoinColumn(name = "author_id")
+  )
   private Set<Author> authors;
 
 

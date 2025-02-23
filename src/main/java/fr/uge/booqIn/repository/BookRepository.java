@@ -23,5 +23,11 @@ public interface BookRepository extends JpaRepository<Book, Long> {
   @Query("select b from Book b where b.publicationDate = :publishedDate")
   List<Book> findByPublishedYear(String publishedDate);
 
+  @Query("SELECT b FROM Book b JOIN FETCH b.authors")
+  List<Book> findAllWithAuthors();
+
+  @Query("SELECT b FROM Book b JOIN FETCH b.authors WHERE b.title LIKE %:title%")
+  List<Book> findBooksByTitleWithAuthors(String title);
+
 
 }
