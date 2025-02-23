@@ -21,7 +21,7 @@ public class ScheduledProcess {
     this.bookService = bookService;
   }
 
-  @Scheduled(cron = "0 */1 * * * *")
+  @Scheduled(cron = "* * 0 * * *")
   public void askAPI() {
     List<String> authors = authorIterator.getNextBatch();
 
