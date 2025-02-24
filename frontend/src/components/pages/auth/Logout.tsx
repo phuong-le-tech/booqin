@@ -1,15 +1,13 @@
 import React, { useContext } from "react";
-import { AuthContext } from "../context/AuthContext";
-import AuthService from "../../services/AuthService"; // assuming you have a service for auth
+import { AuthContext } from "../../../context/AuthContext";
+import AuthService from "../../../services/AuthService"; // Assuming you have a service for auth
 
-const Logout = () => {
+const Logout: React.FC = () => {
     const { setUser } = useContext(AuthContext);
 
     const handleLogout = async () => {
         try {
-            // Call your logout endpoint if available
             await AuthService.logout();
-            // Clear the user in context
             setUser(null);
         } catch (error) {
             console.error("Logout failed:", error);
