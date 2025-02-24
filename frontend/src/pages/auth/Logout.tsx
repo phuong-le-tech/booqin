@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
-import { AuthContext } from "../../../context/AuthContext";
-import AuthService from "../../../services/AuthService"; // Assuming you have a service for auth
+import { AuthContext } from "../../context/AuthContext.tsx";
+import AuthService from "../../services/AuthService.ts"; // Assuming you have a service for auth
 
 const Logout: React.FC = () => {
     const { setUser } = useContext(AuthContext);

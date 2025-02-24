@@ -3,9 +3,10 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { AuthProvider } from "./context/AuthContext";
-import { Home } from "./components/pages/Home";
-import { Login } from "./components/pages/auth/Login";
-import { Register } from "./components/pages/auth/Register";
+import { Home } from "./pages/Home.tsx";
+import { Login } from "./pages/auth/Login";
+import { Register } from "./pages/auth/Register";
+import { Books } from "./pages/book/Books";
 
 const App: React.FC = () => {
     return (
@@ -17,6 +18,7 @@ const App: React.FC = () => {
                         <Route path="/home" element={<Home />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
+                        <Route path="/books" element={<Books />} />
                     </Routes>
                     <ToastContainer
                         position="top-right"
