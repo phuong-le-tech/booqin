@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Public Collections</title>
+</head>
+<body>
+<div>
+    <h1>Public Collections</h1>
+    <div>
+        <table>
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+            <tr th:each="collection : ${collections}" class="hover:bg-gray-50">
+                <td th:text="${collection.title}">Collection Title</td>
+                <td th:text="${collection.description}">Collection Description</td>
+                <td>
+                    <a th:href="@{/collections/{id}(id=${collection.id})}">View</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

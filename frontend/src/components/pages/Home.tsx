@@ -6,6 +6,7 @@ import {Link} from "react-router-dom"
 import {useContext} from "react"
 import {AuthContext} from "../../context/AuthContext"
 import {Layout} from "./Layout.tsx";
+import PublicCollections from "./PublicCollections";
 
 export const Home: React.FC = () => {
     const {user} = useContext(AuthContext)
@@ -33,6 +34,7 @@ export const Home: React.FC = () => {
                                 <Link to="/dashboard" className="btn btn-primary inline-block px-8 py-4 text-lg">
                                     Go to Dashboard
                                 </Link>
+                                <PublicCollections/>
                             </div>
                         ) : (
                             <div className="text-center">
@@ -55,4 +57,3 @@ export const Home: React.FC = () => {
         </Layout>
     )
 }
-
