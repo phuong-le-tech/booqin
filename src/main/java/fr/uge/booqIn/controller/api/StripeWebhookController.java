@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/stripe")
+@RequestMapping("/api/v1/stripe")
 public class StripeWebhookController {
   
   private final StripeService stripeService;
