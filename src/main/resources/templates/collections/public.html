@@ -16,8 +16,8 @@
                 <th>Actions</th>
             </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200">
-            <tr th:each="collection : ${collections}" class="hover:bg-gray-50">
+            <tbody>
+            <tr th:each="collection : ${collections}"">
                 <td th:text="${collection.title}">Collection Title</td>
                 <td th:text="${collection.description}">Collection Description</td>
                 <td>
