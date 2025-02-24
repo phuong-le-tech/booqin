@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-public class BookCollectionControllerTest {
+public class BookCollectionWebControllerTest {
 
   @InjectMocks
   private BookCollectionController bookCollectionController;
@@ -33,7 +33,7 @@ public class BookCollectionControllerTest {
   private BookCollectionService bookCollectionService;
 
   private final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
-  private static final Logger logger = Logger.getLogger(BookCollectionControllerTest.class.getName());
+  private static final Logger logger = Logger.getLogger(BookCollectionWebControllerTest.class.getName());
 
   @BeforeEach
   void setUp() {

@@ -1,6 +1,5 @@
 package fr.uge.booqIn.controller.web;
 
-import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.BookCollection;
 import fr.uge.booqIn.service.BookCollectionService;
 import org.springframework.stereotype.Controller;
@@ -9,10 +8,10 @@ import org.springframework.ui.Model;
 import java.util.List;
 
 @Controller
-public class BookCollectionController {
+public class BookCollectionWebController {
   private final BookCollectionService bookCollectionService;
 
-  public BookCollectionController(BookCollectionService bookCollectionService) {
+  public BookCollectionWebController(BookCollectionService bookCollectionService) {
     this.bookCollectionService = bookCollectionService;
   }
 
