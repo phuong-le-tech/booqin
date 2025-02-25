@@ -53,35 +53,32 @@ export const Navbar: React.FC = () => {
     return (
         <header className="bg-navbar w-full">
             <div className="w-full h-16 flex justify-between items-center">
-                <div className="pl-8">
-
-            <span className="text-2xl font-extrabold text-white hover:text-light-blue transition-colors duration-300">
-               {getPageTitle()}
-            </span>
+                <div className="pl-4 sm:pl-6 md:pl-8">
+                    <span className="text-xl sm:text-2xl font-extrabold text-white hover:text-light-blue transition-colors duration-300">
+                       {getPageTitle()}
+                    </span>
                 </div>
-                <div className="flex items-center gap-8 pr-8 sm:pr-12 lg:pr-16">
+                <div className="flex items-center gap-2 sm:gap-4 md:gap-8 pr-4 sm:pr-6 md:pr-8 lg:pr-16">
                     {user ? (
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 sm:gap-4">
                             <UserMenu user={user} onLogout={handleLogout}/>
                             <NotificationsMenu notifications={notifications} markAsRead={markAsRead}/>
                         </div>
                     ) : (
                         <>
-                            <Link to="/login" className="btn btn-primary inline-block px-4 py-2 text-lg">
+                            <Link to="/login" className="btn btn-primary text-sm sm:text-base inline-block px-2 py-1 sm:px-4 sm:py-2">
                                 Login
                             </Link>
-                            <Link to="/register" className="btn btn-primary inline-block px-4 py-2 text-lg">
+                            <Link to="/register" className="btn btn-primary text-sm sm:text-base inline-block px-2 py-1 sm:px-4 sm:py-2">
                                 Register
                             </Link>
                         </>
                     )}
                     <Link to="/cart" className="text-white hover:text-blue-400">
-                        <ShoppingCart className="h-6 w-6"/>
+                        <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6"/>
                     </Link>
                 </div>
             </div>
         </header>
     )
 }
-
-

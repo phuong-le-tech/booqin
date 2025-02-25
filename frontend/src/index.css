@@ -1,4 +1,5 @@
 @import "tailwindcss";
+
 /* Custom colors */
 :root {
   --primary: #2563eb; /* Bleu principal */
@@ -12,48 +13,111 @@
 /* Custom components */
 @layer components {
   .btn {
-    @apply rounded-md font-medium transition-colors duration-300;
+    @apply rounded-md font-medium transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2;
   }
 
   .btn-primary {
-    @apply bg-secondary text-white hover:bg-gray-500;
+    @apply bg-secondary text-white hover:bg-gray-500 focus:ring-gray-500;
   }
 
   .btn-secondary {
-    @apply bg-primary text-secondary hover:bg-light-blue;
+    @apply bg-primary text-secondary hover:bg-light-blue focus:ring-blue-500;
   }
-  
+
   /* Navbar styles */
   .bg-navbar {
     @apply bg-[var(--navbar)] shadow-sm;
   }
-  
+
   /* Footer styles */
   .bg-footer-color {
     @apply bg-[var(--footer-color)];
   }
-  
+
   /* Sidebar styles */
   .sidebar-nav-item {
-    @apply flex items-center w-full px-4 py-2 text-left transition-colors duration-200 rounded-lg hover:bg-[var(--beige-300)];
+    @apply flex items-center w-full px-4 py-2 text-left transition-colors duration-200 rounded-lg hover:bg-[var(--beige-300)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50;
   }
-  
+
   /* Home page card */
   .home-card {
-    @apply bg-white py-12 px-8 shadow-lg sm:rounded-2xl sm:px-12 transition-all duration-300 hover:shadow-xl border;
+    @apply bg-white py-6 px-4 sm:py-8 sm:px-6 md:py-12 md:px-8 shadow-lg rounded-lg sm:rounded-2xl transition-all duration-300 hover:shadow-xl border;
   }
-  
+
   /* Text colors */
   .text-primary {
     @apply text-[var(--primary)];
   }
-  
+
   .text-secondary {
     @apply text-[var(--secondary)];
   }
-  
+
   .text-light-blue {
     @apply text-[var(--light-blue)];
+  }
+
+  /* Responsive utilities */
+  .container-responsive {
+    @apply w-full px-4 sm:px-6 lg:px-8 mx-auto;
+  }
+
+  /* Form elements */
+  .form-input {
+    @apply block w-full border border-blue-200 rounded-md shadow-sm py-2 px-3
+    text-primary placeholder-gray-400
+    focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm;
+  }
+
+  .form-label {
+    @apply block text-sm font-medium text-primary mb-1;
+  }
+
+  .form-button {
+    @apply w-full flex justify-center py-2 px-4 border border-transparent
+    rounded-md shadow-sm text-sm font-medium text-white
+    bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400
+    focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
+  }
+
+  /* Mobile menu */
+  .mobile-menu-overlay {
+    @apply fixed inset-0 bg-black bg-opacity-50 z-40;
+  }
+
+  .mobile-menu {
+    @apply fixed z-50 h-screen w-64 transform transition-transform duration-300 ease-in-out;
+  }
+
+  /* Card styles for consistent layout */
+  .content-card {
+    @apply bg-white p-4 sm:p-6 rounded-lg shadow-md transition-shadow duration-300 hover:shadow-lg;
+  }
+
+  /* Responsive typography */
+  .responsive-heading-1 {
+    @apply text-2xl sm:text-3xl md:text-4xl font-extrabold;
+  }
+
+  .responsive-heading-2 {
+    @apply text-xl sm:text-2xl md:text-3xl font-bold;
+  }
+
+  .responsive-heading-3 {
+    @apply text-lg sm:text-xl font-semibold;
+  }
+
+  .responsive-body {
+    @apply text-sm sm:text-base;
+  }
+
+  /* Responsive spacing */
+  .section-spacing {
+    @apply py-6 sm:py-8 md:py-12;
+  }
+
+  .element-spacing {
+    @apply mb-4 sm:mb-6;
   }
 }
 
@@ -97,6 +161,17 @@ body {
   overflow-x: hidden;
 }
 
+/* Enhanced for mobile */
+@media (max-width: 640px) {
+  body {
+    font-size: 14px; /* Slightly smaller base font size on mobile */
+  }
+
+  .btn {
+    @apply py-2 px-3 text-sm; /* Smaller buttons on mobile */
+  }
+}
+
 footer {
   background-color: var(--footer);
   padding: 1rem;
@@ -114,4 +189,34 @@ a {
   width: 100%;
 }
 
+/* Responsive grid layouts */
+.responsive-grid {
+  @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6;
+}
 
+/* Better responsive tables */
+.responsive-table {
+  @apply w-full overflow-x-auto;
+}
+
+.responsive-table table {
+  @apply min-w-full divide-y divide-gray-200;
+}
+
+/* Improved focus styles for accessibility */
+:focus-visible {
+  @apply outline-none ring-2 ring-blue-500;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .dark-mode-support {
+    --primary: #3b82f6;
+    --secondary: #9ca3af;
+    --light-blue: #93c5fd;
+    --beige-300: #1f2937;
+    --navbar: #111827;
+    --footer-color: #1f2937;
+    color-scheme: dark;
+  }
+}
