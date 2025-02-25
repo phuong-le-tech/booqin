@@ -3,7 +3,7 @@ import {Link} from "react-router-dom"
 import {useContext, useState} from "react"
 import {AuthContext} from "../context/AuthContext"
 import {Layout} from "./Layout.tsx";
-import PublicCollections from "../components/pages/collections/PublicCollections.tsx";
+import PublicCollections from "../components/collections/PublicCollections.tsx";
 import {BookCollection} from "../model/BookCollection.ts";
 
 export const Home: React.FC = () => {

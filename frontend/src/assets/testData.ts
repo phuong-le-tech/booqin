@@ -67,6 +67,7 @@ export const collections: BookCollection[] = [
         title: "Classic Novels",
         description: "A collection of timeless literary classics.",
         owner: userTest,
+        isPublic: true,
         books: [booksTest[0], booksTest[1]],
         createdAt: new Date("2024-01-15"),
         updatedAt: new Date("2024-02-15")
@@ -76,6 +77,7 @@ export const collections: BookCollection[] = [
         title: "Fantasy Books",
         description: "Books from the fantasy genre.",
         owner: userTest,
+        isPublic: true,
         books: [booksTest[2]],
         createdAt: new Date("2024-01-20"),
         updatedAt: new Date("2024-02-20")
@@ -85,6 +87,7 @@ export const collections: BookCollection[] = [
         title: "Non-Fiction Books",
         description: "Books that don't fit into the fantasy or classic genres.",
         owner: userTest,
+        isPublic: true,
         books: [booksTest[0]],
         createdAt: new Date("2024-01-25"),
         updatedAt: new Date("2024-02-25")
@@ -94,6 +97,7 @@ export const collections: BookCollection[] = [
         title: "Harry Potter Series",
         description: "All books from the Harry Potter series.",
         owner: userTest,
+        isPublic: true,
         books: [booksTest[2]],
         createdAt: new Date("2024-01-30"),
         updatedAt: new Date("2024-02-28")

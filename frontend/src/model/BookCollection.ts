@@ -6,6 +6,7 @@ export interface BookCollection {
     title: String,
     description: String,
     owner: User,
+    isPublic: Boolean,
     books: Book[],
     createdAt: Date,
     updatedAt: Date

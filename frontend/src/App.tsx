@@ -6,9 +6,10 @@ import { AuthProvider } from "./context/AuthContext";
 import { Home } from "./pages/Home";
 import { Login } from "./pages/auth/Login";
 import { Register } from "./pages/auth/Register";
-import CollectionDetails from "./components/pages/collections/CollectionDetails.tsx";
-import PublicCollections from "./components/pages/collections/PublicCollections.tsx";
+import CollectionDetails from "./components/collections/CollectionDetails.tsx";
+import PublicCollections from "./components/collections/PublicCollections.tsx";
 import { Books } from "./pages/book/Books";
+import Collections from "./components/collections/Collections.tsx";
 
 const App: React.FC = () => {
     return (
@@ -21,7 +22,8 @@ const App: React.FC = () => {
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
                         <Route path="/books" element={<Books />} />
-                        <Route path="/collections" element={<PublicCollections />} />
+                        <Route path="/collections" element={<Collections />} />
+                        <Route path="/collections/public" element={<PublicCollections />} />
                         <Route path="/collections/:id" element={<CollectionDetails />} />
                     </Routes>
                     <ToastContainer
