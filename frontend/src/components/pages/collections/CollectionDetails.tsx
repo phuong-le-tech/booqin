@@ -4,13 +4,15 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { BookCollection } from "../../../model/BookCollection";
 import { Book } from "../../../model/Book";
+import { collections } from "../../../assets/testData";
 
 const CollectionDetails: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const [collection, setCollection] = useState<BookCollection | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
+    // USE REAL DATA IN BDD (use requests)
+    /*useEffect(() => {
         const fetchCollection = async () => {
             try {
                 const response = await fetch(`/api/v1/collections/${id}`);
@@ -25,6 +27,13 @@ const CollectionDetails: React.FC = () => {
         };
 
         fetchCollection();
+    }, [id]);*/
+    // USE TEST DATA
+    useEffect(() => {
+        // Chercher la collection dans les données de test
+        const foundCollection = collections.find((col) => col.id === id);
+        setCollection(foundCollection ?? null);
+        setLoading(false);
     }, [id]);
 
     if (loading) return <div className="text-center py-8">Loading...</div>;
@@ -60,11 +69,16 @@ const CollectionDetails: React.FC = () => {
                 )}
 
                 <div className="mt-6">
-                    <Link
+                    {/*<Link
                         to="/collections"
                         className="btn btn-secondary inline-block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
                     >
                         Back to Collections
+                    </Link>*/}
+                    <Link
+                        to="/home"
+                        className="btn btn-secondary inline-block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                        Back to Home
                     </Link>
                 </div>
             </div>
