@@ -3,7 +3,7 @@ package fr.uge.booqIn.dto.user;
 import fr.uge.booqIn.entity.Address;
 import fr.uge.booqIn.enums.UserRole;
 
-public record UserDTO(
+public record UserDto(
         Long id,
         String firstName,
         String lastName,

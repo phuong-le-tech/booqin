@@ -8,6 +8,7 @@ import { Login } from "./components/pages/auth/Login";
 import { Register } from "./components/pages/auth/Register";
 import CollectionDetails from "./components/pages/collections/CollectionDetails.tsx";
 import PublicCollections from "./components/pages/collections/PublicCollections.tsx";
+import { Books } from "./pages/book/Books";
 
 const App: React.FC = () => {
     return (
@@ -19,6 +20,7 @@ const App: React.FC = () => {
                         <Route path="/home" element={<Home />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
+                        <Route path="/books" element={<Books />} />
                         <Route path="/collections" element={<PublicCollections />} />
                         <Route path="/collections/:id" element={<CollectionDetails />} />
                     </Routes>
