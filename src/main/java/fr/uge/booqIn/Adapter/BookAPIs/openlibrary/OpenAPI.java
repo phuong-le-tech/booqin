@@ -41,6 +41,17 @@ public class OpenAPI implements BookFetcher {
     private List<Book> searchBooks(String query) {
         String url = API_URL + query + FIELDS;
         logger.info(url);
+        return getBookList(url);
+    }
+
+    public List<Book> searchPaginatedBooksByAuthor(String author, int page, int pageSize){
+        String paginatedurl = String.format("%sauthor=%s%s&page=%d&limit=%d",
+            API_URL, URLEncoder.encode(author, StandardCharsets.UTF_8), FIELDS, page, pageSize);
+        logger.info("Getting info of "+author+" with url\n\r"+paginatedurl);
+        return getBookList(paginatedurl);
+    }
+
+    private List<Book> getBookList(String url) {
         OpenLibraryResponse response = webClient.get()
                 .uri(url)
                 .retrieve()
@@ -52,9 +63,9 @@ public class OpenAPI implements BookFetcher {
         }
 
         return response.docs().stream()
-                .filter(doc -> doc.isbn() != null && !doc.isbn().isEmpty())
-                .map(this::convertToBook)
-                .toList();
+            .filter(doc -> doc.isbn() != null && !doc.isbn().isEmpty())
+            .map(this::convertToBook)
+            .toList();
     }
 
     private Book convertToBook(Doc doc) {
