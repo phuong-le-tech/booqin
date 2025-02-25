@@ -20,7 +20,7 @@ const App: React.FC = () => {
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
                         <Route path="/books" element={<Books />} />
-                        <Route path="/shopping-cart" element={<ShoppingCart />} />
+                        <Route path="/cart" element={<ShoppingCart />} />
                     </Routes>
                     <ToastContainer
                         position="top-right"
