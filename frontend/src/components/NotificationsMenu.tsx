@@ -12,12 +12,12 @@ export const NotificationsMenu: React.FC<NotificationsMenuProps> = ({ notificati
     const unreadCount = notifications.filter((n) => !n.read).length
 
     const trigger = (
-        <button className="relative p-2 text-white hover:text-blue-400 focus:outline-none">
-            <Bell className="h-6 w-6" />
+        <button className="relative p-1 sm:p-2 text-white hover:text-blue-400 focus:outline-none">
+            <Bell className="h-5 w-5 sm:h-6 sm:w-6" />
             {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-          {unreadCount}
-        </span>
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center">
+                    {unreadCount}
+                </span>
             )}
         </button>
     )
@@ -25,6 +25,9 @@ export const NotificationsMenu: React.FC<NotificationsMenuProps> = ({ notificati
     return (
         <Dropdown trigger={trigger}>
             <div className="py-1">
+                <div className="px-4 py-2 text-sm font-medium border-b text-secondary">
+                    Notifications
+                </div>
                 {notifications.length === 0 ? (
                     <div className="px-4 py-2 text-sm text-gray-700">Pas de notifications</div>
                 ) : (
@@ -45,4 +48,3 @@ export const NotificationsMenu: React.FC<NotificationsMenuProps> = ({ notificati
         </Dropdown>
     )
 }
-
