@@ -36,7 +36,7 @@
 
   /* Sidebar styles */
   .sidebar-nav-item {
-    @apply flex items-center w-full px-4 py-2 text-left transition-colors duration-200 rounded-lg hover:bg-[var(--beige-300)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50;
+    @apply flex items-center w-full px-4 py-2 text-left transition-colors duration-200 rounded-lg hover:bg-[var(--beige-300)] focus:outline-none focus:ring-2 focus:ring-blue-500;
   }
 
   /* Home page card */
@@ -82,7 +82,7 @@
 
   /* Mobile menu */
   .mobile-menu-overlay {
-    @apply fixed inset-0 bg-black bg-opacity-50 z-40;
+    @apply fixed inset-0 bg-black z-40;
   }
 
   .mobile-menu {
