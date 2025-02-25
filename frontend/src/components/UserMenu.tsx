@@ -14,9 +14,9 @@ interface UserMenuProps {
 
 export const UserMenu: React.FC<UserMenuProps> = ({ user, onLogout }) => {
     const trigger = (
-        <button className="flex items-center gap-2 text-white hover:text-blue-400 focus:outline-none">
-            <User className="h-6 w-6" />
-            <span>{user.firstName}</span>
+        <button className="flex items-center gap-1 sm:gap-2 text-white hover:text-blue-400 focus:outline-none">
+            <User className="h-5 w-5 sm:h-6 sm:w-6" />
+            <span className="hidden sm:inline">{user.firstName}</span>
         </button>
     )
 
@@ -24,8 +24,8 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, onLogout }) => {
         <Dropdown trigger={trigger}>
             <div className="py-1">
                 <div className="px-4 py-2 text-sm text-secondary border-b">
-                    <div className="font-medium">{`${user.firstName} ${user.lastName}`}</div>
-                    <div className="text-xs text-secondary">{user.email}</div>
+                    <div className="font-medium truncate">{`${user.firstName} ${user.lastName}`}</div>
+                    <div className="text-xs text-secondary truncate">{user.email}</div>
                 </div>
                 <Link to="/profile" className="block px-4 py-2 text-sm text-secondary hover:bg-gray-500">
                     <User className="inline-block w-4 h-4 mr-2" />
@@ -43,4 +43,3 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, onLogout }) => {
         </Dropdown>
     )
 }
-

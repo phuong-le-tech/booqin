@@ -17,24 +17,23 @@ export const BookCard: React.FC<BookCardProps> = ({ id, title, author, rating })
     const bgColor = generateBackgroundColor(title)
 
     return (
-        <div className="bg-secondary rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:scale-105">
-            <Link to={`/books/${id}`}>
+        <div className="bg-secondary rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:scale-105 h-full flex flex-col">
+            <Link to={`/books/${id}`} className="flex flex-col h-full">
                 <div
-                    className="w-full h-48 flex items-center justify-center text-white text-2xl font-bold"
+                    className="w-full h-32 sm:h-40 md:h-48 flex items-center justify-center text-white text-xl sm:text-2xl font-bold"
                     style={{ backgroundColor: bgColor }}
                 >
                     {title.substring(0, 2).toUpperCase()}
                 </div>
-                <div className="p-4">
-                    <h3 className="text-lg font-semibold text-primary mb-1">{title}</h3>
-                    <p className="text-sm text-primary mb-2">{author}</p>
-                    <div className="flex items-center">
+                <div className="p-3 sm:p-4 flex-grow flex flex-col">
+                    <h3 className="text-base sm:text-lg font-semibold text-primary mb-1 line-clamp-2">{title}</h3>
+                    <p className="text-xs sm:text-sm text-primary mb-2">{author}</p>
+                    <div className="flex items-center mt-auto">
                         <span className="text-yellow-400 mr-1">★</span>
-                        <span className="text-sm text-primary">{rating.toFixed(1)}</span>
+                        <span className="text-xs sm:text-sm text-primary">{rating.toFixed(1)}</span>
                     </div>
                 </div>
             </Link>
         </div>
     )
 }
-
