@@ -1,5 +1,6 @@
 package fr.uge.booqIn.controller;
 
+import fr.uge.booqIn.dto.user.UserShow;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.Cart;
 import fr.uge.booqIn.entity.User;
@@ -29,13 +30,13 @@ public class CartController {
     
     @PostMapping("/create")
     public ResponseEntity<?> createCart(@RequestParam Long userId, @RequestBody(required = false) List<Long> bookIds) {
-        Optional<User> userOptional = userService.getUserById(userId);
+        Optional<User> userOptional = userService.findEntityById(userId);
         
         if (userOptional.isEmpty()) {
             return ResponseEntity.badRequest().body("⚠️ Utilisateur introuvable avec ID : " + userId);
         }
         
-        User user = userOptional.get();
+        var user = userOptional.get();
         //Todo a garder
         //List<Book> books = (bookIds == null || bookIds.isEmpty()) ? new ArrayList<>() : bookService.findBooksByIds(bookIds);
         List<Book> books = new ArrayList<>();

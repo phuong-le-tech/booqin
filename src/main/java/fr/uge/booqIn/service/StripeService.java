@@ -4,7 +4,9 @@ import com.stripe.Stripe;
 import com.stripe.model.Event;
 import com.stripe.model.PaymentIntent;
 import com.stripe.param.PaymentIntentCreateParams;
+import com.stripe.exception.SignatureVerificationException ;
 import fr.uge.booqIn.entity.Cart;
+import com.stripe.net.Webhook;
 import fr.uge.booqIn.enums.Statut;
 import fr.uge.booqIn.repository.CartRepository;
 import jakarta.annotation.PostConstruct;
@@ -17,7 +19,11 @@ public class StripeService {
 
     @Value("${stripe.secret.key}")
     private String stripeSecretKey;
-
+    /*
+    @Value("${stripe.webhook.secret}")
+     */
+    private String endpointSecret;
+    
     private static final double SHIPPING_COST = 5.99;
     private  CartRepository cartRepository = null;
     
@@ -31,6 +37,14 @@ public class StripeService {
     public StripeService(CartRepository cartRepository) {
         Stripe.apiKey = stripeSecretKey;
         this.cartRepository = cartRepository;
+    }
+    
+    private Event constructStripeEvent(String payload, String sigHeader) throws SignatureVerificationException {
+        return Webhook.constructEvent(payload, sigHeader, endpointSecret);
+    }
+    
+    public Event handleStripeWebhook(String payload, String sigHeader) throws SignatureVerificationException {
+        return constructStripeEvent(payload, sigHeader);
     }
 
     public PaymentIntent createPaymentIntent(Cart cart) {
@@ -104,5 +118,5 @@ public class StripeService {
                 break;
         }
     }
-    
+
 }

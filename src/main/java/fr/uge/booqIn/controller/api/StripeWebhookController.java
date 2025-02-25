@@ -2,8 +2,9 @@ package fr.uge.booqIn.controller.api;
 
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
-import com.stripe.net.Webhook;
+
 import fr.uge.booqIn.service.StripeService;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,9 +15,9 @@ import org.springframework.web.bind.annotation.*;
 public class StripeWebhookController {
   
   private final StripeService stripeService;
+
   
-  @Value("${stripe.webhook.secret}")
-  private String endpointSecret;
+
   
   public StripeWebhookController(StripeService stripeService) {
     this.stripeService = stripeService;
@@ -24,14 +25,9 @@ public class StripeWebhookController {
   
   @PostMapping("/webhook")
   public ResponseEntity<String> handleStripeWebhook(@RequestBody String payload,
-                                                    @RequestHeader("Stripe-Signature") String sigHeader) {
+                                                    @RequestHeader("Stripe-Signature") String sigHeader) throws SignatureVerificationException {
     Event event;
-    try {
-      event = Webhook.constructEvent(payload, sigHeader, endpointSecret);
-    } catch (SignatureVerificationException e) {
-      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Signature invalide");
-    }
-    
+    event = stripeService.handleStripeWebhook(payload, sigHeader);
     stripeService.processWebhookEvent(event);
     return ResponseEntity.ok("Événement traité");
   }
