@@ -1,14 +1,14 @@
 package fr.uge.booqIn.dto.bookCollection;
 
-import fr.uge.booqIn.dto.user.UserDTO;
+import fr.uge.booqIn.dto.user.UserDto;
 
 import java.util.List;
 
-public record BookCollectionDTO(
+public record BookCollectionDto(
         Long id,
         String title,
         String description,
-        UserDTO owner,
+        UserDto owner,
         boolean isPublic,
         List<Long> bookIds,
         String createdAt,

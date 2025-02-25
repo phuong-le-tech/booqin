@@ -1,6 +1,6 @@
 package fr.uge.booqIn.dto.book;
 
-public record BookDTO(
+public record BookDto(
         Long id,
         String title,
         String author,
