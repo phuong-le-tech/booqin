@@ -1,10 +1,10 @@
 import type React from "react"
 import {Link} from "react-router-dom"
 import {useContext, useState} from "react"
-import {AuthContext} from "../../context/AuthContext"
+import {AuthContext} from "../context/AuthContext"
 import {Layout} from "./Layout.tsx";
-import PublicCollections from "./collections/PublicCollections.tsx";
-import {BookCollection} from "../../model/BookCollection.ts";
+import PublicCollections from "../components/pages/collections/PublicCollections.tsx";
+import {BookCollection} from "../model/BookCollection.ts";
 
 export const Home: React.FC = () => {
     const {user} = useContext(AuthContext)
@@ -46,11 +46,6 @@ export const Home: React.FC = () => {
                                 </div>
                             </div>
                         )}
-
-                        <div className="mt-8">
-                            {/*<PublicCollections collections={collections}/>*/}
-                            <PublicCollections />
-                        </div>
                     </div>
                 </div>
             </div>

@@ -99,8 +99,7 @@ export const collections: BookCollection[] = [
         updatedAt: new Date("2024-02-28")
     }
 ];
-
-// Associer les collections aux livres
+// Associating books with collections
 booksTest[0].collections.push(collections[0], collections[2]);
 booksTest[1].collections.push(collections[0]);
 booksTest[2].collections.push(collections[1], collections[3]);
