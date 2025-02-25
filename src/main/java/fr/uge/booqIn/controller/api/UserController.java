@@ -1,5 +1,6 @@
 package fr.uge.booqIn.controller.api;
 
+import fr.uge.booqIn.dto.user.UserIndex;
 import fr.uge.booqIn.dto.user.UserShow;
 import fr.uge.booqIn.entity.BookCollection;
 import fr.uge.booqIn.entity.User;
@@ -12,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -27,6 +29,14 @@ public class UserController {
     this.userService = userService;
     this.bookCollectionService = bookCollectionService;
     logger.info("✅ UserController chargé !");
+  }
+
+  @GetMapping()
+  public ResponseEntity<ApiResponse<List<UserIndex>>> getUsers() {
+    logger.info("🔍 Recherche de tous les utilisateurs");
+
+    List<UserIndex> userDtos = userService.findAll();
+    return ResponseEntity.ok(ApiResponse.success("Users found", userDtos));
   }
 
   @GetMapping("/{id}")

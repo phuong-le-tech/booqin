@@ -1,5 +1,6 @@
 package fr.uge.booqIn.service;
 
+import fr.uge.booqIn.dto.user.UserIndex;
 import fr.uge.booqIn.dto.user.UserShow;
 import fr.uge.booqIn.entity.BookCollection;
 import fr.uge.booqIn.entity.User;
@@ -8,6 +9,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -16,6 +18,18 @@ public class UserService {
 
   public UserService(UserRepository userRepository) {
     this.userRepository = userRepository;
+  }
+
+  @Transactional
+  public List<UserIndex> findAll() {
+    return userRepository.findAll().stream()
+            .map(user -> new UserIndex(
+                    user.getId(),
+                    user.getFirstName(),
+                    user.getLastName(),
+                    user.getEmail()
+            ))
+            .toList();
   }
 
   @Transactional
@@ -49,6 +63,28 @@ public class UserService {
   @Transactional
   public User updateUser(User user) {
     return userRepository.save(user);
+  }
+
+  @Transactional
+  public User patchUser(User user) {
+    Optional<User> existingOpt = userRepository.findById(user.getId());
+    if (existingOpt.isEmpty()) {
+      return null;
+    }
+    User existing = existingOpt.get();
+    if (user.getFirstName() != null) {
+      existing.setFirstName(user.getFirstName());
+    }
+    if (user.getLastName() != null) {
+      existing.setLastName(user.getLastName());
+    }
+    if (user.getEmail() != null) {
+      existing.setEmail(user.getEmail());
+    }
+    if (user.getAddress() != null) {
+      existing.setAddress(user.getAddress());
+    }
+    return userRepository.save(existing);
   }
 
   @Transactional
