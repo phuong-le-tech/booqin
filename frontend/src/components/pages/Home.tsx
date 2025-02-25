@@ -3,13 +3,15 @@
 import type React from "react"
 
 import {Link} from "react-router-dom"
-import {useContext} from "react"
+import {useContext, useState} from "react"
 import {AuthContext} from "../../context/AuthContext"
 import {Layout} from "./Layout.tsx";
-import PublicCollections from "./PublicCollections";
+import PublicCollections from "./collections/PublicCollections.tsx";
+import {BookCollection} from "../../model/BookCollection.ts";
 
 export const Home: React.FC = () => {
     const {user} = useContext(AuthContext)
+    //const [collections, setCollections] = useState<BookCollection[]>([]);
 
     return (
         <Layout>
@@ -34,7 +36,6 @@ export const Home: React.FC = () => {
                                 <Link to="/dashboard" className="btn btn-primary inline-block px-8 py-4 text-lg">
                                     Go to Dashboard
                                 </Link>
-                                <PublicCollections/>
                             </div>
                         ) : (
                             <div className="text-center">
@@ -51,6 +52,11 @@ export const Home: React.FC = () => {
                                 </div>
                             </div>
                         )}
+
+                        <div className="mt-8">
+                            {/*<PublicCollections collections={collections}/>*/}
+                            <PublicCollections />
+                        </div>
                     </div>
                 </div>
             </div>

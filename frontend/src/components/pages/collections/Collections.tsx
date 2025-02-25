@@ -3,8 +3,6 @@ import {AuthContext} from "../context/AuthContext.jsx";
 import {Link} from "react-router-dom";
 
 const Collections = () => {
-    return (
-    );
 };
 
 export default Collections;
