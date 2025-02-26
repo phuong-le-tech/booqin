@@ -2,6 +2,7 @@ package fr.uge.booqIn.controller.api;
 
 import fr.uge.booqIn.dto.user.UserIndex;
 import fr.uge.booqIn.dto.user.UserShow;
+import fr.uge.booqIn.dto.user.UserUpdate;
 import fr.uge.booqIn.entity.BookCollection;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.factory.ApiResponse;
@@ -41,26 +42,22 @@ public class UserController {
   public ResponseEntity<ApiResponse<Page<UserIndex>>> getUsers(
           @RequestParam(defaultValue = "0") int page,
           @RequestParam(defaultValue = "10") int size,
-          @RequestParam(defaultValue = "id,asc") String[] sort,
-          @RequestParam(defaultValue = "asc") String direction,
+          @RequestParam(defaultValue = "id") String sortField,
+          @RequestParam(defaultValue = "asc") String sortDirection,
           @RequestParam(required = false) String firstName,
           @RequestParam(required = false) String lastName,
-          @RequestParam(required = false) String email ){
+          @RequestParam(required = false) String email) {
 
-    logger.info("🔍 Recherche paginée des utilisateurs (page={}, size={})", page, size);
+    logger.info("🔍 Recherche paginée des utilisateurs (page={}, size={}, sort={}, direction={})",
+            page, size, sortField, sortDirection);
 
-    List<Sort.Order> orders = new ArrayList<>();
-    System.out.println(Arrays.toString(sort));
-    for (String sortOrder : sort) {
-      String[] _sort = sortOrder.split(",");
-      orders.add(new Sort.Order(_sort[1].equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, _sort[0]));
-    }
-    Page<UserIndex> users = userService.findUsers(
-            firstName,
-            lastName,
-            email,
-            PageRequest.of(page, size, Sort.by(orders))
-    );
+    Sort sort = sortDirection.equalsIgnoreCase("desc") ?
+            Sort.by(sortField).descending() :
+            Sort.by(sortField).ascending();
+
+    Pageable pageable = PageRequest.of(page, size, sort);
+
+    Page<UserIndex> users = userService.findUsers(firstName, lastName, email, pageable);
 
     return ResponseEntity.ok(ApiResponse.success("Users found", users));
   }
@@ -109,6 +106,35 @@ public class UserController {
     }
 
     User updatedUser = userService.updateUser(user);
+    var updatedUserShow = new UserShow(
+            updatedUser.getId(),
+            updatedUser.getFirstName(),
+            updatedUser.getLastName(),
+            updatedUser.getEmail(),
+            updatedUser.getAddress()
+    );
+
+    return ResponseEntity.ok(ApiResponse.success("User updated successfully", updatedUserShow));
+  }
+
+  @PatchMapping("/{id}")
+  public ResponseEntity<ApiResponse<UserShow>> patchUser(@PathVariable Long id, @RequestBody UserUpdate user) {
+    logger.info("🔄 Mise à jour partielle de l'utilisateur avec id: {}", id);
+
+    Optional<User> existingOpt = userService.findEntityById(id);
+    if (existingOpt.isEmpty()) {
+      return ResponseEntity
+              .status(HttpStatus.NOT_FOUND)
+              .body(ApiResponse.error("User not found"));
+    }
+
+    User updatedUser = userService.patchUser(id, user);
+    if (updatedUser == null) {
+      return ResponseEntity
+              .status(HttpStatus.BAD_REQUEST)
+              .body(ApiResponse.error("User not updated"));
+    }
+
     var updatedUserShow = new UserShow(
             updatedUser.getId(),
             updatedUser.getFirstName(),

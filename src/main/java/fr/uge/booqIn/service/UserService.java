@@ -2,6 +2,7 @@ package fr.uge.booqIn.service;
 
 import fr.uge.booqIn.dto.user.UserIndex;
 import fr.uge.booqIn.dto.user.UserShow;
+import fr.uge.booqIn.dto.user.UserUpdate;
 import fr.uge.booqIn.entity.BookCollection;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.repository.UserRepository;
@@ -26,11 +27,23 @@ public class UserService {
 
   @Transactional
   public Page<UserIndex> findUsers(String firstName, String lastName, String email, Pageable pageable) {
-    return userRepository.findAll(Specification.where(
-            UserSpecification.hasFirstName(firstName)
-                    .and(UserSpecification.hasLastName(lastName))
-                    .and(UserSpecification.hasEmail(email))
-    ), pageable)
+    // Build the specification for filtering
+    Specification<User> spec = Specification.where(null);
+
+    if (firstName != null && !firstName.isEmpty()) {
+      spec = spec.and(UserSpecification.hasFirstName(firstName));
+    }
+
+    if (lastName != null && !lastName.isEmpty()) {
+      spec = spec.and(UserSpecification.hasLastName(lastName));
+    }
+
+    if (email != null && !email.isEmpty()) {
+      spec = spec.and(UserSpecification.hasEmail(email));
+    }
+
+    // Use the specification with the pageable object
+    return userRepository.findAll(spec, pageable)
             .map(user -> new UserIndex(
                     user.getId(),
                     user.getFirstName(),
@@ -73,25 +86,27 @@ public class UserService {
   }
 
   @Transactional
-  public User patchUser(User user) {
-    Optional<User> existingOpt = userRepository.findById(user.getId());
-    if (existingOpt.isEmpty()) {
-      return null;
+  public User patchUser(Long id, UserUpdate user) {
+    User existing = userRepository.findById(id).orElseThrow();
+
+    if (user.firstName() != null) {
+      existing.setFirstName(user.firstName());
     }
-    User existing = existingOpt.get();
-    if (user.getFirstName() != null) {
-      existing.setFirstName(user.getFirstName());
+
+    if (user.lastName() != null) {
+      existing.setLastName(user.lastName());
     }
-    if (user.getLastName() != null) {
-      existing.setLastName(user.getLastName());
+
+    if (user.email() != null) {
+      existing.setEmail(user.email());
     }
-    if (user.getEmail() != null) {
-      existing.setEmail(user.getEmail());
+
+    if (user.address() != null) {
+      existing.setAddress(user.address());
     }
-    if (user.getAddress() != null) {
-      existing.setAddress(user.getAddress());
-    }
+
     return userRepository.save(existing);
+
   }
 
   @Transactional
