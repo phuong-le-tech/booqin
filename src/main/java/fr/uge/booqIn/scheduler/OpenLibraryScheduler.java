@@ -24,7 +24,7 @@ public class OpenLibraryScheduler {
         this.openApiAdapter = (OpenApiAdapter) BookFetcherFactory.adapter("open");
     }
 
-    @Scheduled(cron = "0 */1 * * * *")
+    @Scheduled(cron = "* * 2 * * *")
     public void fetchOpenLibraryBooks() {
         List<String> authors = authorIterator.getNextBatch();
 
@@ -43,7 +43,7 @@ public class OpenLibraryScheduler {
         int page = 1;
         List<Book> books;
         do {
-            books = openApiAdapter.searchBookByAuthor(author, page, PAGE_SIZE);
+            books = openApiAdapter.searchBookByAuthorWithPagination(author, page, PAGE_SIZE);
             books.forEach(bookService::save);
             page++;
         } while (!books.isEmpty());
