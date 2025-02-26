@@ -13,7 +13,7 @@ import java.util.logging.Logger;
 @Component
 public class OpenLibraryScheduler {
     private static final Logger logger = Logger.getLogger(OpenLibraryScheduler.class.getName());
-    private static final int PAGE_SIZE = 20;
+    private static final int PAGE_SIZE = 15;
     private final AuthorIterator authorIterator;
     private final BookService bookService;
     private final OpenApiAdapter openApiAdapter;
@@ -34,7 +34,6 @@ public class OpenLibraryScheduler {
         }
 
         for (String author : authors) {
-            System.out.println();
             fetchPaginatedBooks(author);
         }
     }
