@@ -44,6 +44,11 @@ const CollectionDetails: React.FC = () => {
 
     if (!collection) return <div className="text-center py-8">Collection not found.</div>;
 
+    if (user) {
+        if (collection.owner.id !== user.id && !collection.isPublic) {
+            return <div className="text-center py-8">You don't have permission to view this collection.</div>;
+        }
+    }
     const parentPath = origin === 'public' ? "/collections/public" : "/collections";
     const backButtonName = origin === 'public' ? "Back to Public Collections" : "Back to My Collections";
 
