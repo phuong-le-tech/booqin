@@ -77,7 +77,7 @@ export const collections: BookCollection[] = [
         title: "Fantasy Books",
         description: "Books from the fantasy genre.",
         owner: userTest,
-        isPublic: true,
+        isPublic: false,
         books: [booksTest[2]],
         createdAt: new Date("2024-01-20"),
         updatedAt: new Date("2024-02-20")
@@ -97,7 +97,7 @@ export const collections: BookCollection[] = [
         title: "Harry Potter Series",
         description: "All books from the Harry Potter series.",
         owner: userTest,
-        isPublic: true,
+        isPublic: false,
         books: [booksTest[2]],
         createdAt: new Date("2024-01-30"),
         updatedAt: new Date("2024-02-28")
