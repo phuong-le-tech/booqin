@@ -23,6 +23,8 @@ public class Book {
     this.updatedAt = builder.updatedAt;
   }
 
+
+
   public static class Builder {
     private Long id;
     private Set<String> isbns = new HashSet<>();
@@ -151,6 +153,9 @@ public class Book {
 
   public String getTitle() {
     return title;
+  }
+  public void setId(Long id) {
+    this.id = id;
   }
 
   public Set<Author> getAuthors() {

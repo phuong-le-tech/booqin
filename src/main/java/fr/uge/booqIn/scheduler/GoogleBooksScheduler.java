@@ -22,7 +22,7 @@ public class GoogleBooksScheduler {
         this.googleBooksFetcher = BookFetcherFactory.adapter("google");
     }
 
-    @Scheduled(cron = "0 0 1 * * *")
+    @Scheduled(cron = "* * 1 * * *")
     public void fetchGoogleBooks() {
         List<String> authors = authorIterator.getNextBatch();
 

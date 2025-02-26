@@ -14,7 +14,7 @@ import java.util.logging.Logger;
 @Component
 public class OpenLibraryScheduler {
     private static final Logger logger = Logger.getLogger(OpenLibraryScheduler.class.getName());
-    private static final int PAGE_SIZE = 15;
+    private static final int PAGE_SIZE = 10;
     private final AuthorIterator authorIterator;
     private final BookService bookService;
     private final BookFetcher openApiAdapter;
@@ -25,7 +25,7 @@ public class OpenLibraryScheduler {
         this.openApiAdapter = BookFetcherFactory.adapter("open");
     }
 
-    @Scheduled(cron = "* * 2 * * *")
+    @Scheduled(cron = "*/30 * * * * *")
     public void fetchOpenLibraryBooks() {
         List<String> authors = authorIterator.getNextBatch();
 

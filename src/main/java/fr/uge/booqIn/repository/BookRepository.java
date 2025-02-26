@@ -30,7 +30,7 @@ public interface BookRepository extends JpaRepository<Book, Long> {
   List<Book> findBooksByTitleWithAuthors(String title);
 
   @Override
-  @Query("select b from Book b join fetch b.authors") // Correction de la requête
+  @Query("select b from Book b join fetch b.authors join fetch b.isbns" )
   @NonNull
   List<Book> findAll();
 }
