@@ -180,5 +180,6 @@ public class BookCollectionService {
       throw new AccessDeniedException("You don't have permission to modify this collection");
     }
   }
+  
 }
 

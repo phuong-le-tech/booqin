@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Mon Panier</title>
+</head>
+<body>
+
+<div class="container mt-5">
+    <h2>Mon Panier</h2>
+
+    <div th:if="${cart.books.isEmpty()}" class="alert alert-info">
+        Votre panier est vide.
+    </div>
+
+    <ul class="list-group">
+        <li th:each="book : ${cart.books}" class="list-group-item d-flex justify-content-between align-items-center">
+            <span th:text="${book.title}"></span>
+            <form th:action="@{/cart/remove-book}" method="post">
+                <input type="hidden" name="userId" th:value="${cart.user.id}">
+                <input type="hidden" name="bookId" th:value="${book.id}">
+                <button type="submit" class="btn btn-danger btn-sm">Retirer</button>
+            </form>
+        </li>
+    </ul>
+
+    <form th:action="@{/cart/clear/{userId}(userId=${cart.user.id})}" method="post">
+        <button type="submit" class="btn btn-warning mt-3">Vider le panier</button>
+    </form>
+
+    <a href="/" class="btn btn-secondary mt-3">Retour à l'accueil</a>
+</div>
+
+</body>
+</html>

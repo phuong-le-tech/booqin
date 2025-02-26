@@ -22,6 +22,8 @@ public interface BookRepository extends JpaRepository<Book, Long> {
 
   @Query("select b from Book b where b.publicationDate = :publishedDate")
   List<Book> findByPublishedYear(String publishedDate);
+  
+  
 
 
 }

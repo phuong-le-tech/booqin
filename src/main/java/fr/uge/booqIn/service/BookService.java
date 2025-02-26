@@ -34,7 +34,7 @@ public class BookService {
         bookRepository.delete(book);
     }
 
-    public Optional<Book> findById(Long id){
+    public Optional<Book> findBookById(Long id){
         return bookRepository.findById(id);
     }
 
@@ -42,6 +42,9 @@ public class BookService {
         return bookRepository.findAll();
     }
 
+    public Optional<Book> findByIdOrThrow(Long id){
+        return Optional.of(bookRepository.findById(id).orElseThrow());
+    }
     public List<Book> findBooksByTitle(String title) {
         Objects.requireNonNull(title);
         return bookRepository.findBooksByTitle(title);
