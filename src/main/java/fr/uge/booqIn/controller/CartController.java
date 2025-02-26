@@ -4,6 +4,7 @@ import fr.uge.booqIn.dto.user.UserShow;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.Cart;
 import fr.uge.booqIn.entity.User;
+import fr.uge.booqIn.factory.ApiResponse;
 import fr.uge.booqIn.service.BookCollectionService;
 import fr.uge.booqIn.service.CartService;
 import fr.uge.booqIn.service.UserService;
@@ -15,7 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/cart")
+@RequestMapping("/v1/controller/api/cart")
 public class CartController {
 
     private final CartService cartService;
@@ -29,11 +30,11 @@ public class CartController {
     }
     
     @PostMapping("/create")
-    public ResponseEntity<?> createCart(@RequestParam Long userId, @RequestBody(required = false) List<Long> bookIds) {
+    public ResponseEntity<ApiResponse<?>> createCart(@RequestParam Long userId, @RequestBody(required = false) List<Long> bookIds) {
         Optional<User> userOptional = userService.findEntityById(userId);
         
         if (userOptional.isEmpty()) {
-            return ResponseEntity.badRequest().body("⚠️ Utilisateur introuvable avec ID : " + userId);
+            return ResponseEntity.badRequest().body(ApiResponse.error("User not found"));
         }
         
         var user = userOptional.get();
@@ -42,7 +43,7 @@ public class CartController {
         List<Book> books = new ArrayList<>();
         Cart cart = cartService.createCart(user, books);
         System.out.println("Cart created with ID: " + cart);
-        return ResponseEntity.ok(cart);
+        return ResponseEntity.ok(ApiResponse.success("Cart created", cart));
     }
 
 

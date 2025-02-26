@@ -1,7 +1,7 @@
 package fr.uge.booqIn.entity;
 
 import jakarta.persistence.*;
-import fr.uge.booqIn.enums.Statut;
+import fr.uge.booqIn.enums.StatutPayment;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -19,7 +19,7 @@ public class Cart {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Statut statut;
+    private StatutPayment statut;
 
     @ManyToMany
     @JoinTable(name = "cart_books", joinColumns = @JoinColumn(name = "cart_id"), inverseJoinColumns = @JoinColumn(name = "book_id"))
@@ -31,7 +31,7 @@ public class Cart {
     @Column(nullable = true)
     private String paymentIntentId;
 
-    public Cart(User user, Statut statut, List<Book> books) {
+    public Cart(User user, StatutPayment statut, List<Book> books) {
         this.user = user;
         this.statut = statut;
         this.books = books;
@@ -40,11 +40,11 @@ public class Cart {
     public Cart() {
     }
     
-    public Statut getStatut() {
+    public StatutPayment getStatut() {
         return statut;
     }
 
-    public void setStatut(Statut statut) {
+    public void setStatut(StatutPayment statut) {
         this.statut = statut;
     }
 

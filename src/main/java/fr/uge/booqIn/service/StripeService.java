@@ -1,18 +1,21 @@
 package fr.uge.booqIn.service;
 
 import com.stripe.Stripe;
+import com.stripe.exception.StripeException;
 import com.stripe.model.Event;
 import com.stripe.model.PaymentIntent;
 import com.stripe.param.PaymentIntentCreateParams;
 import com.stripe.exception.SignatureVerificationException ;
 import fr.uge.booqIn.entity.Cart;
 import com.stripe.net.Webhook;
-import fr.uge.booqIn.enums.Statut;
+import fr.uge.booqIn.enums.StatutPayment;
 import fr.uge.booqIn.repository.CartRepository;
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class StripeService {
@@ -25,7 +28,7 @@ public class StripeService {
     private String endpointSecret;
     
     private static final double SHIPPING_COST = 5.99;
-    private  CartRepository cartRepository = null;
+    private final CartRepository cartRepository ;
     
     @PostConstruct
     public void init() {
@@ -63,37 +66,35 @@ public class StripeService {
             throw new RuntimeException("Erreur lors de la création du paiement", e);
         }
     }
-
-    public PaymentIntent confirmPayment(String paymentIntentId) {
-        try {
-            PaymentIntent paymentIntent = PaymentIntent.retrieve(paymentIntentId);
-            return paymentIntent.confirm();
-        } catch (Exception e) {
-            throw new RuntimeException("Erreur lors de la confirmation du paiement", e);
-        }
+    
+    /*** Confirmation du paiement ***/
+    public PaymentIntent confirmPayment(String paymentIntentId) throws StripeException {
+        PaymentIntent paymentIntent = PaymentIntent.retrieve(paymentIntentId);
+        return paymentIntent.confirm();
     }
-
-    public PaymentIntent cancelPayment(String paymentIntentId) {
-        try {
-            PaymentIntent paymentIntent = PaymentIntent.retrieve(paymentIntentId);
-            return paymentIntent.cancel();
-        } catch (Exception e) {
-            throw new RuntimeException("Erreur lors de l'annulation du paiement", e);
-        }
+    
+    /*** Annulation du paiement ***/
+    public PaymentIntent cancelPayment(String paymentIntentId) throws  StripeException {
+        PaymentIntent paymentIntent = PaymentIntent.retrieve(paymentIntentId);
+        return paymentIntent.cancel();
     }
-
     public void handlePaymentSuccess(String paymentIntentId) {
         Cart cart = cartRepository.findByPaymentIntentId(paymentIntentId)
-                .orElseThrow(() -> new RuntimeException("Panier introuvable pour cet identifiant"));
-        cart.setStatut(Statut.CONFIRMED);
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Panier introuvable pour l'identifiant de paiement : " + paymentIntentId
+                ));
+        cart.setStatut(StatutPayment.CONFIRMED);
         cartRepository.save(cart);
     }
     
- 
     public void handlePaymentFailure(String paymentIntentId) {
         Cart cart = cartRepository.findByPaymentIntentId(paymentIntentId)
-                .orElseThrow(() -> new RuntimeException("Panier introuvable pour cet identifiant"));
-        cart.setStatut(Statut.CANCELLED);
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Panier introuvable pour l'identifiant de paiement : " + paymentIntentId
+                ));
+        cart.setStatut(StatutPayment.CANCELLED);
         cartRepository.save(cart);
     }
     @Transactional

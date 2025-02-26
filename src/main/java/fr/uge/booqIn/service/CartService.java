@@ -3,15 +3,13 @@ package fr.uge.booqIn.service;
 import fr.uge.booqIn.entity.Cart;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.entity.Book;
-import fr.uge.booqIn.enums.Statut;
+import fr.uge.booqIn.enums.StatutPayment;
 import fr.uge.booqIn.repository.CartRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
-@Transactional
 public class CartService {
 
     private final CartRepository cartRepository;
@@ -21,7 +19,7 @@ public class CartService {
     }
 
     public Cart createCart(User user, List<Book> books) {
-        Cart cart = new Cart(user, Statut.PENDING, books);
+        Cart cart = new Cart(user, StatutPayment.PENDING, books);
         return cartRepository.save(cart);
     }
 
@@ -30,7 +28,7 @@ public class CartService {
                 .orElseThrow(() -> new RuntimeException("Cart not found with id: " + cartId));
     }
 
-    public Cart updateCartStatus(Long cartId, Statut status) {
+    public Cart updateCartStatus(Long cartId, StatutPayment status) {
         Cart cart = getCart(cartId);
         cart.setStatut(status);
         return cartRepository.save(cart);

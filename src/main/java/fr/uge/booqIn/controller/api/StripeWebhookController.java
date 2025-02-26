@@ -3,6 +3,7 @@ package fr.uge.booqIn.controller.api;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
 
+import fr.uge.booqIn.factory.ApiResponse;
 import fr.uge.booqIn.service.StripeService;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,11 +25,11 @@ public class StripeWebhookController {
   }
   
   @PostMapping("/webhook")
-  public ResponseEntity<String> handleStripeWebhook(@RequestBody String payload,
-                                                    @RequestHeader("Stripe-Signature") String sigHeader) throws SignatureVerificationException {
+  public ResponseEntity<ApiResponse<String>> handleStripeWebhook(@RequestBody String payload,
+                                                                 @RequestHeader("Stripe-Signature") String sigHeader) throws SignatureVerificationException {
     Event event;
     event = stripeService.handleStripeWebhook(payload, sigHeader);
     stripeService.processWebhookEvent(event);
-    return ResponseEntity.ok("Événement traité");
+    return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success("Webhook traité"));
   }
 }
