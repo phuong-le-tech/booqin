@@ -5,7 +5,11 @@ import fr.uge.booqIn.dto.user.UserShow;
 import fr.uge.booqIn.entity.BookCollection;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.repository.UserRepository;
+import fr.uge.booqIn.specification.UserSpecification;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -21,15 +25,18 @@ public class UserService {
   }
 
   @Transactional
-  public List<UserIndex> findAll() {
-    return userRepository.findAll().stream()
+  public Page<UserIndex> findUsers(String firstName, String lastName, String email, Pageable pageable) {
+    return userRepository.findAll(Specification.where(
+            UserSpecification.hasFirstName(firstName)
+                    .and(UserSpecification.hasLastName(lastName))
+                    .and(UserSpecification.hasEmail(email))
+    ), pageable)
             .map(user -> new UserIndex(
                     user.getId(),
                     user.getFirstName(),
                     user.getLastName(),
                     user.getEmail()
-            ))
-            .toList();
+            ));
   }
 
   @Transactional

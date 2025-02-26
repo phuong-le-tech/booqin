@@ -9,10 +9,16 @@ import fr.uge.booqIn.service.BookCollectionService;
 import fr.uge.booqIn.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,11 +38,31 @@ public class UserController {
   }
 
   @GetMapping()
-  public ResponseEntity<ApiResponse<List<UserIndex>>> getUsers() {
-    logger.info("🔍 Recherche de tous les utilisateurs");
+  public ResponseEntity<ApiResponse<Page<UserIndex>>> getUsers(
+          @RequestParam(defaultValue = "0") int page,
+          @RequestParam(defaultValue = "10") int size,
+          @RequestParam(defaultValue = "id,asc") String[] sort,
+          @RequestParam(defaultValue = "asc") String direction,
+          @RequestParam(required = false) String firstName,
+          @RequestParam(required = false) String lastName,
+          @RequestParam(required = false) String email ){
 
-    List<UserIndex> userDtos = userService.findAll();
-    return ResponseEntity.ok(ApiResponse.success("Users found", userDtos));
+    logger.info("🔍 Recherche paginée des utilisateurs (page={}, size={})", page, size);
+
+    List<Sort.Order> orders = new ArrayList<>();
+    System.out.println(Arrays.toString(sort));
+    for (String sortOrder : sort) {
+      String[] _sort = sortOrder.split(",");
+      orders.add(new Sort.Order(_sort[1].equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC, _sort[0]));
+    }
+    Page<UserIndex> users = userService.findUsers(
+            firstName,
+            lastName,
+            email,
+            PageRequest.of(page, size, Sort.by(orders))
+    );
+
+    return ResponseEntity.ok(ApiResponse.success("Users found", users));
   }
 
   @GetMapping("/{id}")
