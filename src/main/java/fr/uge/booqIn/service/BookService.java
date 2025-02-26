@@ -23,7 +23,7 @@ public class BookService {
 
     public BookService(BookRepository bookRepository, AuthorRepository authorRepository) {
         this.bookRepository = bookRepository;
-      this.authorRepository = authorRepository;
+        this.authorRepository = authorRepository;
     }
 
     @Transactional
@@ -33,11 +33,9 @@ public class BookService {
         if(!b){
             return;
         }
-        for (Author author : toSave.getAuthors()) {
-            if (author.getId() == null) {
-                authorRepository.save(author);
-            }
-        }
+        toSave.getAuthors().stream()
+            .filter(author -> author.getId() == null)
+            .forEach(authorRepository::save);
         bookRepository.save(toSave);
     }
 

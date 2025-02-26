@@ -1,5 +1,6 @@
 package fr.uge.booqIn.scheduler;
 
+import fr.uge.booqIn.Adapter.BookAPIs.BookFetcher;
 import fr.uge.booqIn.Adapter.BookAPIs.OpenApiAdapter;
 import fr.uge.booqIn.Adapter.BookAPIs.BookFetcherFactory;
 import fr.uge.booqIn.entity.Book;
@@ -16,12 +17,12 @@ public class OpenLibraryScheduler {
     private static final int PAGE_SIZE = 15;
     private final AuthorIterator authorIterator;
     private final BookService bookService;
-    private final OpenApiAdapter openApiAdapter;
+    private final BookFetcher openApiAdapter;
 
     public OpenLibraryScheduler(NovelistsBean novelistsBean, BookService bookService) {
         this.authorIterator = new AuthorIterator(novelistsBean, 15);
         this.bookService = bookService;
-        this.openApiAdapter = (OpenApiAdapter) BookFetcherFactory.adapter("open");
+        this.openApiAdapter = BookFetcherFactory.adapter("open");
     }
 
     @Scheduled(cron = "* * 2 * * *")
@@ -32,10 +33,7 @@ public class OpenLibraryScheduler {
             logger.warning("No authors found for OpenLibrary API.");
             return;
         }
-
-        for (String author : authors) {
-            fetchPaginatedBooks(author);
-        }
+        authors.forEach(this::fetchPaginatedBooks);
     }
 
     private void fetchPaginatedBooks(String author) {

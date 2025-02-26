@@ -2,7 +2,6 @@ package fr.uge.booqIn.scheduler;
 
 import fr.uge.booqIn.Adapter.BookAPIs.BookFetcher;
 import fr.uge.booqIn.Adapter.BookAPIs.BookFetcherFactory;
-import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.service.BookService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
