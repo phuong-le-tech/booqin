@@ -1,18 +1,19 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, {useContext, useEffect, useState} from "react";
 import { useParams, Link } from "react-router-dom";
-import { BookCollection } from "../../model/BookCollection.ts";
-import { Book } from "../../model/Book.ts";
-import { collections } from "../../assets/testData.ts";
-import {SidebarNav} from "../../pages/SidebarNav.tsx";
-import {Navbar} from "../../pages/Navbar.tsx";
-import Layout from "../../pages/Layout.tsx";
+import { BookCollection } from "../../model/BookCollection";
+import { collections } from "../../assets/testData";
+import Layout from "../../pages/Layout";
+import {AuthContext} from "../../context/AuthContext.tsx";
 
 const CollectionDetails: React.FC = () => {
+    const { user } = useContext(AuthContext);
     const { id } = useParams<{ id: string }>();
     const [collection, setCollection] = useState<BookCollection | null>(null);
     const [loading, setLoading] = useState(true);
+    const urlSearchParams = new URLSearchParams(location.search);
+    const origin = urlSearchParams.get('origin');
 
     // USE REAL DATA IN BDD (use requests)
     /*useEffect(() => {
@@ -43,6 +44,9 @@ const CollectionDetails: React.FC = () => {
 
     if (!collection) return <div className="text-center py-8">Collection not found.</div>;
 
+    const parentPath = origin === 'public' ? "/collections/public" : "/collections";
+    const backButtonName = origin === 'public' ? "Back to Public Collections" : "Back to My Collections";
+
     return (
         <Layout>
             <div className="flex h-screen">
@@ -72,11 +76,18 @@ const CollectionDetails: React.FC = () => {
                                 <p className="text-gray-500">No books available in this collection.</p>
                             )}
 
-                            <div className="mt-6">
+                            <div className="mt-6 flex space-x-4">
                                 <Link
                                     to="/home"
-                                    className="inline-block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                                    className="inline-block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                                >
                                     Back to Home
+                                </Link>
+                                <Link
+                                    to={parentPath}
+                                    className="inline-block px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                                >
+                                    {backButtonName}
                                 </Link>
                             </div>
                         </div>

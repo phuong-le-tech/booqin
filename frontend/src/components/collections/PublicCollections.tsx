@@ -32,12 +32,12 @@ const PublicCollections: React.FC = () => {
                                     </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200">
-                                    {collections.map((collection) => (
+                                    {collections.filter(collection => collection.isPublic).map((collection) => (
                                         <tr key={collection.id} className="hover:bg-gray-100">
                                             <td className="px-6 py-4 text-sm text-gray-800">{collection.title}</td>
                                             <td className="px-6 py-4 text-sm text-gray-600">{collection.description}</td>
                                             <td className="px-6 py-4 text-sm font-medium">
-                                                <Link to={`/collections/${collection.id}`}
+                                                <Link to={`/collections/${collection.id}?origin=public`}
                                                       className="text-indigo-600 hover:text-indigo-900">View</Link>
                                             </td>
                                         </tr>

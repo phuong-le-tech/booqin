@@ -10,7 +10,7 @@ interface SidebarNavProps {
 
 const unauthenticatedNavItems = [
     {icon: Book, label: "Books", path: "/books", color: "text-green-300"},
-    {icon: LibraryBigIcon, label: "Collections", path: "/collection", color: "text-purple-300"},
+    {icon: LibraryBigIcon, label: "Collections", path: "/collections/public", color: "text-purple-300"},
 ]
 
 const authenticatedNavItems = [
