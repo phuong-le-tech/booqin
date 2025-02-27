@@ -28,6 +28,7 @@ const PublicCollections: React.FC = () => {
                                     <tr>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Name</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Description</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Owner</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
                                     </tr>
                                     </thead>
@@ -36,6 +37,7 @@ const PublicCollections: React.FC = () => {
                                         <tr key={collection.id} className="hover:bg-gray-100">
                                             <td className="px-6 py-4 text-sm text-gray-800">{collection.title}</td>
                                             <td className="px-6 py-4 text-sm text-gray-600">{collection.description}</td>
+                                            <td className="px-6 py-4 text-sm text-gray-600">{collection.owner.firstName} {collection.owner.lastName}</td>
                                             <td className="px-6 py-4 text-sm font-medium">
                                                 <Link to={`/collections/${collection.id}?origin=public`}
                                                       className="text-indigo-600 hover:text-indigo-900">View</Link>

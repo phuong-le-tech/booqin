@@ -42,6 +42,7 @@ const Collections: React.FC = () => {
                                             <tr>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Name</th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Description</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Owner</th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
                                             </tr>
                                             </thead>
@@ -50,6 +51,7 @@ const Collections: React.FC = () => {
                                                 <tr key={collection.id} className="hover:bg-gray-100">
                                                     <td className="px-6 py-4 text-sm text-gray-800">{collection.title}</td>
                                                     <td className="px-6 py-4 text-sm text-gray-600">{collection.description}</td>
+                                                    <td className="px-6 py-4 text-sm text-gray-600">{collection.owner.firstName} {collection.owner.lastName}</td>
                                                     <td className="px-6 py-4 text-sm font-medium">
                                                         <Link to={`/collections/${collection.id}`}
                                                               className="text-indigo-600 hover:text-indigo-900">View</Link>
@@ -67,6 +69,7 @@ const Collections: React.FC = () => {
                                             <tr>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Name</th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Description</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Owner</th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
                                             </tr>
                                             </thead>
@@ -75,6 +78,7 @@ const Collections: React.FC = () => {
                                                 <tr key={collection.id} className="hover:bg-gray-100">
                                                     <td className="px-6 py-4 text-sm text-gray-800">{collection.title}</td>
                                                     <td className="px-6 py-4 text-sm text-gray-600">{collection.description}</td>
+                                                    <td className="px-6 py-4 text-sm text-gray-600">{collection.owner.firstName} {collection.owner.lastName}</td>
                                                     <td className="px-6 py-4 text-sm font-medium">
                                                         <Link to={`/collections/${collection.id}?origin=user`}
                                                               className="text-indigo-600 hover:text-indigo-900">View</Link>
@@ -89,7 +93,7 @@ const Collections: React.FC = () => {
                                 <div>
                                     <h1 className="text-center text-gray-500">Please login to view your collections !</h1>
                                     <span className="block text-center text-gray-500">
-                                        <Link to="/" className="btn btn-secondary inline-block px-4 py-2 mt-4">Go back to home page</Link>
+                                        <Link to="/" className="btn btn-secondary text-blue-900 border-blue-700 inline-block px-4 py-2 mt-4">Go back to home page</Link>
                                     </span>
                                 </div>
                             )}
