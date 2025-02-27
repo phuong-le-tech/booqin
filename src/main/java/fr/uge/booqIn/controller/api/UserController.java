@@ -35,7 +35,6 @@ public class UserController {
   public UserController(UserService userService, BookCollectionService bookCollectionService) {
     this.userService = userService;
     this.bookCollectionService = bookCollectionService;
-    logger.info("✅ UserController chargé !");
   }
 
   @GetMapping()
@@ -66,12 +65,8 @@ public class UserController {
   public ResponseEntity<ApiResponse<UserShow>> getUserById(@PathVariable Long id) {
     logger.info("🔍 Recherche utilisateur avec id: {}", id);
 
-    Optional<UserShow> userDtoOpt = userService.findById(id);
-    return userDtoOpt.map(userShow ->
-                    ResponseEntity.ok(ApiResponse.success("User found", userShow)))
-            .orElseGet(() -> ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error("User not found")));
+    UserShow userShow = userService.findById(id);
+    return ResponseEntity.ok(ApiResponse.success("User found", userShow));
   }
 
   @DeleteMapping("/{id}")
@@ -111,14 +106,15 @@ public class UserController {
             updatedUser.getFirstName(),
             updatedUser.getLastName(),
             updatedUser.getEmail(),
-            updatedUser.getAddress()
+            updatedUser.getAddress(),
+            new ArrayList<>()
     );
 
     return ResponseEntity.ok(ApiResponse.success("User updated successfully", updatedUserShow));
   }
 
   @PatchMapping("/{id}")
-  public ResponseEntity<ApiResponse<UserShow>> patchUser(@PathVariable Long id, @RequestBody UserUpdate user) {
+  public ResponseEntity<ApiResponse<User>> patchUser(@PathVariable Long id, @RequestBody UserUpdate user) {
     logger.info("🔄 Mise à jour partielle de l'utilisateur avec id: {}", id);
 
     Optional<User> existingOpt = userService.findEntityById(id);
@@ -135,15 +131,7 @@ public class UserController {
               .body(ApiResponse.error("User not updated"));
     }
 
-    var updatedUserShow = new UserShow(
-            updatedUser.getId(),
-            updatedUser.getFirstName(),
-            updatedUser.getLastName(),
-            updatedUser.getEmail(),
-            updatedUser.getAddress()
-    );
-
-    return ResponseEntity.ok(ApiResponse.success("User updated successfully", updatedUserShow));
+    return ResponseEntity.ok(ApiResponse.success("User updated successfully", updatedUser));
   }
 
   @PostMapping("/{id}/collections/{collectionId}")

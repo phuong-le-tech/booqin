@@ -37,7 +37,7 @@ public class User implements UserDetails {
   @Enumerated(EnumType.STRING)
   private UserRole role;
 
-  @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
   private List<ToLendBook> booksToLend = new ArrayList<>();
 
   @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
@@ -169,6 +169,16 @@ public class User implements UserDetails {
     collections.add(collection);
     collection.setOwner(this);
   }
+
+  public void addBookToLend(ToLendBook book) {
+    booksToLend.add(book);
+    book.setOwner(this);
+  }
+
+  public void removeBookToLend(ToLendBook book) {
+    booksToLend.remove(book);
+  }
+
 
   public void removeCollection(BookCollection collection) {
     collections.remove(collection);
