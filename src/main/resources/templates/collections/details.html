@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title th:text="${collection.title} + ' - Details'">Collection Details</title>
-    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
 </head>
 <body class="bg-gray-100 p-8">
 <div class="max-w-4xl mx-auto">
@@ -25,6 +25,8 @@
                 <span class="text-sm text-gray-500" th:text="${book.publicationDate}">Publication Date</span>
             </li>
         </ul>
+        <a th:href="@{/collections/public}">Back to Public Collections</a>
+        <a th:href="@{/collections}">Back to My Collections</a>
     </div>
 
     <a href="/collections" class="mt-6 inline-block text-indigo-600 hover:text-indigo-900">Back to List</a>

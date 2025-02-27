@@ -3,29 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <title>Public Collections</title>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
 </head>
-<body>
-<div>
-    <h1>Public Collections</h1>
-    <div>
-        <table>
-            <thead>
+<body class="bg-gray-100 p-8">
+<div class="max-w-4xl mx-auto">
+    <h1 class="text-3xl font-bold text-gray-900 mb-6">Public Collections</h1>
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <table class="min-w-full">
+            <thead class="bg-gray-50">
             <tr>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Actions</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Owner</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
             </thead>
-            <tbody>
-            <tr th:each="collection : ${collections}">
-                <td th:text="${collection.title}">Collection Title</td>
-                <td th:text="${collection.description}">Collection Description</td>
-                <td>
-                    <a th:href="@{/collections/{id}(id=${collection.id})}">View</a>
+            <tbody class="divide-y divide-gray-200">
+            <tr th:each="collection : ${publicCollections}" class="hover:bg-gray-50">
+                <td class="px-6 py-4 text-sm text-gray-900" th:text="${collection.title}">Collection Title</td>
+                <td class="px-6 py-4 text-sm text-gray-500" th:text="${collection.description}">Collection Description</td>
+                <td class="px-6 py-4 text-sm text-gray-500" th:text="${collection.owner.firstName} + ' ' + ${collection.owner.lastName}">Owner</td>
+                <td class="px-6 py-4 text-sm font-medium">
+                    <a th:href="@{/collections/{id}(id=${collection.id})}" class="text-indigo-600 hover:text-indigo-900">View</a>
                 </td>
             </tr>
             </tbody>
         </table>
+    </div>
+
+    <div class="mt-6 text-center">
+        <a th:href="@{/home}" class="inline-block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Back to Home</a>
     </div>
 </div>
 </body>

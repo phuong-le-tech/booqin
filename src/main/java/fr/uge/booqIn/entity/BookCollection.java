@@ -57,6 +57,79 @@ public class BookCollection {
     this.owner = owner;
   }
 
+  private BookCollection(Builder builder) {
+    this.title = builder.title;
+    this.description = builder.description;
+    this.owner = builder.owner;
+    this.books = builder.books;
+    this.isPublic = builder.isPublic;
+    this.createdAt = builder.createdAt;
+    this.updatedAt = builder.updatedAt;
+    this.isSmart = builder.isSmart;
+    this.collectionType = builder.collectionType;
+  }
+
+  public static class Builder {
+    private String title;
+    private String description;
+    private User owner;
+    private List<Book> books = new ArrayList<>();
+    private boolean isPublic = false;
+    private Date createdAt = new Date();
+    private Date updatedAt = new Date();
+    private boolean isSmart = false;
+    private CollectionType collectionType = CollectionType.NORMAL;
+
+    public Builder title(String title) {
+      this.title = title;
+      return this;
+    }
+
+    public Builder description(String description) {
+      this.description = description;
+      return this;
+    }
+
+    public Builder owner(User owner) {
+      this.owner = owner;
+      return this;
+    }
+
+    public Builder books(List<Book> books) {
+      this.books = books;
+      return this;
+    }
+
+    public Builder isPublic(boolean isPublic) {
+      this.isPublic = isPublic;
+      return this;
+    }
+
+    public Builder createdAt(Date createdAt) {
+      this.createdAt = createdAt;
+      return this;
+    }
+
+    public Builder updatedAt(Date updatedAt) {
+      this.updatedAt = updatedAt;
+      return this;
+    }
+
+    public Builder isSmart(boolean isSmart) {
+      this.isSmart = isSmart;
+      return this;
+    }
+
+    public Builder collectionType(CollectionType collectionType) {
+      this.collectionType = collectionType;
+      return this;
+    }
+
+    public BookCollection build() {
+      return new BookCollection(this);
+    }
+  }
+
   public Long getId() {
     return id;
   }

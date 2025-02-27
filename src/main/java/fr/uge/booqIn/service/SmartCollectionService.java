@@ -1,6 +1,6 @@
 package fr.uge.booqIn.service;
 
-import fr.uge.booqIn.dto.model.SmartCollectionDTORequest;
+import fr.uge.booqIn.dto.model.SmartCollectionDtoRequest;
 import fr.uge.booqIn.entity.BookCollection;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.factory.CriteriaStrategyFactory;
@@ -33,7 +33,7 @@ public class SmartCollectionService {
   }
 
   @Transactional
-  public BookCollection createSmartCollection(User owner, SmartCollectionDTORequest request) {
+  public BookCollection createSmartCollection(User owner, SmartCollectionDtoRequest request) {
     var strategy = strategyFactory.createCriteriaStrategy(request.criteria());
     var collection = new BookCollection();  // on va créer la collection personnalisée correspondante
     collection.setOwner(owner);
