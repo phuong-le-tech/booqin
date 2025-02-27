@@ -25,7 +25,7 @@ public class OpenLibraryScheduler {
         this.openApiAdapter = BookFetcherFactory.adapter("open");
     }
 
-    @Scheduled(cron = "*/30 * * * * *")
+    @Scheduled(cron = "* * 2 * * *")
     public void fetchOpenLibraryBooks() {
         List<String> authors = authorIterator.getNextBatch();
 

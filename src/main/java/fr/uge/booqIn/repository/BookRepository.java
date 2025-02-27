@@ -1,6 +1,8 @@
 package fr.uge.booqIn.repository;
 
 import fr.uge.booqIn.entity.Book;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.lang.NonNull;
@@ -33,4 +35,9 @@ public interface BookRepository extends JpaRepository<Book, Long> {
   @Query("select b from Book b join fetch b.authors join fetch b.isbns" )
   @NonNull
   List<Book> findAll();
+
+  @Override
+  @Query("SELECT b FROM Book b JOIN FETCH b.authors JOIN FETCH b.isbns")
+  @NonNull
+  Page<Book> findAll(Pageable pageable);
 }

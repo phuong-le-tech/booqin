@@ -6,6 +6,8 @@ import fr.uge.booqIn.mapper.BookMapper;
 import fr.uge.booqIn.repository.AuthorRepository;
 import fr.uge.booqIn.repository.BookRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
@@ -28,6 +30,10 @@ public class BookService {
         this.bookMapper = bookMapper;
     }
 
+    @Transactional
+    public Page<Book> findAll(Pageable pageable) {
+        return bookRepository.findAll(pageable);
+    }
 
     @Transactional
     public Book save(Book toSave) {
