@@ -9,6 +9,7 @@ import { Register } from "./pages/auth/Register";
 import CollectionDetails from "./components/collections/CollectionDetails.tsx";
 import PublicCollections from "./components/collections/PublicCollections.tsx";
 import { Books } from "./pages/book/Books";
+import {ShoppingCart} from "./pages/shoppingCart/ShoppingCart";
 import Collections from "./components/collections/Collections.tsx";
 
 const App: React.FC = () => {
@@ -22,6 +23,7 @@ const App: React.FC = () => {
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
                         <Route path="/books" element={<Books />} />
+                        <Route path="/cart" element={<ShoppingCart />} />
                         {/*<Route path="/books/:id" element={<BookDetails />} />*/}
                         <Route path="/collections" element={<Collections />} />
                         <Route path="/collections/public" element={<PublicCollections />} />
