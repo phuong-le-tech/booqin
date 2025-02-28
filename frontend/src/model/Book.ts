@@ -1,6 +1,12 @@
+import {Author} from "./Author.ts";
+
 export interface Book {
     id: string;
+    isbns: string[];
     title: string;
-    author: string;
-    rating: number;
+    authors: Author[];
+    description: string;
+    publicationDate: string;
+    createdAt: string;
+    updatedAt: string;
 }
