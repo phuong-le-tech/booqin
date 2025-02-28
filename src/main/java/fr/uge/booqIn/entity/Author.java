@@ -2,6 +2,7 @@ package fr.uge.booqIn.entity;
 
 import jakarta.persistence.*;
 
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -17,13 +18,8 @@ public class Author {
     @Column(name = "last_name")
     private String lastName;
 
-    @ManyToMany
-    @JoinTable(
-            name = "author_book",
-            joinColumns = @JoinColumn(name = "author_id"),
-            inverseJoinColumns = @JoinColumn(name = "book_id")
-    )
-    private Set<Book> books;
+    @ManyToMany(mappedBy = "authors", fetch = FetchType.LAZY)
+    private Set<Book> books = new HashSet<>();
 
     public Author() {
     }
@@ -31,6 +27,22 @@ public class Author {
     public Author(String firstName, String lastName) {
         this.firstName = firstName;
         this.lastName = lastName;
+    }
+
+    public void addBook(Book book) {
+        if (this.books == null) {
+            this.books = new HashSet<>();
+        }
+        this.books.add(book);
+        if (book.getAuthors() == null) {
+            book.setAuthors(new HashSet<>());
+        }
+        book.getAuthors().add(this);
+    }
+
+    public void removeBook(Book book) {
+        this.books.remove(book);
+        book.getAuthors().remove(this);
     }
 
     public Long getId() {
