@@ -52,7 +52,7 @@ public class GoogleBooksAPI implements BookFetcher {
 
             return responseMono.items().stream()
                     .map(this::convertToBook)
-                    .collect(Collectors.toList());
+                    .toList();
 
         } catch (Exception e) {
             System.out.println("Error while fetching books: " + e.getMessage());

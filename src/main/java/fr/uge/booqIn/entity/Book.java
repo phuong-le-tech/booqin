@@ -19,6 +19,8 @@ public class Book {
     this.updatedAt = builder.updatedAt;
   }
 
+
+
   public static class Builder {
     private Long id;
     private Set<String> isbns = new HashSet<>();
@@ -103,8 +105,13 @@ public class Book {
   @Column(nullable = false, length = 5000)
   private String title;
 
-  @ManyToMany(mappedBy = "books")
-  private Set<Author> authors;
+  @ManyToMany
+  @JoinTable(
+      name = "book_author",
+      joinColumns = @JoinColumn(name = "book_id"),
+      inverseJoinColumns = @JoinColumn(name = "author_id")
+  )
+  private Set<Author> authors = new HashSet<>();
 
 
   @Column(nullable = false, length = 5000)
@@ -142,6 +149,9 @@ public class Book {
 
   public String getTitle() {
     return title;
+  }
+  public void setId(Long id) {
+    this.id = id;
   }
 
   public Set<Author> getAuthors() {
