@@ -2,10 +2,7 @@ package fr.uge.booqIn.entity;
 
 import jakarta.persistence.*;
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Entity
@@ -125,8 +122,8 @@ public class Book {
   @Column(name = "publication_date")
   private String publicationDate;
 
-  @ManyToMany
-  private List<BookCollection> collections;
+  @ManyToMany(fetch = FetchType.LAZY)
+  private List<BookCollection> collections = new ArrayList<>();
 
 
   @Temporal(TemporalType.TIMESTAMP)
