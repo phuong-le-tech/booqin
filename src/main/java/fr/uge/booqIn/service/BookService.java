@@ -7,14 +7,14 @@ import fr.uge.booqIn.repository.AuthorRepository;
 import fr.uge.booqIn.repository.BookRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.function.Function;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Service
 public class BookService {
@@ -31,8 +31,20 @@ public class BookService {
     }
 
     @Transactional
-    public Page<Book> findAll(Pageable pageable) {
-        return bookRepository.findAll(pageable);
+    public Page<BookDto> findAllDto(Pageable pageable) {
+        Page<Long> bookIdsPage = bookRepository.findAllBookIds(pageable);
+        if (bookIdsPage.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<Book> books = bookRepository.findAllByIdIn(bookIdsPage.getContent());
+        List<BookDto> bookDtos = books.stream()
+            .map(bookMapper::toDto).toList();
+        Map<Long, BookDto> dtoMap = bookDtos.stream()
+            .collect(Collectors.toMap(BookDto::id, Function.identity()));
+        List<BookDto> orderedDtos = bookIdsPage.getContent().stream()
+            .map(dtoMap::get)
+            .filter(Objects::nonNull).toList();
+        return new PageImpl<>(orderedDtos, pageable, bookIdsPage.getTotalElements());
     }
 
     @Transactional
