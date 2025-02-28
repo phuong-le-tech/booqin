@@ -37,7 +37,8 @@ public class SecurityConfig {
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers("/auth/**", "/home", "/favicon.ico", "/static/**")
                                                 .permitAll()
-                                                .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/collections")
+                                                .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login",
+                                                        "/api/v1/collections", "/api/v1/collections/**")
                                                 .permitAll()
                                                 .anyRequest().authenticated())
                                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

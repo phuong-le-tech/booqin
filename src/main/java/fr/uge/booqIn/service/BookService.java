@@ -66,4 +66,9 @@ public class BookService {
         return bookRepository.saveAll(books);
     }
 
+
+    @Transactional
+    public Optional<Book> getBookByIdWithCollections(Long id) {
+        return bookRepository.findByIdWithCollections(id);
+    }
 }

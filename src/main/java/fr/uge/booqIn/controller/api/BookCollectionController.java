@@ -154,6 +154,5 @@ public class BookCollectionController {
             .status(HttpStatus.BAD_REQUEST)
             .body(ApiResponse.error("Collection not updated"))
     );
-
   }
 }

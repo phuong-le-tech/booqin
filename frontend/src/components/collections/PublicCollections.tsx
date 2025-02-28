@@ -1,20 +1,42 @@
 "use client";
 
-import React, {useContext} from "react";
-import {Link} from "react-router-dom";
-import {BookCollection} from "../../model/BookCollection.ts";
-import {User} from "../../model/User.ts";
-import {Book} from "../../model/Book.ts";
-import {Author} from "../../model/Author.ts";
-import { collections } from "../../assets/testData.ts";
-import {SidebarNav} from "../../pages/SidebarNav.tsx";
-import {Navbar} from "../../pages/Navbar.tsx";
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import Layout from "../../pages/Layout.tsx";
+import {BookCollection} from "../../model/BookCollection.ts";
+import {List} from "lucide-react";
+import {collections} from "../../assets/testData.ts";
 
-
-
-// const PublicCollections: React.FC<PublicCollectionsProps> = ({ collections }) => {
 const PublicCollections: React.FC = () => {
+    /*const [collections, setCollections] = useState<BookCollection[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        // Fonction pour récupérer les collections publiques depuis le backend
+        const fetchPublicCollections = async () => {
+            try {
+                const response = await fetch('/api/v1/collections/public'); // Assurez-vous que l'URL est correcte
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                setCollections(data);
+                setLoading(false);
+            } catch (error) {
+                setError(error.message);
+                setLoading(false);
+            }
+        };
+        fetchPublicCollections();
+    }, []);
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+    if (error) {
+        return <div>Error: {error}</div>;
+    }*/
+
     return (
         <Layout>
             <div className="flex h-screen">
@@ -33,7 +55,7 @@ const PublicCollections: React.FC = () => {
                                     </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200">
-                                    {collections.filter(collection => collection.isPublic).map((collection) => (
+                                    {collections.map((collection) => (
                                         <tr key={collection.id} className="hover:bg-gray-100">
                                             <td className="px-6 py-4 text-sm text-gray-800">{collection.title}</td>
                                             <td className="px-6 py-4 text-sm text-gray-600">{collection.description}</td>

@@ -1,8 +1,10 @@
 package fr.uge.booqIn.repository;
 
 import fr.uge.booqIn.entity.Book;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -23,5 +25,7 @@ public interface BookRepository extends JpaRepository<Book, Long> {
   @Query("select b from Book b where b.publicationDate = :publishedDate")
   List<Book> findByPublishedYear(String publishedDate);
 
-
+  @EntityGraph(attributePaths = {"books"})
+  @Query("SELECT b FROM Book b LEFT JOIN FETCH b.collections WHERE b.id = :id")
+  Optional<Book> findByIdWithCollections(@Param("id") Long id);
 }

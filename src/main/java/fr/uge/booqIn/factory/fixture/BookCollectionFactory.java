@@ -11,20 +11,21 @@ public class BookCollectionFactory {
   private static final Faker faker = new Faker();
 
   public static BookCollection createBookCollection() {
+    return createBookCollection(new User());
+  }
+
+  public static BookCollection createBookCollection(User ownerUser) {
     String title = faker.book().title();
     String description = faker.lorem().sentence();
-    User owner = new User();  // à changer par un user qui existe ??
     boolean isPublic = faker.bool().bool();
     Date createdAt = faker.date().past(100, TimeUnit.DAYS);
     Date updatedAt = faker.date().past(100, TimeUnit.DAYS);
     return new BookCollection.Builder()
             .title(title)
             .description(description)
-            .owner(owner)
+            .owner(ownerUser)
             .isPublic(isPublic)
             .isSmart(false)
-            .createdAt(createdAt)
-            .updatedAt(updatedAt)
             .collectionType(BookCollection.CollectionType.NORMAL)
             .build();
   }
