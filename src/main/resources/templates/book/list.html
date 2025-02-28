@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Book Grid</title>
+    <!-- Ajout de Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 p-6">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" th:if="${not #lists.isEmpty(books)}">
+    <div th:each="book : ${books}" class="bg-white border border-gray-200 rounded-xl shadow-sm flex flex-col transition duration-300 hover:shadow-md hover:-translate-y-1">
+        <div class="w-full h-48 flex justify-center items-center text-2xl text-white rounded-t-xl"
+             th:style="'background-color: ' + ${T(java.lang.String).format('#%06x', T(java.lang.Math).abs(book.id.hashCode()) % 0xFFFFFF)}">
+            <span th:text="${book.title().substring(0, 1).toUpperCase()}"></span>
+        </div>
+        <div class="p-4 flex flex-col flex-grow">
+            <h3 class="text-lg font-bold text-gray-800 mb-1 line-clamp-2" th:text="${book.title()}"></h3>
+            <p class="text-sm text-blue-600 font-medium mb-2 truncate" th:text="${#strings.abbreviate(book.authors() != null and !book.authors().isEmpty() ? #strings.listJoin(book.authors().![firstName + ' ' + lastName], ', ') : 'Unknown Author', 50)}"></p>
+            <p th:if="${book.publicationDate()}" class="text-xs text-gray-500 mb-3" th:text="'Published: ' + ${book.publicationDate()}"></p>
+            <p class="text-sm text-gray-600 line-clamp-3 mb-4" th:text="${#strings.abbreviate(book.description(), 120)}"></p>
+            <a class="mt-auto text-center py-2 px-4 bg-blue-600 text-white text-sm font-medium rounded-lg transition hover:bg-blue-700" th:href="@{'/books/' + ${book.id()}}">View details</a>
+        </div>
+    </div>
+</div>
+
+<div class="text-center py-8" th:if="${#lists.isEmpty(books)}">
+    <p class="text-lg font-medium text-gray-700">No books available</p>
+    <p class="text-sm text-gray-500">Try adjusting your search or check back later</p>
+</div>
+
+<div class="flex items-center justify-center gap-2 my-6" th:if="${totalPages > 1}"
+     th:with="visiblePages=5,
+              startPage=${(currentPage - 2 < 0) ? 0 : ((currentPage + 2 >= totalPages) ? (totalPages - visiblePages < 0 ? 0 : totalPages - visiblePages) : currentPage - 2)},
+              endPage=${(startPage + visiblePages - 1 >= totalPages) ? (totalPages - 1) : (startPage + visiblePages - 1)}">
+
+    <button class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-blue-600 transition hover:bg-blue-600 hover:text-white"
+            th:if="${currentPage > 0}"
+            th:onclick="'window.location.href=\'' + @{/books(page=${currentPage - 1})} + '\''">
+        <span class="nav-icon">&#8592;</span>
+    </button>
+
+    <!-- Premier numéro de page avec ellipsis si nécessaire -->
+    <div class="min-w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer transition text-sm text-gray-800 hover:bg-gray-200"
+         th:if="${startPage > 0}"
+         th:onclick="'window.location.href=\'' + @{/books(page=0)} + '\''">
+        <span>1</span>
+    </div>
+
+    <div class="flex items-center justify-center text-sm text-gray-500 tracking-wider" th:if="${startPage > 1}">...</div>
+
+    <!-- Pages visibles dans la fenêtre coulissante -->
+    <div class="flex items-center gap-1">
+        <div class="min-w-9 h-9 rounded-full flex items-center justify-center cursor-pointer transition text-sm"
+             th:each="i : ${#numbers.sequence(startPage, endPage)}"
+             th:classappend="${currentPage == i} ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'"
+             th:onclick="'window.location.href=\'' + @{/books(page=${i})} + '\''">
+            <span th:text="${i + 1}"></span>
+        </div>
+    </div>
+
+    <!-- Dernier numéro de page avec ellipsis si nécessaire -->
+    <div class="flex items-center justify-center text-sm text-gray-500 tracking-wider" th:if="${endPage < totalPages - 2}">...</div>
+
+    <div class="min-w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer transition text-sm text-gray-800 hover:bg-gray-200"
+         th:if="${endPage < totalPages - 1}"
+         th:onclick="'window.location.href=\'' + @{/books(page=${totalPages - 1})} + '\''">
+        <span th:text="${totalPages}"></span>
+    </div>
+
+    <button class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-blue-600 transition hover:bg-blue-600 hover:text-white"
+            th:if="${currentPage < totalPages - 1}"
+            th:onclick="'window.location.href=\'' + @{/books(page=${currentPage + 1})} + '\''">
+        <span class="nav-icon">&#8594;</span>
+    </button>
+</div>
+</body>
+</html>

@@ -7,6 +7,7 @@ import { Home } from "./pages/Home.tsx";
 import { Login } from "./pages/auth/Login";
 import { Register } from "./pages/auth/Register";
 import { Books } from "./pages/book/Books";
+import { BookDetail } from "./pages/book/BookDetail";
 import {ShoppingCart} from "./pages/shoppingCart/ShoppingCart";
 
 const App: React.FC = () => {
@@ -20,6 +21,7 @@ const App: React.FC = () => {
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
                         <Route path="/books" element={<Books />} />
+                        <Route path="/books/:id" element={<BookDetail />} />
                         <Route path="/cart" element={<ShoppingCart />} />
                     </Routes>
                     <ToastContainer
