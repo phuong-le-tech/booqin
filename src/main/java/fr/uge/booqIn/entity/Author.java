@@ -18,8 +18,8 @@ public class Author {
     @Column(name = "last_name")
     private String lastName;
 
-    @ManyToMany(mappedBy = "authors")
-    private Set<Book> books;
+    @ManyToMany(mappedBy = "authors", fetch = FetchType.LAZY)
+    private Set<Book> books = new HashSet<>();
 
     public Author() {
     }

@@ -6,6 +6,7 @@ import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -17,23 +18,19 @@ public class BookMapper {
         if (book == null) {
             return null;
         }
-        
-        BookDto dto = new BookDto();
-        dto.setId(book.getId());
-        dto.setIsbns(book.getIsbns());
-        dto.setTitle(book.getTitle());
-        dto.setDescription(book.getDescription());
-        dto.setPublicationDate(book.getPublicationDate());
-        dto.setCreatedAt(book.getCreatedAt());
-        dto.setUpdatedAt(book.getUpdatedAt());
-        
-        if (book.getAuthors() != null) {
-            Set<AuthorDto> AuthorDtos = book.getAuthors().stream()
-                    .map(this::toAuthorDto)
-                    .collect(Collectors.toSet());
-            dto.setAuthors(AuthorDtos);
-        }
-        return dto;
+
+        return new BookDto(
+            book.getId(),
+            book.getIsbns(),
+            book.getTitle(),
+            book.getAuthors() != null ? book.getAuthors().stream()
+                .map(this::toAuthorDto)
+                .collect(Collectors.toSet()) : new HashSet<>(),
+            book.getDescription(),
+            book.getPublicationDate(),
+            book.getCreatedAt(),
+            book.getUpdatedAt()
+        );
     }
     
 
@@ -44,7 +41,7 @@ public class BookMapper {
         
         return books.stream()
                 .map(this::toDto)
-                .collect(Collectors.toList());
+                .toList();
     }
     
 
@@ -52,13 +49,7 @@ public class BookMapper {
         if (author == null) {
             return null;
         }
-        
-        AuthorDto dto = new AuthorDto();
-        dto.setId(author.getId());
-        dto.setFirstName(author.getFirstName());
-        dto.setLastName(author.getLastName());
-        
-        return dto;
+        return new AuthorDto(author.getId(), author.getFirstName(), author.getLastName());
     }
 
     public Book toEntity(BookDto BookDto) {
@@ -67,13 +58,13 @@ public class BookMapper {
         }
         
         Book.Builder builder = new Book.Builder()
-                .id(BookDto.getId())
-                .title(BookDto.getTitle())
-                .description(BookDto.getDescription())
-                .publicationDate(BookDto.getPublicationDate());
+                .id(BookDto.id())
+                .title(BookDto.title())
+                .description(BookDto.description())
+                .publicationDate(BookDto.publicationDate());
         
-        if (BookDto.getIsbns() != null) {
-            builder.isbns(BookDto.getIsbns().stream().toList());
+        if (BookDto.isbns() != null) {
+            builder.isbns(BookDto.isbns().stream().toList());
         }
         
         return builder.build();

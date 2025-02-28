@@ -22,7 +22,7 @@ public class BookWebController {
     }
 
     @GetMapping
-    public String getAllBooks(Model model, @RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value = "size",defaultValue = "120") int size){
+    public String getAllBooks(Model model, @RequestParam(value = "page", defaultValue = "1") int page, @RequestParam(value = "size",defaultValue = "120") int size){
         Page<Book> booksPage = bookService.findAll(PageRequest.of(page, size));
         model.addAttribute("books", booksPage.getContent());
         model.addAttribute("totalPages", booksPage.getTotalPages());
