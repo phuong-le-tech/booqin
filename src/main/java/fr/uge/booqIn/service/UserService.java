@@ -53,15 +53,20 @@ public class UserService {
   }
 
   @Transactional
-  public Optional<UserShow> findById(Long id) {
-    return userRepository.findById(id)
-            .map(user -> new UserShow(
-                    user.getId(),
-                    user.getFirstName(),
-                    user.getLastName(),
-                    user.getEmail(),
-                    user.getAddress()
-            ));
+  public UserShow findById(Long id) {
+    User userOpt = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+    userOpt.getCollections().size();
+    userOpt.getBooksToLend().size();
+    return new UserShow(
+            userOpt.getId(),
+            userOpt.getFirstName(),
+            userOpt.getLastName(),
+            userOpt.getEmail(),
+            userOpt.getAddress(),
+            userOpt.getCollections()
+    );
+
   }
 
   @Transactional
