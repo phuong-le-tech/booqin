@@ -4,7 +4,7 @@ import fr.uge.booqIn.dto.user.UserDto;
 
 import java.util.List;
 
-public record BookCollectionDTO(
+public record BookCollectionDto(
         Long id,
         String title,
         String description,

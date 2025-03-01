@@ -21,4 +21,9 @@ public class OpenApiAdapter implements BookFetcher {
   public List<Book> searchByIsbn(String isbn) {
     return openAPI.searchByIsbn(isbn);
   }
+
+  @Override
+  public List<Book> searchBookByAuthorWithPagination(String author, int page, int pageSize){
+    return openAPI.searchPaginatedBooksByAuthor(author,page,pageSize);
+  }
 }

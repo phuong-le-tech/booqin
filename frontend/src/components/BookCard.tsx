@@ -1,10 +1,17 @@
 import type React from "react"
 import { Link } from "react-router-dom"
 import type { Book } from "../model/Book"
+import { useContext } from "react";
+import { AuthContext } from "../context/AuthContext.tsx";
+import axiosInstance from "../services/AxiosInstance.ts";
+import {ApiResponse} from "../model/ApiResponse.ts";
 
-interface BookCardProps extends Book {}
+
+interface BookCardProps extends Book { }
 
 export const BookCard: React.FC<BookCardProps> = ({ id, title, author, rating }) => {
+    const { user } = useContext(AuthContext);
+    const userId = user?.id;
     const generateBackgroundColor = (title: string) => {
         let hash = 0
         for (let i = 0; i < title.length; i++) {
@@ -13,6 +20,24 @@ export const BookCard: React.FC<BookCardProps> = ({ id, title, author, rating })
         const color = Math.floor(Math.abs((Math.sin(hash) * 16777215) % 1) * 16777215).toString(16)
         return "#" + "0".repeat(6 - color.length) + color
     }
+
+    const addToCart = async () => {
+        try {
+            const response = await axiosInstance.post("/v1/cart/add-book", {
+                userId,
+                bookId: id,
+            });
+
+            if (response.status === 200) {
+                alert("Le livre a été ajouté au panier");
+            }
+        } catch (error) {
+            console.error("Erreur lors de l'ajout du livre au panier", error);
+            console.log(error.response?.data);
+        }
+    };
+
+
 
     const bgColor = generateBackgroundColor(title)
 
@@ -34,6 +59,12 @@ export const BookCard: React.FC<BookCardProps> = ({ id, title, author, rating })
                     </div>
                 </div>
             </Link>
+            <button
+                onClick={addToCart}
+                className="m-3 bg-light-blue text-navbar px-4 py-2 rounded-lg hover:bg-blue-500 transition"
+            >
+                Add to cart
+            </button>
         </div>
     )
 }

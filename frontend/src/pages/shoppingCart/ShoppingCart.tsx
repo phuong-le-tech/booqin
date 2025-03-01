@@ -1,7 +1,6 @@
-import React, {useState, useEffect, useContext} from "react";
-import axios from "axios";
+import React, { useState, useEffect, useContext } from "react";
 import { Layout } from "../Layout";
-import {AuthContext} from "../../context/AuthContext.tsx";
+import { AuthContext } from "../../context/AuthContext.tsx";
 
 type Book = {
     id: string;
@@ -15,18 +14,23 @@ type Cart = {
 };
 
 export const ShoppingCart: React.FC = () => {
-     const {user} = useContext(AuthContext);
-     const userId = user?.id;
+    const { user } = useContext(AuthContext);
+    const userId = user?.id;
     const [cart, setCart] = useState<Cart>({ books: [] });
     const [loading, setLoading] = useState(true);
 
     const deliveryFee = 5.99;
 
-
+    // Récupérer le panier avec `/api`
     const fetchCart = async () => {
+        if (!userId) return;
         try {
-            const response = await axios.get(`http://localhost:8080/api/cart/${userId}`);
-            setCart(response.data);
+            const response = await fetch(`/api/cart/${userId}`);
+            if (!response.ok) {
+                throw new Error(`Erreur HTTP : ${response.status}`);
+            }
+            const data = await response.json();
+            setCart(data);
         } catch (error) {
             console.error("Erreur lors de la récupération du panier", error);
         } finally {
@@ -34,19 +38,36 @@ export const ShoppingCart: React.FC = () => {
         }
     };
 
-
+    // Supprimer un livre du panier avec `/api`
     const removeBook = async (bookId: string) => {
+        if (!userId) return;
         try {
-            await axios.delete(`http://localhost:8080/api/cart/remove?userId=${userId}&bookId=${bookId}`);
-            fetchCart();
+            const response = await fetch(`/api/cart/remove?userId=${userId}&bookId=${bookId}`, {
+                method: "DELETE",
+            });
+
+            if (!response.ok) {
+                throw new Error(`Erreur HTTP : ${response.status}`);
+            }
+
+            fetchCart(); // Rafraîchir le panier
         } catch (error) {
             console.error("Erreur lors de la suppression du livre", error);
         }
     };
 
+    // Vider le panier avec `/api`
     const clearCart = async () => {
+        if (!userId) return;
         try {
-            await axios.delete(`http://localhost:8080/api/cart/clear/${userId}`);
+            const response = await fetch(`/api/cart/clear/${userId}`, {
+                method: "DELETE",
+            });
+
+            if (!response.ok) {
+                throw new Error(`Erreur HTTP : ${response.status}`);
+            }
+
             setCart({ books: [] });
         } catch (error) {
             console.error("Erreur lors de la suppression du panier", error);
@@ -55,7 +76,7 @@ export const ShoppingCart: React.FC = () => {
 
     useEffect(() => {
         fetchCart();
-    }, []);
+    }, [userId]);
 
     const subtotal = cart.books.reduce((sum, book) => sum + book.price, 0);
     const total = subtotal + deliveryFee;
@@ -68,8 +89,7 @@ export const ShoppingCart: React.FC = () => {
                 {loading ? (
                     <p className="text-gray-300 text-lg">Chargement du panier...</p>
                 ) : cart.books.length === 0 ? (
-                    <p className="text-gray-300 text-lg">Votre panier est vide.></p>
-
+                    <p className="text-gray-300 text-lg">Votre panier est vide.</p>
                 ) : (
                     <>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-4xl">
