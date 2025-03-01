@@ -5,6 +5,7 @@ import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.Author;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -16,7 +17,7 @@ public class BookFactory {
     String title = faker.book().title();
     String isbn = faker.number().digits(10);
     String description = faker.lorem().sentence();
-    String publicationDate = faker.date().past(100, TimeUnit.DAYS).toString();
+    Date publicationDate = faker.date().past(100, TimeUnit.DAYS);
 
     // Création d'un auteur avec prénom et nom générés par Faker
     String firstName = faker.name().firstName();

@@ -6,15 +6,14 @@ import fr.uge.booqIn.dto.auth.RegisterDto;
 import fr.uge.booqIn.dto.auth.UserMeDto;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.factory.ApiResponse;
-import fr.uge.booqIn.service.AuthService;
 import fr.uge.booqIn.service.JwtService;
+import fr.uge.booqIn.service.interfaces.AuthServiceInterface;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,10 +21,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/auth")
 public class AuthController {
 
-  private final AuthService authService;
+  private final AuthServiceInterface authService;
   private final JwtService jwtService;
 
-  public AuthController(AuthService authService, JwtService jwtService) {
+  public AuthController(AuthServiceInterface authService, JwtService jwtService) {
     this.authService = authService;
     this.jwtService = jwtService;
   }

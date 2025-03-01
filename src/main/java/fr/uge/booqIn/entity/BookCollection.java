@@ -19,7 +19,7 @@ public class BookCollection {
   @Column(nullable = false)
   private String description;
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   private User owner;
 
   @ManyToMany(mappedBy = "collections")

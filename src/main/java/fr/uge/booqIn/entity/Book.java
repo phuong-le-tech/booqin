@@ -19,16 +19,14 @@ public class Book {
     this.updatedAt = builder.updatedAt;
   }
 
-
-
   public static class Builder {
     private Long id;
     private Set<String> isbns = new HashSet<>();
     private String title;
     private Set<Author> authors = new HashSet<>();
     private String description;
-    private String publicationDate;
-    private List<BookCollection> collections = new ArrayList<>();
+    private Date publicationDate;
+    private List<BookCollection> collections;
     private Date createdAt = new Date();
     private Date updatedAt = new Date();
 
@@ -61,7 +59,7 @@ public class Book {
       return this;
     }
 
-    public Builder publicationDate(String publicationDate) {
+    public Builder publicationDate(Date publicationDate) {
       this.publicationDate = publicationDate;
       return this;
     }
@@ -90,7 +88,6 @@ public class Book {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-
   @ElementCollection
   @CollectionTable(
           name = "book_isbn",
@@ -107,9 +104,9 @@ public class Book {
 
   @ManyToMany
   @JoinTable(
-      name = "book_author",
-      joinColumns = @JoinColumn(name = "book_id"),
-      inverseJoinColumns = @JoinColumn(name = "author_id")
+          name = "book_author",
+          joinColumns = @JoinColumn(name = "book_id"),
+          inverseJoinColumns = @JoinColumn(name = "author_id")
   )
   private Set<Author> authors = new HashSet<>();
 
@@ -119,7 +116,7 @@ public class Book {
 
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "publication_date")
-  private String publicationDate;
+  private Date publicationDate;
 
   @ManyToMany
   private List<BookCollection> collections = new ArrayList<>();
@@ -136,7 +133,7 @@ public class Book {
   public Book() {
   }
 
-  public Book(String title, Set<Author> authors, String description, String publicationDate) {
+  public Book(String title, Set<Author> authors, String description, Date publicationDate) {
     this.title = title;
     this.authors = authors;
     this.description = description;
@@ -150,6 +147,7 @@ public class Book {
   public String getTitle() {
     return title;
   }
+
   public void setId(Long id) {
     this.id = id;
   }
@@ -162,7 +160,7 @@ public class Book {
     return description;
   }
 
-  public String getPublicationDate() {
+  public Date getPublicationDate() {
     return publicationDate;
   }
 
@@ -190,7 +188,7 @@ public class Book {
     this.description = description;
   }
 
-  public void setPublicationDate(String publicationDate) {
+  public void setPublicationDate(Date publicationDate) {
     this.publicationDate = publicationDate;
   }
 
@@ -213,7 +211,6 @@ public class Book {
     // empecher les doublons ?
     collections.add(collection);
     collection.getBooks().add(this);
-
   }
 
   public void removeCollection(BookCollection collection) {
@@ -221,7 +218,6 @@ public class Book {
       collections.remove(collection);
       collection.getBooks().remove(this);
     }
-
   }
 
   public Set<String> getIsbns() {

@@ -1,8 +1,5 @@
-import {Book} from "./Book.ts";
-
 export interface Author {
-    id: number;
+    id: string;
     firstName: string;
     lastName: string;
-    books: Book[];
 }

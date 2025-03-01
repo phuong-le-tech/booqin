@@ -11,6 +11,7 @@ import PublicCollections from "./components/collections/PublicCollections.tsx";
 import { Books } from "./pages/book/Books";
 import { BookDetail } from "./pages/book/BookDetail";
 import {ShoppingCart} from "./pages/shoppingCart/ShoppingCart";
+import {Profile} from "./pages/user/Profile.tsx";
 import Collections from "./components/collections/Collections.tsx";
 
 const App: React.FC = () => {
@@ -25,6 +26,7 @@ const App: React.FC = () => {
                         <Route path="/register" element={<Register />} />
                         <Route path="/books" element={<Books />} />
                         <Route path="/books/:id" element={<BookDetail />} />
+                        <Route path={"/profile"} element={<Profile />} />
                         <Route path="/cart" element={<ShoppingCart />} />
                         {/*<Route path="/books/:id" element={<BookDetails />} />*/}
                         <Route path="/collections" element={<Collections />} />
