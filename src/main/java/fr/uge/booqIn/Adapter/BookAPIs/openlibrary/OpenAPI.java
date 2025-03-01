@@ -8,10 +8,9 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -80,7 +79,7 @@ public class OpenAPI implements BookFetcher {
                 .collect(Collectors.toSet());
         }
         String description = doc.description() != null ? doc.description() : "";
-        String publicationDate = doc.first_publish_year() != null ? String.valueOf(doc.first_publish_year()) : "";
+        Date publicationDate = convertYearToDate(doc.first_publish_year());
         return new Book.Builder()
             .title(title)
             .authors(authors)
@@ -88,5 +87,22 @@ public class OpenAPI implements BookFetcher {
             .publicationDate(publicationDate)
             .isbns(doc.isbn())
             .build();
+    }
+
+    private Date convertYearToDate(Integer year) {
+        if (year == null) {
+            return null;
+        }
+
+        SimpleDateFormat yearFormat = new SimpleDateFormat("yyyy");
+        yearFormat.setLenient(true);
+
+        try {
+            // Convertir l'année en chaîne et la parser en date
+            return yearFormat.parse(year.toString());
+        } catch (ParseException e) {
+            logger.warning("Failed to parse publication year: " + year);
+            return null;
+        }
     }
 }

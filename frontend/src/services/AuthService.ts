@@ -114,31 +114,6 @@ const AuthService = {
             return null;
         }
     },
-
-    updateProfile: async (userData: Partial<User>): Promise<User> => {
-        try {
-            const response = await axiosInstance.put<ApiResponse<User>>(
-                "/v1/auth/profile",
-                userData
-            );
-            const apiResp = response.data;
-
-            if (!apiResp.success || !apiResp.data) {
-                throw new Error(apiResp.message || "Profile update failed");
-            }
-            return apiResp.data;
-        } catch (error: any) {
-            if (error.response) {
-                throw new Error(
-                    error.response.data?.message || "Server error while updating profile"
-                );
-            } else if (error.request) {
-                throw new Error("No response from server (updateProfile).");
-            } else {
-                throw new Error("Error setting up the request (updateProfile).");
-            }
-        }
-    },
 };
 
 export default AuthService;
