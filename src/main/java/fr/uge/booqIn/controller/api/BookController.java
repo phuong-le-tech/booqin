@@ -4,11 +4,15 @@ import fr.uge.booqIn.dto.book.BookDto;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.factory.ApiResponse;
 import fr.uge.booqIn.service.BookService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -21,10 +25,20 @@ public class BookController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<BookDto>>> findAll() {
-        List<BookDto> books = bookService.findAllDto();
+    public ResponseEntity<ApiResponse<List<BookDto>>> findAll(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size) {
+
+        Page<BookDto> booksPage = bookService.findAllDto(PageRequest.of(page, size));
+
+        // For pagination
+        Map<String, Object> meta = new HashMap<>();
+        meta.put("totalPages", booksPage.getTotalPages());
+        meta.put("totalItems", booksPage.getTotalElements());
+        meta.put("currentPage", page);
+
         return ResponseEntity.ok(
-                ApiResponse.success("Books retrieved successfully", books));
+                ApiResponse.success("Books retrieved successfully", booksPage.getContent(), meta));
     }
 
     @GetMapping("/searchByTitle")
@@ -59,6 +73,16 @@ public class BookController {
                 .body(ApiResponse.success("Book created successfully", savedBook));
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<BookDto>> getBookById(@PathVariable Long id) {
+        Optional<BookDto> bookOptional = bookService.findByIdDto(id);
+        return bookOptional
+                .map(book -> ResponseEntity.ok(ApiResponse.success("Book retrieved successfully", book)))
+                .orElse(ResponseEntity
+                        .status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.error("Book not found with id: " + id)));
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<BookDto>> updateBook(
             @PathVariable Long id,
@@ -88,6 +112,6 @@ public class BookController {
 
         bookService.delete(existingBook.get());
         return ResponseEntity.ok(
-                ApiResponse.success("Book deleted successfully", null));
+                ApiResponse.success("Book deleted successfully"));
     }
 }
