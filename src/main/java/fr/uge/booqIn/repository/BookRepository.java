@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface BookRepository extends JpaRepository<Book, Long> {
@@ -44,4 +45,13 @@ public interface BookRepository extends JpaRepository<Book, Long> {
 
   @Query("SELECT b FROM Book b LEFT JOIN FETCH b.authors LEFT JOIN FETCH b.isbns WHERE b.id IN :ids")
   List<Book> findAllByIdIn(@Param("ids") List<Long> ids);
+  
+  
+  @Query("SELECT DISTINCT b FROM Book b LEFT JOIN FETCH b.authors LEFT JOIN FETCH b.isbns WHERE b.id = :id")
+  Optional<Book> findByIdWithIsbns(@Param("id") Long id);
+  
+  @Query("SELECT b.isbns FROM Book b WHERE b.id = :id")
+  Set<String> findIsbnsByBookId(@Param("id") Long id);
+  
+  
 }

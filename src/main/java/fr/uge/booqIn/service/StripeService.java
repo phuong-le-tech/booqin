@@ -19,7 +19,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class StripeService {
-
+    
     @Value("${stripe.secret.key}")
     private String stripeSecretKey;
     /*
@@ -49,7 +49,7 @@ public class StripeService {
     public Event handleStripeWebhook(String payload, String sigHeader) throws SignatureVerificationException {
         return constructStripeEvent(payload, sigHeader);
     }
-
+    
     public PaymentIntent createPaymentIntent(Cart cart) {
         try {
             PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
@@ -60,8 +60,11 @@ public class StripeService {
                                     .setEnabled(true)
                                     .build())
                     .build();
-
-            return PaymentIntent.create(params);
+            
+            PaymentIntent paymentIntent = PaymentIntent.create(params);
+            cart.setPaymentIntentId(paymentIntent.getId());
+            cartRepository.save(cart);
+            return paymentIntent;
         } catch (Exception e) {
             throw new RuntimeException("Erreur lors de la création du paiement", e);
         }
@@ -119,5 +122,5 @@ public class StripeService {
                 break;
         }
     }
-
+    
 }

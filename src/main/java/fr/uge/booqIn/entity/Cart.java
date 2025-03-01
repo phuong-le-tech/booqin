@@ -13,7 +13,7 @@ public class Cart {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
@@ -64,11 +64,12 @@ public class Cart {
         this.createdAt = createdAt;
     }
     
-    public void getPaymentIntentId(String paymentIntentId) {
-        this.paymentIntentId = paymentIntentId;
+    public String getPaymentIntentId() {
+        return this.paymentIntentId;
     }
-    public String setPaymentIntentId() {
-        return paymentIntentId;
+    
+    public void setPaymentIntentId(String id) {
+        this.paymentIntentId = id;
     }
     
     @Override
