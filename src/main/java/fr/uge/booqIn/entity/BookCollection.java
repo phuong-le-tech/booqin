@@ -16,13 +16,13 @@ public class BookCollection {
   @Column(nullable = false)
   private String title;
 
-  @Column(nullable = false)
+  @Column(nullable = false, columnDefinition = "TEXT")
   private String description;
 
   @ManyToOne(fetch = FetchType.LAZY)
   private User owner;
 
-  @ManyToMany(mappedBy = "collections")
+  @ManyToMany
   private List<Book> books = new ArrayList<>();
 
   @Column(nullable = false)
@@ -41,6 +41,22 @@ public class BookCollection {
 
   @Enumerated(EnumType.STRING)
   private CollectionType collectionType = CollectionType.NORMAL;
+
+  @Override
+  public String toString() {
+    return "BookCollection{" +
+            "id=" + id +
+            ", title='" + title + '\'' +
+            ", description='" + description + '\'' +
+            ", owner=" + owner +
+            ", books=" + books.stream().limit(10).toList() +
+            ", isPublic=" + isPublic +
+            ", createdAt=" + createdAt +
+            ", updatedAt=" + updatedAt +
+            ", isSmart=" + isSmart +
+            ", collectionType=" + collectionType +
+            '}';
+  }
 
   public enum CollectionType {
     NORMAL, // basic collection
@@ -203,15 +219,12 @@ public class BookCollection {
   }
 
   public void addBook(Book book) {
-    if (book.getCollections() == null) {
-      book.setCollections(new ArrayList<>()); // ✅ Ajoute une vérification de null
-    }
     books.add(book);
-    book.getCollections().add(this);
   }
 
   public void removeBook(Book book) {
-    books.remove(book);
-    book.getCollections().remove(this);
+    if (!books.remove(book)) {
+      throw new IllegalArgumentException("Book not found in collection");
+    }
   }
 }

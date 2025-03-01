@@ -58,7 +58,6 @@ public class BookCollectionController {
   ) {
     logger.info("🗑️ Suppression de la collection avec id: " + id);
 
-    // Vérifie l'existence
     Optional<BookCollection> collectionOpt = bookCollectionService.findCollectionById(id);
     if (collectionOpt.isEmpty()) {
       return ResponseEntity

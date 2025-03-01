@@ -31,7 +31,7 @@ public class BookFactory {
     return new Book.Builder()
             .title(title)
             .authors(authors)
-            .isbns(Collections.singletonList(isbn))
+            .isbns(Collections.singleton(isbn))
             .description(description)
             .publicationDate(publicationDate)
             .build();

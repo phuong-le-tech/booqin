@@ -42,12 +42,12 @@ public class BookCollectionServiceTest {
   /**
    * Vérifie que le Book créé par BookFactory a bien une liste de collections initialisée.
    */
-  @Test
-  void testBookInitialization() {
-    Book book = BookFactory.createBook();
-    assertNotNull(book.getCollections(),
-            "The collections list should be initialized and not null");
-  }
+//  @Test
+//  void testBookInitialization() {
+//    Book book = BookFactory.createBook();
+//    assertNotNull(book.getCollections(),
+//            "The collections list should be initialized and not null");
+//  }
 
   /**
    * Test de l'ajout d'un livre à une collection existante (et ownership OK).

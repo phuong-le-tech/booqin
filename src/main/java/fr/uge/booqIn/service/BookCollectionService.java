@@ -41,6 +41,7 @@ public class BookCollectionService {
   public Optional<BookCollection> findCollectionById(Long id) {
     //return bookCollectionRepository.findById(id);
     return bookCollectionRepository.findByIdWithBooks(id);
+    //return bookCollectionRepository.findByIdWithBooksAndIsbns(id);
   }
 
   @Transactional
@@ -61,10 +62,6 @@ public class BookCollectionService {
       BookCollection collection = optCollection.get();
       verifyOwnership(collection, currentUser);
 
-      // Retrait de la collection dans chaque Book
-      for (Book book : collection.getBooks()) {
-        book.getCollections().remove(collection);
-      }
       bookCollectionRepository.delete(collection);
 
       return Optional.of(collection);
@@ -183,13 +180,6 @@ public class BookCollectionService {
   @Transactional
   public List<BookCollection> getUserCollectionsWithBooks(User user) {
     return bookCollectionRepository.findByOwnerWithBooks(user);
-  }
-
-  @Transactional
-  public Optional<Book> getBookByIdWithCollections(Long id) {
-    Optional<Book> bookOpt = bookRepository.findById(id);
-    bookOpt.ifPresent(book -> Hibernate.initialize(book.getCollections()));
-    return bookOpt;
   }
 
   @Transactional
