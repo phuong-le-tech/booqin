@@ -1,10 +1,9 @@
 package fr.uge.booqIn.scheduler;
 
 import fr.uge.booqIn.Adapter.BookAPIs.BookFetcher;
-import fr.uge.booqIn.Adapter.BookAPIs.OpenApiAdapter;
 import fr.uge.booqIn.Adapter.BookAPIs.BookFetcherFactory;
 import fr.uge.booqIn.entity.Book;
-import fr.uge.booqIn.service.BookService;
+import fr.uge.booqIn.service.interfaces.BookServiceInterface;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -16,10 +15,10 @@ public class OpenLibraryScheduler {
     private static final Logger logger = Logger.getLogger(OpenLibraryScheduler.class.getName());
     private static final int PAGE_SIZE = 10;
     private final AuthorIterator authorIterator;
-    private final BookService bookService;
+    private final BookServiceInterface bookService;
     private final BookFetcher openApiAdapter;
 
-    public OpenLibraryScheduler(NovelistsBean novelistsBean, BookService bookService) {
+    public OpenLibraryScheduler(NovelistsBean novelistsBean, BookServiceInterface bookService) {
         this.authorIterator = new AuthorIterator(novelistsBean, 15);
         this.bookService = bookService;
         this.openApiAdapter = BookFetcherFactory.adapter("open");
@@ -41,7 +40,7 @@ public class OpenLibraryScheduler {
         List<Book> books;
         do {
             books = openApiAdapter.searchBookByAuthorWithPagination(author, page, PAGE_SIZE);
-            books.forEach(bookService::save);
+            books.forEach(bookService::saveFromApi);
             page++;
         } while (!books.isEmpty());
     }

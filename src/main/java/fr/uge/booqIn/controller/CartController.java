@@ -1,23 +1,11 @@
 package fr.uge.booqIn.controller;
 
-import fr.uge.booqIn.dto.user.UserShow;
-import fr.uge.booqIn.entity.Book;
-import fr.uge.booqIn.entity.Cart;
-import fr.uge.booqIn.entity.User;
-import fr.uge.booqIn.factory.ApiResponse;
-import fr.uge.booqIn.service.BookCollectionService;
-import fr.uge.booqIn.service.CartService;
-import fr.uge.booqIn.service.UserService;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/v1/controller/api/cart")
 public class CartController {
+/*
 
     private final CartService cartService;
     private final UserService userService;
@@ -45,6 +33,7 @@ public class CartController {
         System.out.println("Cart created with ID: " + cart);
         return ResponseEntity.ok(ApiResponse.success("Cart created", cart));
     }
+*/
 
 
 }

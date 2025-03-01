@@ -1,4 +1,4 @@
-package fr.uge.booqIn.service;
+package fr.uge.booqIn.service.impl;
 
 import fr.uge.booqIn.dto.auth.AuthResponse;
 import fr.uge.booqIn.dto.auth.LoginDto;
@@ -6,47 +6,60 @@ import fr.uge.booqIn.dto.auth.RegisterDto;
 import fr.uge.booqIn.dto.auth.UserMeDto;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.UserRole;
+import fr.uge.booqIn.mapper.AuthMapper;
 import fr.uge.booqIn.repository.UserRepository;
+import fr.uge.booqIn.service.interfaces.AuthServiceInterface;
+import fr.uge.booqIn.service.JwtService;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class AuthService {
+public class AuthServiceImpl implements AuthServiceInterface {
 
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
   private final AuthenticationManager authenticationManager;
   private final JwtService jwtService;
+  private final AuthMapper authMapper;
 
-  public AuthService(
+  public AuthServiceImpl(
           UserRepository userRepository,
           PasswordEncoder passwordEncoder,
           AuthenticationManager authenticationManager,
-          JwtService jwtService) {
+          JwtService jwtService,
+          AuthMapper authMapper) {
     this.userRepository = userRepository;
     this.passwordEncoder = passwordEncoder;
     this.authenticationManager = authenticationManager;
     this.jwtService = jwtService;
+    this.authMapper = authMapper;
   }
 
-  public User register(RegisterDto signUpDto) {
-    userRepository.findByEmail(signUpDto.email()).ifPresent(u -> {
+  @Override
+  @Transactional
+  public User register(RegisterDto registerDto) {
+    userRepository.findByEmail(registerDto.email()).ifPresent(u -> {
       throw new IllegalArgumentException("Email already taken");
     });
 
     User user = new User(
-            signUpDto.firstName(),
-            signUpDto.lastName(),
-            signUpDto.email(),
-            passwordEncoder.encode(signUpDto.password()),
-            signUpDto.address(),
-            /* signUpDto.role() */ UserRole.USER);
+            registerDto.firstName(),
+            registerDto.lastName(),
+            registerDto.email(),
+            passwordEncoder.encode(registerDto.password()),
+            registerDto.address(),
+            UserRole.USER
+    );
+
     return userRepository.save(user);
   }
 
+  @Override
+  @Transactional
   public AuthResponse login(LoginDto signInDto) {
     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
             signInDto.login(),
@@ -61,17 +74,15 @@ public class AuthService {
     return new AuthResponse(accessToken, refreshToken);
   }
 
+  @Override
+  @Transactional(readOnly = true)
   public UserMeDto getCurrentUser(Authentication authentication) {
     if (authentication == null || !authentication.isAuthenticated()) {
-      System.out.println("User is not authenticated");
       throw new IllegalStateException("User is not authenticated");
     }
+
     User user = (User) authentication.getPrincipal();
 
-    return new UserMeDto(
-            user.getId(),
-            user.getFirstName(),
-            user.getLastName(),
-            user.getEmail());
+    return authMapper.toUserMeDto(user);
   }
 }

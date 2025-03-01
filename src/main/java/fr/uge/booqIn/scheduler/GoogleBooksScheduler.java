@@ -2,7 +2,7 @@ package fr.uge.booqIn.scheduler;
 
 import fr.uge.booqIn.Adapter.BookAPIs.BookFetcher;
 import fr.uge.booqIn.Adapter.BookAPIs.BookFetcherFactory;
-import fr.uge.booqIn.service.BookService;
+import fr.uge.booqIn.service.interfaces.BookServiceInterface;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -13,10 +13,10 @@ import java.util.logging.Logger;
 public class GoogleBooksScheduler {
     private static final Logger logger = Logger.getLogger(GoogleBooksScheduler.class.getName());
     private final AuthorIterator authorIterator;
-    private final BookService bookService;
+    private final BookServiceInterface bookService;
     private final BookFetcher googleBooksFetcher;
 
-    public GoogleBooksScheduler(NovelistsBean novelistsBean, BookService bookService) {
+    public GoogleBooksScheduler(NovelistsBean novelistsBean, BookServiceInterface bookService) {
         this.authorIterator = new AuthorIterator(novelistsBean, 15);
         this.bookService = bookService;
         this.googleBooksFetcher = BookFetcherFactory.adapter("google");
@@ -34,6 +34,6 @@ public class GoogleBooksScheduler {
         authors.stream()
             .map(googleBooksFetcher::searchByAuthor)
             .flatMap(List::stream)
-            .forEach(bookService::save);
+            .forEach(bookService::saveFromApi);
     }
 }

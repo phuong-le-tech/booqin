@@ -5,19 +5,24 @@ import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.singleton.WebClientSingleton;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class GoogleBooksAPI implements BookFetcher {
     private static final String API_URL = "https://www.googleapis.com/books/v1/volumes?q=";
     private static final String SUFFIX_URL = "&langRestrict=en";
     private final WebClient webClient = WebClientSingleton.getInstance();
+
+    private static final List<SimpleDateFormat> DATE_FORMATS = Arrays.asList(
+            new SimpleDateFormat("yyyy-MM-dd"),
+            new SimpleDateFormat("yyyy-MM"),
+            new SimpleDateFormat("yyyy")
+    );
 
     @Override
     public List<Book> searchByTitle(String title) {
@@ -67,7 +72,7 @@ public class GoogleBooksAPI implements BookFetcher {
                 ? volumeInfo.authors().stream().map(authorName -> new Author(authorName, "")).collect(Collectors.toSet())
                 : Set.of();
         String description = volumeInfo.description() != null ? volumeInfo.description() : "";
-        String publicationDate = volumeInfo.publishedDate();
+        Date publicationDate = parsePublicationDate(volumeInfo.publishedDate());
 
         String isbn10 = getIdentifier(volumeInfo.industryIdentifiers(),"ISBN_10");
         String isbn13 = getIdentifier(volumeInfo.industryIdentifiers(),"ISBN_13");
@@ -90,5 +95,23 @@ public class GoogleBooksAPI implements BookFetcher {
                         .map(IndustryIdentifier::identifier)
                         .findFirst())
                 .orElse(null);
+    }
+
+    private Date parsePublicationDate(String dateString) {
+        if (dateString == null || dateString.isEmpty()) {
+            return null;
+        }
+
+        for (SimpleDateFormat format : DATE_FORMATS ) {
+            try {
+                format.setLenient(true);
+                return format.parse(dateString);
+            } catch (ParseException e) {
+                // Essayer le format suivant
+            }
+        }
+
+        System.out.println("Failed to parse date: " + dateString);
+        return null;
     }
 }
