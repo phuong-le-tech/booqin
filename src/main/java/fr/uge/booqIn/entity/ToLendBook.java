@@ -13,7 +13,7 @@ public class ToLendBook {
   @ManyToOne(fetch = FetchType.LAZY)
   private User owner;
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   private Book book;
 
   @Enumerated(EnumType.STRING)

@@ -2,6 +2,8 @@ package fr.uge.booqIn.mapper;
 
 import fr.uge.booqIn.dto.author.AuthorDto;
 import fr.uge.booqIn.dto.book.BookDto;
+import fr.uge.booqIn.dto.book.BookIndex;
+import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import org.springframework.stereotype.Component;
@@ -14,59 +16,53 @@ import java.util.stream.Collectors;
 @Component
 public class BookMapper {
 
-    public BookDto toDto(Book book) {
+    /**
+     * Maps Book entity to BookIndex DTO
+     */
+    public BookIndex toBookIndex(Book book) {
         if (book == null) {
             return null;
         }
 
-        return new BookDto(
-            book.getId(),
-            book.getIsbns(),
-            book.getTitle(),
-            book.getAuthors() != null ? book.getAuthors().stream()
-                .map(this::toAuthorDto)
-                .collect(Collectors.toSet()) : new HashSet<>(),
-            book.getDescription(),
-            book.getPublicationDate(),
-            book.getCreatedAt(),
-            book.getUpdatedAt()
+        Set<String> authorNames = book.getAuthors().stream()
+                .map(author -> author.getFirstName() + " " + author.getLastName())
+                .collect(Collectors.toSet());
+
+        return new BookIndex(
+                book.getId(),
+                book.getTitle(),
+                authorNames,
+                book.getPublicationDate()
         );
     }
-    
 
-    public List<BookDto> toDtoList(List<Book> books) {
-        if (books == null) {
-            return List.of();
+    /**
+     * Maps Book entity to BookShow DTO
+     */
+    public BookShow toBookShow(Book book) {
+        if (book == null) {
+            return null;
         }
-        
-        return books.stream()
-                .map(this::toDto)
-                .toList();
+        System.out.println(book.getCollections());
+        return new BookShow(
+                book.getId(),
+                book.getIsbns(),
+                book.getTitle(),
+                book.getAuthors() != null ? book.getAuthors().stream()
+                        .map(this::toAuthorDto)
+                        .collect(Collectors.toSet()) : new HashSet<>(),
+                book.getDescription(),
+                book.getPublicationDate(),
+                book.getCollections(),
+                book.getCreatedAt(),
+                book.getUpdatedAt()
+        );
     }
-    
 
     public AuthorDto toAuthorDto(Author author) {
         if (author == null) {
             return null;
         }
         return new AuthorDto(author.getId(), author.getFirstName(), author.getLastName());
-    }
-
-    public Book toEntity(BookDto BookDto) {
-        if (BookDto == null) {
-            return null;
-        }
-        
-        Book.Builder builder = new Book.Builder()
-                .id(BookDto.id())
-                .title(BookDto.title())
-                .description(BookDto.description())
-                .publicationDate(BookDto.publicationDate());
-        
-        if (BookDto.isbns() != null) {
-            builder.isbns(BookDto.isbns().stream().toList());
-        }
-        
-        return builder.build();
     }
 }

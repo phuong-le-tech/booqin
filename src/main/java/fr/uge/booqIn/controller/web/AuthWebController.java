@@ -2,7 +2,7 @@ package fr.uge.booqIn.controller.web;
 
 import fr.uge.booqIn.dto.auth.LoginDto;
 import fr.uge.booqIn.dto.auth.RegisterDto;
-import fr.uge.booqIn.service.AuthService;
+import fr.uge.booqIn.service.interfaces.AuthServiceInterface;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/auth")
 public class AuthWebController {
 
-  private final AuthService authService;
+  private final AuthServiceInterface authService;
 
-  public AuthWebController(AuthService authService) {
+  public AuthWebController(AuthServiceInterface authService) {
     this.authService = authService;
   }
 

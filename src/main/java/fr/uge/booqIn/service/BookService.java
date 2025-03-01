@@ -166,21 +166,4 @@ public class BookService {
     public List<Book> findAllWithAuthors() {
         return bookRepository.findAllWithAuthors();
     }
-    
-    @Transactional
-    public Optional<Book> findByIdWithIsbns(Long bookId) {
-        Optional<Book> bookOptional = bookRepository.findById(bookId);
-        
-        bookOptional.ifPresent(book -> {
-            Set<String> isbns = bookRepository.findIsbnsByBookId(bookId);
-            book.setIsbns(isbns);
-            book.getAuthors().size();
-        });
-        
-        return bookOptional;
-    }
-    
-    
-    
-    
 }
