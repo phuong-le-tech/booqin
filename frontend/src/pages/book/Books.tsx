@@ -1,6 +1,7 @@
 // src/pages/Books.tsx
 import React, { useState, useEffect } from "react";
 import { BookGrid } from "../../components/BookGrid";
+import { Pagination } from "../../components/Pagination";
 import { Layout } from "../Layout";
 import { Book } from "../../model/Book";
 import BookService from "../../services/BookService";
@@ -12,39 +13,38 @@ export const Books: React.FC = () => {
     const [searchType, setSearchType] = useState<string>("title");
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        const fetchBooks = async () => {
-            try {
-                setIsLoading(true);
-                const fetchedBooks = await BookService.getAllBooks();
-                setBooks(fetchedBooks);
-                setError(null);
-            } catch (error) {
-                console.error("Failed to fetch books:", error);
-                setError("Failed to load books. Please try again later.");
-            } finally {
-                setIsLoading(false);
-            }
-        };
+    // États pour la pagination
+    const [currentPage, setCurrentPage] = useState<number>(0);
+    const [totalPages, setTotalPages] = useState<number>(1);
+    const itemsPerPage = 20; // Nombre de livres par page
 
-        fetchBooks();
-    }, []);
+    useEffect(() => {
+        fetchBooks(currentPage);
+    }, [currentPage]); // Refetch quand la page change
+
+    const fetchBooks = async (page: number) => {
+        try {
+            setIsLoading(true);
+            const response = await BookService.getPaginatedBooks(page, itemsPerPage);
+            setBooks(response.books);
+            setTotalPages(response.totalPages);
+            setError(null);
+        } catch (error) {
+            console.error("Failed to fetch books:", error);
+            setError("Failed to load books. Please try again later.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        setCurrentPage(0); // Revenir à la première page lors d'une recherche
+
         if (!searchTerm.trim()) {
             // Si la recherche est vide, on charge tous les livres
-            try {
-                setIsLoading(true);
-                const fetchedBooks = await BookService.getAllBooks();
-                setBooks(fetchedBooks);
-                setError(null);
-            } catch (error) {
-                setError("Failed to load books. Please try again later.");
-            } finally {
-                setIsLoading(false);
-            }
+            fetchBooks(0);
             return;
         }
 
@@ -59,6 +59,8 @@ export const Books: React.FC = () => {
             }
 
             setBooks(searchResults);
+            // Pour la recherche, on désactive la pagination standard
+            setTotalPages(1);
             setError(null);
         } catch (error) {
             console.error("Search failed:", error);
@@ -66,6 +68,12 @@ export const Books: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    // Gestionnaire de changement de page
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+        // Le useEffect se déclenchera et rechargera les livres avec la nouvelle page
     };
 
     return (
@@ -114,6 +122,15 @@ export const Books: React.FC = () => {
                 )}
 
                 <BookGrid books={books} isLoading={isLoading} />
+
+                {/* Pagination - On affiche seulement si on n'est pas en mode recherche */}
+                {!searchTerm && totalPages > 1 && (
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                    />
+                )}
             </div>
         </Layout>
     );

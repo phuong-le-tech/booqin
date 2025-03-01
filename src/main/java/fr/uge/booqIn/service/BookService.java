@@ -78,6 +78,7 @@ public class BookService {
     }
 
 
+    @Transactional
     public Optional<Book> findById(Long id) {
         Objects.requireNonNull(id, "L'ID ne peut pas être null");
         return bookRepository.findById(id);
@@ -161,9 +162,17 @@ public class BookService {
         return bookMapper.toDto(savedBook);
     }
 
+    @Transactional
+    public Optional<BookDto> findByIdDto(Long id) {
+        Objects.requireNonNull(id, "ID cannot be null");
+        Optional<Book> bookOptional = bookRepository.findByIdWithIsbns(id);
+        return bookOptional.map(bookMapper::toDto);
+    }
+
 
     @Transactional
     public List<Book> findAllWithAuthors() {
         return bookRepository.findAllWithAuthors();
     }
+
 }
