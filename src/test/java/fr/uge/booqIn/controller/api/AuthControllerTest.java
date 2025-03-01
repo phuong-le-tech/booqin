@@ -1,14 +1,13 @@
-package fr.uge.booqIn.controller;
+package fr.uge.booqIn.controller.api;
 
-import fr.uge.booqIn.controller.api.AuthController;
 import fr.uge.booqIn.dto.auth.AuthResponse;
 import fr.uge.booqIn.dto.auth.LoginDto;
 import fr.uge.booqIn.dto.auth.RegisterDto;
 import fr.uge.booqIn.dto.auth.UserMeDto;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.factory.ApiResponse;
-import fr.uge.booqIn.service.AuthService;
 import fr.uge.booqIn.service.JwtService;
+import fr.uge.booqIn.service.interfaces.AuthServiceInterface;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,7 +23,7 @@ import static org.mockito.Mockito.*;
 class AuthControllerTest {
 
   @Mock
-  private AuthService authService;
+  private AuthServiceInterface authService;
 
   @Mock
   private JwtService jwtService;
