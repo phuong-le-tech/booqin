@@ -22,7 +22,6 @@ public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificat
   @Query("SELECT DISTINCT b FROM Book b " +
           "LEFT JOIN FETCH b.authors " +
           "LEFT JOIN FETCH b.isbns " +
-          "LEFT JOIN FETCH b.collections " +
           "WHERE b.id = :id")
   @NonNull
   Optional<Book> findById(@NonNull Long id);
@@ -33,9 +32,9 @@ public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificat
   @Query("select b from Book b where b.publicationDate = :publishedDate")
   List<Book> findByPublishedYear(String publishedDate);
 
-  @EntityGraph(attributePaths = {"books"})
-  @Query("SELECT b FROM Book b LEFT JOIN FETCH b.collections WHERE b.id = :id")
-  Optional<Book> findByIdWithCollections(@Param("id") Long id);
+//  @EntityGraph(attributePaths = {"books"})
+//  @Query("SELECT b FROM Book b LEFT JOIN FETCH b.collections WHERE b.id = :id")
+//  Optional<Book> findByIdWithCollections(@Param("id") Long id);
 
   @Query("SELECT b FROM Book b JOIN FETCH b.authors ")
   List<Book> findAllWithAuthors();

@@ -1,18 +1,21 @@
 package fr.uge.booqIn.controller.web;
 
+import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.BookCollection;
 import fr.uge.booqIn.entity.User;
+import fr.uge.booqIn.mapper.BookMapper;
 import fr.uge.booqIn.service.BookCollectionService;
-import fr.uge.booqIn.service.BookService;
+import fr.uge.booqIn.service.impl.BookServiceImpl;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.sql.Date;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -20,10 +23,11 @@ import java.util.stream.Collectors;
 @RequestMapping("/collections")
 public class BookCollectionWebController {
   private final BookCollectionService bookCollectionService;
-  private final BookService bookService;
+  private final BookServiceImpl bookService;
+  private final BookMapper bookMapper = new BookMapper();
   private final Logger logger = Logger.getLogger(BookCollectionWebController.class.getName());
 
-  public BookCollectionWebController(BookCollectionService bookCollectionService, BookService bookService) {
+  public BookCollectionWebController(BookCollectionService bookCollectionService, BookServiceImpl bookService) {
     this.bookCollectionService = bookCollectionService;
     this.bookService = bookService;
   }
@@ -54,6 +58,7 @@ public class BookCollectionWebController {
       return "redirect:/collections"; // Rediriger si la collection n'est pas trouvée
     }
     System.out.println("Collection size: " + collection.get().getBooks().size());
+    System.out.println("Collection: \n" + collection.get());
     model.addAttribute("collection", collection.get());
     return "collections/details";
   }
@@ -89,7 +94,14 @@ public class BookCollectionWebController {
       logger.info("Collection found: " +  collectionOpt.get().getTitle());
       BookCollection collection = collectionOpt.get();
       //Optional<Book> bookOpt = bookCollectionService.getBookFromCollection(collectionId, bookId);
-      Optional<Book> bookOpt = bookService.findById(bookId);
+      //Optional<Book> bookOpt = bookService.findById(bookId);
+      BookShow bookShow = bookService.findById(bookId);
+      Set<Author> authors = bookShow.authors().stream().map(bookMapper::toAuthor).collect(Collectors.toSet());
+      Optional<Book> bookOpt = Optional.of(new Book.Builder().id(bookShow.id()).isbns(bookShow.isbns())
+              .title(bookShow.title()).authors(authors).description(bookShow.description())
+              .publicationDate(bookShow.publicationDate()).createdAt(bookShow.createdAt())
+              .updatedAt(bookShow.updatedAt())
+              .build());
       if (bookOpt.isPresent()) {
         logger.info("Book found: " + bookOpt.get().getTitle());
         Book book = bookOpt.get();
@@ -103,8 +115,6 @@ public class BookCollectionWebController {
       logger.warning("Collection not found with ID: " + collectionId);
       model.addAttribute("error", "Collection not found");
     }
-
     return "collections/addBook";
   }
-
 }
