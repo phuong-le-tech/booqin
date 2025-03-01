@@ -1,41 +1,15 @@
 // src/components/BookCard.tsx
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Book } from '../model/Book';
+import { BookIndex } from '../model/Book';
 
-interface BookCardProps extends Book {}
+interface BookCardProps {
+    book: BookIndex;
+}
 
-export const BookCard: React.FC<BookCardProps> = ({
-                                                      id,
-                                                      title,
-                                                      authors,
-                                                      description,
-                                                      publicationDate
-                                                  }) => {
-    // Limiter la description à un nombre de caractères
-    const truncateDescription = (text: string, maxLength: number = 120) => {
-        if (!text) return '';
-        if (text.length <= maxLength) return text;
-        return text.substring(0, maxLength).trim() + '...';
-    };
-
-    // Obtenir les noms d'auteurs formatés avec une limite
-    const formatAuthors = (authors: any[], maxToShow: number = 2) => {
-        if (!authors || authors.length === 0) return 'Unknown Author';
-
-        if (authors.length <= maxToShow) {
-            return authors.map(author => author.fullName).join(', ');
-        } else {
-            const shownAuthors = authors.slice(0, maxToShow).map(author => author.fullName).join(', ');
-            return `${shownAuthors} +${authors.length - maxToShow} more`;
-        }
-    };
-
-    const authorNames = formatAuthors(authors);
-
-    // Générer une couleur de fond aléatoire dans des tons de bleu pour la couverture
-    // On utilise l'ID du livre pour avoir une couleur constante pour le même livre
-    const getBookCoverColor = () => {
+export const BookCard: React.FC<BookCardProps> = ({ book }) => {
+    // Fonction pour générer une couleur à partir de l'id du livre
+    const getBookCoverColor = (bookId: number) => {
         const colors = [
             '#1e3a8a', // bleu foncé
             '#1e40af',
@@ -45,47 +19,53 @@ export const BookCard: React.FC<BookCardProps> = ({
             '#60a5fa', // bleu clair
             '#93c5fd'
         ];
-        const colorIndex = parseInt(id.toString().slice(-1)) % colors.length;
+        const colorIndex = bookId % colors.length;
         return colors[colorIndex];
     };
 
+    // Fonction pour formater la date
+    const formatDate = (dateString: string) => {
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString(undefined, {
+                year: 'numeric',
+                month: 'long'
+            });
+        } catch (e) {
+            return dateString;
+        }
+    };
+
     return (
-        <Link to={`/books/${id}`} className="block h-full">
-            <div className="h-full bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 flex flex-col">
-                {/* Image de couverture (placeholder coloré) */}
+        <Link to={`/books/${book.id}`} className="block">
+            <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300">
+                {/* Couverture de livre stylisée */}
                 <div
-                    className="w-full h-48 flex items-center justify-center text-white font-bold text-xl"
-                    style={{ backgroundColor: getBookCoverColor() }}
+                    className="w-full h-48 flex items-center justify-center"
+                    style={{ backgroundColor: getBookCoverColor(book.id) }}
                 >
-                    {title.substring(0, 1).toUpperCase()}
+          <span className="text-white text-5xl font-bold">
+            {book.title.charAt(0).toUpperCase()}
+          </span>
                 </div>
 
-                <div className="p-5 flex-grow flex flex-col">
-                    {/* Titre et auteur */}
-                    <div className="flex-grow">
-                        <h3 className="text-lg font-bold text-gray-800 mb-1 line-clamp-2 hover:text-blue-600 transition-colors">{title}</h3>
-                        <p className="text-sm text-blue-700 mb-2 font-medium line-clamp-1" title={authors && authors.length > 0 ? authors.map(author => author.fullName).join(', ') : ''}>{authorNames}</p>
+                {/* Informations du livre */}
+                <div className="p-4">
+                    <h3 className="text-lg font-semibold text-gray-800 line-clamp-2 mb-2">
+                        {book.title}
+                    </h3>
 
-                        {publicationDate && (
-                            <p className="text-xs text-gray-500 mb-3">Published: {publicationDate}</p>
-                        )}
+                    <p className="text-sm text-gray-600 line-clamp-1 mb-2">
+                        {book.authorNames && book.authorNames.length > 0
+                            ? book.authorNames.join(', ')
+                            : 'Unknown author'}
+                    </p>
 
-                        {/* Description avec taille maximale */}
-                        <div className="mt-2">
-                            <p className="text-sm text-gray-600 line-clamp-3 h-14 overflow-hidden">
-                                {truncateDescription(description)}
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Bouton "View details" */}
-                    <div className="mt-4 pt-3 border-t border-gray-100">
-                        <div className="flex justify-center">
-              <span className="inline-block px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
-                View details
-              </span>
-                        </div>
-                    </div>
+                    {book.publicationDate && (
+                        <p className="text-xs text-gray-500">
+                            Published: {formatDate(book.publicationDate)}
+                        </p>
+                    )}
                 </div>
             </div>
         </Link>

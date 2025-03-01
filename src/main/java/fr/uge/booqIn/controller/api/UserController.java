@@ -31,7 +31,7 @@ public class UserController {
   @GetMapping("")
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<Page<UserIndex>>> getUsers(
-          @RequestParam(defaultValue = "1") int page,
+          @RequestParam(defaultValue = "0") int page,
           @RequestParam(defaultValue = "10") int size,
           @RequestParam(defaultValue = "id") String sortField,
           @RequestParam(defaultValue = "asc") String sortDirection,
@@ -95,6 +95,6 @@ public class UserController {
   public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
     logger.info("🗑️ Suppression de l'utilisateur avec id: {}", id);
     userService.deleteUser(id);
-    return ResponseEntity.ok(ApiResponse.success("User deleted successfully", null));
+    return ResponseEntity.ok(ApiResponse.success("User deleted successfully"));
   }
 }

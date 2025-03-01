@@ -2,12 +2,12 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "../Layout";
-import { Book } from "../../model/Book";
+import { BookShow, AuthorDto } from "../../model/Book";
 import BookService from "../../services/BookService";
 
 export const BookDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
-    const [book, setBook] = useState<Book | null>(null);
+    const [book, setBook] = useState<BookShow | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -31,8 +31,8 @@ export const BookDetail: React.FC = () => {
         fetchBookDetails();
     }, [id]);
 
-    // Fonction pour générer une couleur à partir de l'id du livre (même fonction que dans BookCard)
-    const getBookCoverColor = (bookId: string) => {
+    // Fonction pour générer une couleur à partir de l'id du livre
+    const getBookCoverColor = (bookId: number) => {
         const colors = [
             '#1e3a8a', // bleu foncé
             '#1e40af',
@@ -42,7 +42,7 @@ export const BookDetail: React.FC = () => {
             '#60a5fa', // bleu clair
             '#93c5fd'
         ];
-        const colorIndex = parseInt(bookId.toString().slice(-1)) % colors.length;
+        const colorIndex = bookId % colors.length;
         return colors[colorIndex];
     };
 
@@ -109,6 +109,11 @@ export const BookDetail: React.FC = () => {
         }
     };
 
+    // Fonction pour créer le nom complet des auteurs
+    const getAuthorFullName = (author: AuthorDto) => {
+        return `${author.firstName} ${author.lastName}`.trim();
+    };
+
     return (
         <Layout>
             <div className="container mx-auto px-4 py-8">
@@ -142,11 +147,11 @@ export const BookDetail: React.FC = () => {
 
                             <div className="mb-6">
                                 <p className="text-lg text-blue-700 font-medium">
-                                    By {book.authors.map(author => author.fullName).join(', ')}
+                                    By {book.authors.map(author => getAuthorFullName(author)).join(', ')}
                                 </p>
                                 {book.publicationDate && (
                                     <p className="text-sm text-gray-500 mt-1">
-                                        Published: {book.publicationDate}
+                                        Published: {formatDate(book.publicationDate)}
                                     </p>
                                 )}
                             </div>

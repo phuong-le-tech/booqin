@@ -1,97 +1,111 @@
-import { Book } from '../model/Book';
+// src/services/BookService.ts
+import axios from 'axios';
+import { BookPagedResponse, BookShow } from '../model/Book';
+import { ApiResponse } from '../model/ApiResponse';
 
 const API_URL = '/api/v1/books';
 
-interface PaginatedBooks {
-    books: Book[];
-    totalPages: number;
-    currentPage: number;
-}
-
-const BookService = {
-    async getAllBooks(): Promise<Book[]> {
+class BookService {
+    /**
+     * Récupère une liste paginée de livres avec filtres optionnels
+     */
+    async getBooks(
+        page: number = 0,
+        size: number = 10,
+        sortField: string = 'id',
+        sortDirection: string = 'asc',
+        filters: {
+            title?: string,
+            author?: string,
+            isbn?: string
+        } = {}
+    ) {
         try {
-            const response = await fetch(API_URL);
-            const data = await response.json();
+            // Construit les paramètres en incluant uniquement les valeurs non vides
+            const params: any = {
+                page,
+                size,
+                sortField,
+                sortDirection
+            };
 
-            if (!response.ok || !data.success) {
-                throw new Error(data.message || 'Failed to fetch books');
-            }
+            // Ajoute seulement les filtres qui ont une valeur
+            if (filters.title) params.title = filters.title;
+            if (filters.author) params.author = filters.author;
+            if (filters.isbn) params.isbn = filters.isbn;
 
-            return data.data;
+            const response = await axios.get<ApiResponse<BookPagedResponse>>(`${API_URL}`, { params });
+            return response.data.data;
         } catch (error) {
             console.error('Error fetching books:', error);
             throw error;
         }
-    },
+    }
 
-    async getPaginatedBooks(page: number, size: number): Promise<PaginatedBooks> {
+    /**
+     * Récupère un livre par son ID
+     */
+    async getBookById(id: string | number) {
         try {
-            const response = await fetch(`${API_URL}?page=${page}&size=${size}`);
-            const data = await response.json();
-
-            if (!response.ok || !data.success) {
-                throw new Error(data.message || 'Failed to fetch paginated books');
-            }
-
-            return {
-                books: data.data,
-                totalPages: data.meta?.totalPages || 1,
-                currentPage: data.meta?.currentPage || 0
-            };
+            const response = await axios.get<ApiResponse<BookShow>>(`${API_URL}/${id}`);
+            return response.data.data;
         } catch (error) {
-            console.error('Error fetching paginated books:', error);
-            throw error;
-        }
-    },
-
-    async getBookById(id: string): Promise<Book> {
-        try {
-            const response = await fetch(`${API_URL}/${id}`);
-            const data = await response.json();
-
-            if (!response.ok || !data.success) {
-                throw new Error(data.message || `Failed to fetch book with ID: ${id}`);
-            }
-
-            return data.data;
-        } catch (error) {
-            console.error(`Error fetching book with ID ${id}:`, error);
-            throw error;
-        }
-    },
-
-    async searchBooksByTitle(title: string): Promise<Book[]> {
-        try {
-            const response = await fetch(`${API_URL}/searchByTitle?title=${encodeURIComponent(title)}`);
-            const data = await response.json();
-
-            if (!response.ok || !data.success) {
-                throw new Error(data.message || 'Failed to search books by title');
-            }
-
-            return data.data;
-        } catch (error) {
-            console.error('Error searching books by title:', error);
-            throw error;
-        }
-    },
-
-    async searchBooksByAuthor(author: string): Promise<Book[]> {
-        try {
-            const response = await fetch(`${API_URL}/searchByAuthor?author=${encodeURIComponent(author)}`);
-            const data = await response.json();
-
-            if (!response.ok || !data.success) {
-                throw new Error(data.message || 'Failed to search books by author');
-            }
-
-            return data.data;
-        } catch (error) {
-            console.error('Error searching books by author:', error);
+            console.error(`Error fetching book with id ${id}:`, error);
             throw error;
         }
     }
-};
 
-export default BookService;
+    /**
+     * Crée un nouveau livre (réservé aux administrateurs)
+     */
+    async createBook(bookData: any) {
+        try {
+            const response = await axios.post<ApiResponse<BookShow>>(`${API_URL}`, bookData);
+            return response.data.data;
+        } catch (error) {
+            console.error('Error creating book:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Met à jour un livre existant (réservé aux administrateurs)
+     */
+    async updateBook(id: string | number, bookData: any) {
+        try {
+            const response = await axios.put<ApiResponse<BookShow>>(`${API_URL}/${id}`, bookData);
+            return response.data.data;
+        } catch (error) {
+            console.error(`Error updating book with id ${id}:`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * Mise à jour partielle d'un livre (réservé aux administrateurs)
+     */
+    async patchBook(id: string | number, bookUpdateData: any) {
+        try {
+            const response = await axios.patch<ApiResponse<BookShow>>(`${API_URL}/${id}`, bookUpdateData);
+            return response.data.data;
+        } catch (error) {
+            console.error(`Error patching book with id ${id}:`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * Supprime un livre (réservé aux administrateurs)
+     */
+    async deleteBook(id: string | number) {
+        try {
+            await axios.delete<ApiResponse<void>>(`${API_URL}/${id}`);
+            return true;
+        } catch (error) {
+            console.error(`Error deleting book with id ${id}:`, error);
+            throw error;
+        }
+    }
+}
+
+export default new BookService();

@@ -61,10 +61,6 @@ public class UserServiceImpl implements UserServiceInterface {
   @Transactional
   public UserShow findById(@NotNull Long id) {
     User user = findUserById(id);
-
-    // Initialize lazy-loaded collections
-    initializeLazyCollections(user);
-
     return userMapper.toUserShow(user);
   }
 
@@ -93,7 +89,6 @@ public class UserServiceImpl implements UserServiceInterface {
       user.setPassword(passwordEncoder.encode(user.getPassword()));
     }
 
-    initializeLazyCollections(user);
     return userRepository.save(user);
   }
 
@@ -101,7 +96,6 @@ public class UserServiceImpl implements UserServiceInterface {
   @Transactional
   public User patchUser(@NotNull Long id, @NotNull @Valid UserUpdate userUpdate) {
     User user = findUserById(id);
-    initializeLazyCollections(user);
 
     userUpdate.email().ifPresent(newEmail -> {
       if (!newEmail.equals(user.getEmail())) {
@@ -138,10 +132,5 @@ public class UserServiceImpl implements UserServiceInterface {
   private User findUserById(Long id) {
     return userRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
-  }
-
-  private void initializeLazyCollections(User user) {
-    user.getCollections().size();
-    user.getBooksToLend().size();
   }
 }

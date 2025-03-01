@@ -1,11 +1,11 @@
-import { useState, useEffect, useContext, type ChangeEvent, type FormEvent } from "react"
-import { useNavigate } from "react-router-dom"
-import { toast } from "react-toastify"
-import { AuthContext } from "../../context/AuthContext.tsx"
+import {useState, useEffect, useContext, type ChangeEvent, type FormEvent} from "react"
+import {useNavigate} from "react-router-dom"
+import {toast} from "react-toastify"
+import {AuthContext} from "../../context/AuthContext.tsx"
 import UserService from "../../services/UserService.ts"
-import { Layout } from "../Layout.tsx"
-import { User, Mail, MapPin, Edit, Save, X } from "lucide-react"
-import type { Address } from "../../model/Address.ts"
+import {Layout} from "../Layout.tsx"
+import {User, Mail, MapPin, Edit, Save, X} from "lucide-react"
+import type {Address} from "../../model/Address.ts"
 
 interface ProfileForm {
     id: string
@@ -16,7 +16,7 @@ interface ProfileForm {
 }
 
 export const Profile = () => {
-    const { user, setUser } = useContext(AuthContext)
+    const {user, setUser} = useContext(AuthContext)
     const [formData, setFormData] = useState<ProfileForm>({
         id: user?.id || "",
         firstName: user?.firstName || "",
@@ -55,14 +55,14 @@ export const Profile = () => {
     }, [user, navigate])
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target
+        const {name, value} = e.target
         if (["streetNumber", "streetName", "city", "postalCode"].includes(name)) {
             setFormData((prev) => ({
                 ...prev,
-                address: { ...prev.address, [name]: value },
+                address: {...prev.address, [name]: value},
             }))
         } else {
-            setFormData((prev) => ({ ...prev, [name]: value }))
+            setFormData((prev) => ({...prev, [name]: value}))
         }
     }
 
@@ -70,8 +70,15 @@ export const Profile = () => {
         e.preventDefault()
         setIsLoading(true)
         try {
-            const updatedUser = await UserService.updateUser(formData)
-            setUser({ ...user, ...updatedUser })
+            const userData = {
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                email: formData.email,
+                address: formData.address
+            }
+
+            const updatedUser = await UserService.updateUser(parseInt(formData.id), userData)
+            setUser({...user, ...updatedUser})
             toast.success("Profile updated successfully!")
             setIsEditing(false)
         } catch (error: any) {
@@ -118,12 +125,12 @@ export const Profile = () => {
                             >
                                 {isEditing ? (
                                     <>
-                                        <X className="h-4 w-4 mr-2" />
+                                        <X className="h-4 w-4 mr-2"/>
                                         Cancel
                                     </>
                                 ) : (
                                     <>
-                                        <Edit className="h-4 w-4 mr-2" />
+                                        <Edit className="h-4 w-4 mr-2"/>
                                         Edit Profile
                                     </>
                                 )}
@@ -135,7 +142,8 @@ export const Profile = () => {
                             <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                                     <div>
-                                        <label htmlFor="firstName" className="block text-sm font-medium text-primary mb-1">
+                                        <label htmlFor="firstName"
+                                               className="block text-sm font-medium text-primary mb-1">
                                             First Name
                                         </label>
                                         <input
@@ -151,7 +159,8 @@ export const Profile = () => {
                                         />
                                     </div>
                                     <div>
-                                        <label htmlFor="lastName" className="block text-sm font-medium text-primary mb-1">
+                                        <label htmlFor="lastName"
+                                               className="block text-sm font-medium text-primary mb-1">
                                             Last Name
                                         </label>
                                         <input
@@ -188,7 +197,8 @@ export const Profile = () => {
                                     <h3 className="text-lg font-medium text-primary mb-3">Address Information</h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                                         <div>
-                                            <label htmlFor="streetNumber" className="block text-sm font-medium text-primary mb-1">
+                                            <label htmlFor="streetNumber"
+                                                   className="block text-sm font-medium text-primary mb-1">
                                                 Street Number
                                             </label>
                                             <input
@@ -204,7 +214,8 @@ export const Profile = () => {
                                             />
                                         </div>
                                         <div>
-                                            <label htmlFor="streetName" className="block text-sm font-medium text-primary mb-1">
+                                            <label htmlFor="streetName"
+                                                   className="block text-sm font-medium text-primary mb-1">
                                                 Street Name
                                             </label>
                                             <input
@@ -222,7 +233,8 @@ export const Profile = () => {
                                     </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mt-4">
                                         <div>
-                                            <label htmlFor="city" className="block text-sm font-medium text-primary mb-1">
+                                            <label htmlFor="city"
+                                                   className="block text-sm font-medium text-primary mb-1">
                                                 City
                                             </label>
                                             <input
@@ -238,7 +250,8 @@ export const Profile = () => {
                                             />
                                         </div>
                                         <div>
-                                            <label htmlFor="postalCode" className="block text-sm font-medium text-primary mb-1">
+                                            <label htmlFor="postalCode"
+                                                   className="block text-sm font-medium text-primary mb-1">
                                                 Postal Code
                                             </label>
                                             <input
@@ -269,7 +282,7 @@ export const Profile = () => {
                                             "Updating..."
                                         ) : (
                                             <>
-                                                <Save className="h-4 w-4 mr-2" />
+                                                <Save className="h-4 w-4 mr-2"/>
                                                 Save Changes
                                             </>
                                         )}
@@ -282,7 +295,7 @@ export const Profile = () => {
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="bg-primary p-4 rounded-lg shadow">
                                         <div className="flex items-center mb-2">
-                                            <User className="h-5 w-5 text-blue-500 mr-2" />
+                                            <User className="h-5 w-5 text-blue-500 mr-2"/>
                                             <h3 className="text-lg font-medium text-secondary">Personal Information</h3>
                                         </div>
                                         <div className="space-y-2 mt-4">
@@ -297,7 +310,7 @@ export const Profile = () => {
 
                                     <div className="bg-primary p-4 rounded-lg shadow">
                                         <div className="flex items-center mb-2">
-                                            <Mail className="h-5 w-5 text-blue-500 mr-2" />
+                                            <Mail className="h-5 w-5 text-blue-500 mr-2"/>
                                             <h3 className="text-lg font-medium text-secondary">Contact Information</h3>
                                         </div>
                                         <div className="space-y-2 mt-4">
@@ -310,7 +323,7 @@ export const Profile = () => {
                                 {user.address && (
                                     <div className="bg-primary p-4 rounded-lg shadow mt-4">
                                         <div className="flex items-center mb-2">
-                                            <MapPin className="h-5 w-5 text-blue-500 mr-2" />
+                                            <MapPin className="h-5 w-5 text-blue-500 mr-2"/>
                                             <h3 className="text-lg font-medium text-secondary">Address</h3>
                                         </div>
                                         <div className="mt-4">

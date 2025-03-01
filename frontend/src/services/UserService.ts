@@ -1,21 +1,12 @@
 import axiosInstance from "./AxiosInstance";
 import { User } from "../model/User";
 import { ApiResponse } from "../model/ApiResponse";
-import { Address } from "../model/Address";
-
-interface UserUpdateData {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    address: Address;
-}
 
 const UserService = {
     /**
      * Get a user by their ID
      */
-    getUserById: async (userId: string): Promise<User> => {
+    getUserById: async (userId: number): Promise<User> => {
         try {
             const response = await axiosInstance.get<ApiResponse<User>>(`/v1/users/${userId}`);
             const apiResp = response.data;
@@ -36,12 +27,13 @@ const UserService = {
         }
     },
 
-    /**
-     * Update a user's profile information using PUT method
-     */
-    updateUser: async (userData: UserUpdateData): Promise<User> => {
+
+    updateUser: async (userId: number, userData: Partial<User>): Promise<User> => {
         try {
-            const response = await axiosInstance.put<ApiResponse<User>>('/v1/users', userData);
+            const response = await axiosInstance.patch<ApiResponse<User>>(
+                `/v1/users/${userId}`,
+                userData
+            );
             const apiResp = response.data;
 
             if (!apiResp.success || !apiResp.data) {
