@@ -1,12 +1,17 @@
 package fr.uge.booqIn.dto.user;
 
 import fr.uge.booqIn.entity.Address;
+import fr.uge.booqIn.entity.BookCollection;
+import fr.uge.booqIn.entity.ToLendBook;
+
+import java.util.List;
 
 public record UserShow (
   Long id,
   String firstName,
   String lastName,
   String email,
-  Address address
+  Address address,
+  List<BookCollection> collections
   ) {
 }

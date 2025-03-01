@@ -1,16 +1,17 @@
+// src/components/Pagination.tsx
 import React from 'react';
+import { PageInfo } from '../model/Pagination';
 
 interface PaginationProps {
-    currentPage: number;
-    totalPages: number;
+    pageInfo: PageInfo;
     onPageChange: (page: number) => void;
 }
 
 export const Pagination: React.FC<PaginationProps> = ({
-                                                          currentPage,
-                                                          totalPages,
+                                                          pageInfo,
                                                           onPageChange
                                                       }) => {
+    const { number: currentPage, totalPages } = pageInfo;
     const pageNumbers = [];
 
     // Logic to determine which page numbers to show
@@ -81,7 +82,7 @@ export const Pagination: React.FC<PaginationProps> = ({
                     </button>
                 ))}
 
-                {/* Last Page Button */}
+                {/* Last Page */}
                 {endPage < totalPages - 1 && (
                     <>
                         {endPage < totalPages - 2 && (
