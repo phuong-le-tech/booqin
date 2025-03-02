@@ -30,6 +30,7 @@ public class BookMapper {
                 book.getId(),
                 book.getTitle(),
                 authorNames,
+                book.getIsbns(),
                 book.getPublicationDate()
         );
     }

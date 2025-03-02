@@ -12,20 +12,23 @@ import fr.uge.booqIn.service.impl.BookServiceImpl;
 import fr.uge.booqIn.service.impl.CartServiceImpl;
 import fr.uge.booqIn.service.impl.UserServiceImpl;
 import fr.uge.booqIn.dto.cart.CartDto;
+import fr.uge.booqIn.service.interfaces.BookServiceInterface;
+import fr.uge.booqIn.service.interfaces.CartServiceInterface;
+import fr.uge.booqIn.service.interfaces.UserServiceInterface;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
 @RestController
-@RequestMapping("api/v1/cart")
+@RequestMapping("api/v1/carts")
 public class CartController {
     
-    private final CartServiceImpl cartService;
-    private final UserServiceImpl userService;
-    private final BookServiceImpl bookService;
+    private final CartServiceInterface cartService;
+    private final UserServiceInterface userService;
+    private final BookServiceInterface bookService;
     
-    public CartController(CartServiceImpl cartService, UserServiceImpl userService, BookServiceImpl bookService) {
+    public CartController(CartServiceInterface cartService, UserServiceInterface userService, BookServiceInterface bookService) {
         this.cartService = cartService;
         this.userService = userService;
         this.bookService = bookService;
@@ -33,8 +36,7 @@ public class CartController {
     
     @PostMapping("/add-book")
     public ResponseEntity<ApiResponse<Boolean>> addBookToCart(@RequestBody CartDto request) {
-        
-        Optional<UserIndex> userOptional = Optional.ofNullable(userService.findUserByIdtoIndex(request.userId()));
+        Optional<UserIndex> userOptional = Optional.ofNullable(userService.findUserByIdToIndex(request.userId()));
         
         Optional<BookShow> bookOptional = Optional.ofNullable(bookService.findById(request.bookId()));
         
@@ -52,7 +54,7 @@ public class CartController {
     
     @DeleteMapping("/remove-book")
     public ResponseEntity<ApiResponse<Boolean>> removeBookFromCart(@RequestParam Long userId, @RequestParam Long bookId) {
-        Optional<UserIndex> userOptional = Optional.ofNullable(userService.findUserByIdtoIndex(userId));
+        Optional<UserIndex> userOptional = Optional.ofNullable(userService.findUserByIdToIndex(userId));
         Optional<BookShow> bookOptional = Optional.ofNullable(bookService.findById(bookId));
         
         if (userOptional.isEmpty() || bookOptional.isEmpty()) {
@@ -67,7 +69,7 @@ public class CartController {
     
     @GetMapping("/user-cart/{userId}")
     public ResponseEntity<ApiResponse<ShopCartDto>> getUserCart(@PathVariable Long userId) {
-        Optional<UserIndex> userOptional = Optional.ofNullable(userService.findUserByIdtoIndex(userId));
+        Optional<UserIndex> userOptional = Optional.ofNullable(userService.findUserByIdToIndex(userId));
         if (userOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(ApiResponse.error("User not found"));
         }
@@ -78,7 +80,7 @@ public class CartController {
     
     @DeleteMapping("/clear-cart/{userId}")
     public ResponseEntity<ApiResponse<String>> clearCart(@PathVariable Long userId) {
-        Optional<UserIndex> userOptional= Optional.ofNullable(userService.findUserByIdtoIndex(userId));
+        Optional<UserIndex> userOptional= Optional.ofNullable(userService.findUserByIdToIndex(userId));
         
         if (userOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(ApiResponse.error("User not found"));
