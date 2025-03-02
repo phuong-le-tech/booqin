@@ -1,16 +1,29 @@
-import React from 'react';
+// src/components/Pagination.tsx
+import React from "react";
+import { PageInfo } from "../model/Pagination";
 
+// This adapter component works with the existing Books.tsx
 interface PaginationProps {
-    currentPage: number;
-    totalPages: number;
+    pageInfo: PageInfo;
     onPageChange: (page: number) => void;
 }
 
 export const Pagination: React.FC<PaginationProps> = ({
-                                                          currentPage,
-                                                          totalPages,
-                                                          onPageChange
+                                                          pageInfo,
+                                                          onPageChange,
                                                       }) => {
+    // Safely extract and validate page numbers to prevent NaN issues
+    const currentPage = typeof pageInfo.number === 'number' && !isNaN(pageInfo.number)
+        ? pageInfo.number
+        : 0;
+
+    const totalPages = pageInfo.totalPages > 0 ? pageInfo.totalPages : 1;
+
+    // Don't render if there's only one page
+    if (totalPages <= 1) {
+        return null;
+    }
+
     const pageNumbers = [];
 
     // Logic to determine which page numbers to show
@@ -30,12 +43,19 @@ export const Pagination: React.FC<PaginationProps> = ({
         pageNumbers.push(i);
     }
 
+    // Safe page change handler to prevent NaN values
+    const handlePageChange = (page: number) => {
+        // Validate the page number before passing it to the parent component
+        const validPage = !isNaN(page) ? Math.max(0, Math.min(page, totalPages - 1)) : 0;
+        onPageChange(validPage);
+    };
+
     return (
         <div className="flex justify-center mt-8">
             <nav className="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                 {/* Previous Page Button */}
                 <button
-                    onClick={() => onPageChange(Math.max(0, currentPage - 1))}
+                    onClick={() => handlePageChange(Math.max(0, currentPage - 1))}
                     disabled={currentPage === 0}
                     className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
                         currentPage === 0
@@ -53,7 +73,7 @@ export const Pagination: React.FC<PaginationProps> = ({
                 {startPage > 0 && (
                     <>
                         <button
-                            onClick={() => onPageChange(0)}
+                            onClick={() => handlePageChange(0)}
                             className="relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
                         >
                             1
@@ -70,7 +90,7 @@ export const Pagination: React.FC<PaginationProps> = ({
                 {pageNumbers.map(number => (
                     <button
                         key={number}
-                        onClick={() => onPageChange(number)}
+                        onClick={() => handlePageChange(number)}
                         className={`relative inline-flex items-center px-4 py-2 border ${
                             currentPage === number
                                 ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
@@ -90,7 +110,7 @@ export const Pagination: React.FC<PaginationProps> = ({
               </span>
                         )}
                         <button
-                            onClick={() => onPageChange(totalPages - 1)}
+                            onClick={() => handlePageChange(totalPages - 1)}
                             className="relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
                         >
                             {totalPages}
@@ -100,7 +120,7 @@ export const Pagination: React.FC<PaginationProps> = ({
 
                 {/* Next Page Button */}
                 <button
-                    onClick={() => onPageChange(Math.min(totalPages - 1, currentPage + 1))}
+                    onClick={() => handlePageChange(Math.min(totalPages - 1, currentPage + 1))}
                     disabled={currentPage === totalPages - 1}
                     className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
                         currentPage === totalPages - 1
