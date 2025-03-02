@@ -1,6 +1,6 @@
 // src/services/BookService.ts
 import axios from 'axios';
-import { BookPagedResponse, BookShow } from '../model/Book';
+import { BookPagedResponse, Book } from '../model/Book';
 import { ApiResponse } from '../model/ApiResponse';
 
 const API_URL = '/api/v1/books';
@@ -47,7 +47,7 @@ class BookService {
      */
     async getBookById(id: string | number) {
         try {
-            const response = await axios.get<ApiResponse<BookShow>>(`${API_URL}/${id}`);
+            const response = await axios.get<ApiResponse<Book>>(`${API_URL}/${id}`);
             return response.data.data;
         } catch (error) {
             console.error(`Error fetching book with id ${id}:`, error);
@@ -60,7 +60,7 @@ class BookService {
      */
     async createBook(bookData: any) {
         try {
-            const response = await axios.post<ApiResponse<BookShow>>(`${API_URL}`, bookData);
+            const response = await axios.post<ApiResponse<Book>>(`${API_URL}`, bookData);
             return response.data.data;
         } catch (error) {
             console.error('Error creating book:', error);
@@ -73,7 +73,7 @@ class BookService {
      */
     async updateBook(id: string | number, bookData: any) {
         try {
-            const response = await axios.put<ApiResponse<BookShow>>(`${API_URL}/${id}`, bookData);
+            const response = await axios.put<ApiResponse<Book>>(`${API_URL}/${id}`, bookData);
             return response.data.data;
         } catch (error) {
             console.error(`Error updating book with id ${id}:`, error);
@@ -86,7 +86,7 @@ class BookService {
      */
     async patchBook(id: string | number, bookUpdateData: any) {
         try {
-            const response = await axios.patch<ApiResponse<BookShow>>(`${API_URL}/${id}`, bookUpdateData);
+            const response = await axios.patch<ApiResponse<Book>>(`${API_URL}/${id}`, bookUpdateData);
             return response.data.data;
         } catch (error) {
             console.error(`Error patching book with id ${id}:`, error);

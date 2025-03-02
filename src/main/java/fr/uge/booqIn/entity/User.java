@@ -8,10 +8,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Entity
 @Table(name="users")
@@ -51,7 +48,7 @@ public class User implements UserDetails {
   private UserRole role;
 
   @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<ToLendBook> booksToLend = new ArrayList<>();
+  private Set<ToLendBook> booksToLend = new HashSet<>();
 
   @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<BookCollection> collections = new ArrayList<>();
@@ -117,7 +114,7 @@ public class User implements UserDetails {
     return role;
   }
 
-  public List<ToLendBook> getBooksToLend() {
+  public Set<ToLendBook> getBooksToLend() {
     return booksToLend;
   }
 
@@ -161,7 +158,7 @@ public class User implements UserDetails {
     this.role = role;
   }
 
-  public void setBooksToLend(List<ToLendBook> toBorrowBooks) {
+  public void setBooksToLend(Set<ToLendBook> toBorrowBooks) {
     this.booksToLend = toBorrowBooks;
   }
 

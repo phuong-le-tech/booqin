@@ -130,7 +130,14 @@ public class UserServiceImpl implements UserServiceInterface {
   }
 
   private User findUserById(Long id) {
-    return userRepository.findById(id)
+    User userWithCollections = userRepository.findByIdWithCollections(id)
             .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+
+    User userWithBooksToLend = userRepository.findByIdWithBooksToLend(id)
+            .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+
+    userWithCollections.setBooksToLend(userWithBooksToLend.getBooksToLend());
+
+    return userWithCollections;
   }
 }

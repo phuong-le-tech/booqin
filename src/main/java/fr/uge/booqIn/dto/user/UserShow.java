@@ -2,7 +2,6 @@ package fr.uge.booqIn.dto.user;
 
 import fr.uge.booqIn.entity.Address;
 import fr.uge.booqIn.entity.BookCollection;
-import fr.uge.booqIn.entity.ToLendBook;
 
 import java.util.List;
 
