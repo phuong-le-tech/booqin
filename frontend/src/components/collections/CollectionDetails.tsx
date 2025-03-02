@@ -1,0 +1,106 @@
+"use client";
+
+import React, {useContext, useEffect, useState} from "react";
+import { useParams, Link } from "react-router-dom";
+import { BookCollection } from "../../model/BookCollection";
+import { collections } from "../../assets/testData";
+import Layout from "../../pages/Layout";
+import {AuthContext} from "../../context/AuthContext.tsx";
+
+const CollectionDetails: React.FC = () => {
+    const { user } = useContext(AuthContext);
+    const { id } = useParams<{ id: string }>();
+    const [collection, setCollection] = useState<BookCollection | null>(null);
+    const [loading, setLoading] = useState(true);
+    const urlSearchParams = new URLSearchParams(location.search);
+    const origin = urlSearchParams.get('origin');
+
+    // USE REAL DATA IN BDD (use requests)
+    /*useEffect(() => {
+        const fetchCollection = async () => {
+            try {
+                const response = await fetch(`/api/v1/collections/${id}`);
+                if (!response.ok) throw new Error("Failed to fetch collection");
+                const data: BookCollection = await response.json();
+                setCollection(data);
+            } catch (error) {
+                console.error("Error fetching collection details:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchCollection();
+    }, [id]);*/
+    // USE TEST DATA
+    useEffect(() => {
+        // Chercher la collection dans les données de test
+        const foundCollection = collections.find((col) => col.id === id);
+        setCollection(foundCollection ?? null);
+        setLoading(false);
+    }, [id]);
+
+    if (loading) return <div className="text-center py-8">Loading...</div>;
+
+    if (!collection) return <div className="text-center py-8">Collection not found.</div>;
+
+    if (user) {
+        if (collection.owner.id !== user.id && !collection.isPublic) {
+            return <div className="text-center py-8">You don't have permission to view this collection.</div>;
+        }
+    }
+    const parentPath = origin === 'public' ? "/collections/public" : "/collections";
+    const backButtonName = origin === 'public' ? "Back to Public Collections" : "Back to My Collections";
+
+    return (
+        <Layout>
+            <div className="flex h-screen">
+                <div className="flex-1 flex flex-col">
+                    <div className="flex-1 bg-white p-8">
+                        <div className="max-w-4xl mx-auto bg-gray-50 shadow rounded-lg p-6">
+                            <h1 className="text-4xl font-bold text-gray-800 mb-4">{collection.title}</h1>
+                            <p className="text-gray-700 mb-6">{collection.description}</p>
+
+                            <h2 className="text-2xl font-semibold mb-4">Books in this Collection:</h2>
+                            {collection.books.length > 0 ? (
+                                <ul className="space-y-4">
+                                    {collection.books.map((book) => (
+                                        <li key={book.id} className="p-4 border rounded-lg bg-white">
+                                            <h3 className="text-lg font-bold">{book.title}</h3>
+                                            <p className="text-sm text-gray-600">{book.description}</p>
+                                            <p className="text-sm text-gray-500">Published: {book.publicationDate}</p>
+                                            {book.authors.length > 0 && (
+                                                <p className="text-sm text-gray-500">
+                                                    Authors: {book.authors.map((author) => `${author.firstName} ${author.lastName}`).join(", ")}
+                                                </p>
+                                            )}
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-gray-500">No books available in this collection.</p>
+                            )}
+
+                            <div className="mt-6 flex space-x-4">
+                                <Link
+                                    to="/home"
+                                    className="inline-block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                                >
+                                    Back to Home
+                                </Link>
+                                <Link
+                                    to={parentPath}
+                                    className="inline-block px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                                >
+                                    {backButtonName}
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </Layout>
+    );
+};
+
+export default CollectionDetails;

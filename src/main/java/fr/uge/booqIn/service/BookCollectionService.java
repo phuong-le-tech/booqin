@@ -4,8 +4,9 @@ import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.BookCollection;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.repository.BookRepository;
-import fr.uge.booqIn.repository.CollectionRepository;
+import fr.uge.booqIn.repository.BookCollectionRepository;
 import jakarta.transaction.Transactional;
+import org.hibernate.Hibernate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
@@ -17,52 +18,51 @@ import java.util.Optional;
 @Service
 public class BookCollectionService {
 
-  private final CollectionRepository collectionRepository;
+  private final BookCollectionRepository bookCollectionRepository;
   private final BookRepository bookRepository;
 
-  public BookCollectionService(CollectionRepository collectionRepository,
+  public BookCollectionService(BookCollectionRepository bookCollectionRepository,
                                BookRepository bookRepository) {
-    this.collectionRepository = collectionRepository;
+    this.bookCollectionRepository = bookCollectionRepository;
     this.bookRepository = bookRepository;
   }
 
+  @Transactional
   public BookCollection createCollection(BookCollection bookCollection) {
     if (bookCollection.getBooks() == null) {
       bookCollection.setBooks(new ArrayList<>());
     }
     bookCollection.setCreatedAt(new Date());
     bookCollection.setUpdatedAt(new Date());
-    return collectionRepository.save(bookCollection);
+    return bookCollectionRepository.save(bookCollection);
   }
 
   @Transactional
   public Optional<BookCollection> findCollectionById(Long id) {
-    return collectionRepository.findById(id);
+    //return bookCollectionRepository.findById(id);
+    return bookCollectionRepository.findByIdWithBooks(id);
+    //return bookCollectionRepository.findByIdWithBooksAndIsbns(id);
   }
 
   @Transactional
   public Optional<BookCollection> findCollectionByTitle(String title) {
-    return collectionRepository.findByTitle(title);
+    return bookCollectionRepository.findByTitle(title);
   }
 
   @Transactional
   public void deleteCollection(Long id) {
-    collectionRepository.deleteById(id);
+    bookCollectionRepository.deleteById(id);
   }
 
   @Transactional
   public Optional<BookCollection> deleteCollection(Long id, User currentUser) {
     // On récupère l’Optional<BookCollection>
-    Optional<BookCollection> optCollection = collectionRepository.findById(id);
+    Optional<BookCollection> optCollection = bookCollectionRepository.findById(id);
     if (optCollection.isPresent()) {
       BookCollection collection = optCollection.get();
       verifyOwnership(collection, currentUser);
 
-      // Retrait de la collection dans chaque Book
-      for (Book book : collection.getBooks()) {
-        book.getCollections().remove(collection);
-      }
-      collectionRepository.delete(collection);
+      bookCollectionRepository.delete(collection);
 
       return Optional.of(collection);
     }
@@ -71,13 +71,13 @@ public class BookCollectionService {
 
   @Transactional
   public List<BookCollection> getUserCollections(User user) {
-    return collectionRepository.findByOwner(user);
+    return bookCollectionRepository.findByOwner(user);
   }
 
   @Transactional
   public Optional<BookCollection> addBookToCollection(Long collectionId, Long bookId, User currentUser) {
     // Vérifie la collection
-    Optional<BookCollection> colOpt = collectionRepository.findById(collectionId);
+    Optional<BookCollection> colOpt = bookCollectionRepository.findById(collectionId);
     if (colOpt.isEmpty()) {
       return Optional.empty(); // collection non trouvée
     }
@@ -92,7 +92,7 @@ public class BookCollectionService {
 
     collection.addBook(bookOpt.get());
     collection.setUpdatedAt(new Date());
-    return Optional.of(collectionRepository.save(collection));
+    return Optional.of(bookCollectionRepository.save(collection));
   }
 
   /**
@@ -102,7 +102,7 @@ public class BookCollectionService {
    */
   @Transactional
   public Optional<BookCollection> addBookToCollection(Long collectionId, Book book, User currentUser) {
-    Optional<BookCollection> colOpt = collectionRepository.findById(collectionId);
+    Optional<BookCollection> colOpt = bookCollectionRepository.findById(collectionId);
     if (colOpt.isEmpty()) {
       return Optional.empty();
     }
@@ -111,7 +111,7 @@ public class BookCollectionService {
 
     collection.addBook(book);
     collection.setUpdatedAt(new Date());
-    return Optional.of(collectionRepository.save(collection));
+    return Optional.of(bookCollectionRepository.save(collection));
   }
 
   /**
@@ -121,7 +121,7 @@ public class BookCollectionService {
    */
   @Transactional
   public Optional<BookCollection> removeBookFromCollection(Long collectionId, Long bookId, User currentUser) {
-    Optional<BookCollection> colOpt = collectionRepository.findById(collectionId);
+    Optional<BookCollection> colOpt = bookCollectionRepository.findById(collectionId);
     if (colOpt.isEmpty()) {
       return Optional.empty();
     }
@@ -135,12 +135,12 @@ public class BookCollectionService {
 
     collection.removeBook(bookOpt.get());
     collection.setUpdatedAt(new Date());
-    return Optional.of(collectionRepository.save(collection));
+    return Optional.of(bookCollectionRepository.save(collection));
   }
 
   @Transactional
   public List<BookCollection> getPublicCollections() {
-    return collectionRepository.findByIsPublicTrue();
+    return bookCollectionRepository.findByIsPublicTrue();
   }
 
   /**
@@ -150,7 +150,7 @@ public class BookCollectionService {
    */
   @Transactional
   public Optional<BookCollection> updateCollection(Long id, User currentUser, BookCollection updatedCollection) {
-    Optional<BookCollection> optCollection = collectionRepository.findById(id);
+    Optional<BookCollection> optCollection = bookCollectionRepository.findById(id);
     if (optCollection.isPresent()) {
       BookCollection collection = optCollection.get();
 
@@ -166,17 +166,36 @@ public class BookCollectionService {
       collection.setPublic(updatedCollection.isPublic());
       collection.setUpdatedAt(new Date());
 
-      collectionRepository.save(collection);
+      bookCollectionRepository.save(collection);
       return Optional.of(collection);
     }
     return Optional.empty();
+  }
+
+//  @Transactional
+//  public Optional<List<Book>> getAllBooksFromCollection(Long id) {
+//    Optional<BookCollection> collection = bookCollectionRepository.findById(id);
+//    return collection.map(BookCollection::getBooks);
+//  }
+  @Transactional
+  public List<BookCollection> getUserCollectionsWithBooks(User user) {
+    return bookCollectionRepository.findByOwnerWithBooks(user);
+  }
+
+  @Transactional
+  public Optional<Book> getBookFromCollection(Long collectionId, Long bookId) {
+    Optional<BookCollection> collection = bookCollectionRepository.findById(collectionId);
+    return collection.flatMap(bookCollection -> bookCollection.getBooks().stream()
+            .filter(book -> book.getId().equals(bookId))
+            .findFirst());
   }
 
   /**
    * Vérifie que la collection appartient à l'utilisateur, sinon AccessDeniedException.
    */
   private void verifyOwnership(BookCollection collection, User user) {
-    if (!collection.getOwner().equals(user)) {
+    //if (!collection.getOwner().equals(user)) {
+    if (!collection.getOwner().getUsername().equals(user.getUsername())) {
       throw new AccessDeniedException("You don't have permission to modify this collection");
     }
   }
