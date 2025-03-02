@@ -14,7 +14,6 @@ public class Book {
     this.authors = builder.authors;
     this.description = builder.description;
     this.publicationDate = builder.publicationDate;
-    this.collections = builder.collections;
     this.createdAt = builder.createdAt;
     this.updatedAt = builder.updatedAt;
   }
@@ -35,12 +34,8 @@ public class Book {
       return this;
     }
 
-    public Builder isbns(List<String> isbns) {
-      if (isbns != null) {
-        this.isbns = new HashSet<>(isbns);
-      } else {
-        this.isbns = new HashSet<>();
-      }
+    public Builder isbns(Set<String> isbns) {
+      this.isbns = isbns;
       return this;
     }
 
@@ -61,11 +56,6 @@ public class Book {
 
     public Builder publicationDate(Date publicationDate) {
       this.publicationDate = publicationDate;
-      return this;
-    }
-
-    public Builder collections(List<BookCollection> collections) {
-      this.collections = collections;
       return this;
     }
 
@@ -118,10 +108,6 @@ public class Book {
   @Column(name = "publication_date")
   private Date publicationDate;
 
-  @ManyToMany
-  private List<BookCollection> collections = new ArrayList<>();
-
-
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "created_at", nullable = false, updatable = false)
   private Date createdAt = new Date();
@@ -164,10 +150,6 @@ public class Book {
     return publicationDate;
   }
 
-  public List<BookCollection> getCollections() {
-    return collections;
-  }
-
   public Date getCreatedAt() {
     return createdAt;
   }
@@ -192,26 +174,12 @@ public class Book {
     this.publicationDate = publicationDate;
   }
 
-  public void setCollections(List<BookCollection> collections) {
-    this.collections = collections;
-  }
-
   public void setCreatedAt(Date createdAt) {
     this.createdAt = createdAt;
   }
 
   public void setUpdatedAt(Date updatedAt) {
     this.updatedAt = updatedAt;
-  }
-
-  public void addCollection(BookCollection collection) {
-    collections.add(collection);
-    collection.getBooks().add(this);
-  }
-
-  public void removeCollection(BookCollection collection) {
-    collections.remove(collection);
-    collection.getBooks().remove(this);
   }
 
   public Set<String> getIsbns() {

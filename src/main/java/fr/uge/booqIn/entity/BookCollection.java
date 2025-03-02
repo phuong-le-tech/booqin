@@ -16,13 +16,13 @@ public class BookCollection {
   @Column(nullable = false)
   private String title;
 
-  @Column(nullable = false)
+  @Column(nullable = false, columnDefinition = "TEXT")
   private String description;
 
   @ManyToOne(fetch = FetchType.LAZY)
   private User owner;
 
-  @ManyToMany(mappedBy = "collections")
+  @ManyToMany
   private List<Book> books = new ArrayList<>();
 
   @Column(nullable = false)
@@ -36,6 +36,34 @@ public class BookCollection {
   @Column(name = "updated_at")
   private Date updatedAt;
 
+  @Column(columnDefinition = "boolean default false")
+  private boolean isSmart = false;
+
+  @Enumerated(EnumType.STRING)
+  private CollectionType collectionType = CollectionType.NORMAL;
+
+  @Override
+  public String toString() {
+    return "BookCollection{" +
+            "id=" + id +
+            ", title='" + title + '\'' +
+            ", description='" + description + '\'' +
+            ", owner=" + owner +
+            ", books=" + books.stream().limit(10).toList() +
+            ", isPublic=" + isPublic +
+            ", createdAt=" + createdAt +
+            ", updatedAt=" + updatedAt +
+            ", isSmart=" + isSmart +
+            ", collectionType=" + collectionType +
+            '}';
+  }
+
+  public enum CollectionType {
+    NORMAL, // basic collection
+    SMART,  // defined by criteria, by user
+    GLOBAL  // generated automatically
+  }
+
   public BookCollection() {
   }
 
@@ -43,6 +71,79 @@ public class BookCollection {
     this.title = name;
     this.description = description;
     this.owner = owner;
+  }
+
+  private BookCollection(Builder builder) {
+    this.title = builder.title;
+    this.description = builder.description;
+    this.owner = builder.owner;
+    this.books = builder.books;
+    this.isPublic = builder.isPublic;
+    this.createdAt = builder.createdAt;
+    this.updatedAt = builder.updatedAt;
+    this.isSmart = builder.isSmart;
+    this.collectionType = builder.collectionType;
+  }
+
+  public static class Builder {
+    private String title;
+    private String description;
+    private User owner;
+    private List<Book> books = new ArrayList<>();
+    private boolean isPublic = false;
+    private Date createdAt = new Date();
+    private Date updatedAt = new Date();
+    private boolean isSmart = false;
+    private CollectionType collectionType = CollectionType.NORMAL;
+
+    public Builder title(String title) {
+      this.title = title;
+      return this;
+    }
+
+    public Builder description(String description) {
+      this.description = description;
+      return this;
+    }
+
+    public Builder owner(User owner) {
+      this.owner = owner;
+      return this;
+    }
+
+    public Builder books(List<Book> books) {
+      this.books = books;
+      return this;
+    }
+
+    public Builder isPublic(boolean isPublic) {
+      this.isPublic = isPublic;
+      return this;
+    }
+
+    public Builder createdAt(Date createdAt) {
+      this.createdAt = createdAt;
+      return this;
+    }
+
+    public Builder updatedAt(Date updatedAt) {
+      this.updatedAt = updatedAt;
+      return this;
+    }
+
+    public Builder isSmart(boolean isSmart) {
+      this.isSmart = isSmart;
+      return this;
+    }
+
+    public Builder collectionType(CollectionType collectionType) {
+      this.collectionType = collectionType;
+      return this;
+    }
+
+    public BookCollection build() {
+      return new BookCollection(this);
+    }
   }
 
   public Long getId() {
@@ -67,6 +168,10 @@ public class BookCollection {
 
   public boolean isPublic() {
     return isPublic;
+  }
+
+  public boolean isSmart() {
+    return isSmart;
   }
 
   public Date getCreatedAt() {
@@ -109,16 +214,17 @@ public class BookCollection {
     this.updatedAt = updatedAt;
   }
 
+  public void setSmart(boolean isSmart) {
+    this.isSmart = isSmart;
+  }
+
   public void addBook(Book book) {
-    if (book.getCollections() == null) {
-      book.setCollections(new ArrayList<>()); // ✅ Ajoute une vérification de null
-    }
     books.add(book);
-    book.getCollections().add(this);
   }
 
   public void removeBook(Book book) {
-    books.remove(book);
-    book.getCollections().remove(this);
+    if (!books.remove(book)) {
+      throw new IllegalArgumentException("Book not found in collection");
+    }
   }
 }
