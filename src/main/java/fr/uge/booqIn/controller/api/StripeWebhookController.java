@@ -16,10 +16,7 @@ import org.springframework.web.bind.annotation.*;
 public class StripeWebhookController {
   
   private final StripeService stripeService;
-  
-  
-  
-  
+
   public StripeWebhookController(StripeService stripeService) {
     this.stripeService = stripeService;
   }

@@ -17,4 +17,5 @@ public interface CartServiceInterface {
   boolean removeBookFromCart(Long id, Long bookId);
   ShopCartDto getCartDto(Long user);
   boolean clearCart(Long user);
+
 }

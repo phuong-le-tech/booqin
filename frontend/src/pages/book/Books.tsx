@@ -43,9 +43,10 @@ export const Books: React.FC = () => {
                 'asc',
                 activeFilters
             );
-
-            setBooks(response.content);
-            setPageInfo(response.page);
+            if (response) {
+                setBooks(response.content);
+                setPageInfo(response.page);
+            }
             setError(null);
         } catch (error) {
             console.error("Failed to fetch books:", error);
@@ -84,8 +85,10 @@ export const Books: React.FC = () => {
         try {
             setIsLoading(true);
             const response = await BookService.getBooks(0, pageInfo.size, 'id', 'asc', newFilters);
-            setBooks(response.content);
-            setPageInfo(response.page);
+            if (response) {
+                setBooks(response.content);
+                setPageInfo(response.page);
+            }
             setError(null);
         } catch (error) {
             console.error("Search failed:", error);

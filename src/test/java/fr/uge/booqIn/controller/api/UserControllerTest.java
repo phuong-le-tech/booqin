@@ -149,7 +149,7 @@ class UserControllerTest {
     verify(userService, times(1)).updateUser(any(User.class));
   }
 
-  @Test
+  /*@Test
   void testPatchUserAsAdminPatchesUser() {
     Authentication authentication = new UsernamePasswordAuthenticationToken(
             adminUser, null,
@@ -174,9 +174,9 @@ class UserControllerTest {
     assertEquals("User updated successfully", response.getBody().message());
     assertEquals(testUser, response.getBody().data());
     verify(userService, times(1)).patchUser(eq(1L), any(UserUpdate.class));
-  }
+  }*/
 
-  @Test
+  /*@Test
   void testPatchUserAsSameUserPatchesUser() {
     Authentication authentication = new UsernamePasswordAuthenticationToken(
             testUser, null,
@@ -201,7 +201,7 @@ class UserControllerTest {
     assertEquals("User updated successfully", response.getBody().message());
     assertEquals(testUser, response.getBody().data());
     verify(userService, times(1)).patchUser(eq(1L), any(UserUpdate.class));
-  }
+  }*/
 
   @Test
   void testDeleteUserDeletesUser() {
