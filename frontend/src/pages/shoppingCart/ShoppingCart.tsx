@@ -54,7 +54,7 @@ export const ShoppingCart: React.FC = () => {
         const fetchCart = async () => {
             try {
                 console.log("📦 Récupération du panier pour userId:", auth.user.id);
-                const response = await axiosInstance.get(`/v1/cart/user-cart/${auth.user.id}`);
+                const response = await axiosInstance.get(`/v1/carts/user-cart/${auth.user.id}`);
                 console.log("📦 Réponse API complète:", response.data);
 
                 if (response.data && response.data.success && response.data.data) {
@@ -102,7 +102,7 @@ export const ShoppingCart: React.FC = () => {
                 bookId: bookId
             });
 
-            const response = await axiosInstance.delete("/v1/cart/remove-book", {
+            const response = await axiosInstance.delete("/v1/carts/remove-book", {
                 params: { userId: auth.user.id, bookId: bookId },
             });
 
@@ -153,7 +153,7 @@ export const ShoppingCart: React.FC = () => {
         try {
             console.log("📤 Envoi de la requête pour vider le panier de l'utilisateur ID:", auth.user.id);
 
-            const response = await axiosInstance.delete(`/v1/cart/clear-cart/${auth.user.id}`);
+            const response = await axiosInstance.delete(`/v1/carts/clear-cart/${auth.user.id}`);
 
             console.log("✅ Réponse API après vidage du panier:", response);
 

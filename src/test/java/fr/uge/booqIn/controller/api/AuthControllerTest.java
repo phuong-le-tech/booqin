@@ -139,7 +139,7 @@ class AuthControllerTest {
   @Test
   void testMe() {
     Authentication authMock = mock(Authentication.class);
-    UserMeDto meDto = new UserMeDto(1L, "John", "Doe", "john.doe@example.com");
+    UserMeDto meDto = new UserMeDto(1L, "John", "Doe", "john.doe@example.com", "USER");
 
     when(authService.getCurrentUser(authMock)).thenReturn(meDto);
 

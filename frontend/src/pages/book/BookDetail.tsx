@@ -2,12 +2,13 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "../Layout";
-import { BookShow, AuthorDto } from "../../model/Book";
+import { Book } from "../../model/Book";
+import { Author } from "../../model/Author";
 import BookService from "../../services/BookService";
 
 export const BookDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
-    const [book, setBook] = useState<BookShow | null>(null);
+    const [book, setBook] = useState<Book | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -18,6 +19,11 @@ export const BookDetail: React.FC = () => {
             try {
                 setIsLoading(true);
                 const bookData = await BookService.getBookById(id);
+                if (!bookData) {
+                    setError("Book not found");
+                    setIsLoading(false);
+                    return;
+                }
                 setBook(bookData);
                 setError(null);
             } catch (error) {
@@ -110,7 +116,7 @@ export const BookDetail: React.FC = () => {
     };
 
     // Fonction pour créer le nom complet des auteurs
-    const getAuthorFullName = (author: AuthorDto) => {
+    const getAuthorFullName = (author: Author) => {
         return `${author.firstName} ${author.lastName}`.trim();
     };
 

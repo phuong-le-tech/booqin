@@ -32,7 +32,7 @@ export const BookCard: React.FC<BookCardProps> = ({ book }) => {
 
     const addToCart = async () => {
         try {
-            const response = await axiosInstance.post("/v1/cart/add-book", {
+            const response = await axiosInstance.post("/v1/carts/add-book", {
                 userId,
                 bookId: id,
             });

@@ -39,6 +39,7 @@
         <input type="hidden" name="direction" th:value="${direction}">
     </form>
 </div>
+
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" th:if="${not #lists.isEmpty(books)}">
     <div th:each="book : ${books}" class="bg-white border border-gray-200 rounded-xl shadow-sm flex flex-col transition duration-300 hover:shadow-md hover:-translate-y-1">
         <div class="w-full h-48 flex justify-center items-center text-2xl text-white rounded-t-xl"
@@ -109,5 +110,6 @@
         <span class="nav-icon">&#8594;</span>
     </button>
 </div>
+
 </body>
 </html>

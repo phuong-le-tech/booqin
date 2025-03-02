@@ -7,6 +7,7 @@ import fr.uge.booqIn.entity.Cart;
 import fr.uge.booqIn.factory.ApiResponse;
 import fr.uge.booqIn.service.StripeService;
 import fr.uge.booqIn.service.impl.CartServiceImpl;
+import fr.uge.booqIn.service.interfaces.CartServiceInterface;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,9 +19,9 @@ import java.util.Optional;
 public class StripeController {
     
     private final StripeService stripeService;
-    private final CartServiceImpl cartService;
+    private final CartServiceInterface cartService;
     
-    public StripeController(StripeService stripeService, CartServiceImpl cartService) {
+    public StripeController(StripeService stripeService, CartServiceInterface cartService) {
         this.stripeService = stripeService;
         this.cartService = cartService;
     }

@@ -1,5 +1,5 @@
 import {Link, useLocation} from "react-router-dom"
-import {LayoutDashboard, Book, LogOut, LibraryBigIcon, Library} from "lucide-react"
+import {LayoutDashboard, Book, LogOut, LibraryBigIcon, Library, Settings} from "lucide-react"
 import {useContext} from "react"
 import {AuthContext} from "../context/AuthContext.tsx"
 import AuthService from "../services/AuthService.ts"
@@ -43,6 +43,9 @@ export function SidebarNav({ onCloseSidebar = () => {} }: SidebarNavProps) {
         }
     }
 
+    // Check if user is admin
+    const isAdmin = user && user.role === "ADMIN"
+    console.log(user)
     return (
         <div className="bg-navbar w-64 p-4 border-r flex flex-col h-full">
             <nav className="space-y-2 flex-1">
@@ -72,6 +75,19 @@ export function SidebarNav({ onCloseSidebar = () => {} }: SidebarNavProps) {
                             </Link>
                         ))
                     )}
+
+                    {/* Admin section */}
+                    {isAdmin && (
+                        <Link
+                            to="/admin"
+                            className={`sidebar-nav-item text-red-300 ${location.pathname === '/admin' ? 'bg-opacity-20 bg-white' : ''}`}
+                            onClick={handleNavClick}
+                        >
+                            <Settings className="mr-2 h-4 w-4"/>
+                            Admin Panel
+                        </Link>
+                    )}
+
                     {user && (
                         <button
                             onClick={handleLogout}

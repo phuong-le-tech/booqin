@@ -1,6 +1,5 @@
 package fr.uge.booqIn.service.interfaces;
 
-import fr.uge.booqIn.dto.book.BookDto;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.dto.book.BookUpdate;
