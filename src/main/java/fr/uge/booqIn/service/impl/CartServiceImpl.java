@@ -11,6 +11,7 @@ import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.repository.BookRepository;
 import fr.uge.booqIn.repository.CartRepository;
 import fr.uge.booqIn.service.interfaces.CartServiceInterface;
+import fr.uge.booqIn.service.interfaces.UserServiceInterface;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -23,9 +24,9 @@ public class CartServiceImpl implements CartServiceInterface {
 
   private final CartRepository cartRepository;
   private final BookRepository bookRepository;
-  private final UserServiceImpl userService;
+  private final UserServiceInterface userService;
 
-  public CartServiceImpl(CartRepository cartRepository, BookRepository bookRepository, UserServiceImpl userService) {
+  public CartServiceImpl(CartRepository cartRepository, BookRepository bookRepository, UserServiceInterface userService) {
     this.cartRepository = cartRepository;
     this.bookRepository = bookRepository;
     this.userService = userService;

@@ -43,6 +43,7 @@ export const Books: React.FC = () => {
                 'asc',
                 activeFilters
             );
+            console.log(response);
             if (response) {
                 setBooks(response.content);
                 setPageInfo(response.page);
