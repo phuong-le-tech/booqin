@@ -1,5 +1,6 @@
 package fr.uge.booqIn.repository;
 
+import fr.uge.booqIn.dto.user.UserShow;
 import fr.uge.booqIn.entity.Cart;
 import fr.uge.booqIn.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,7 +12,8 @@ import java.util.Optional;
 
 @Repository
 public interface CartRepository extends JpaRepository<Cart, Long> {
-    List<Cart> findByUserId(Long userId);
+    Cart findByUser(User user);
     Optional<Cart> findByPaymentIntentId(String paymentIntentId);
-    Optional<Cart> findByUser(User user);
+
+  
 }

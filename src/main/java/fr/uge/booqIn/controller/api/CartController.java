@@ -1,12 +1,16 @@
 package fr.uge.booqIn.controller.api;
 
+import fr.uge.booqIn.dto.book.BookShow;
+import fr.uge.booqIn.dto.cart.ShopCartDto;
+import fr.uge.booqIn.dto.user.UserIndex;
+import fr.uge.booqIn.dto.user.UserShow;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.Cart;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.factory.ApiResponse;
-import fr.uge.booqIn.service.BookService;
-import fr.uge.booqIn.service.CartService;
-import fr.uge.booqIn.service.UserService;
+import fr.uge.booqIn.service.impl.BookServiceImpl;
+import fr.uge.booqIn.service.impl.CartServiceImpl;
+import fr.uge.booqIn.service.impl.UserServiceImpl;
 import fr.uge.booqIn.dto.cart.CartDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,68 +21,72 @@ import java.util.Optional;
 @RequestMapping("api/v1/cart")
 public class CartController {
     
-    private final CartService cartService;
-    private final UserService userService;
-    private final BookService bookService;
+    private final CartServiceImpl cartService;
+    private final UserServiceImpl userService;
+    private final BookServiceImpl bookService;
     
-    public CartController(CartService cartService, UserService userService, BookService bookService) {
+    public CartController(CartServiceImpl cartService, UserServiceImpl userService, BookServiceImpl bookService) {
         this.cartService = cartService;
         this.userService = userService;
         this.bookService = bookService;
     }
     
     @PostMapping("/add-book")
-    public ResponseEntity<ApiResponse<Cart>> addBookToCart(@RequestBody CartDto request) {
-        Optional<User> userOptional = userService.findEntityById(request.userId());
-        Optional<Book> bookOptional = bookService.findByIdWithIsbns(request.bookId());
+    public ResponseEntity<ApiResponse<Boolean>> addBookToCart(@RequestBody CartDto request) {
         
-        System.out.println("userOptional: " + userOptional);
-        System.out.println("bookOptional: " + bookOptional);
+        Optional<UserIndex> userOptional = Optional.ofNullable(userService.findUserByIdtoIndex(request.userId()));
+        
+        Optional<BookShow> bookOptional = Optional.ofNullable(bookService.findById(request.bookId()));
         
         if (userOptional.isEmpty() || bookOptional.isEmpty()) {
-            return ResponseEntity.badRequest().body(ApiResponse.error("User or Book not found"));
+            return ResponseEntity.badRequest().body(ApiResponse.error("User or Book not found", false));
         }
         
-        Cart updatedCart = cartService.addBookToCart(userOptional.get(), bookOptional.get());
-        return ResponseEntity.ok(ApiResponse.success("Book added to cart", updatedCart));
+        boolean updatedCart = cartService.addBookToCart(userOptional.get().id(), bookOptional.get().id());
+        
+        return updatedCart
+                ? ResponseEntity.ok(ApiResponse.success("Book added to cart", true))
+                : ResponseEntity.ok(ApiResponse.success("Book already in cart", false));
+    
     }
     
-    
-    
     @DeleteMapping("/remove-book")
-    public ResponseEntity<ApiResponse<Cart>> removeBookFromCart(@RequestParam Long userId, @RequestParam Long bookId) {
-        Optional<User> userOptional = userService.findEntityById(userId);
-        Optional<Book> bookOptional = bookService.findByIdWithIsbns(bookId);
+    public ResponseEntity<ApiResponse<Boolean>> removeBookFromCart(@RequestParam Long userId, @RequestParam Long bookId) {
+        Optional<UserIndex> userOptional = Optional.ofNullable(userService.findUserByIdtoIndex(userId));
+        Optional<BookShow> bookOptional = Optional.ofNullable(bookService.findById(bookId));
         
         if (userOptional.isEmpty() || bookOptional.isEmpty()) {
-            return ResponseEntity.badRequest().body(ApiResponse.error("User or Book not found"));
+            return ResponseEntity.status(404).body(ApiResponse.error("User or Book not found", false));
         }
         
-        Cart updatedCart = cartService.removeBookFromCart(userOptional.get(), bookOptional.get());
-        return ResponseEntity.ok(ApiResponse.success("Book removed from cart", updatedCart));
+        boolean updatedCart = cartService.removeBookFromCart(userOptional.get().id(), bookOptional.get().id());
+        return updatedCart
+                ? ResponseEntity.ok(ApiResponse.success("Book removed from cart", true))
+                : ResponseEntity.status(404).body(ApiResponse.error("Book not in cart", false));
     }
     
     @GetMapping("/user-cart/{userId}")
-    public ResponseEntity<ApiResponse<Cart>> getUserCart(@PathVariable Long userId) {
-        Optional<User> userOptional = userService.findEntityById(userId);
+    public ResponseEntity<ApiResponse<ShopCartDto>> getUserCart(@PathVariable Long userId) {
+        Optional<UserIndex> userOptional = Optional.ofNullable(userService.findUserByIdtoIndex(userId));
         if (userOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(ApiResponse.error("User not found"));
         }
         
-        Cart cart = cartService.getCart(userOptional.get());
-        return ResponseEntity.ok(ApiResponse.success("Cart retrieved", cart));
+        ShopCartDto shopCartDto = cartService.getCartDto(userOptional.get().id());
+        return ResponseEntity.ok(ApiResponse.success("Cart retrieved", shopCartDto));
     }
     
     @DeleteMapping("/clear-cart/{userId}")
     public ResponseEntity<ApiResponse<String>> clearCart(@PathVariable Long userId) {
-        Optional<User> userOptional = userService.findEntityById(userId);
+        Optional<UserIndex> userOptional= Optional.ofNullable(userService.findUserByIdtoIndex(userId));
         
         if (userOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(ApiResponse.error("User not found"));
         }
         
-        cartService.clearCart(userOptional.get());
-        return ResponseEntity.ok(ApiResponse.success("Cart cleared", "Cart has been emptied successfully"));
+        boolean cleared = cartService.clearCart(userOptional.get().id());
+        return cleared
+                ? ResponseEntity.ok(ApiResponse.success("Cart cleared", "Cart has been emptied successfully"))
+                : ResponseEntity.badRequest().body(ApiResponse.error("Cannot clear a completed cart"));
     }
-    
 }

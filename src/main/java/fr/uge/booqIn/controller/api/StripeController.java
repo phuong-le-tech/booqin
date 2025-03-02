@@ -1,18 +1,16 @@
 package fr.uge.booqIn.controller.api;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import fr.uge.booqIn.dto.stripe.PaymentIntentResponseDTO;
 import fr.uge.booqIn.entity.Cart;
 import fr.uge.booqIn.factory.ApiResponse;
-import fr.uge.booqIn.service.CartService;
 import fr.uge.booqIn.service.StripeService;
+import fr.uge.booqIn.service.impl.CartServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -20,22 +18,23 @@ import java.util.Optional;
 public class StripeController {
     
     private final StripeService stripeService;
-    private final CartService cartService;
+    private final CartServiceImpl cartService;
     
-    public StripeController(StripeService stripeService, CartService cartService) {
+    public StripeController(StripeService stripeService, CartServiceImpl cartService) {
         this.stripeService = stripeService;
         this.cartService = cartService;
     }
     
     @PostMapping("/create")
     public ResponseEntity<ApiResponse<PaymentIntentResponseDTO>> createPaymentIntent(@RequestParam Long cartId) {
-        Cart cart = cartService.getCart(cartId);
-        if (cart == null || cart.getBooks().isEmpty()) {
+        Optional<Cart> cartOptional = Optional.ofNullable(cartService.getCart(cartId));
+        
+        if (cartOptional.isEmpty() || cartOptional.get().getBooks().isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("Le panier est vide ou inexistant"));
         }
         
-        PaymentIntent paymentIntent = stripeService.createPaymentIntent(cart);
+        PaymentIntent paymentIntent = stripeService.createPaymentIntent(cartOptional.get());
         PaymentIntentResponseDTO response = new PaymentIntentResponseDTO(
                 paymentIntent.getId(),
                 paymentIntent.getClientSecret(),
@@ -84,5 +83,4 @@ public class StripeController {
                     .body(ApiResponse.error("Erreur Stripe : " + e.getMessage()));
         }
     }
-
 }
