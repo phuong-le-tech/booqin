@@ -1,11 +1,14 @@
 import type React from "react"
 import {Link} from "react-router-dom"
-import {useContext} from "react"
-import {AuthContext} from "../context/AuthContext.tsx"
+import {useContext, useState} from "react"
+import {AuthContext} from "../context/AuthContext"
 import {Layout} from "./Layout.tsx";
+import PublicCollections from "../components/collections/PublicCollections.tsx";
+import {BookCollection} from "../model/BookCollection.ts";
 
 export const Home: React.FC = () => {
     const {user} = useContext(AuthContext)
+    //const [collections, setCollections] = useState<BookCollection[]>([]);
 
     return (
         <Layout>
@@ -49,3 +52,4 @@ export const Home: React.FC = () => {
         </Layout>
     )
 }
+

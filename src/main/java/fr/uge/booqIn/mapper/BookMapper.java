@@ -1,7 +1,6 @@
 package fr.uge.booqIn.mapper;
 
 import fr.uge.booqIn.dto.author.AuthorDto;
-import fr.uge.booqIn.dto.book.BookDto;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.entity.Author;
@@ -9,7 +8,6 @@ import fr.uge.booqIn.entity.Book;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -43,17 +41,15 @@ public class BookMapper {
         if (book == null) {
             return null;
         }
-        System.out.println(book.getCollections());
         return new BookShow(
                 book.getId(),
                 book.getIsbns(),
                 book.getTitle(),
                 book.getAuthors() != null ? book.getAuthors().stream()
                         .map(this::toAuthorDto)
-                        .collect(Collectors.toSet()) : new HashSet<>(),
+                        .collect(Collectors.toSet()) : new HashSet<AuthorDto>(),
                 book.getDescription(),
                 book.getPublicationDate(),
-                book.getCollections(),
                 book.getCreatedAt(),
                 book.getUpdatedAt()
         );
@@ -64,5 +60,12 @@ public class BookMapper {
             return null;
         }
         return new AuthorDto(author.getId(), author.getFirstName(), author.getLastName());
+    }
+
+    public Author toAuthor(AuthorDto authorDto) {
+        if (authorDto == null) {
+            return null;
+        }
+        return new Author(authorDto.firstName(), authorDto.lastName());
     }
 }
