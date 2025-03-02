@@ -4,3 +4,4 @@
 target/
 data/
 .env
+package-lock.json

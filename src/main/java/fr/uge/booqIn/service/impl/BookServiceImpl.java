@@ -19,10 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.logging.Logger;
 
 @Service
@@ -103,7 +100,6 @@ public class BookServiceImpl implements BookServiceInterface {
     bookUpdate.title().ifPresent(book::setTitle);
     bookUpdate.description().ifPresent(book::setDescription);
     bookUpdate.publicationDate().ifPresent(book::setPublicationDate);
-    bookUpdate.collections().ifPresent(book::setCollections);
 
     bookUpdate.isbns().ifPresent(isbns -> {
       book.getIsbns().clear();
@@ -150,5 +146,10 @@ public class BookServiceImpl implements BookServiceInterface {
 
   private Optional<Book> findByIsbn(String isbn) {
     return bookRepository.findBookByIsbnInSet(isbn);
+  }
+
+  @Transactional
+  public List<Book> findAll() {
+    return bookRepository.findAll();
   }
 }

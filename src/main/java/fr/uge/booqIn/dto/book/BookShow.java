@@ -14,7 +14,6 @@ public record BookShow(
         Set<AuthorDto> authors,
         String description,
         Date publicationDate,
-        List<BookCollection> collections,
         Date createdAt,
         Date updatedAt
 ) {

@@ -85,7 +85,7 @@ public class OpenAPI implements BookFetcher {
             .authors(authors)
             .description(description)
             .publicationDate(publicationDate)
-            .isbns(doc.isbn())
+            .isbns(new HashSet<>(doc.isbn()))
             .build();
     }
 

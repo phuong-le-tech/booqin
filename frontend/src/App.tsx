@@ -1,4 +1,3 @@
-// src/App.tsx
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
@@ -8,10 +7,13 @@ import { BooksProvider } from "./context/BooksContext";
 import { Home } from "./pages/Home";
 import { Login } from "./pages/auth/Login";
 import { Register } from "./pages/auth/Register";
+import CollectionDetails from "./components/collections/CollectionDetails.tsx";
+import PublicCollections from "./components/collections/PublicCollections.tsx";
 import { Books } from "./pages/book/Books";
 import { BookDetail } from "./pages/book/BookDetail";
-import { ShoppingCart } from "./pages/shoppingCart/ShoppingCart";
-import { Profile } from "./pages/user/Profile";
+import {ShoppingCart} from "./pages/shoppingCart/ShoppingCart";
+import {Profile} from "./pages/user/Profile.tsx";
+import Collections from "./components/collections/Collections.tsx";
 
 const App: React.FC = () => {
     return (
@@ -35,6 +37,10 @@ const App: React.FC = () => {
                         } />
                         <Route path={"/profile"} element={<Profile />} />
                         <Route path="/cart" element={<ShoppingCart />} />
+                        {/*<Route path="/books/:id" element={<BookDetails />} />*/}
+                        <Route path="/collections" element={<Collections />} />
+                        <Route path="/collections/public" element={<PublicCollections />} />
+                        <Route path="/collections/:id" element={<CollectionDetails />} />
                     </Routes>
                     <ToastContainer
                         position="top-right"

@@ -1,7 +1,7 @@
 import {Address} from "./Address.ts";
 
 export interface User {
-    id: string;
+    id: number;
     firstName: string;
     lastName: string;
     email: string;
