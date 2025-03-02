@@ -5,6 +5,7 @@ public record ApiResponse<T>(
         String message,
         T data
 ) {
+
   public static <U> ApiResponse<U> success(String message, U data) {
     return new ApiResponse<>(true, message, data);
   }

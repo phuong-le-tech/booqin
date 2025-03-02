@@ -22,4 +22,5 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
   Optional<User> findByIdWithBooksToLend(Long id);
 
   Optional<User> findByEmail(String email);
+
 }

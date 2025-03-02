@@ -73,4 +73,7 @@ public interface UserServiceInterface {
    * @throws fr.uge.booqIn.exception.ResourceNotFoundException if user not found
    */
   void deleteUser(@NotNull Long id);
+
+
+  UserIndex findUserByIdToIndex(@NotNull Long id);
 }

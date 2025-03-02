@@ -1,5 +1,6 @@
 package fr.uge.booqIn.entity;
 
+import fr.uge.booqIn.enums.StatutPayment;
 import fr.uge.booqIn.enums.UserRole;
 import jakarta.persistence.*;
 import jakarta.validation.Valid;
@@ -60,7 +61,11 @@ public class User implements UserDetails {
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "updated_at")
   private Date updatedAt = new Date();
-
+  
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private Cart cart;
+  
+  
   public User() {
   }
 
@@ -71,6 +76,7 @@ public class User implements UserDetails {
     this.password = password;
     this.address = address;
     this.role = role;
+    this.cart = new Cart(this, StatutPayment.PENDING, new ArrayList<>());
   }
 
   public Long getId() {
@@ -182,6 +188,10 @@ public class User implements UserDetails {
   public void addBookToLend(ToLendBook book) {
     booksToLend.add(book);
     book.setOwner(this);
+  }
+  
+  public Cart getCart() {
+    return cart;
   }
 
   public void removeBookToLend(ToLendBook book) {

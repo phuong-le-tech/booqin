@@ -38,7 +38,7 @@ public class SecurityConfig {
                                                 .requestMatchers("/auth/**", "/home", "/favicon.ico", "/static/**")
                                                 .permitAll()
                                                 .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login","/api/v1/books",
-                                                        "/api/v1/collections", "/api/v1/collections/**")
+                                                        "/api/v1/collections", "/api/v1/collections/**" )
                                                 .permitAll()
                                                 .anyRequest().authenticated())
                                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -72,7 +72,7 @@ public class SecurityConfig {
                                 .csrf(AbstractHttpConfigurer::disable)
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers("/auth/**", "/home", "/h2-console/**", "/static/**",
-                                                                "/favicon.ico", "/books/**", "/books/{id}")
+                                                                "/favicon.ico", "/books/**", "/books/{id}", "/carts/**")
                                                 .permitAll()
                                                 .anyRequest().authenticated())
                                 .sessionManagement(

@@ -131,9 +131,6 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
   @Override
   @Transactional
   public BookCollection addBookToCollection(@NotNull Long collectionId, @NotNull Long bookId) {
-    // Get the current logged-in user
-    User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
     // Find the collection
     BookCollection collection = findBookCollectionById(collectionId);
 
