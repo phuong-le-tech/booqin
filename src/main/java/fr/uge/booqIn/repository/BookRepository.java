@@ -32,10 +32,6 @@ public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificat
   @Query("select b from Book b where b.publicationDate = :publishedDate")
   List<Book> findByPublishedYear(String publishedDate);
 
-//  @EntityGraph(attributePaths = {"books"})
-//  @Query("SELECT b FROM Book b LEFT JOIN FETCH b.collections WHERE b.id = :id")
-//  Optional<Book> findByIdWithCollections(@Param("id") Long id);
-
   @Query("SELECT b FROM Book b JOIN FETCH b.authors ")
   List<Book> findAllWithAuthors();
 
