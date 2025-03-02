@@ -1,6 +1,7 @@
 package fr.uge.booqIn.controller.web;
 
 import fr.uge.booqIn.dto.book.BookIndex;
+import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -33,7 +34,7 @@ public class BookWebController {
                               @RequestParam(value = "isbn", required = false) String isbn) {
 
         Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction) ?
-                Sort.Direction.DESC : Sort.Direction.ASC;
+            Sort.Direction.DESC : Sort.Direction.ASC;
         Sort sortObj = Sort.by(sortDirection, sort);
 
         Pageable pageable = PageRequest.of(page, size, sortObj);
@@ -50,5 +51,12 @@ public class BookWebController {
         model.addAttribute("direction", direction);
 
         return "book/list";
+    }
+
+    @GetMapping("/{id}")
+    public String getBookFromId(Model model, @PathVariable Long id) {
+        BookShow book = bookService.findById(id);
+        model.addAttribute("book", book);
+        return "book/bookDetails";
     }
 }

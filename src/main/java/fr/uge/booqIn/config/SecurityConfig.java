@@ -71,7 +71,7 @@ public class SecurityConfig {
                                 .csrf(AbstractHttpConfigurer::disable)
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers("/auth/**", "/home", "/h2-console/**", "/static/**",
-                                                                "/favicon.ico", "/books/**", "/books/{id}")
+                                                                "/favicon.ico", "/books/**")
                                                 .permitAll()
                                                 .anyRequest().authenticated())
                                 .sessionManagement(

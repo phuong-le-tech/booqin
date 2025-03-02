@@ -11,12 +11,14 @@ import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class GoogleBooksAPI implements BookFetcher {
     private static final String API_URL = "https://www.googleapis.com/books/v1/volumes?q=";
     private static final String SUFFIX_URL = "&langRestrict=en";
     private final WebClient webClient = WebClientSingleton.getInstance();
+    private static final Logger logger = Logger.getLogger(GoogleBooksAPI.class.getName());
 
     private static final List<SimpleDateFormat> DATE_FORMATS = Arrays.asList(
             new SimpleDateFormat("yyyy-MM-dd"),
@@ -31,6 +33,7 @@ public class GoogleBooksAPI implements BookFetcher {
 
     @Override
     public List<Book> searchByAuthor(String author) {
+        logger.info("Searching info for :%s".formatted(author));
         return searchBooks("inauthor:" + URLEncoder.encode(author, StandardCharsets.UTF_8));
     }
 
@@ -42,7 +45,7 @@ public class GoogleBooksAPI implements BookFetcher {
 
     private List<Book> searchBooks(String query) {
         String url = API_URL + query;
-        System.out.println("URL: " + url);
+//        System.out.println("URL: " + url);
 
         try {
             GoogleBooksResponse responseMono = webClient.get()
@@ -69,8 +72,10 @@ public class GoogleBooksAPI implements BookFetcher {
     private Book convertToBook(BookItem item) {
         var volumeInfo = item.volumeInfo();
         Set<Author> authors = volumeInfo.authors() != null && !volumeInfo.authors().isEmpty()
-                ? volumeInfo.authors().stream().map(authorName -> new Author(authorName, "")).collect(Collectors.toSet())
-                : Set.of();
+            ? volumeInfo.authors().stream()
+            .map(this::parseAuthor)
+            .collect(Collectors.toSet())
+            : Set.of();
         String description = volumeInfo.description() != null ? volumeInfo.description() : "";
         Date publicationDate = parsePublicationDate(volumeInfo.publishedDate());
 
@@ -86,6 +91,19 @@ public class GoogleBooksAPI implements BookFetcher {
         b.addIsbn(isbn10);
         b.addIsbn(isbn13);
         return b;
+    }
+
+    private Author parseAuthor(String authorName) {
+        String[] parts = authorName.split(" ", 2);
+        String firstName = parts[0];
+        String lastName = parts.length > 1 ? parts[1] : "";
+        if (firstName.length() > 255) {
+            firstName = firstName.substring(0, 255);
+        }
+        if (lastName.length() > 255) {
+            lastName = lastName.substring(0, 255);
+        }
+        return new Author(firstName, lastName);
     }
 
     private String getIdentifier(List<IndustryIdentifier> industryIdentifiers, String type){

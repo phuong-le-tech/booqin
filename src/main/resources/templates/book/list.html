@@ -7,6 +7,38 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 p-6">
+<!-- Formulaire de recherche et de filtrage -->
+<div class="bg-white rounded-lg shadow-sm p-6 mt-8">
+    <h3 class="text-lg font-bold text-gray-800 mb-4">Search & Filter Books</h3>
+    <form th:action="@{/books}" method="get" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="flex flex-col">
+            <label for="title" class="text-sm font-medium text-gray-700 mb-1">Title</label>
+            <input type="text" id="title" name="title" th:value="${title}"
+                   class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div class="flex flex-col">
+            <label for="author" class="text-sm font-medium text-gray-700 mb-1">Author</label>
+            <input type="text" id="author" name="author" th:value="${author}"
+                   class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div class="flex flex-col">
+            <label for="isbn" class="text-sm font-medium text-gray-700 mb-1">ISBN</label>
+            <input type="text" id="isbn" name="isbn" th:value="${isbn}"
+                   class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div class="flex flex-col items-end justify-end">
+            <button type="submit"
+                    class="bg-blue-600 text-white px-4 py-2 rounded-md transition hover:bg-blue-700 font-medium">
+                Search
+            </button>
+        </div>
+
+        <!-- Champs cachés pour maintenir la pagination et le tri -->
+        <input type="hidden" name="page" value="0">
+        <input type="hidden" name="sort" th:value="${sort}">
+        <input type="hidden" name="direction" th:value="${direction}">
+    </form>
+</div>
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" th:if="${not #lists.isEmpty(books)}">
     <div th:each="book : ${books}" class="bg-white border border-gray-200 rounded-xl shadow-sm flex flex-col transition duration-300 hover:shadow-md hover:-translate-y-1">
         <div class="w-full h-48 flex justify-center items-center text-2xl text-white rounded-t-xl"
@@ -76,39 +108,6 @@
             th:onclick="'window.location.href=\'' + @{/books(page=${currentPage + 1}, title=${title}, author=${author}, isbn=${isbn}, sort=${sort}, direction=${direction})} + '\''">
         <span class="nav-icon">&#8594;</span>
     </button>
-</div>
-
-<!-- Formulaire de recherche et de filtrage -->
-<div class="bg-white rounded-lg shadow-sm p-6 mt-8">
-    <h3 class="text-lg font-bold text-gray-800 mb-4">Search & Filter Books</h3>
-    <form th:action="@{/books}" method="get" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="flex flex-col">
-            <label for="title" class="text-sm font-medium text-gray-700 mb-1">Title</label>
-            <input type="text" id="title" name="title" th:value="${title}"
-                   class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-        </div>
-        <div class="flex flex-col">
-            <label for="author" class="text-sm font-medium text-gray-700 mb-1">Author</label>
-            <input type="text" id="author" name="author" th:value="${author}"
-                   class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-        </div>
-        <div class="flex flex-col">
-            <label for="isbn" class="text-sm font-medium text-gray-700 mb-1">ISBN</label>
-            <input type="text" id="isbn" name="isbn" th:value="${isbn}"
-                   class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-        </div>
-        <div class="flex flex-col items-end justify-end">
-            <button type="submit"
-                    class="bg-blue-600 text-white px-4 py-2 rounded-md transition hover:bg-blue-700 font-medium">
-                Search
-            </button>
-        </div>
-
-        <!-- Champs cachés pour maintenir la pagination et le tri -->
-        <input type="hidden" name="page" value="0">
-        <input type="hidden" name="sort" th:value="${sort}">
-        <input type="hidden" name="direction" th:value="${direction}">
-    </form>
 </div>
 </body>
 </html>
