@@ -2,92 +2,97 @@ package fr.uge.booqIn.entity;
 
 import jakarta.persistence.*;
 import fr.uge.booqIn.enums.StatutPayment;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
 public class Cart {
 
-    @Id
-    @Column(nullable = false)
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @Column(nullable = false)
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private StatutPayment statut;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private StatutPayment statut;
 
-    @ManyToMany
-    @JoinTable(name = "cart_books", joinColumns = @JoinColumn(name = "cart_id"), inverseJoinColumns = @JoinColumn(name = "book_id"))
-    private List<Book> books;
+  @ManyToMany(fetch = FetchType.LAZY)
+  @JoinTable(
+          name = "cart_books",
+          joinColumns = @JoinColumn(name = "cart_id"),
+          inverseJoinColumns = @JoinColumn(name = "book_id")
+  )
+  private List<Book> books;
 
-    @Column(nullable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
-    
-    @Column(nullable = true)
-    private String paymentIntentId;
+  @Column(nullable = false)
+  private LocalDateTime createdAt = LocalDateTime.now();
 
-    public Cart(User user, StatutPayment statut, List<Book> books) {
-        this.user = user;
-        this.statut = statut;
-        this.books = books;
-    }
-    
-    public Cart() {
-    }
-    
-    public Long getId() {
-        return id;
-    }
-    
-    public User getUser() {
-        return user;
-    }
-    
-    public StatutPayment getStatut() {
-        return statut;
-    }
+  @Column(nullable = true)
+  private String paymentIntentId;
 
-    public void setStatut(StatutPayment statut) {
-        this.statut = statut;
-    }
+  public Cart(User user, StatutPayment statut, List<Book> books) {
+    this.user = user;
+    this.statut = statut;
+    this.books = books;
+  }
 
-    public List<Book> getBooks() {
-        return books;
-    }
+  public Cart() {
+  }
 
-    public void setBooks(List<Book> books) {
-        this.books = books;
-    }
+  public Long getId() {
+    return id;
+  }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
+  public User getUser() {
+    return user;
+  }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-    
-    public String getPaymentIntentId() {
-        return this.paymentIntentId;
-    }
-    
-    public void setPaymentIntentId(String id) {
-        this.paymentIntentId = id;
-    }
-    
-    @Override
-    public String toString() {
-        return "Cart{" +
-                "id=" + id +
-                ", user=" + user +
-                ", statut=" + statut +
-                ", books=" + books +
-                ", createdAt=" + createdAt +
-                '}';
-    }
+  public StatutPayment getStatut() {
+    return statut;
+  }
+
+  public void setStatut(StatutPayment statut) {
+    this.statut = statut;
+  }
+
+  public List<Book> getBooks() {
+    return books;
+  }
+
+  public void setBooks(List<Book> books) {
+    this.books = books;
+  }
+
+  public LocalDateTime getCreatedAt() {
+    return createdAt;
+  }
+
+  public void setCreatedAt(LocalDateTime createdAt) {
+    this.createdAt = createdAt;
+  }
+
+  public String getPaymentIntentId() {
+    return this.paymentIntentId;
+  }
+
+  public void setPaymentIntentId(String id) {
+    this.paymentIntentId = id;
+  }
+
+  @Override
+  public String toString() {
+    return "Cart{" +
+            "id=" + id +
+            ", user=" + user +
+            ", statut=" + statut +
+            ", books=" + books +
+            ", createdAt=" + createdAt +
+            '}';
+  }
 }
