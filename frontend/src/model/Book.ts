@@ -16,7 +16,6 @@ export interface BookShow {
     authors: AuthorDto[];
     description: string;
     publicationDate: string;
-    collections: BookCollection[];
     createdAt: string;
     updatedAt: string;
 }

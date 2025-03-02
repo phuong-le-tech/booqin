@@ -10,14 +10,14 @@ interface SidebarNavProps {
 
 const unauthenticatedNavItems = [
     {icon: Book, label: "Books", path: "/books", color: "text-green-300"},
-    {icon: LibraryBigIcon, label: "Collections", path: "/collection", color: "text-purple-300"},
+    {icon: LibraryBigIcon, label: "Collections", path: "/collections/public", color: "text-purple-300"},
 ]
 
 const authenticatedNavItems = [
     {icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", color: "text-blue-300"},
     {icon: Book, label: "Books", path: "/books", color: "text-green-300"},
-    {icon: LibraryBigIcon, label: "Collections", path: "/collection", color: "text-purple-300"},
-    {icon: Library, label: "My Collections", path: "/my-collection", color: "text-yellow-300"},
+    {icon: LibraryBigIcon, label: "Collections", path: "/collections/public", color: "text-purple-300"},
+    {icon: Library, label: "My Collections", path: "/collections", color: "text-yellow-300"},
 ]
 
 export function SidebarNav({ onCloseSidebar = () => {} }: SidebarNavProps) {
@@ -28,7 +28,9 @@ export function SidebarNav({ onCloseSidebar = () => {} }: SidebarNavProps) {
         try {
             await AuthService.logout()
             setUser(null)
-            onCloseSidebar()
+            if (onCloseSidebar) {
+                onCloseSidebar()
+            }
         } catch (error) {
             console.error("Logout failed:", error)
         }
@@ -36,7 +38,9 @@ export function SidebarNav({ onCloseSidebar = () => {} }: SidebarNavProps) {
 
     const handleNavClick = () => {
         // Close sidebar on navigation (for mobile)
-        onCloseSidebar()
+        if (onCloseSidebar) {
+            onCloseSidebar()
+        }
     }
 
     return (

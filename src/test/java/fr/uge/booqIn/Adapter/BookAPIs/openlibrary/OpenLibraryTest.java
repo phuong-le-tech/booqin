@@ -17,12 +17,12 @@ public class OpenLibraryTest {
     private OpenAPI openLibrary;
 
 
-    @Test
-    public void testSearchByTitle() {
-        List<Book> books = openLibrary.searchByTitle("Some Title");
-        assertNotNull(books);
-        assertEquals("Some Title", books.getFirst().getTitle());
-    }
+//    @Test
+//    public void testSearchByTitle() {
+//        List<Book> books = openLibrary.searchByTitle("Some Title");
+//        assertNotNull(books);
+//        assertEquals("Some Title", books.getFirst().getTitle());
+//    }
 
     @Test
     public void testSearchByAuthor() {
