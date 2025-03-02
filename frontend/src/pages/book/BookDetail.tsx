@@ -10,6 +10,8 @@ export const BookDetail: React.FC = () => {
     const [book, setBook] = useState<BookShow | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
+    const [isbnExpanded, setIsbnExpanded] = useState<boolean>(false);
+    const [authorsExpanded, setAuthorsExpanded] = useState<boolean>(false);
 
     useEffect(() => {
         const fetchBookDetails = async () => {
@@ -18,7 +20,12 @@ export const BookDetail: React.FC = () => {
             try {
                 setIsLoading(true);
                 const bookData = await BookService.getBookById(id);
-                setBook(bookData);
+                if (bookData) {
+                    setBook(bookData);
+                } else {
+                    setError("Book not found");
+                    setBook(null);
+                }
                 setError(null);
             } catch (error) {
                 console.error("Failed to fetch book details:", error);
@@ -44,6 +51,102 @@ export const BookDetail: React.FC = () => {
         ];
         const colorIndex = bookId % colors.length;
         return colors[colorIndex];
+    };
+
+    // Fonction pour formater la date en anglais
+    const formatDate = (dateString: string) => {
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        } catch (e) {
+            return dateString;
+        }
+    };
+
+    // Fonction pour créer le nom complet des auteurs
+    const getAuthorFullName = (author: AuthorDto) => {
+        return `${author.firstName} ${author.lastName}`.trim();
+    };
+
+    // Fonction pour afficher les auteurs de manière adaptative
+    const renderAuthors = () => {
+        if (!book?.authors || book.authors.length === 0) return null;
+
+        const initialDisplayCount = 2;
+        const hasMoreAuthors = book.authors.length > initialDisplayCount;
+
+        return (
+            <div className="mb-4">
+                <div className="flex items-baseline">
+                    <p className="text-lg text-blue-700 font-medium mr-2">
+                        By{" "}
+                        {(authorsExpanded ? book.authors : book.authors.slice(0, initialDisplayCount))
+                            .map(author => getAuthorFullName(author))
+                            .join(', ')}
+                        {!authorsExpanded && hasMoreAuthors && ", ..."}
+                    </p>
+                    {hasMoreAuthors && (
+                        <button
+                            onClick={() => setAuthorsExpanded(!authorsExpanded)}
+                            className="text-sm text-blue-600 hover:text-blue-800 focus:outline-none ml-1"
+                        >
+                            {authorsExpanded ? "Show less" : `+${book.authors.length - initialDisplayCount} more`}
+                        </button>
+                    )}
+                </div>
+                {book.publicationDate && (
+                    <p className="text-sm text-gray-500 mt-1">
+                        Published: {formatDate(book.publicationDate)}
+                    </p>
+                )}
+            </div>
+        );
+    };
+
+    // Fonction pour afficher les ISBNs de manière adaptative
+    const renderIsbns = () => {
+        if (!book?.isbns || book.isbns.length === 0) return null;
+
+        const initialDisplayCount = 3;
+        const hasMoreIsbns = book.isbns.length > initialDisplayCount;
+
+        return (
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                <h2 className="text-lg font-semibold text-gray-700 mb-2">
+                    ISBN{book.isbns.length > 1 ? 's' : ''}
+                </h2>
+                <ul className={`space-y-1 ${hasMoreIsbns && !isbnExpanded ? 'overflow-y-hidden' : ''}`}>
+                    {(isbnExpanded ? book.isbns : book.isbns.slice(0, initialDisplayCount)).map((isbn, index) => (
+                        <li key={index} className="text-gray-600 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                            </svg>
+                            {isbn}
+                        </li>
+                    ))}
+                </ul>
+                {!isbnExpanded && hasMoreIsbns && (
+                    <button
+                        onClick={() => setIsbnExpanded(true)}
+                        className="mt-2 text-sm text-blue-600 hover:text-blue-800 focus:outline-none flex items-center"
+                    >
+                        + {book.isbns.length - initialDisplayCount} more
+                    </button>
+                )}
+                {isbnExpanded && hasMoreIsbns && (
+                    <button
+                        onClick={() => setIsbnExpanded(false)}
+                        className="mt-2 text-sm text-blue-600 hover:text-blue-800 focus:outline-none"
+                    >
+                        Show less
+                    </button>
+                )}
+            </div>
+        );
     };
 
     if (isLoading) {
@@ -95,25 +198,6 @@ export const BookDetail: React.FC = () => {
         );
     }
 
-    // Fonction pour formater la date
-    const formatDate = (dateString: string) => {
-        try {
-            const date = new Date(dateString);
-            return date.toLocaleDateString(undefined, {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-        } catch (e) {
-            return dateString;
-        }
-    };
-
-    // Fonction pour créer le nom complet des auteurs
-    const getAuthorFullName = (author: AuthorDto) => {
-        return `${author.firstName} ${author.lastName}`.trim();
-    };
-
     return (
         <Layout>
             <div className="container mx-auto px-4 py-8">
@@ -145,32 +229,9 @@ export const BookDetail: React.FC = () => {
                         <div className="p-6 md:p-8 md:w-2/3 lg:w-3/4">
                             <h1 className="text-3xl font-bold text-gray-800 mb-2">{book.title}</h1>
 
-                            <div className="mb-6">
-                                <p className="text-lg text-blue-700 font-medium">
-                                    By {book.authors.map(author => getAuthorFullName(author)).join(', ')}
-                                </p>
-                                {book.publicationDate && (
-                                    <p className="text-sm text-gray-500 mt-1">
-                                        Published: {formatDate(book.publicationDate)}
-                                    </p>
-                                )}
-                            </div>
+                            {renderAuthors()}
 
-                            {book.isbns && book.isbns.length > 0 && (
-                                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                                    <h2 className="text-lg font-semibold text-gray-700 mb-2">ISBN</h2>
-                                    <ul className="space-y-1">
-                                        {book.isbns.map((isbn, index) => (
-                                            <li key={index} className="text-gray-600 flex items-center">
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-                                                </svg>
-                                                {isbn}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
+                            {renderIsbns()}
 
                             <div className="mb-8">
                                 <h2 className="text-xl font-semibold text-gray-700 mb-3">Description</h2>
@@ -181,19 +242,6 @@ export const BookDetail: React.FC = () => {
 
                             {/* Actions */}
                             <div className="flex flex-wrap gap-3 mb-8">
-                                <a
-                                    href={`https://www.goodreads.com/search?q=${encodeURIComponent(book.title)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                                        <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
-                                        <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
-                                    </svg>
-                                    Find on Goodreads
-                                </a>
-
                                 {book.isbns && book.isbns.length > 0 && (
                                     <a
                                         href={`https://www.amazon.com/s?k=${encodeURIComponent(book.isbns[0])}`}

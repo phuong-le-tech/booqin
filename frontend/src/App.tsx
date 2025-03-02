@@ -1,15 +1,17 @@
+// src/App.tsx
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { AuthProvider } from "./context/AuthContext";
-import { Home } from "./pages/Home.tsx";
+import { BooksProvider } from "./context/BooksContext";
+import { Home } from "./pages/Home";
 import { Login } from "./pages/auth/Login";
 import { Register } from "./pages/auth/Register";
 import { Books } from "./pages/book/Books";
 import { BookDetail } from "./pages/book/BookDetail";
-import {ShoppingCart} from "./pages/shoppingCart/ShoppingCart";
-import {Profile} from "./pages/user/Profile.tsx";
+import { ShoppingCart } from "./pages/shoppingCart/ShoppingCart";
+import { Profile } from "./pages/user/Profile";
 
 const App: React.FC = () => {
     return (
@@ -21,8 +23,16 @@ const App: React.FC = () => {
                         <Route path="/home" element={<Home />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
-                        <Route path="/books" element={<Books />} />
-                        <Route path="/books/:id" element={<BookDetail />} />
+                        <Route path="/books" element={
+                            <BooksProvider>
+                                <Books />
+                            </BooksProvider>
+                        } />
+                        <Route path="/books/:id" element={
+                            <BooksProvider>
+                                <BookDetail />
+                            </BooksProvider>
+                        } />
                         <Route path={"/profile"} element={<Profile />} />
                         <Route path="/cart" element={<ShoppingCart />} />
                     </Routes>
