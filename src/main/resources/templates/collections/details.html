@@ -2,14 +2,14 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
-    <title th:text="${collection.title} + ' - Details'">Collection Details</title>
+    <title th:text="${collection.name} + ' - Details'">Collection Details</title>
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
 </head>
 <body class="bg-gray-50 text-gray-900 flex flex-col items-center justify-start min-h-screen p-6">
 
 <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg w-full">
     <div th:if="${collection}">
-        <h1 class="text-4xl font-bold text-indigo-600 mb-6 text-center" th:text="${collection.title}">Collection Title</h1>
+        <h1 class="text-4xl font-bold text-indigo-600 mb-6 text-center" th:text="${collection.name}">Collection Title</h1>
         <div class="mb-8">
             <h2 class="text-2xl font-semibold text-gray-800 mb-2">Details</h2>
             <p class="text-gray-700 text-justify border-t border-gray-200 pt-4" th:text="${collection.description}">
@@ -25,8 +25,12 @@
                     <p class="text-gray-500 mb-2" th:text="${book.publicationDate}">Publication Date</p>
                     <p class="text-gray-600">
                         Authors:
-                        <span th:each="author, iterStat : ${book.authors}">
+                        <!--<span th:each="author, iterStat : ${book.authors}">
                             <span th:text="${author.firstName} + ' ' + ${author.lastName}"></span>
+                            <span th:if="${!iterStat.last}">, </span>
+                        </span>-->
+                        <span th:each="author, iterStat : ${book.authorNames}">
+                            <span th:text="${author}"></span>
                             <span th:if="${!iterStat.last}">, </span>
                         </span>
                     </p>

@@ -69,6 +69,7 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
   @Transactional
   public BookCollectionShow findById(@NotNull Long id) {
     BookCollection bookCollection = findBookCollectionById(id);
+    System.out.println("BookCollection Service IMPL: \n" + bookCollection);
     return bookCollectionMapper.toBookCollectionShow(bookCollection);
   }
 
