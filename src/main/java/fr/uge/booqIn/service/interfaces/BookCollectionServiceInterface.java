@@ -3,12 +3,16 @@ package fr.uge.booqIn.service.interfaces;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionIndex;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionUpdate;
+import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.BookCollection;
+import fr.uge.booqIn.entity.User;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.validation.annotation.Validated;
+
+import java.util.List;
 
 @Validated
 public interface BookCollectionServiceInterface {
@@ -68,6 +72,63 @@ public interface BookCollectionServiceInterface {
    *
    * @param id BookCollection ID to delete
    * @throws fr.uge.booqIn.exception.ResourceNotFoundException if collection not found
+   * @throws org.springframework.security.access.AccessDeniedException if user is not authorized
    */
   void deleteBookCollection(@NotNull Long id);
+
+  /**
+   * Add a book to a collection
+   *
+   * @param collectionId ID of the collection to add the book to
+   * @param bookId ID of the book to add
+   * @return Updated BookCollection entity
+   * @throws fr.uge.booqIn.exception.ResourceNotFoundException if collection or book not found
+   * @throws org.springframework.security.access.AccessDeniedException if current user is not the owner
+   */
+  BookCollection addBookToCollection(@NotNull Long collectionId, @NotNull Long bookId);
+
+  /**
+   * Remove a book from a collection
+   *
+   * @param collectionId ID of the collection to remove the book from
+   * @param bookId ID of the book to remove
+   * @param currentUser Current authenticated user
+   * @return Updated BookCollection entity
+   * @throws fr.uge.booqIn.exception.ResourceNotFoundException if collection or book not found
+   * @throws org.springframework.security.access.AccessDeniedException if current user is not the owner
+   */
+  BookCollection removeBookFromCollection(@NotNull Long collectionId, @NotNull Long bookId, User currentUser);
+
+  /**
+   * Get all collections belonging to a user
+   *
+   * @param user User entity
+   * @return List of BookCollection entities
+   */
+  List<BookCollection> getUserCollections(User user);
+
+  /**
+   * Get all collections belonging to a user with their books eagerly loaded
+   *
+   * @param user User entity
+   * @return List of BookCollection entities with books
+   */
+  List<BookCollection> getUserCollectionsWithBooks(User user);
+
+  /**
+   * Get all public collections
+   *
+   * @return List of public BookCollection entities
+   */
+  List<BookCollection> getPublicCollections();
+
+  /**
+   * Get a specific book from a collection
+   *
+   * @param collectionId ID of the collection
+   * @param bookId ID of the book
+   * @return Book entity if found, null otherwise
+   * @throws fr.uge.booqIn.exception.ResourceNotFoundException if collection not found
+   */
+  Book getBookFromCollection(Long collectionId, Long bookId);
 }

@@ -17,9 +17,6 @@ public class StripeWebhookController {
   
   private final StripeService stripeService;
 
-  
-
-  
   public StripeWebhookController(StripeService stripeService) {
     this.stripeService = stripeService;
   }
@@ -33,3 +30,4 @@ public class StripeWebhookController {
     return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success("Webhook traité"));
   }
 }
+

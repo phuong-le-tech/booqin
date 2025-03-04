@@ -214,8 +214,15 @@ public class BookServiceImpl implements BookServiceInterface {
   }
 
   private Book findBookById(Long id) {
-    return bookRepository.findById(id)
+    Book bookWithAuthors = bookRepository.findByIdWithAuthors(id)
             .orElseThrow(() -> new ResourceNotFoundException("Book", "id", id));
+
+    Book bookWithIsbns = bookRepository.findByIdWithIsbns(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Book", "id", id));
+
+    bookWithAuthors.setIsbns(bookWithIsbns.getIsbns());
+
+    return bookWithAuthors;
   }
 
   private Optional<Book> findByIsbn(String isbn) {

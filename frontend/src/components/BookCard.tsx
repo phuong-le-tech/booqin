@@ -1,12 +1,18 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { BookIndex } from '../model/Book';
+import axiosInstance from "../services/AxiosInstance.ts";
+import { AuthContext } from "../context/AuthContext.tsx";
 
 interface BookCardProps {
     book: BookIndex;
 }
 
 export const BookCard: React.FC<BookCardProps> = ({ book }) => {
+    const { id } = book;
+    const { user } = useContext(AuthContext);
+    const userId = user?.id;
+
     // Fonction pour générer une couleur à partir de l'id du livre
     const getBookCoverColor = (bookId: number) => {
         const colors = [
@@ -20,6 +26,23 @@ export const BookCard: React.FC<BookCardProps> = ({ book }) => {
         ];
         const colorIndex = bookId % colors.length;
         return colors[colorIndex];
+    };
+
+    // Fonction pour ajouter un livre au panier
+    const addToCart = async () => {
+        try {
+            const response = await axiosInstance.post("/v1/carts/add-book", {
+                userId,
+                bookId: id,
+            });
+
+            if (response.status === 200) {
+                alert("Le livre a été ajouté au panier");
+            }
+        } catch (error) {
+            console.error("Erreur lors de l'ajout du livre au panier", error);
+            console.log(error.response?.data);
+        }
     };
 
     // Fonction pour formater la date
@@ -36,8 +59,8 @@ export const BookCard: React.FC<BookCardProps> = ({ book }) => {
     };
 
     return (
-        <Link to={`/books/${book.id}`} className="block h-full">
-            <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col h-full">
+        <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col h-full">
+            <Link to={`/books/${book.id}`} className="block flex-grow">
                 {/* Couverture de livre stylisée */}
                 <div
                     className="w-full h-48 flex items-center justify-center flex-shrink-0"
@@ -68,7 +91,15 @@ export const BookCard: React.FC<BookCardProps> = ({ book }) => {
                         )}
                     </div>
                 </div>
-            </div>
-        </Link>
+            </Link>
+
+            {/* Bouton Add to Cart */}
+            <button
+                onClick={addToCart}
+                className="m-3 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
+            >
+                Add to cart
+            </button>
+        </div>
     );
 };

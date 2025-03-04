@@ -1,5 +1,6 @@
 package fr.uge.booqIn.entity;
 
+import fr.uge.booqIn.enums.StatutPayment;
 import fr.uge.booqIn.enums.UserRole;
 import jakarta.persistence.*;
 import jakarta.validation.Valid;
@@ -8,10 +9,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Entity
 @Table(name="users")
@@ -51,7 +49,7 @@ public class User implements UserDetails {
   private UserRole role;
 
   @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<ToLendBook> booksToLend = new ArrayList<>();
+  private Set<ToLendBook> booksToLend = new HashSet<>();
 
   @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<BookCollection> collections = new ArrayList<>();
@@ -63,7 +61,11 @@ public class User implements UserDetails {
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "updated_at")
   private Date updatedAt = new Date();
-
+  
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private Cart cart;
+  
+  
   public User() {
   }
 
@@ -74,6 +76,7 @@ public class User implements UserDetails {
     this.password = password;
     this.address = address;
     this.role = role;
+    this.cart = new Cart(this, StatutPayment.PENDING, new ArrayList<>());
   }
 
   public Long getId() {
@@ -117,7 +120,7 @@ public class User implements UserDetails {
     return role;
   }
 
-  public List<ToLendBook> getBooksToLend() {
+  public Set<ToLendBook> getBooksToLend() {
     return booksToLend;
   }
 
@@ -161,7 +164,7 @@ public class User implements UserDetails {
     this.role = role;
   }
 
-  public void setBooksToLend(List<ToLendBook> toBorrowBooks) {
+  public void setBooksToLend(Set<ToLendBook> toBorrowBooks) {
     this.booksToLend = toBorrowBooks;
   }
 
@@ -185,6 +188,10 @@ public class User implements UserDetails {
   public void addBookToLend(ToLendBook book) {
     booksToLend.add(book);
     book.setOwner(this);
+  }
+  
+  public Cart getCart() {
+    return cart;
   }
 
   public void removeBookToLend(ToLendBook book) {

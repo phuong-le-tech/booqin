@@ -8,7 +8,6 @@ import {User, Mail, MapPin, Edit, Save, X} from "lucide-react"
 import type {Address} from "../../model/Address.ts"
 
 interface ProfileForm {
-    id: string
     firstName: string
     lastName: string
     email: string
@@ -18,7 +17,6 @@ interface ProfileForm {
 export const Profile = () => {
     const {user, setUser} = useContext(AuthContext)
     const [formData, setFormData] = useState<ProfileForm>({
-        id: user?.id || "",
         firstName: user?.firstName || "",
         lastName: user?.lastName || "",
         email: user?.email || "",
@@ -41,7 +39,6 @@ export const Profile = () => {
 
         // Set form data from user context
         setFormData({
-            id: user.id,
             firstName: user.firstName,
             lastName: user.lastName,
             email: user.email,
@@ -56,10 +53,16 @@ export const Profile = () => {
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const {name, value} = e.target
-        if (["streetNumber", "streetName", "city", "postalCode"].includes(name)) {
+
+        // Gestion des champs d'adresse
+        if (name.startsWith("address.")) {
+            const addressField = name.split(".")[1]
             setFormData((prev) => ({
                 ...prev,
-                address: {...prev.address, [name]: value},
+                address: {
+                    ...prev.address,
+                    [addressField]: value
+                },
             }))
         } else {
             setFormData((prev) => ({...prev, [name]: value}))
@@ -70,6 +73,10 @@ export const Profile = () => {
         e.preventDefault()
         setIsLoading(true)
         try {
+            if (!user?.id) {
+                throw new Error("User ID is missing")
+            }
+
             const userData = {
                 firstName: formData.firstName,
                 lastName: formData.lastName,
@@ -77,7 +84,7 @@ export const Profile = () => {
                 address: formData.address
             }
 
-            const updatedUser = await UserService.updateUser(parseInt(formData.id), userData)
+            const updatedUser = await UserService.updateUser(user.id, userData)
             setUser({...user, ...updatedUser})
             toast.success("Profile updated successfully!")
             setIsEditing(false)
@@ -92,7 +99,6 @@ export const Profile = () => {
         if (isEditing) {
             // Reset form when canceling edit
             setFormData({
-                id: user?.id || "",
                 firstName: user?.firstName || "",
                 lastName: user?.lastName || "",
                 email: user?.email || "",
@@ -197,14 +203,14 @@ export const Profile = () => {
                                     <h3 className="text-lg font-medium text-primary mb-3">Address Information</h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                                         <div>
-                                            <label htmlFor="streetNumber"
+                                            <label htmlFor="address.streetNumber"
                                                    className="block text-sm font-medium text-primary mb-1">
                                                 Street Number
                                             </label>
                                             <input
                                                 type="text"
-                                                id="streetNumber"
-                                                name="streetNumber"
+                                                id="address.streetNumber"
+                                                name="address.streetNumber"
                                                 value={formData.address.streetNumber}
                                                 onChange={handleChange}
                                                 required
@@ -214,14 +220,14 @@ export const Profile = () => {
                                             />
                                         </div>
                                         <div>
-                                            <label htmlFor="streetName"
+                                            <label htmlFor="address.streetName"
                                                    className="block text-sm font-medium text-primary mb-1">
                                                 Street Name
                                             </label>
                                             <input
                                                 type="text"
-                                                id="streetName"
-                                                name="streetName"
+                                                id="address.streetName"
+                                                name="address.streetName"
                                                 value={formData.address.streetName}
                                                 onChange={handleChange}
                                                 required
@@ -233,14 +239,14 @@ export const Profile = () => {
                                     </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mt-4">
                                         <div>
-                                            <label htmlFor="city"
+                                            <label htmlFor="address.city"
                                                    className="block text-sm font-medium text-primary mb-1">
                                                 City
                                             </label>
                                             <input
                                                 type="text"
-                                                id="city"
-                                                name="city"
+                                                id="address.city"
+                                                name="address.city"
                                                 value={formData.address.city}
                                                 onChange={handleChange}
                                                 required
@@ -250,14 +256,14 @@ export const Profile = () => {
                                             />
                                         </div>
                                         <div>
-                                            <label htmlFor="postalCode"
+                                            <label htmlFor="address.postalCode"
                                                    className="block text-sm font-medium text-primary mb-1">
                                                 Postal Code
                                             </label>
                                             <input
                                                 type="text"
-                                                id="postalCode"
-                                                name="postalCode"
+                                                id="address.postalCode"
+                                                name="address.postalCode"
                                                 value={formData.address.postalCode}
                                                 onChange={handleChange}
                                                 required
