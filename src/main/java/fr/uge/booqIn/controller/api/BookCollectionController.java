@@ -167,10 +167,11 @@ public class BookCollectionController {
    * Get all public collections
    */
   @GetMapping("/public")
-  public ResponseEntity<ApiResponse<List<BookCollection>>> getPublicCollections() {
+  public ResponseEntity<ApiResponse<List<BookCollectionShow>>> getPublicCollections() {
     logger.info("✅ Fetching public collections");
-
-    List<BookCollection> collections = bookCollectionService.getPublicCollections();
+    //List<BookCollection> collections = bookCollectionService.getPublicCollections();
+    List<BookCollectionShow> collections = bookCollectionService.getPublicCollections();
+    System.out.println("Collections Size: " + collections.size());
     return ResponseEntity.ok(ApiResponse.success("Public collections fetched", collections));
   }
 

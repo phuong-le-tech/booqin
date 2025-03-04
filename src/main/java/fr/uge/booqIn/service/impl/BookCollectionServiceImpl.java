@@ -160,8 +160,11 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
   }
 
   @Transactional
-  public List<BookCollection> getPublicCollections() {
-    return bookCollectionRepository.findByIsPublicTrue();
+  public List<BookCollectionShow> getPublicCollections() {
+    return bookCollectionRepository.findByIsPublicTrue()
+            .stream()
+            .map(bookCollectionMapper::toBookCollectionShow)
+            .toList();
   }
 
   @Transactional

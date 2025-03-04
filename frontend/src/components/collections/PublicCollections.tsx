@@ -3,39 +3,46 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "../../pages/Layout.tsx";
-import {BookCollection} from "../../model/BookCollection.ts";
+import {BookCollection, BookCollectionShow} from "../../model/BookCollection.ts";
 import {List} from "lucide-react";
 import {collections} from "../../assets/testData.ts";
+import axiosInstance from "../../services/AxiosInstance.ts";
 
 const PublicCollections: React.FC = () => {
-    /*const [collections, setCollections] = useState<BookCollection[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [collections, setCollections] = useState<BookCollectionShow[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState<number>(0);
+    const [totalPages, setTotalPages] = useState<number>(0);
 
     useEffect(() => {
-        // Fonction pour récupérer les collections publiques depuis le backend
-        const fetchPublicCollections = async () => {
+        const fetchCollections = async () => {
             try {
-                const response = await fetch('/api/v1/collections/public'); // Assurez-vous que l'URL est correcte
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                const response = await axiosInstance.get(`/v1/collections/public`);
+                console.log("after fetchPublicCollections");
+                console.log(response.data);
+                if (response.data && response.data.success && response.data.data) {
+                    setCollections(response.data.data);
+                    //setTotalPages(data.totalPages);   // TODO: pour plus tard la pagination
+                } else {
+                    throw new Error(`Network response was not ok !`);
                 }
-                const data = await response.json();
-                setCollections(data);
-                setLoading(false);
-            } catch (error) {
-                setError(error.message);
+            } catch (err) {
+                setError(err.message);
+            } finally {
                 setLoading(false);
             }
         };
-        fetchPublicCollections();
-    }, []);
+        fetchCollections();
+    }, [currentPage]);
+
     if (loading) {
-        return <div>Loading...</div>;
+        return <Layout><div>Loading...</div></Layout>;
     }
+
     if (error) {
-        return <div>Error: {error}</div>;
-    }*/
+        return <Layout><div>Error: {error}</div></Layout>;
+    }
 
     return (
         <Layout>

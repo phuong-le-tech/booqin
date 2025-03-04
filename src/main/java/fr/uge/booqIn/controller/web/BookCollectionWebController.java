@@ -38,7 +38,8 @@ public class BookCollectionWebController {
 
   @GetMapping("/public")
   public String showPublicCollections(Model model) {
-    List<BookCollection> collections = bookCollectionService.getPublicCollections();
+    //List<BookCollection> collections = bookCollectionService.getPublicCollections();
+    List<BookCollectionShow> collections = bookCollectionService.getPublicCollections();
     model.addAttribute("publicCollections", collections);
     return "collections/public";
   }
