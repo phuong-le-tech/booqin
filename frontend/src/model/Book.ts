@@ -20,7 +20,7 @@ export interface Book {
     publicationDate: string;
     createdAt: string;
     updatedAt: string;
-    category?: string;
+    categories?: string[];
 }
 
 // Modèle pour la mise à jour partielle de Book
