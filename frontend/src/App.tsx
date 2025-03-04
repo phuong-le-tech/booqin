@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { AuthProvider } from "./context/AuthContext";
+import { BooksProvider } from "./context/BooksContext";
 import { Home } from "./pages/Home";
 import { Login } from "./pages/auth/Login";
 import { Register } from "./pages/auth/Register";
@@ -25,8 +26,16 @@ const App: React.FC = () => {
                         <Route path="/home" element={<Home />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
-                        <Route path="/books" element={<Books />} />
-                        <Route path="/books/:id" element={<BookDetail />} />
+                        <Route path="/books" element={
+                            <BooksProvider>
+                                <Books />
+                            </BooksProvider>
+                        } />
+                        <Route path="/books/:id" element={
+                            <BooksProvider>
+                                <BookDetail />
+                            </BooksProvider>
+                        } />
                         <Route path={"/profile"} element={<Profile />} />
                         <Route path="/cart" element={<ShoppingCart />} />
                         {/*<Route path="/books/:id" element={<BookDetails />} />*/}

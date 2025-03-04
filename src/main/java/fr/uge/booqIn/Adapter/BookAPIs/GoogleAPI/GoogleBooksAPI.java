@@ -1,5 +1,6 @@
 package fr.uge.booqIn.Adapter.BookAPIs.GoogleAPI;
 
+import fr.uge.booqIn.Adapter.BookAPIs.AuthorNameParser;
 import fr.uge.booqIn.Adapter.BookAPIs.BookFetcher;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
@@ -11,12 +12,14 @@ import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.logging.Logger;
 
 public class GoogleBooksAPI implements BookFetcher {
     private static final String API_URL = "https://www.googleapis.com/books/v1/volumes?q=";
     private static final String SUFFIX_URL = "&langRestrict=en";
     private final WebClient webClient = WebClientSingleton.getInstance();
+
+    private final static Logger logger = Logger.getLogger(GoogleBooksAPI.class.toString());
 
     private static final List<SimpleDateFormat> DATE_FORMATS = Arrays.asList(
             new SimpleDateFormat("yyyy-MM-dd"),
@@ -42,7 +45,7 @@ public class GoogleBooksAPI implements BookFetcher {
 
     private List<Book> searchBooks(String query) {
         String url = API_URL + query;
-        System.out.println("URL: " + url);
+        logger.info("URL: " + url);
 
         try {
             GoogleBooksResponse responseMono = webClient.get()
@@ -51,7 +54,7 @@ public class GoogleBooksAPI implements BookFetcher {
                     .bodyToMono(GoogleBooksResponse.class).block();
 
             if (responseMono == null || responseMono.items() == null) {
-                System.out.println("Empty responseMono.");
+                logger.info("Empty responseMono.");
                 return List.of();
             }
 
@@ -60,7 +63,7 @@ public class GoogleBooksAPI implements BookFetcher {
                     .toList();
 
         } catch (Exception e) {
-            System.out.println("Error while fetching books: " + e.getMessage());
+            logger.warning("Error while fetching books: " + e.getMessage());
             return List.of();
         }
     }
@@ -68,24 +71,40 @@ public class GoogleBooksAPI implements BookFetcher {
 
     private Book convertToBook(BookItem item) {
         var volumeInfo = item.volumeInfo();
-        Set<Author> authors = volumeInfo.authors() != null && !volumeInfo.authors().isEmpty()
-                ? volumeInfo.authors().stream().map(authorName -> new Author(authorName, "")).collect(Collectors.toSet())
-                : Set.of();
+        Set<Author> authors = new HashSet<>();
+        if (volumeInfo.authors() != null && !volumeInfo.authors().isEmpty()) {
+            for (String authorName : volumeInfo.authors()) {
+                // Vérifier si l'entrée contient plusieurs auteurs séparés par des virgules
+                if (authorName.indexOf(",") != authorName.lastIndexOf(",")) {
+                    authors.addAll(AuthorNameParser.parseMultipleAuthors(authorName));
+                } else {
+                    authors.add(AuthorNameParser.parseAuthorName(authorName));
+                }
+            }
+        }
         String description = volumeInfo.description() != null ? volumeInfo.description() : "";
         Date publicationDate = parsePublicationDate(volumeInfo.publishedDate());
 
         String isbn10 = getIdentifier(volumeInfo.industryIdentifiers(),"ISBN_10");
         String isbn13 = getIdentifier(volumeInfo.industryIdentifiers(),"ISBN_13");
 
-        var b = new Book(
-                volumeInfo.title(),
-                authors,
-                description,
-                publicationDate
-        );
-        b.addIsbn(isbn10);
-        b.addIsbn(isbn13);
-        return b;
+        Set<String> isbns = new HashSet<>();
+        if (isbn10 != null) isbns.add(isbn10);
+        if (isbn13 != null) isbns.add(isbn13);
+
+        Set<String> categories = new HashSet<>();
+        if (volumeInfo.categories() != null && !volumeInfo.categories().isEmpty()) {
+            categories.addAll(volumeInfo.categories());
+        }
+
+        return new Book.Builder()
+                .title(volumeInfo.title())
+                .authors(authors)
+                .description(description)
+                .publicationDate(publicationDate)
+                .isbns(isbns)
+                .categories(categories)
+                .build();
     }
 
     private String getIdentifier(List<IndustryIdentifier> industryIdentifiers, String type){
@@ -111,7 +130,7 @@ public class GoogleBooksAPI implements BookFetcher {
             }
         }
 
-        System.out.println("Failed to parse date: " + dateString);
+        logger.warning("Failed to parse date: " + dateString);
         return null;
     }
 }
