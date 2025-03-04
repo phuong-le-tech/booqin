@@ -220,7 +220,11 @@ public class BookServiceImpl implements BookServiceInterface {
     Book bookWithIsbns = bookRepository.findByIdWithIsbns(id)
             .orElseThrow(() -> new ResourceNotFoundException("Book", "id", id));
 
+    Book bookWithCategories = bookRepository.findByIdWithCategories(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Book", "id", id));
+
     bookWithAuthors.setIsbns(bookWithIsbns.getIsbns());
+    bookWithAuthors.setCategories(bookWithCategories.getCategories());
 
     return bookWithAuthors;
   }

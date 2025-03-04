@@ -150,6 +150,27 @@ export const BookDetail: React.FC = () => {
         );
     };
 
+    // Fonction pour afficher les catégories
+    const renderCategories = () => {
+        if (!book?.categories || book.categories?.length === 0) return null;
+
+        return (
+            <div className="mb-6">
+                <h2 className="text-lg font-semibold text-gray-700 mb-2">Categories</h2>
+                <div className="flex flex-wrap gap-2">
+                    {book.categories.map((category, index) => (
+                        <span
+                            key={index}
+                            className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
+                        >
+                            {category}
+                        </span>
+                    ))}
+                </div>
+            </div>
+        );
+    };
+
     if (isLoading) {
         return (
             <Layout>
@@ -233,6 +254,8 @@ export const BookDetail: React.FC = () => {
                             {renderAuthors()}
 
                             {renderIsbns()}
+
+                            {renderCategories()}
 
                             <div className="mb-8">
                                 <h2 className="text-xl font-semibold text-gray-700 mb-3">Description</h2>

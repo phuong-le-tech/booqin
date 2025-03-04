@@ -52,7 +52,8 @@ public class BookMapper {
                 book.getDescription(),
                 book.getPublicationDate(),
                 book.getCreatedAt(),
-                book.getUpdatedAt()
+                book.getUpdatedAt(),
+                book.getCategories()
         );
     }
 

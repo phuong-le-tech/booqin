@@ -15,6 +15,7 @@ public record BookShow(
         String description,
         Date publicationDate,
         Date createdAt,
-        Date updatedAt
+        Date updatedAt,
+        Set<String> categories
 ) {
 }
