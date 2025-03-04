@@ -11,6 +11,8 @@ import fr.uge.booqIn.mapper.BookMapper;
 import fr.uge.booqIn.service.BookCollectionService;
 import fr.uge.booqIn.service.impl.BookServiceImpl;
 import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -112,6 +114,18 @@ public class BookCollectionWebController {
       logger.warning("Resource not found: " + e.getMessage());
       model.addAttribute("error", e.getMessage());
       return "collections/addBook";
+    }
+  }
+
+  @PostMapping("/create") // TODO: changer le request body par un DTO
+  public String createCollection(Model model, @Valid @RequestBody BookCollection bookCollection, @AuthenticationPrincipal User currentUser) {
+    try {
+      BookCollection createdCollection = bookCollectionService.createBookCollection(bookCollection);
+      createdCollection.setOwner(currentUser);
+      return "redirect:/collections";
+    } catch (ResourceNotFoundException e) {
+      model.addAttribute("error", e.getMessage());
+      return "collections/create";
     }
   }
 }
