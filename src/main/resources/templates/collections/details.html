@@ -25,10 +25,6 @@
                     <p class="text-gray-500 mb-2" th:text="${book.publicationDate}">Publication Date</p>
                     <p class="text-gray-600">
                         Authors:
-                        <!--<span th:each="author, iterStat : ${book.authors}">
-                            <span th:text="${author.firstName} + ' ' + ${author.lastName}"></span>
-                            <span th:if="${!iterStat.last}">, </span>
-                        </span>-->
                         <span th:each="author, iterStat : ${book.authorNames}">
                             <span th:text="${author}"></span>
                             <span th:if="${!iterStat.last}">, </span>

@@ -45,14 +45,14 @@ public class BookCollectionWebController {
 
   @GetMapping()
   public String showUserCollections(Model model, @AuthenticationPrincipal User currentUser) {
-    List<BookCollection> collections = bookCollectionService.getUserCollections(currentUser);
+    List<BookCollection> collections = bookCollectionService.getUserCollectionsWithBooks(currentUser);
     List<BookCollection> userPublicCollections = collections.stream().filter(BookCollection::isPublic).toList();
     List<BookCollection> userPrivateCollections = collections.stream().filter(collection -> !collection.isPublic()).toList();
     model.addAttribute("collections", collections);
     model.addAttribute("userPublicCollections", userPublicCollections);
     model.addAttribute("userPrivateCollections", userPrivateCollections);
     return "collections/userCollections";
-  }
+  } // TODO: rajouter pagination pour les collections, et pour le contenu d'une collection
 
   @GetMapping("/{id}")
   public String showCollectionDetails(@PathVariable Long id, Model model) {
