@@ -45,41 +45,30 @@ public class CartServiceImpl implements CartServiceInterface {
     cart.setStatut(status);
     return cartRepository.save(cart);
   }
-
-
+  
+  
   @Override
   @Transactional
-  public boolean addBookToCart(Long id, Long bookId) {
-
+  public boolean addBookToCart(Long userId, Long bookId) {
     Book book = bookRepository.findById(bookId)
             .orElseThrow(() -> new ResourceNotFoundException("Book", "id", bookId));
-
-    Cart cart = getCart(id);
-
-    List<Book> books = new ArrayList<>(cart.getBooks());
-    if (!books.contains(book)) {
-      books.add(book);
-      cart.setBooks(books);
+    
+    Cart cart = getCart(userId);
+    if (!cart.getBooks().contains(book)) {
+      cart.getBooks().add(book);
       cartRepository.save(cart);
       return true;
     }
-
+    
     return false;
   }
+
 
   @Override
   @Transactional
   public boolean removeBookFromCart(Long user, Long bookId) {
-
-    Cart cart = getCart(user);
-    Book book = bookRepository.findById(bookId).orElseThrow(() -> new ResourceNotFoundException("Book", "id", bookId));
-
-    if (cart.getBooks().contains(book)) {
-      cart.getBooks().remove(book);
-      cartRepository.save(cart);
+      cartRepository.deleteBookFromCart(user, bookId);
       return true;
-    }
-    return false;
   }
 
   @Override

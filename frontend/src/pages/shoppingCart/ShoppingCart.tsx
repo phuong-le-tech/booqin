@@ -4,7 +4,6 @@ import axiosInstance from "../../services/AxiosInstance.ts";
 import { AuthContext } from "../../context/AuthContext.tsx";
 import { useNavigate } from "react-router-dom";
 
-
 type Book = {
     id: string;
     title: string;
@@ -22,34 +21,57 @@ export const ShoppingCart: React.FC = () => {
     const [cart, setCart] = useState<CartDto | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const navigate = useNavigate(); //
+    const navigate = useNavigate();
     const auth = useContext(AuthContext);
 
+    // Fonction pour traiter et nettoyer le panier
+    const processCart = (cart: CartDto | null) => {
+        if (!cart || !cart.books) return cart;
+
+        // Éliminer les doublons tout en préservant l'ordre
+        const uniqueBooks = cart.books.filter(
+            (book, index, self) =>
+                index === self.findIndex((t) => t.id === book.id)
+        );
+
+        return {
+            ...cart,
+            books: uniqueBooks
+        };
+    };
+
+    // Charger le panier depuis localStorage
     useEffect(() => {
         const savedCart = localStorage.getItem("cart");
         if (savedCart) {
-            setCart(JSON.parse(savedCart));
+            try {
+                const parsedCart = JSON.parse(savedCart);
+                const processedCart = processCart(parsedCart);
+
+                // Log de diagnostic
+                if (parsedCart.books.length !== processedCart.books.length) {
+                    console.warn('Doublons détectés et supprimés', {
+                        originaux: parsedCart.books.length,
+                        traités: processedCart.books.length
+                    });
+                }
+
+                setCart(processedCart);
+                localStorage.setItem("cart", JSON.stringify(processedCart));
+            } catch (error) {
+                console.error("Erreur de parsing du localStorage", error);
+                localStorage.removeItem("cart");
+            }
         }
     }, []);
 
-
+    // Récupérer le panier depuis l'API
     useEffect(() => {
-        if (auth === undefined) {
-            console.log("🔄 Contexte Auth en cours d'initialisation...");
+        if (auth === undefined || auth.user === undefined || !auth.user || !auth.user.id) {
+            console.log("🚨 Contexte Auth ou utilisateur non prêt");
+            setLoading(false);
             return;
         }
-
-        if (auth.user === undefined) {
-            console.log("⏳ AuthContext pas encore prêt, on attend...");
-            return;
-        }
-
-        if (!auth.user || !auth.user.id) {
-            console.log("🚨 Utilisateur non connecté. Attente avant de récupérer le panier...");
-            return; // ❌ Ne pas afficher l'erreur immédiatement
-        }
-
-        console.log("✅ Utilisateur détecté, ID:", auth.user.id);
 
         const fetchCart = async () => {
             try {
@@ -58,11 +80,15 @@ export const ShoppingCart: React.FC = () => {
                 console.log("📦 Réponse API complète:", response.data);
 
                 if (response.data && response.data.success && response.data.data) {
-                    let booksArray = Array.isArray(response.data.data.books)
+                    const booksArray = Array.isArray(response.data.data.books)
                         ? response.data.data.books
-                        : Object.values(response.data.data.books || {});
+                        : [];
 
-                    const newCart = { ...response.data.data, books: booksArray };
+                    const newCart = processCart({
+                        ...response.data.data,
+                        books: booksArray
+                    });
+
                     setCart(newCart);
                     localStorage.setItem("cart", JSON.stringify(newCart));
                 } else {
@@ -85,59 +111,29 @@ export const ShoppingCart: React.FC = () => {
             return;
         }
 
-
-        const previousCart = { ...cart };
-
-        setCart((prevCart) => {
-            if (!prevCart) return null;
-            return {
-                ...prevCart,
-                books: prevCart.books.filter((book) => book.id !== bookId),
-            };
-        });
-
         try {
-            console.log("📤 Envoi de la requête de suppression au backend...", {
-                userId: auth.user.id,
-                bookId: bookId
-            });
-
             const response = await axiosInstance.delete("/v1/carts/remove-book", {
                 params: { userId: auth.user.id, bookId: bookId },
             });
 
-            console.log("✅ Réponse API après suppression:", response);
-
             if (response.status === 200) {
-                console.log("🗑️ Suppression réussie !");
-                localStorage.setItem("cart", JSON.stringify(cart));
+                setCart((prevCart) => {
+                    if (!prevCart) return null;
+
+                    const updatedCart = processCart({
+                        ...prevCart,
+                        books: prevCart.books.filter((book) => book.id !== bookId),
+                    });
+
+                    localStorage.setItem("cart", JSON.stringify(updatedCart));
+                    return updatedCart;
+                });
             } else {
-                console.warn("⚠️ Suppression échouée, statut:", response.status);
                 alert("Impossible de supprimer le livre.");
-
-
-                setCart(previousCart);
             }
         } catch (error: any) {
             console.error("❌ Erreur lors de la suppression du livre du panier", error);
-
-            setCart(previousCart);
-
-            if (error.response) {
-                console.error("📡 Réponse d'erreur de l'API:", {
-                    status: error.response.status,
-                    data: error.response.data,
-                    headers: error.response.headers,
-                });
-
-                alert(error.response.data?.message || "Erreur lors de la suppression du livre.");
-            } else if (error.request) {
-                console.error("⏳ Aucune réponse du serveur, problème de connexion", error.request);
-                alert("Le serveur ne répond pas. Vérifiez votre connexion.");
-            } else {
-                console.error("⚙️ Erreur de configuration Axios", error.message);
-                alert("Une erreur est survenue.");
-            }
+            alert("Erreur lors de la suppression du livre.");
         }
     };
 
@@ -147,21 +143,14 @@ export const ShoppingCart: React.FC = () => {
             return;
         }
 
-        setCart(null);
-        localStorage.removeItem("cart");
-
         try {
-            console.log("📤 Envoi de la requête pour vider le panier de l'utilisateur ID:", auth.user.id);
-
             const response = await axiosInstance.delete(`/v1/carts/clear-cart/${auth.user.id}`);
 
-            console.log("✅ Réponse API après vidage du panier:", response);
-
             if (response.status === 200) {
-                console.log("🗑️ Panier vidé avec succès !");
+                setCart(null);
+                localStorage.removeItem("cart");
                 alert("Votre panier a été vidé !");
             } else {
-                console.warn("⚠️ Échec du vidage du panier, statut:", response.status);
                 alert("Impossible de vider le panier.");
             }
         } catch (error: any) {
@@ -170,33 +159,14 @@ export const ShoppingCart: React.FC = () => {
         }
     };
 
-
-
-
-
-    const removeBook = async (id: string) => {
-        if (!cart || !auth.user) return;
-
-        try {
-            const updatedCart = {
-                ...cart,
-                books: cart.books.filter((book) => book.id !== id)
-            };
-            setCart(updatedCart);
-            localStorage.setItem("cart", JSON.stringify(updatedCart));
-        } catch (err: any) {
-            setError("Impossible de supprimer le livre.");
-        }
-    };
-
     const calculateSubtotal = () => {
         if (!cart || !cart.books) return 0;
-        return cart.books.reduce((sum, book) => sum + (book.price ?? 0), 0);
+        return cart.books.reduce((sum, book) => sum + (book.price || 0), 0);
     };
 
+    const subtotal = calculateSubtotal();
     const deliveryFee = 5.99;
-    const subtotal = 5.99;
-    const total = subtotal ;
+    const total = subtotal + deliveryFee;
 
     return (
         <Layout>
@@ -226,7 +196,6 @@ export const ShoppingCart: React.FC = () => {
                         >
                             Parcourir la boutique
                         </button>
-
                     </div>
                 ) : (
                     <div className="w-full max-w-6xl flex flex-col lg:flex-row gap-8">
@@ -237,7 +206,10 @@ export const ShoppingCart: React.FC = () => {
                                 </div>
                                 <div className="divide-y divide-gray-700">
                                     {cart.books.map((book) => (
-                                        <div key={book.id} className="p-6 flex flex-col sm:flex-row gap-6 items-center hover:bg-gray-800 transition-colors">
+                                        <div
+                                            key={book.id}
+                                            className="p-6 flex flex-col sm:flex-row gap-6 items-center hover:bg-gray-800 transition-colors"
+                                        >
                                             <div className="h-32 w-24 bg-gradient-to-br from-blue-900 to-purple-900 rounded-lg flex items-center justify-center flex-shrink-0">
                                                 <svg className="w-12 h-12 text-blue-300/70" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
