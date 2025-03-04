@@ -120,7 +120,7 @@ public interface BookCollectionServiceInterface {
    *
    * @return List of public BookCollection entities
    */
-  List<BookCollection> getPublicCollections();
+  List<BookCollectionShow> getPublicCollections();
 
   /**
    * Get a specific book from a collection
