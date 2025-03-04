@@ -243,19 +243,6 @@ export const BookDetail: React.FC = () => {
 
                             {/* Actions */}
                             <div className="flex flex-wrap gap-3 mb-8">
-                                <a
-                                    href={`https://www.goodreads.com/search?q=${encodeURIComponent(book.title)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                                        <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
-                                        <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
-                                    </svg>
-                                    Find on Goodreads
-                                </a>
-
                                 {book.isbns && book.isbns.length > 0 && (
                                     <a
                                         href={`https://www.amazon.com/s?k=${encodeURIComponent(book.isbns[0])}`}

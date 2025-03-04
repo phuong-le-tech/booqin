@@ -70,7 +70,7 @@ public class Book {
   /**
    * Default constructor required by JPA.
    */
-  protected Book() {
+  public Book() {
   }
 
   /**

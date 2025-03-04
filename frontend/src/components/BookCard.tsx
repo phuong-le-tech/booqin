@@ -1,8 +1,8 @@
 import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { BookIndex } from '../model/Book';
-import axiosInstance from "../services/AxiosInstance.ts";
-import { AuthContext } from "../context/AuthContext.tsx";
+import axiosInstance from "../services/AxiosInstance";
+import { AuthContext } from "../context/AuthContext";
 
 interface BookCardProps {
     book: BookIndex;
@@ -13,22 +13,22 @@ export const BookCard: React.FC<BookCardProps> = ({ book }) => {
     const { user } = useContext(AuthContext);
     const userId = user?.id;
 
-    // Fonction pour générer une couleur à partir de l'id du livre
+    // Function to generate a color from the book id
     const getBookCoverColor = (bookId: number) => {
         const colors = [
-            '#1e3a8a', // bleu foncé
+            '#1e3a8a', // dark blue
             '#1e40af',
             '#1d4ed8',
-            '#2563eb', // bleu moyen
+            '#2563eb', // medium blue
             '#3b82f6',
-            '#60a5fa', // bleu clair
+            '#60a5fa', // light blue
             '#93c5fd'
         ];
         const colorIndex = bookId % colors.length;
         return colors[colorIndex];
     };
 
-    // Fonction pour ajouter un livre au panier
+    // Function to add a book to cart
     const addToCart = async () => {
         try {
             const response = await axiosInstance.post("/v1/carts/add-book", {
@@ -37,19 +37,19 @@ export const BookCard: React.FC<BookCardProps> = ({ book }) => {
             });
 
             if (response.status === 200) {
-                alert("Le livre a été ajouté au panier");
+                alert("The book has been added to cart");
             }
-        } catch (error) {
-            console.error("Erreur lors de l'ajout du livre au panier", error);
+        } catch (error: any) {
+            console.error("Error adding book to cart", error);
             console.log(error.response?.data);
         }
     };
 
-    // Fonction pour formater la date
+    // Function to format date in English
     const formatDate = (dateString: string) => {
         try {
             const date = new Date(dateString);
-            return date.toLocaleDateString(undefined, {
+            return date.toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long'
             });
@@ -61,7 +61,7 @@ export const BookCard: React.FC<BookCardProps> = ({ book }) => {
     return (
         <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col h-full">
             <Link to={`/books/${book.id}`} className="block flex-grow">
-                {/* Couverture de livre stylisée */}
+                {/* Styled book cover */}
                 <div
                     className="w-full h-48 flex items-center justify-center flex-shrink-0"
                     style={{ backgroundColor: getBookCoverColor(book.id) }}
@@ -71,7 +71,7 @@ export const BookCard: React.FC<BookCardProps> = ({ book }) => {
                     </span>
                 </div>
 
-                {/* Informations du livre */}
+                {/* Book information */}
                 <div className="p-4 flex flex-col flex-grow">
                     <h3 className="text-lg font-semibold text-gray-800 line-clamp-2 mb-2 h-14">
                         {book.title}
@@ -93,7 +93,7 @@ export const BookCard: React.FC<BookCardProps> = ({ book }) => {
                 </div>
             </Link>
 
-            {/* Bouton Add to Cart */}
+            {/* Add to Cart button */}
             <button
                 onClick={addToCart}
                 className="m-3 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
