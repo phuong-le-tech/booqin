@@ -32,7 +32,19 @@ public class UserMapper {
             user.getLastName(),
             user.getEmail(),
             user.getAddress(),
-            user.getCollections()
+            user.getCollections(),
+            user.getRole()
+    );
+  }
+
+  public User userShowToUser(UserShow userShow) {
+    return new User(
+            userShow.firstName(),
+            userShow.lastName(),
+            userShow.email(),
+            "",
+            userShow.address(),
+            userShow.role()
     );
   }
 }

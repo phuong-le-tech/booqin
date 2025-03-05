@@ -70,4 +70,19 @@ public class BookMapper {
         }
         return new Author(authorDto.firstName(), authorDto.lastName());
     }
+
+    public Book bookIndexToBook(BookIndex bookIndex) {
+        if (bookIndex == null) {
+            return null;
+        }
+        Set<Author> authors = bookIndex.authorNames().stream()
+                .map(authorName -> {
+                    String[] names = authorName.split(" ");
+                    return new Author(names[0], names[1]);
+                })
+                .collect(Collectors.toSet());
+        return new Book.Builder().id(bookIndex.id()).isbns(bookIndex.isbns())
+                .title(bookIndex.title()).authors(authors).publicationDate(bookIndex.publicationDate())
+                .build();
+    }
 }
