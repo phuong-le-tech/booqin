@@ -40,29 +40,79 @@
             <div class="p-6 md:p-8 md:w-2/3 lg:w-3/4">
                 <h1 class="text-3xl font-bold text-gray-800 mb-2" th:text="${book.title}">Titre du livre</h1>
 
+                <!-- Auteurs avec troncation -->
                 <div class="mb-6">
-                    <p class="text-lg text-blue-700 font-medium">
+                    <p class="text-lg text-blue-700 font-medium authors-display">
                         Par
-                        <span th:each="author, iterStat : ${book.authors}">
-                                <span th:text="${author.firstName + ' ' + author.lastName}"></span><span th:if="${!iterStat.last}">, </span>
+                        <!-- Affiche jusqu'à 3 auteurs -->
+                        <span class="authors-visible" th:if="${book.authors != null && !book.authors.isEmpty()}">
+                            <span th:each="author, iterStat : ${book.authors}" th:if="${iterStat.index < 3}">
+                                <span th:text="${author.firstName + ' ' + author.lastName}"></span><span th:if="${!iterStat.last && iterStat.index < 2}">, </span>
                             </span>
+                            <!-- S'il y a plus de 3 auteurs, ajoute un '+X' cliquable -->
+                            <span th:if="${book.authors.size() > 3}" class="text-blue-500 hover:text-blue-700 cursor-pointer ml-1 toggle-authors">
+                                <span th:text="${' +' + (book.authors.size() - 3) + ' autres'}"></span>
+                            </span>
+                        </span>
                     </p>
+
+                    <!-- Liste complète des auteurs (cachée par défaut) -->
+                    <div class="authors-full hidden mt-3 pl-4 border-l-2 border-blue-200 text-blue-700">
+                        <p class="mb-1 font-medium">Tous les auteurs:</p>
+                        <ul class="space-y-1">
+                            <li th:each="author : ${book.authors}"
+                                th:text="${author.firstName + ' ' + author.lastName}"
+                                class="text-blue-600">
+                            </li>
+                        </ul>
+                        <p class="mt-2">
+                            <span class="text-blue-500 hover:text-blue-700 cursor-pointer text-sm toggle-authors">
+                                Masquer la liste complète
+                            </span>
+                        </p>
+                    </div>
+
                     <p class="text-sm text-gray-500 mt-1" th:if="${book.publicationDate != null}">
                         Publié le: <span th:text="${#dates.format(book.publicationDate, 'dd MMMM yyyy')}">Date de publication</span>
                     </p>
                 </div>
 
-                <!-- ISBNs -->
+                <!-- ISBNs avec troncation -->
                 <div class="mb-6 p-4 bg-gray-50 rounded-lg" th:if="${book.isbns != null && !book.isbns.isEmpty()}">
                     <h2 class="text-lg font-semibold text-gray-700 mb-2">ISBN</h2>
-                    <ul class="space-y-1">
-                        <li th:each="isbn : ${book.isbns}" class="text-gray-600 flex items-center">
+
+                    <!-- Affiche jusqu'à 2 ISBN -->
+                    <ul class="space-y-1 isbns-visible">
+                        <li th:each="isbn, isbnStat : ${book.isbns}" th:if="${isbnStat.index < 2}"
+                            class="text-gray-600 flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
                             </svg>
                             <span th:text="${isbn}">ISBN</span>
                         </li>
+                        <!-- S'il y a plus de 2 ISBN, ajoute un '+X' cliquable -->
+                        <li th:if="${book.isbns.size() > 2}" class="text-blue-500 hover:text-blue-700 cursor-pointer ml-6 toggle-isbns">
+                            <span th:text="${'+' + (book.isbns.size() - 2) + ' autres ISBN'}"></span>
+                        </li>
                     </ul>
+
+                    <!-- Liste complète des ISBN (cachée par défaut) -->
+                    <div class="isbns-full hidden mt-3 pl-4 border-l-2 border-blue-200">
+                        <p class="mb-1 font-medium text-gray-700">Tous les ISBN:</p>
+                        <ul class="space-y-1">
+                            <li th:each="isbn : ${book.isbns}" class="text-gray-600 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+                                </svg>
+                                <span th:text="${isbn}">ISBN</span>
+                            </li>
+                        </ul>
+                        <p class="mt-2">
+                            <span class="text-blue-500 hover:text-blue-700 cursor-pointer text-sm toggle-isbns">
+                                Masquer la liste complète
+                            </span>
+                        </p>
+                    </div>
                 </div>
 
                 <!-- Description -->
@@ -73,7 +123,6 @@
                     </div>
                 </div>
 
-
                 <!-- Dates -->
                 <div class="mt-6 pt-4 border-t border-gray-200 text-sm text-gray-500 flex flex-col sm:flex-row sm:justify-between">
                     <p>Ajouté le <span th:text="${#dates.format(book.createdAt, 'dd MMMM yyyy')}">Date de création</span></p>
@@ -83,5 +132,36 @@
         </div>
     </div>
 </div>
+
+<!-- Script JavaScript pour gérer l'affichage/masquage -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Gestion des auteurs
+        const toggleAuthorsElements = document.querySelectorAll('.toggle-authors');
+        toggleAuthorsElements.forEach(function(element) {
+            element.addEventListener('click', function() {
+                const authorsFullElement = document.querySelector('.authors-full');
+                if (authorsFullElement.classList.contains('hidden')) {
+                    authorsFullElement.classList.remove('hidden');
+                } else {
+                    authorsFullElement.classList.add('hidden');
+                }
+            });
+        });
+
+        // Gestion des ISBN
+        const toggleIsbnsElements = document.querySelectorAll('.toggle-isbns');
+        toggleIsbnsElements.forEach(function(element) {
+            element.addEventListener('click', function() {
+                const isbnsFullElement = document.querySelector('.isbns-full');
+                if (isbnsFullElement.classList.contains('hidden')) {
+                    isbnsFullElement.classList.remove('hidden');
+                } else {
+                    isbnsFullElement.classList.add('hidden');
+                }
+            });
+        });
+    });
+</script>
 </body>
 </html>

@@ -11,13 +11,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
@@ -32,7 +31,7 @@ public class BookWebController {
     @GetMapping
     public String getAllBooks(Model model,
                               @RequestParam(value = "page", defaultValue = "0") int page,
-                              @RequestParam(value = "size", defaultValue = "120") int size,
+                              @RequestParam(value = "size", defaultValue = "20") int size,
                               @RequestParam(value = "sort", defaultValue = "title") String sort,
                               @RequestParam(value = "direction", defaultValue = "asc") String direction,
                               @RequestParam(value = "title", required = false) String title,
@@ -73,38 +72,38 @@ public class BookWebController {
     }
 
     @PostMapping
-    public String addBook(@ModelAttribute BookCreateDto bookCreateDto) {
-        // Traitement du nom d'auteur (simple pour l'exemple)
-        String authorName = bookCreateDto.author();
-        String firstName = "";
-        String lastName = authorName;
+    public String addBook(
+        @RequestParam("title") String title,
+        @RequestParam("authors") List<String> authors,
+        @RequestParam("isbn") List<String> isbns,
+        @RequestParam("publicationDate") @DateTimeFormat(pattern = "yyyy-MM-dd") Date publicationDate,
+        @RequestParam("description") String description) {
 
-        // Si le nom contient un espace, on considère le format "Prénom Nom"
-        if (authorName.contains(" ")) {
-            String[] parts = authorName.split(" ", 2);
-            firstName = parts[0];
-            lastName = parts[1];
-        }
+        Set<Author> authorSet = authors.stream()
+            .filter(a -> a != null && !a.trim().isEmpty())
+            .map(a -> a.split(" "))
+            .map(author -> {
+                if (author.length > 1) {
+                    return new Author(author[0], author[1]);
+                } else {
+                    return new Author(author[0], "");
+                }
+            })
+            .collect(Collectors.toSet());
 
-        // Création d'un seul auteur
-        Author author = new Author(firstName, lastName);
-        Set<Author> authors = new HashSet<>();
-        authors.add(author);
-
-        // Création d'un seul ISBN
-        Set<String> isbns = new HashSet<>();
-        if (bookCreateDto.isbn() != null && !bookCreateDto.isbn().isEmpty()) {
-            isbns.add(bookCreateDto.isbn());
-        }
+        // Conversion en Set pour les ISBN et filtrage des valeurs vides
+        Set<String> isbnSet = isbns.stream()
+            .filter(isbn -> isbn != null && !isbn.trim().isEmpty())
+            .collect(Collectors.toSet());
 
         // Construction du livre
         Book book = new Book.Builder()
-                .isbns(isbns)
-                .title(bookCreateDto.title())
-                .authors(authors)
-                .description(bookCreateDto.description())
-                .publicationDate(bookCreateDto.publicationDate())
-                .build();
+            .isbns(isbnSet)
+            .title(title)
+            .authors(authorSet)
+            .description(description)
+            .publicationDate(publicationDate)
+            .build();
 
         bookService.createBook(book);
         return "redirect:/books";

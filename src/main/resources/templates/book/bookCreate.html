@@ -7,71 +7,154 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50">
-    <div class="container mx-auto px-4 py-8">
-        <!-- Navigation back -->
-        <div class="flex justify-between items-center mb-6">
-            <a href="/books"
-               class="text-blue-600 hover:text-blue-800 flex items-center font-medium">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
-                </svg>
-                Retour à la liste des livres
-            </a>
-        </div>
+<div class="container mx-auto px-4 py-8">
+    <!-- Navigation back -->
+    <div class="flex justify-between items-center mb-6">
+        <a href="/books"
+           class="text-blue-600 hover:text-blue-800 flex items-center font-medium">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+            </svg>
+            Retour à la liste des livres
+        </a>
+    </div>
 
-        <!-- Form Card -->
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 max-w-3xl mx-auto">
-            <div class="p-6">
-                <h1 class="text-2xl font-bold text-gray-800 mb-6">Ajouter un Livre</h1>
-                
-                <form th:action="@{/books}" th:object="${book}" method="post" class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Titre -->
-                        <div class="flex flex-col">
-                            <label for="title" class="text-sm font-medium text-gray-700 mb-1">Titre:</label>
-                            <input type="text" id="title" th:field="*{title}" required
-                                   class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        
-                        <!-- Auteur -->
-                        <div class="flex flex-col">
-                            <label for="author" class="text-sm font-medium text-gray-700 mb-1">Auteur:</label>
-                            <input type="text" id="author" th:field="*{author}" required
-                                   class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                    </div>
-                    
-                    <!-- ISBN -->
+    <!-- Form Card -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 max-w-3xl mx-auto">
+        <div class="p-6">
+            <h1 class="text-2xl font-bold text-gray-800 mb-6">Ajouter un Livre</h1>
+
+            <form th:action="@{/books}" method="post" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Titre -->
                     <div class="flex flex-col">
-                        <label for="isbn" class="text-sm font-medium text-gray-700 mb-1">ISBN:</label>
-                        <input type="text" id="isbn" th:field="*{isbn}" required
+                        <label for="title" class="text-sm font-medium text-gray-700 mb-1">Titre:</label>
+                        <input type="text" id="title" name="title" required
                                class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
-                    
-                    <!-- Date de publication -->
+
+                    <!-- Auteur(s) -->
+                    <div id="authors-container">
+                        <div class="flex flex-col">
+                            <div class="flex items-center justify-between">
+                                <label for="authors0" class="text-sm font-medium text-gray-700 mb-1">Auteur:</label>
+                                <button type="button" id="add-author"
+                                        class="text-blue-600 hover:text-blue-800 focus:outline-none">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <input type="text" id="authors0" name="authors" required
+                                   class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ISBN(s) -->
+                <div id="isbns-container">
                     <div class="flex flex-col">
-                        <label for="publicationDate" class="text-sm font-medium text-gray-700 mb-1">Date de publication:</label>
-                        <input type="date" id="publicationDate" th:field="*{publicationDate}" required
+                        <div class="flex items-center justify-between">
+                            <label for="isbn0" class="text-sm font-medium text-gray-700 mb-1">ISBN:</label>
+                            <button type="button" id="add-isbn"
+                                    class="text-blue-600 hover:text-blue-800 focus:outline-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
+                        <input type="text" id="isbn0" name="isbn" required
                                class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
-                    
-                    <!-- Description -->
-                    <div class="flex flex-col">
-                        <label for="description" class="text-sm font-medium text-gray-700 mb-1">Description:</label>
-                        <textarea id="description" th:field="*{description}" required rows="5"
-                                  class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
-                    </div>
-                    
-                    <!-- Bouton de soumission -->
-                    <div class="flex justify-end pt-4">
-                        <button type="submit" 
-                                class="bg-blue-600 text-white px-6 py-2 rounded-md transition hover:bg-blue-700 font-medium">
-                            Ajouter
-                        </button>
-                    </div>
-                </form>
-            </div>
+                </div>
+
+                <!-- Date de publication -->
+                <div class="flex flex-col">
+                    <label for="publicationDate" class="text-sm font-medium text-gray-700 mb-1">Date de publication:</label>
+                    <input type="date" id="publicationDate" name="publicationDate" required
+                           class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <!-- Description -->
+                <div class="flex flex-col">
+                    <label for="description" class="text-sm font-medium text-gray-700 mb-1">Description:</label>
+                    <textarea id="description" name="description" required rows="5"
+                              class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+                </div>
+
+                <!-- Bouton de soumission -->
+                <div class="flex justify-end pt-4">
+                    <button type="submit"
+                            class="bg-blue-600 text-white px-6 py-2 rounded-md transition hover:bg-blue-700 font-medium">
+                        Ajouter
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
+
+<!-- JavaScript pour ajouter des champs dynamiquement -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Gestion des auteurs
+        let authorCount = 1;
+        document.getElementById('add-author').addEventListener('click', function() {
+            const authorsContainer = document.getElementById('authors-container');
+            const newAuthorDiv = document.createElement('div');
+            newAuthorDiv.className = 'flex flex-col mt-2';
+            newAuthorDiv.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <label for="authors${authorCount}" class="text-sm font-medium text-gray-700 mb-1">Auteur ${authorCount + 1}:</label>
+                        <button type="button" class="remove-author text-red-600 hover:text-red-800 focus:outline-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5 10a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                    <input type="text" id="authors${authorCount}" name="authors"
+                           class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                `;
+            authorsContainer.appendChild(newAuthorDiv);
+
+            // Ajouter un gestionnaire d'événements pour le bouton de suppression
+            newAuthorDiv.querySelector('.remove-author').addEventListener('click', function() {
+                authorsContainer.removeChild(newAuthorDiv);
+                authorCount--;
+            });
+
+            authorCount++;
+        });
+
+        // Gestion des ISBNs
+        let isbnCount = 1;
+        document.getElementById('add-isbn').addEventListener('click', function() {
+            const isbnsContainer = document.getElementById('isbns-container');
+            const newIsbnDiv = document.createElement('div');
+            newIsbnDiv.className = 'flex flex-col mt-2';
+            newIsbnDiv.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <label for="isbn${isbnCount}" class="text-sm font-medium text-gray-700 mb-1">ISBN ${isbnCount + 1}:</label>
+                        <button type="button" class="remove-isbn text-red-600 hover:text-red-800 focus:outline-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5 10a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                    <input type="text" id="isbn${isbnCount}" name="isbn"
+                           class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                `;
+            isbnsContainer.appendChild(newIsbnDiv);
+
+            // Ajouter un gestionnaire d'événements pour le bouton de suppression
+            newIsbnDiv.querySelector('.remove-isbn').addEventListener('click', function() {
+                isbnsContainer.removeChild(newIsbnDiv);
+                isbnCount--;
+            });
+
+            isbnCount++;
+        });
+    });
+</script>
 </body>
 </html>

@@ -3,6 +3,7 @@ package fr.uge.booqIn.service.impl;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.dto.book.BookUpdate;
+import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.exception.DuplicateResourceException;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
@@ -11,13 +12,13 @@ import fr.uge.booqIn.repository.AuthorRepository;
 import fr.uge.booqIn.repository.BookRepository;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
 import fr.uge.booqIn.specification.BookSpecification;
-import jakarta.transaction.Transactional;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.*;
 import java.util.logging.Logger;
@@ -59,12 +60,12 @@ public class BookServiceImpl implements BookServiceInterface {
 
   @Override
   @Transactional
-  public BookShow findById(@NotNull Long id) {
+  public BookShow findById(@NonNull Long id) {
     Book book = findBookById(id);
     return bookMapper.toBookShow(book);
   }
 
-  public Book createBook(@NotNull @Valid Book book) {
+  public Book createBook(@NonNull @Validated Book book) {
     if (book.getAuthors() != null) {
       book.getAuthors().stream()
               .filter(author -> author.getId() == null)
@@ -82,7 +83,7 @@ public class BookServiceImpl implements BookServiceInterface {
 
   @Override
   @Transactional
-  public Book updateBook(@NotNull @Valid Book book) {
+  public Book updateBook(@NonNull @Validated Book book) {
     if (!bookRepository.existsById(book.getId())) {
       throw new ResourceNotFoundException("Book", "id", book.getId());
     }
@@ -93,7 +94,7 @@ public class BookServiceImpl implements BookServiceInterface {
 
   @Override
   @Transactional
-  public BookShow patchBook(@NotNull Long id, @NotNull @Valid BookUpdate bookUpdate) {
+  public BookShow patchBook(@NonNull Long id, @NonNull @Validated BookUpdate bookUpdate) {
     Book book = findBookById(id);
     System.out.println(book);
 
@@ -111,21 +112,90 @@ public class BookServiceImpl implements BookServiceInterface {
 
   @Override
   @Transactional
-  public void deleteBook(@NotNull Long id) {
+  public void deleteBook(@NonNull Long id) {
     Book book = findBookById(id);
     bookRepository.delete(book);
   }
 
   @Transactional
   public Book saveFromApi(Book toSave) {
-    Objects.requireNonNull(toSave, "Le livre à sauvegarder ne peut pas être null");
+    Objects.requireNonNull(toSave, "Book to save cannot be null");
 
-    boolean isbnExists = toSave.getIsbns().stream()
-            .anyMatch(isbn -> findByIsbn(isbn).isPresent());
+    // Check if a book with one of the ISBNs already exists
+    Optional<Book> existingBookOpt = findExistingBookByIsbns(toSave.getIsbns());
 
-    if (isbnExists) {
-      logger.info("Un livre avec l'un des ISBNs existe déjà");
-      return null;
+      return existingBookOpt.map(book -> updateExistingBook(book, toSave)).orElseGet(() -> createNewBook(toSave));
+  }
+
+  private Optional<Book> findExistingBookByIsbns(Set<String> isbns) {
+    return isbns.stream()
+            .map(this::findByIsbn)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .findFirst();
+  }
+
+  private Book updateExistingBook(Book existingBook, Book newBook) {
+    logger.info("A book with one of the ISBNs already exists, updating information");
+
+    // Update description if needed
+    if (isEmptyOrNull(existingBook.getDescription()) && !isEmptyOrNull(newBook.getDescription())) {
+      existingBook.setDescription(newBook.getDescription());
+    }
+
+    // Add new ISBNs
+    addNewIsbns(existingBook, newBook.getIsbns());
+
+    // Add new categories
+    addNewCategories(existingBook, newBook.getCategories());
+
+    // Add new authors
+    addNewAuthors(existingBook, newBook.getAuthors());
+
+    // Update modification date
+    existingBook.setUpdatedAt(new Date());
+
+    return bookRepository.save(existingBook);
+  }
+
+  private void addNewIsbns(Book existingBook, Set<String> newIsbns) {
+    if (newIsbns == null) return;
+
+    Set<String> existingIsbns = new HashSet<>(existingBook.getIsbns());
+    for (String isbn : newIsbns) {
+      if (!existingIsbns.contains(isbn) && findByIsbn(isbn).isEmpty()) {
+        existingBook.addIsbn(isbn);
+      }
+    }
+  }
+
+  private void addNewCategories(Book existingBook, Set<String> newCategories) {
+    if (newCategories == null) return;
+
+    newCategories.forEach(existingBook::addCategory);
+  }
+
+  private void addNewAuthors(Book existingBook, Set<Author> newAuthors) {
+    if (newAuthors == null) return;
+
+    // Save new authors that don't have an ID
+    newAuthors.stream()
+            .filter(author -> author.getId() == null)
+            .forEach(authorRepository::save);
+
+    // Add authors to the existing book
+    if (existingBook.getAuthors() == null) {
+      existingBook.setAuthors(new HashSet<>());
+    }
+    existingBook.getAuthors().addAll(newAuthors);
+  }
+
+  private Book createNewBook(Book toSave) {
+    // Check that none of the ISBNs exists in any book
+    for (String isbn : toSave.getIsbns()) {
+      if (findByIsbn(isbn).isPresent()) {
+        throw new DuplicateResourceException("Book", "ISBN", isbn);
+      }
     }
 
     if (toSave.getAuthors() == null) {
@@ -139,6 +209,10 @@ public class BookServiceImpl implements BookServiceInterface {
     return bookRepository.save(toSave);
   }
 
+  private boolean isEmptyOrNull(String str) {
+    return str == null || str.isEmpty();
+  }
+
   private Book findBookById(Long id) {
     Book bookWithAuthors = bookRepository.findByIdWithAuthors(id)
             .orElseThrow(() -> new ResourceNotFoundException("Book", "id", id));
@@ -146,7 +220,11 @@ public class BookServiceImpl implements BookServiceInterface {
     Book bookWithIsbns = bookRepository.findByIdWithIsbns(id)
             .orElseThrow(() -> new ResourceNotFoundException("Book", "id", id));
 
+    Book bookWithCategories = bookRepository.findByIdWithCategories(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Book", "id", id));
+
     bookWithAuthors.setIsbns(bookWithIsbns.getIsbns());
+    bookWithAuthors.setCategories(bookWithCategories.getCategories());
 
     return bookWithAuthors;
   }
