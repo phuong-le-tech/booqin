@@ -20,13 +20,11 @@ const PublicCollections: React.FC = () => {
             try {
                 const response = await axiosInstance.get(`/v1/collections/public`);
                 console.log("after fetchPublicCollections");
-                console.log(response.data);
-                if (response.data && response.data.success && response.data.data) {
-                    setCollections(response.data.data);
-                    //setTotalPages(data.totalPages);   // TODO: pour plus tard la pagination
-                } else {
-                    throw new Error(`Network response was not ok !`);
-                }
+                console.log("response.data:\n" + response.data);
+                console.log("response.data.collections:\n" + response.data.collections);
+                console.log("response.data.collection:\n" + response.data.collection);
+                console.log("response.data.data:\n" + response.data.data);
+                setCollections(response.data);
             } catch (err) {
                 setError(err.message);
             } finally {

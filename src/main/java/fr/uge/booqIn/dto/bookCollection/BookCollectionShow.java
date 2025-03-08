@@ -1,7 +1,7 @@
 package fr.uge.booqIn.dto.bookCollection;
 
 import fr.uge.booqIn.dto.book.BookIndex;
-import fr.uge.booqIn.entity.User;
+import fr.uge.booqIn.dto.user.UserShow;
 
 import java.util.Date;
 import java.util.Set;
@@ -11,7 +11,7 @@ public record BookCollectionShow(
         String name,
         String description,
         Set<BookIndex> books,
-        User user,
+        UserShow user,
         Date createdAt,
         Date updatedAt
 ) {}

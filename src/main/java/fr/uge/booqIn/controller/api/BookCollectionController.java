@@ -172,6 +172,11 @@ public class BookCollectionController {
     //List<BookCollection> collections = bookCollectionService.getPublicCollections();
     List<BookCollectionShow> collections = bookCollectionService.getPublicCollections();
     System.out.println("Collections Size: " + collections.size());
+    BookCollectionShow collection = collections.getFirst();
+    System.out.println("Collection name: " + collection.name());
+    System.out.println("Collection desc: " + collection.description());
+    System.out.println("Collection books: " + collection.books().size());
+    System.out.println("Collection user books to lend nb: " + collection.user().booksToLend().size());
     return ResponseEntity.ok(ApiResponse.success("Public collections fetched", collections));
   }
 

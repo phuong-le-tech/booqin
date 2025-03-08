@@ -60,8 +60,8 @@ public class BookCollectionMapper {
             bookCollection.getTitle(),
             bookCollection.getDescription(),
             bookShows,
-            owner,
-            //userMapper.toUserShow(owner),
+            //owner,
+            userMapper.toUserShow(owner),
             bookCollection.getCreatedAt(),
             bookCollection.getUpdatedAt()
     );
@@ -79,8 +79,8 @@ public class BookCollectionMapper {
             .title(bookCollectionShow.name())
             .description(bookCollectionShow.description())
             .books(books.stream().toList())
-            //.owner(userMapper.userShowToUser(bookCollectionShow.user()))
-            .owner(bookCollectionShow.user())
+            .owner(userMapper.userShowToUser(bookCollectionShow.user()))
+            //.owner(bookCollectionShow.user())
             .createdAt(bookCollectionShow.createdAt())
             .updatedAt(bookCollectionShow.updatedAt())
             .build();
