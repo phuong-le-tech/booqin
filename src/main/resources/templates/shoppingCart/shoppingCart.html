@@ -27,14 +27,6 @@
             <tbody>
             <tr th:each="book : ${cart.books}">
                 <td th:text="${book.title}"></td>
-                <p class="text-gray-600">
-                    Authors:
-                    <span th:each="author, iterStat : ${book.authorNames}">
-                            <span th:text="author"></span>
-                            <span th:if="${!iterStat.last}">, </span>
-                        </span>
-                </p>
-
                 <td>
                     <form th:action="@{/cart/remove-book}" method="post">
                         <input type="hidden" name="userId" th:value="${cart.userId}">
