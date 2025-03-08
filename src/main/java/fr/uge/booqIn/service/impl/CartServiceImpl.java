@@ -35,7 +35,8 @@ public class CartServiceImpl implements CartServiceInterface {
 
   @Override
   public Cart getCart(Long cartId) {
-    return cartRepository.findById(cartId)
+   var  user = userService.findUserByIdToIndex(cartId);
+    return cartRepository.findById(user.id())
             .orElseThrow(() -> new ResourceNotFoundException("Cart", "id", cartId));
   }
 
@@ -46,7 +47,6 @@ public class CartServiceImpl implements CartServiceInterface {
     return cartRepository.save(cart);
   }
   
-  
   @Override
   @Transactional
   public boolean addBookToCart(Long userId, Long bookId) {
@@ -54,15 +54,21 @@ public class CartServiceImpl implements CartServiceInterface {
             .orElseThrow(() -> new ResourceNotFoundException("Book", "id", bookId));
     
     Cart cart = getCart(userId);
+    System.out.println("Book "  + cart.getBooks());
+    
     if (!cart.getBooks().contains(book)) {
       cart.getBooks().add(book);
-      cartRepository.save(cart);
+      System.out.println("Book added to cart."  + cartRepository.save(cart));
+
       return true;
     }
     
+    System.out.println("Book already exists, not adding.");
+    System.out.println("Cart: " + cart.getBooks());
+    
     return false;
   }
-
+  
 
   @Override
   @Transactional

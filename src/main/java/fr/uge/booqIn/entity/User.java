@@ -76,7 +76,7 @@ public class User implements UserDetails {
     this.password = password;
     this.address = address;
     this.role = role;
-    this.cart = new Cart(this, StatutPayment.PENDING, new ArrayList<>());
+    this.cart = new Cart(this, StatutPayment.PENDING, new HashSet<>());
   }
 
   public Long getId() {
