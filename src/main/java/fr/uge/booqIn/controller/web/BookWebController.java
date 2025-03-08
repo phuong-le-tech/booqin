@@ -1,17 +1,20 @@
 package fr.uge.booqIn.controller.web;
 
-import fr.uge.booqIn.dto.book.BookCreateDto;
+import fr.uge.booqIn.dto.book.BookCreate;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
-import fr.uge.booqIn.dto.author.AuthorDto;
+import fr.uge.booqIn.dto.user.UserShow;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
+import fr.uge.booqIn.entity.User;
+import fr.uge.booqIn.mapper.UserMapper;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -36,16 +39,16 @@ public class BookWebController {
                               @RequestParam(value = "direction", defaultValue = "asc") String direction,
                               @RequestParam(value = "title", required = false) String title,
                               @RequestParam(value = "author", required = false) String author,
-                              @RequestParam(value = "isbn", required = false) String isbn) {
+                              @RequestParam(value = "isbn", required = false) String isbn,
+                              Authentication authenfication) {
 
         Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction) ?
-                Sort.Direction.DESC : Sort.Direction.ASC;
+            Sort.Direction.DESC : Sort.Direction.ASC;
         Sort sortObj = Sort.by(sortDirection, sort);
 
         Pageable pageable = PageRequest.of(page, size, sortObj);
 
         Page<BookIndex> booksPage = bookService.findBooks(title, author, isbn, pageable);
-
         model.addAttribute("books", booksPage.getContent());
         model.addAttribute("totalPages", booksPage.getTotalPages());
         model.addAttribute("currentPage", page);
@@ -54,6 +57,13 @@ public class BookWebController {
         model.addAttribute("isbn", isbn);
         model.addAttribute("sort", sort);
         model.addAttribute("direction", direction);
+
+        if(authenfication != null && authenfication.isAuthenticated()){
+            UserMapper userMapper = new UserMapper();
+            User user = (User) authenfication.getPrincipal();
+            UserShow showUser = userMapper.toUserShow(user);
+            model.addAttribute("userId",showUser.id());
+        }
 
         return "book/list";
     }
@@ -67,7 +77,7 @@ public class BookWebController {
 
     @GetMapping("/new")
     public String showCreateForm(Model model) {
-        model.addAttribute("book", new BookCreateDto());
+        model.addAttribute("book", new BookCreate());
         return "book/bookCreate";
     }
 

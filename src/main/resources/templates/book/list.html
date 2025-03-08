@@ -55,6 +55,12 @@
             <p th:if="${book.publicationDate() == null}" class="text-xs text-gray-500 mb-3">Published: Unknown date</p>
             <!-- Le record BookIndex ne semble pas avoir de description, donc je l'ai retiré -->
             <a class="mt-auto text-center py-2 px-4 bg-blue-600 text-white text-sm font-medium rounded-lg transition hover:bg-blue-700" th:href="@{'/books/' + ${book.id()}}">View details</a>
+            <!-- Ajout du bouton "Add to Cart" -->
+            <form th:action="@{/cart/add-book}" method="post" class="mt-2">
+                <input type="hidden" name="bookId" th:value="${book.id()}" />
+                <input type="hidden" name="userId" th:value="${userId}">
+                <button type="submit" class="w-full text-center py-2 px-4 bg-green-600 text-white text-sm font-medium rounded-lg transition hover:bg-green-700">Add to Cart</button>
+            </form>
         </div>
     </div>
 </div>

@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * DTO spécifique pour la création d'un livre via le formulaire
  */
-public class BookCreateDto {
+public class BookCreate {
     private String title;
     private List<String> authors = new ArrayList<>(); // Format: "Prénom Nom" ou simplement "Nom"
     private String description;
@@ -20,11 +20,11 @@ public class BookCreateDto {
     private List<String> isbn = new ArrayList<>();
 
     // Constructeur par défaut nécessaire pour le binding Spring
-    public BookCreateDto() {
+    public BookCreate() {
     }
 
     // Constructeur complet
-    public BookCreateDto(String title, List<String> authors, String description, Date publicationDate, List<String> isbn) {
+    public BookCreate(String title, List<String> authors, String description, Date publicationDate, List<String> isbn) {
         this.title = title;
         this.authors = authors != null ? authors : new ArrayList<>();
         this.description = description;
