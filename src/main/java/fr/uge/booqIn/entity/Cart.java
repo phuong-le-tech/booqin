@@ -5,6 +5,7 @@ import fr.uge.booqIn.enums.StatutPayment;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 public class Cart {
@@ -28,7 +29,7 @@ public class Cart {
           joinColumns = @JoinColumn(name = "cart_id"),
           inverseJoinColumns = @JoinColumn(name = "book_id")
   )
-  private List<Book> books;
+  private Set<Book> books;
 
   @Column(nullable = false)
   private LocalDateTime createdAt = LocalDateTime.now();
@@ -36,7 +37,7 @@ public class Cart {
   @Column(nullable = true)
   private String paymentIntentId;
 
-  public Cart(User user, StatutPayment statut, List<Book> books) {
+  public Cart(User user, StatutPayment statut, Set<Book> books) {
     this.user = user;
     this.statut = statut;
     this.books = books;
@@ -61,11 +62,11 @@ public class Cart {
     this.statut = statut;
   }
 
-  public List<Book> getBooks() {
+  public Set<Book> getBooks() {
     return books;
   }
 
-  public void setBooks(List<Book> books) {
+  public void setBooks(Set<Book> books) {
     this.books = books;
   }
 

@@ -67,19 +67,19 @@ export const ShoppingCart: React.FC = () => {
 
     // Récupérer le panier depuis l'API
     useEffect(() => {
-        if (auth === undefined || auth.user === undefined || !auth.user || !auth.user.id) {
-            console.log("🚨 Contexte Auth ou utilisateur non prêt");
-            setLoading(false);
-            return;
-        }
+        if (!auth.user?.id || cart) return;
+
 
         const fetchCart = async () => {
             try {
                 console.log("📦 Récupération du panier pour userId:", auth.user.id);
                 const response = await axiosInstance.get(`/v1/carts/user-cart/${auth.user.id}`);
-                console.log("📦 Réponse API complète:", response.data);
 
-                if (response.data && response.data.success && response.data.data) {
+                console.log("📦 Réponse brute de l’API:", response.data);
+
+                if (response.data?.success && response.data?.data) {
+                    console.log("📚 Livres avant traitement :", response.data.data.books);
+
                     const booksArray = Array.isArray(response.data.data.books)
                         ? response.data.data.books
                         : [];
@@ -88,6 +88,8 @@ export const ShoppingCart: React.FC = () => {
                         ...response.data.data,
                         books: booksArray
                     });
+
+                    console.log("📚 Livres après nettoyage :", newCart.books);
 
                     setCart(newCart);
                     localStorage.setItem("cart", JSON.stringify(newCart));
@@ -101,9 +103,10 @@ export const ShoppingCart: React.FC = () => {
                 setLoading(false);
             }
         };
-
         fetchCart();
-    }, [auth.user]);
+    }, [auth.user?.id]);
+
+
 
     const removeFromCart = async (bookId: string) => {
         if (!cart || !auth.user) {
@@ -162,6 +165,22 @@ export const ShoppingCart: React.FC = () => {
     const calculateSubtotal = () => {
         if (!cart || !cart.books) return 0;
         return cart.books.reduce((sum, book) => sum + (book.price || 0), 0);
+    };
+
+    const handlePayment = async () => {
+        if (!cart || !auth.user) return;
+
+        try {
+            const response = await axiosInstance.post(`v1/payment/checkout?cartId=${cart.id}`);
+            if (response.data && response.data.success) {
+                console.log("Création de session Stripe réussie", response.data.data);
+                window.location.href = response.data.data;
+            } else {
+                console.error("Erreur lors de la création de la session Stripe", response);
+            }
+        } catch (error) {
+            console.error("Erreur Axios lors du paiement :", error);
+        }
     };
 
     const subtotal = calculateSubtotal();
@@ -258,8 +277,8 @@ export const ShoppingCart: React.FC = () => {
                                         </div>
                                     </div>
                                     <button
-                                        onClick={() => alert(`Paiement simulé de ${total.toFixed(2)} €`)}
-                                        className="mt-6 w-full bg-light-blue text-white py-4 rounded-lg font-semibold text-lg shadow-lg hover:bg-blue-500 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                                        onClick={handlePayment}
+                                        className="mt-6 w-full bg-light-blue text-white py-4 rounded-lg font-semibold text-lg shadow-lg hover:bg-blue-500 transition-all duration-300 transform hover:scale-105"
                                     >
                                         Payer maintenant
                                     </button>

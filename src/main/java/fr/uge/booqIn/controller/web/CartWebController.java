@@ -80,7 +80,6 @@ public class CartWebController {
     } else {
       redirectAttributes.addFlashAttribute("success", "Livre ajouté au panier avec succès.");
     }
-    
     return "redirect:/cart?userId=" + userId;
   }
 }

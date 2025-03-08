@@ -21,9 +21,10 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
 
 
     @Override
-    @Query("SELECT c FROM Cart c LEFT JOIN FETCH c.books b LEFT JOIN FETCH b.authors LEFT JOIN FETCH b.isbns WHERE c.id = :id")
+    @Query("SELECT DISTINCT c FROM Cart c LEFT JOIN FETCH c.books b LEFT JOIN FETCH b.authors LEFT JOIN FETCH b.isbns WHERE c.id = :id")
     @NonNull
     Optional<Cart> findById(@NonNull Long id);
+    
     
     @Modifying
     @Query(value = "DELETE FROM cart_books WHERE cart_id = :cartId AND book_id = :bookId", nativeQuery = true)

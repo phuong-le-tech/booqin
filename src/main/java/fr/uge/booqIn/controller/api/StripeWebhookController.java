@@ -22,8 +22,7 @@ public class StripeWebhookController {
   }
   
   @PostMapping("/webhook")
-  public ResponseEntity<ApiResponse<String>> handleStripeWebhook(@RequestBody String payload,
-                                                                 @RequestHeader("Stripe-Signature") String sigHeader) throws SignatureVerificationException {
+  public ResponseEntity<ApiResponse<String>> handleStripeWebhook(@RequestBody String payload, @RequestHeader("Stripe-Signature") String sigHeader) throws SignatureVerificationException {
     Event event;
     event = stripeService.handleStripeWebhook(payload, sigHeader);
     stripeService.processWebhookEvent(event);

@@ -2,6 +2,7 @@ package fr.uge.booqIn.controller.api;
 
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
+import com.stripe.model.checkout.Session;
 import fr.uge.booqIn.dto.stripe.PaymentIntentResponseDTO;
 import fr.uge.booqIn.entity.Cart;
 import fr.uge.booqIn.factory.ApiResponse;
@@ -26,8 +27,11 @@ public class StripeController {
         this.cartService = cartService;
     }
     
-    @PostMapping("/create")
-    public ResponseEntity<ApiResponse<PaymentIntentResponseDTO>> createPaymentIntent(@RequestParam Long cartId) {
+   
+    
+    
+    @PostMapping("/checkout")
+    public ResponseEntity<ApiResponse<String>> createCheckoutSession(@RequestParam Long cartId) {
         Optional<Cart> cartOptional = Optional.ofNullable(cartService.getCart(cartId));
         
         if (cartOptional.isEmpty() || cartOptional.get().getBooks().isEmpty()) {
@@ -35,53 +39,9 @@ public class StripeController {
                     .body(ApiResponse.error("Le panier est vide ou inexistant"));
         }
         
-        PaymentIntent paymentIntent = stripeService.createPaymentIntent(cartOptional.get());
-        PaymentIntentResponseDTO response = new PaymentIntentResponseDTO(
-                paymentIntent.getId(),
-                paymentIntent.getClientSecret(),
-                paymentIntent.getStatus()
-        );
+        Session session = stripeService.createCheckoutSession(cartOptional.get());
         
-        return ResponseEntity.ok(ApiResponse.success("PaymentIntent créé", response));
+        return ResponseEntity.ok(ApiResponse.success("Session Stripe créée", session.getUrl()));
     }
     
-    @PostMapping("/confirm/{paymentIntentId}")
-    public ResponseEntity<ApiResponse<PaymentIntent>> confirmPayment(@PathVariable String paymentIntentId) {
-        try {
-            PaymentIntent paymentIntent = stripeService.confirmPayment(paymentIntentId);
-            
-            if (paymentIntent == null || !"succeeded".equals(paymentIntent.getStatus())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(ApiResponse.error("La confirmation du paiement a échoué"));
-            }
-            
-            stripeService.handlePaymentSuccess(paymentIntentId);
-            
-            return ResponseEntity.ok(ApiResponse.success("Paiement confirmé avec succès", paymentIntent));
-            
-        } catch (StripeException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("Erreur Stripe : " + e.getMessage()));
-        }
-    }
-    
-    @PostMapping("/cancel/{paymentIntentId}")
-    public ResponseEntity<ApiResponse<PaymentIntent>> cancelPayment(@PathVariable String paymentIntentId) {
-        try {
-            PaymentIntent paymentIntent = stripeService.cancelPayment(paymentIntentId);
-            
-            if (paymentIntent == null || !"canceled".equals(paymentIntent.getStatus())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(ApiResponse.error("L'annulation du paiement a échoué"));
-            }
-            
-            stripeService.handlePaymentFailure(paymentIntentId);
-            
-            return ResponseEntity.ok(ApiResponse.success("Paiement annulé avec succès", paymentIntent));
-            
-        } catch (StripeException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("Erreur Stripe : " + e.getMessage()));
-        }
-    }
 }
