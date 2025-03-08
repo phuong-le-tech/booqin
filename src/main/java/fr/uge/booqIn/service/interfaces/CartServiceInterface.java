@@ -15,7 +15,7 @@ public interface CartServiceInterface {
   Cart updateCartStatus(Long cartId, StatutPayment status);
   boolean addBookToCart(Long id, Long bookId);
   boolean removeBookFromCart(Long id, Long bookId);
-  ShopCartDto getCartDto(Long user);
+  ShopCartDto getCartDto(Long userId);
   boolean clearCart(Long user);
 
 }
