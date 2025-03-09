@@ -10,6 +10,7 @@ public record BookCollectionShow(
         Long id,
         String name,
         String description,
+        boolean isPublic,
         Set<BookIndex> books,
         UserShow user,
         Date createdAt,

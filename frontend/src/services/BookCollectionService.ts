@@ -16,6 +16,16 @@ class BookCollectionService {
         }
     }
 
+    async getUserCollectionsWithBooks() {
+        try {
+            const response = await axios.get<ApiResponse<BookCollectionShow[]>>(`${API_URL}/user/with-books`);
+            return response.data.data;
+        } catch (error) {
+            console.error('Error fetching user collections with books:', error);
+            throw error;
+        }
+    }
+
     async getBookCollectionById(id: string | number) {
         try {
             const response = await axios.get<ApiResponse<BookCollectionShow>>(`${API_URL}/${id}`);

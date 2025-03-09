@@ -7,6 +7,7 @@ import {BookCollection, BookCollectionShow} from "../../model/BookCollection.ts"
 import {List} from "lucide-react";
 import {collections} from "../../assets/testData.ts";
 import axiosInstance from "../../services/AxiosInstance.ts";
+import BookCollectionService from "../../services/BookCollectionService.ts";
 
 const PublicCollections: React.FC = () => {
     const [collections, setCollections] = useState<BookCollectionShow[]>([]);
@@ -18,13 +19,14 @@ const PublicCollections: React.FC = () => {
     useEffect(() => {
         const fetchCollections = async () => {
             try {
-                const response = await axiosInstance.get(`/v1/collections/public`);
-                console.log("after fetchPublicCollections");
-                console.log("response.data:\n" + response.data);
-                console.log("response.data.collections:\n" + response.data.collections);
-                console.log("response.data.collection:\n" + response.data.collection);
-                console.log("response.data.data:\n" + response.data.data);
-                setCollections(response.data);
+                // const response = await axiosInstance.get(`/v1/collections/public`);
+                setLoading(true);
+                const publicCollectionsData = await BookCollectionService.getPublicCollections();
+                if (publicCollectionsData) {
+                    setCollections(publicCollectionsData.collections);
+                } else {
+                    setError("No public collections found");
+                }
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -62,7 +64,7 @@ const PublicCollections: React.FC = () => {
                                     <tbody className="divide-y divide-gray-200">
                                     {collections.map((collection) => (
                                         <tr key={collection.id} className="hover:bg-gray-100">
-                                            <td className="px-6 py-4 text-sm text-gray-800">{collection.title}</td>
+                                            <td className="px-6 py-4 text-sm text-gray-800">{collection.name}</td>
                                             <td className="px-6 py-4 text-sm text-gray-600">{collection.description}</td>
                                             <td className="px-6 py-4 text-sm text-gray-600">{collection.owner.firstName} {collection.owner.lastName}</td>
                                             <td className="px-6 py-4 text-sm font-medium">
