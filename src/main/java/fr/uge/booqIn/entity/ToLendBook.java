@@ -3,6 +3,8 @@ package fr.uge.booqIn.entity;
 import fr.uge.booqIn.enums.BookStatus;
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 public class ToLendBook {
 
@@ -15,14 +17,22 @@ public class ToLendBook {
 
   @ManyToOne(fetch = FetchType.LAZY)
   private Book book;
+  
+  @ManyToOne(fetch = FetchType.LAZY)
+  private User borrower;
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private BookStatus status = BookStatus.AVAILABLE;
-
+  
+  
+  private LocalDateTime reservedAt;
+  
+  
   public ToLendBook() {
   }
 
+  
   public ToLendBook(User owner, Book book) {
     this.owner = owner;
     this.book = book;
@@ -54,5 +64,21 @@ public class ToLendBook {
 
   public void setBook(Book book) {
     this.book = book;
+  }
+  
+  public User getBorrower() {
+    return borrower;
+  }
+  
+  public void setBorrower(User borrower) {
+    this.borrower = borrower;
+  }
+  
+  public LocalDateTime getReservedAt() {
+    return reservedAt;
+  }
+  
+  public void setReservedAt(LocalDateTime reservedAt) {
+    this.reservedAt = reservedAt;
   }
 }
