@@ -18,8 +18,6 @@ public class ToLendBook {
   @ManyToOne(fetch = FetchType.LAZY)
   private Book book;
   
-  @ManyToOne(fetch = FetchType.LAZY)
-  private User borrower;
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
@@ -64,14 +62,6 @@ public class ToLendBook {
 
   public void setBook(Book book) {
     this.book = book;
-  }
-  
-  public User getBorrower() {
-    return borrower;
-  }
-  
-  public void setBorrower(User borrower) {
-    this.borrower = borrower;
   }
   
   public LocalDateTime getReservedAt() {
