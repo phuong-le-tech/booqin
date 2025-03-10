@@ -117,11 +117,23 @@ public class BookCollectionWebController {
     }
   }
 
-  @PostMapping("/create") // TODO: changer le request body par un DTO
-  public String createCollection(Model model, @Valid @RequestBody BookCollection bookCollection, @AuthenticationPrincipal User currentUser) {
+  @GetMapping("/new")
+  public String showCreateCollectionForm(Model model) {
+    model.addAttribute("bookCollection", new BookCollection());
+    return "collections/create";
+  }
+
+  @PostMapping("/new") // TODO: changer le request body par un DTO
+  public String createCollection(
+          @Valid @ModelAttribute("bookCollection") BookCollection bookCollection,
+          @RequestParam(required = false) Boolean isPublic,
+          @AuthenticationPrincipal User currentUser,
+          Model model) {
     try {
+      bookCollection.setOwner(currentUser);
+      bookCollection.setPublic(isPublic != null && isPublic);
       BookCollection createdCollection = bookCollectionService.createBookCollection(bookCollection);
-      createdCollection.setOwner(currentUser);
+      System.out.println("Collection created: " + createdCollection);
       return "redirect:/collections";
     } catch (ResourceNotFoundException e) {
       model.addAttribute("error", e.getMessage());

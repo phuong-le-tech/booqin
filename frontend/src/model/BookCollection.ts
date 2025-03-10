@@ -3,7 +3,7 @@ import {Book} from "./Book.ts";
 import {PageInfo} from "./Pagination.ts";
 
 export interface BookCollection {
-    id: String,
+    id: number
     title: String,
     description: String,
     owner: User,

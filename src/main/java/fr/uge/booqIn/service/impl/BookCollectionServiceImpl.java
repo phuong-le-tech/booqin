@@ -77,14 +77,17 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
   @Transactional
   public BookCollection createBookCollection(@NotNull @Valid BookCollection bookCollection) {
     validateBooksExist(bookCollection.getBooks());
-
+    System.out.println("ID: " + bookCollection.getId());
+    System.out.println("VALIDE BOOKS IN CREATE BOOK COLLECTION");
     // Ensure books collection is initialized
     if (bookCollection.getBooks() == null) {
       bookCollection.setBooks(new ArrayList<>());
     }
+    System.out.println("books collection is initialized");
 
     bookCollection.setCreatedAt(new Date());
     bookCollection.setUpdatedAt(new Date());
+    System.out.println("Dates create & update");
     return bookCollectionRepository.save(bookCollection);
   }
 
