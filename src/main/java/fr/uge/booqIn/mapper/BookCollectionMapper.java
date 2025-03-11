@@ -1,13 +1,11 @@
 package fr.uge.booqIn.mapper;
 
 import fr.uge.booqIn.dto.book.BookIndex;
-import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionIndex;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.BookCollection;
 import fr.uge.booqIn.entity.User;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Set;
@@ -59,9 +57,10 @@ public class BookCollectionMapper {
             bookCollection.getId(),
             bookCollection.getTitle(),
             bookCollection.getDescription(),
+            bookCollection.isPublic(),
             bookShows,
-            owner,
-            //userMapper.toUserShow(owner),
+            //owner,
+            userMapper.toUserShow(owner),
             bookCollection.getCreatedAt(),
             bookCollection.getUpdatedAt()
     );
@@ -78,9 +77,10 @@ public class BookCollectionMapper {
     return new BookCollection.Builder()
             .title(bookCollectionShow.name())
             .description(bookCollectionShow.description())
+            .isPublic(bookCollectionShow.isPublic())
             .books(books.stream().toList())
-            //.owner(userMapper.userShowToUser(bookCollectionShow.user()))
-            .owner(bookCollectionShow.user())
+            .owner(userMapper.userShowToUser(bookCollectionShow.user()))
+            //.owner(bookCollectionShow.user())
             .createdAt(bookCollectionShow.createdAt())
             .updatedAt(bookCollectionShow.updatedAt())
             .build();
