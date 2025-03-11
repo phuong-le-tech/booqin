@@ -25,7 +25,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.logging.Logger;
 
 @Service
@@ -158,8 +157,11 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
   }
 
   @Transactional
-  public List<BookCollection> getUserCollectionsWithBooks(User user) {
-    return bookCollectionRepository.findByOwnerWithBooks(user);
+  public List<BookCollectionShow> getUserCollectionsWithBooks(User user) {
+    //return bookCollectionRepository.findByOwnerWithBooks(user);
+    return bookCollectionRepository.findByOwnerWithBooks(user)
+            .stream().map(bookCollectionMapper::toBookCollectionShow)
+            .toList();
   }
 
   @Transactional

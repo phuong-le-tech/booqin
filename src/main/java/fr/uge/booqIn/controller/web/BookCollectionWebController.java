@@ -19,6 +19,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -48,9 +49,9 @@ public class BookCollectionWebController {
 
   @GetMapping()
   public String showUserCollections(Model model, @AuthenticationPrincipal User currentUser) {
-    List<BookCollection> collections = bookCollectionService.getUserCollectionsWithBooks(currentUser);
-    List<BookCollection> userPublicCollections = collections.stream().filter(BookCollection::isPublic).toList();
-    List<BookCollection> userPrivateCollections = collections.stream().filter(collection -> !collection.isPublic()).toList();
+    List<BookCollectionShow> collections = bookCollectionService.getUserCollectionsWithBooks(currentUser);
+    List<BookCollectionShow> userPublicCollections = collections.stream().filter(BookCollectionShow::isPublic).toList();
+    List<BookCollectionShow> userPrivateCollections = collections.stream().filter(collection -> !collection.isPublic()).toList();
     model.addAttribute("collections", collections);
     model.addAttribute("userPublicCollections", userPublicCollections);
     model.addAttribute("userPrivateCollections", userPrivateCollections);
@@ -139,5 +140,26 @@ public class BookCollectionWebController {
       model.addAttribute("error", e.getMessage());
       return "collections/create";
     }
+  }
+
+  @GetMapping("/{id}/delete")
+  public String deleteCollection(@PathVariable Long id, @AuthenticationPrincipal User currentUser) {
+    try {
+      // Verify that the current user owns the collection
+      BookCollectionShow collection = bookCollectionService.findById(id);
+      if (!verifyIsSameUser(currentUser, collection)) {
+        return "redirect:/collections?error=notOwner";
+      }
+
+      // Delete the collection
+      bookCollectionService.deleteBookCollection(id);
+      return "redirect:/collections?success=deleted";
+    } catch (ResourceNotFoundException e) {
+      return "redirect:/collections?error=notFound";
+    }
+  }
+
+  private boolean verifyIsSameUser(User currentUser, BookCollectionShow collection) {
+    return Objects.equals(collection.user().id(), currentUser.getId());
   }
 }
