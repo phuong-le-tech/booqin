@@ -3,10 +3,15 @@ package fr.uge.booqIn.scheduler;
 import fr.uge.booqIn.Adapter.BookAPIs.BookFetcher;
 import fr.uge.booqIn.Adapter.BookAPIs.BookFetcherFactory;
 import fr.uge.booqIn.entity.Book;
+import fr.uge.booqIn.entity.BookLending;
+import fr.uge.booqIn.enums.BookStatus;
+import fr.uge.booqIn.repository.BookLendingRepository;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
+import jakarta.transaction.Transactional;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -17,11 +22,14 @@ public class OpenLibraryScheduler {
     private final AuthorIterator authorIterator;
     private final BookServiceInterface bookService;
     private final BookFetcher openApiAdapter;
+    private final  BookLendingRepository bookLendingRepository;
 
-    public OpenLibraryScheduler(NovelistsBean novelistsBean, BookServiceInterface bookService) {
+    public OpenLibraryScheduler(NovelistsBean novelistsBean, BookServiceInterface bookService, BookLendingRepository bookLendingRepository) {
         this.authorIterator = new AuthorIterator(novelistsBean, 15);
         this.bookService = bookService;
-        this.openApiAdapter = BookFetcherFactory.adapter("open");
+      this.bookLendingRepository = bookLendingRepository;
+      this.openApiAdapter = BookFetcherFactory.adapter("open");
+      
     }
 
     @Scheduled(cron = "* * 2 * * *")    // * * 2 * * * -> every 2am
@@ -44,4 +52,19 @@ public class OpenLibraryScheduler {
             page++;
         } while (!books.isEmpty());
     }
+    
+    
+    @Scheduled(fixedRate = 60000)
+    @Transactional
+    public void expireReservations() {
+        LocalDateTime expirationTime = LocalDateTime.now().minusMinutes(20);
+        List<BookLending> expiredReservations = bookLendingRepository.findByStatusAndReservedAtBefore(BookStatus.RESERVED, expirationTime);
+        for (BookLending lending : expiredReservations) {
+            lending.setStatus(BookStatus.AVAILABLE);
+            lending.setReservedAt(null);
+            lending.setBorrower(null);
+            bookLendingRepository.save(lending);
+        }
+    }
+    
 }
