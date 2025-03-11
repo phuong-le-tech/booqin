@@ -88,7 +88,6 @@ public class CartServiceImpl implements CartServiceInterface {
                     book.getAuthors().stream()
                             .map(author -> author.getFirstName() + " " + author.getLastName())
                             .collect(Collectors.toSet()),
-                    book.getIsbns(),
                     book.getPublicationDate()
             ))
             .toList();

@@ -3,11 +3,9 @@ package fr.uge.booqIn.controller.web;
 import fr.uge.booqIn.dto.book.BookCreate;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
-import fr.uge.booqIn.dto.user.UserShow;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.User;
-import fr.uge.booqIn.mapper.UserMapper;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -45,24 +43,19 @@ public class BookWebController {
         Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction) ?
             Sort.Direction.DESC : Sort.Direction.ASC;
         Sort sortObj = Sort.by(sortDirection, sort);
-
         Pageable pageable = PageRequest.of(page, size, sortObj);
-
         Page<BookIndex> booksPage = bookService.findBooks(title, author, isbn, pageable);
         model.addAttribute("books", booksPage.getContent());
         model.addAttribute("totalPages", booksPage.getTotalPages());
         model.addAttribute("currentPage", page);
         model.addAttribute("title", title);
         model.addAttribute("author", author);
-        model.addAttribute("isbn", isbn);
         model.addAttribute("sort", sort);
         model.addAttribute("direction", direction);
 
         if(authenfication != null && authenfication.isAuthenticated()){
-            UserMapper userMapper = new UserMapper();
             User user = (User) authenfication.getPrincipal();
-            UserShow showUser = userMapper.toUserShow(user);
-            model.addAttribute("userId",showUser.id());
+            model.addAttribute("userId",user.getId());
         }
 
         return "book/list";
