@@ -3,15 +3,9 @@ package fr.uge.booqIn.controller.api;
 import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.dto.cart.ShopCartDto;
 import fr.uge.booqIn.dto.user.UserIndex;
-import fr.uge.booqIn.dto.user.UserShow;
-import fr.uge.booqIn.entity.Book;
-import fr.uge.booqIn.entity.Cart;
-import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.factory.ApiResponse;
-import fr.uge.booqIn.service.impl.BookServiceImpl;
-import fr.uge.booqIn.service.impl.CartServiceImpl;
-import fr.uge.booqIn.service.impl.UserServiceImpl;
 import fr.uge.booqIn.dto.cart.CartDto;
+import fr.uge.booqIn.service.interfaces.BookLendingInterface;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
 import fr.uge.booqIn.service.interfaces.CartServiceInterface;
 import fr.uge.booqIn.service.interfaces.UserServiceInterface;
@@ -27,11 +21,13 @@ public class CartController {
     private final CartServiceInterface cartService;
     private final UserServiceInterface userService;
     private final BookServiceInterface bookService;
+    private final BookLendingInterface bookLendingInterface;
     
-    public CartController(CartServiceInterface cartService, UserServiceInterface userService, BookServiceInterface bookService) {
+    public CartController(CartServiceInterface cartService, UserServiceInterface userService, BookServiceInterface bookService, BookLendingInterface bookLendingInterface) {
         this.cartService = cartService;
         this.userService = userService;
         this.bookService = bookService;
+      this.bookLendingInterface = bookLendingInterface;
     }
     
     @PostMapping("/add-book")
@@ -43,7 +39,10 @@ public class CartController {
         if (userOptional.isEmpty() || bookOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(ApiResponse.error("User or Book not found", false));
         }
-        
+        var reserved =  bookLendingInterface.reserveBook(bookOptional.get().id(), userOptional.get().id());
+        if (!reserved) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Book not available", false));
+        }
         boolean updatedCart = cartService.addBookToCart(userOptional.get().id(), bookOptional.get().id());
         
         return updatedCart
@@ -60,6 +59,7 @@ public class CartController {
         if (userOptional.isEmpty() || bookOptional.isEmpty()) {
             return ResponseEntity.status(404).body(ApiResponse.error("User or Book not found", false));
         }
+        
         
         boolean updatedCart = cartService.removeBookFromCart(userOptional.get().id(), bookOptional.get().id());
         return updatedCart
