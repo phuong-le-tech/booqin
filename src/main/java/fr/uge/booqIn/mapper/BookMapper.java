@@ -30,7 +30,6 @@ public class BookMapper {
                 book.getId(),
                 book.getTitle(),
                 authorNames,
-                book.getIsbns(),
                 book.getPublicationDate()
         );
     }
@@ -81,7 +80,7 @@ public class BookMapper {
                     return new Author(names[0], names[1]);
                 })
                 .collect(Collectors.toSet());
-        return new Book.Builder().id(bookIndex.id()).isbns(bookIndex.isbns())
+        return new Book.Builder().id(bookIndex.id())
                 .title(bookIndex.title()).authors(authors).publicationDate(bookIndex.publicationDate())
                 .build();
     }
