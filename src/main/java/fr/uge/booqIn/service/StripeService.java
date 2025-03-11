@@ -186,12 +186,13 @@ public class StripeService {
     @Transactional
     public Session createCheckoutSession(Cart cart) {
         try {
-            List<SessionCreateParams.LineItem> lineItems = cart.getBooks().stream()
+            var cards = cart.getBooks();
+            List<SessionCreateParams.LineItem> lineItems = cards.stream()
                     .map(book -> SessionCreateParams.LineItem.builder()
                             .setQuantity(1L)
                             .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
                                     .setCurrency("eur")
-                                    .setUnitAmount((long) (5.99 * 100))
+                                    .setUnitAmount((long) (6 * 100) )
                                     .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
                                             .setName(book.getTitle())
                                             .build())
