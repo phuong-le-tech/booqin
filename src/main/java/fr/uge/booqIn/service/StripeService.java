@@ -10,6 +10,7 @@ import fr.uge.booqIn.entity.Cart;
 import com.stripe.net.Webhook;
 import fr.uge.booqIn.enums.StatutPayment;
 import fr.uge.booqIn.repository.CartRepository;
+import fr.uge.booqIn.service.interfaces.BookLendingInterface;
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,11 +34,13 @@ public class StripeService {
     
     private static final double SHIPPING_COST = 5.99;
     private final CartRepository cartRepository;
+    private BookLendingInterface bookLendingService;
     
     
-    public StripeService(CartRepository cartRepository) {
+    public StripeService(CartRepository cartRepository, BookLendingInterface bookLendingService) {
         this.cartRepository = cartRepository;
-        System.out.println("stripe.webhook.secret " + webhookSecret);
+        this.bookLendingService = bookLendingService;
+
     }
     
     @PostConstruct
@@ -144,6 +147,10 @@ public class StripeService {
             
             cart.setStatut(StatutPayment.CONFIRMED);
             cartRepository.save(cart);
+            
+            for (var book : cart.getBooks()) {
+                bookLendingService.markAsShipped(book.getId(), cart.getUser().getId());
+            }
             
             System.out.println("✅ Statut de paiement mis à jour pour le panier ID : " + cart.getId() + " -> " + StatutPayment.CONFIRMED);
         } catch (ResponseStatusException e) {

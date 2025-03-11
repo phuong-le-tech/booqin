@@ -141,7 +141,7 @@ public class UserServiceImpl implements UserServiceInterface {
             userWithCollections.getLastName(), userWithCollections.getEmail());
   }
 
-  private User findUserById(Long id) {
+  public User findUserById(Long id) {
     User userWithCollections = userRepository.findByIdWithCollections(id)
             .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
 
