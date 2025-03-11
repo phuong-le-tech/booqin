@@ -105,8 +105,25 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     return true;
   }
   
+  @Transactional
+  public void receiveBook(Long bookId , Long userId) {
+    Optional<Book> optBook = bookRepository.findById(bookId);
+    User user = userService.findUserById(userId);
+    if (optBook.isEmpty()) {
+      return;
+    }
+    Optional<BookLending> optLendings = bookLendingRepository.findByBookAndBorrower(optBook.get() , user);
+    if (optLendings.isPresent()) {
+      BookLending bookLending = optLendings.get();
+      if (bookLending.getStatus() == BookStatus.SHIPPED) {
+        bookLending.setStatus(BookStatus.BORROWED);
+        bookLendingRepository.save(bookLending);
+      }
+    }
+  }
   
   
+  // changer de place
   @Scheduled(fixedRate = 60000)
   @Transactional
   public void expireReservations() {
