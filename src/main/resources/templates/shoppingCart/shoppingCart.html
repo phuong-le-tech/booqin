@@ -39,14 +39,16 @@
         </table>
 
         <div class="text-end">
-            <p><strong>Sous-total:</strong> <span th:text="${subtotal} + ' €'"></span></p>
             <p><strong>Frais de livraison:</strong> 5.99 €</p>
             <p><strong>Total:</strong> <span th:text="${total} + ' €'"></span></p>
             <form th:action="@{/cart/clear-cart}" method="post">
                 <input type="hidden" name="userId" th:value="${cart.userId}">
                 <button type="submit" class="btn btn-warning">Vider le panier</button>
             </form>
-            <button class="btn btn-success mt-2">Payer maintenant</button>
+            <form th:action="@{/payment/checkout}" method="post">
+                <input type="hidden" name="cartId" th:value="${cart.id}">
+                <button type="submit" class="btn btn-success mt-2">Payer maintenant</button>
+            </form>
         </div>
     </div>
 </div>

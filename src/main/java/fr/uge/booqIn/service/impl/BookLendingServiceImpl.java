@@ -105,6 +105,21 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     return true;
   }
   
+  public boolean cancelBook(Long bookId , Long userId) {
+    User user = userService.findUserById(userId);
+    Optional<Book> optBook = bookRepository.findById(bookId);
+    if (optBook.isEmpty()) {
+      return false;
+    }
+    Optional<BookLending> optLendings = bookLendingRepository.findByBookAndBorrower(optBook.get() , user);
+    if (optLendings.isPresent()) {
+      BookLending bookLending = optLendings.get();
+      bookLendingRepository.delete(bookLending);
+      return true;
+    }
+    return false;
+  }
+  
   @Transactional
   public void receiveBook(Long bookId , Long userId) {
     Optional<Book> optBook = bookRepository.findById(bookId);
@@ -123,20 +138,6 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   }
   
   
-  // changer de place
-  @Scheduled(fixedRate = 60000)
-  @Transactional
-  public void expireReservations() {
-    LocalDateTime expirationTime = LocalDateTime.now().minusMinutes(20);
-    List<BookLending> expiredReservations = bookLendingRepository.findByStatusAndReservedAtBefore(BookStatus.RESERVED, expirationTime);
-    for (BookLending lending : expiredReservations) {
-      lending.setStatus(BookStatus.AVAILABLE);
-      lending.setReservedAt(null);
-      lending.setBorrower(null);
-      bookLendingRepository.save(lending);
-    }
-  }
-  
   
   @Transactional
   public boolean markAsShipped(Long bookId , Long userId) {
@@ -148,13 +149,17 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     Optional<BookLending> optLendings = bookLendingRepository.findByBookAndBorrower(optBook.get() , user);
     if (optLendings.isPresent()) {
       BookLending bookLending = optLendings.get();
-      if (bookLending.getStatus() == BookStatus.RESERVED) {
-        bookLending.setStatus(BookStatus.SHIPPED);
-        bookLendingRepository.save(bookLending);
+       bookLendingRepository.delete(bookLending);
         return true;
       }
-    }
     return false;
   }
   
+  public List<BookLending> findUserLendings(Long userId) {
+    User user = userService.findUserById(userId);
+    return bookLendingRepository.findByBorrower(user);
+  }
+  public void ListClearBookstoLend(List<BookLending> bookLendings){
+    bookLendingRepository.deleteAll(bookLendings);
+  }
 }

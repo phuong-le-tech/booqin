@@ -184,7 +184,7 @@ export const ShoppingCart: React.FC = () => {
     };
 
     const subtotal = calculateSubtotal();
-    const deliveryFee = 5.99;
+    const deliveryFee = 6 * cart?.books?.length || 0;
     const total = subtotal + deliveryFee;
 
     return (

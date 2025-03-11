@@ -15,4 +15,5 @@ public interface BookLendingRepository extends JpaRepository<BookLending, Long> 
   Optional<BookLending> findByBookId(Long bookId);
   List<BookLending> findByStatusAndReservedAtBefore(BookStatus status, LocalDateTime expirationTime);
   Optional<BookLending> findByBookAndBorrower(Book book  , User user);
+  List<BookLending> findByBorrower(User user);
 }

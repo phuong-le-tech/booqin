@@ -41,7 +41,7 @@ public class CartController {
         }
         var reserved =  bookLendingInterface.reserveBook(bookOptional.get().id(), userOptional.get().id());
         if (!reserved) {
-            return ResponseEntity.badRequest().body(ApiResponse.error("Book not available", false));
+            return ResponseEntity.badRequest().body(ApiResponse.success("Book not available", false));
         }
         boolean updatedCart = cartService.addBookToCart(userOptional.get().id(), bookOptional.get().id());
         
@@ -60,7 +60,8 @@ public class CartController {
             return ResponseEntity.status(404).body(ApiResponse.error("User or Book not found", false));
         }
         
-        
+        var canceled = bookLendingInterface.cancelBook(bookOptional.get().id(), userOptional.get().id());
+     
         boolean updatedCart = cartService.removeBookFromCart(userOptional.get().id(), bookOptional.get().id());
         return updatedCart
                 ? ResponseEntity.ok(ApiResponse.success("Book removed from cart", true))
@@ -85,6 +86,9 @@ public class CartController {
         if (userOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(ApiResponse.error("User not found"));
         }
+        
+        var listBookLending = bookLendingInterface.findUserLendings(userOptional.get().id());
+        bookLendingInterface.ListClearBookstoLend(listBookLending);
         
         boolean cleared = cartService.clearCart(userOptional.get().id());
         return cleared
