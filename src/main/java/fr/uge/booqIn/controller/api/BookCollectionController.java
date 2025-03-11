@@ -8,6 +8,7 @@ import fr.uge.booqIn.entity.BookCollection;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.factory.ApiResponse;
+import fr.uge.booqIn.mapper.BookCollectionMapper;
 import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -32,6 +33,7 @@ public class BookCollectionController {
 
   private static final Logger logger = Logger.getLogger(BookCollectionController.class.getName());
   private final BookCollectionServiceInterface bookCollectionService;
+  private final BookCollectionMapper bookCollectionMapper = new BookCollectionMapper();
 
   public BookCollectionController(BookCollectionServiceInterface bookCollectionService) {
     this.bookCollectionService = bookCollectionService;
@@ -172,6 +174,11 @@ public class BookCollectionController {
     //List<BookCollection> collections = bookCollectionService.getPublicCollections();
     List<BookCollectionShow> collections = bookCollectionService.getPublicCollections();
     System.out.println("Collections Size: " + collections.size());
+    BookCollectionShow collection = collections.getFirst();
+    System.out.println("Collection name: " + collection.name());
+    System.out.println("Collection desc: " + collection.description());
+    System.out.println("Collection books: " + collection.books().size());
+    System.out.println("Collection user books to lend nb: " + collection.user().booksToLend().size());
     return ResponseEntity.ok(ApiResponse.success("Public collections fetched", collections));
   }
 
@@ -197,7 +204,8 @@ public class BookCollectionController {
 
     logger.info("✅ Fetching collections with books for user: " + currentUser.getUsername());
 
-    List<BookCollection> collections = bookCollectionService.getUserCollectionsWithBooks(currentUser);
+    List<BookCollection> collections = bookCollectionService.getUserCollectionsWithBooks(currentUser)
+            .stream().map(bookCollectionMapper::bookCollectionShowToBookCollection).toList();
     return ResponseEntity.ok(ApiResponse.success("User collections with books fetched", collections));
   }
 

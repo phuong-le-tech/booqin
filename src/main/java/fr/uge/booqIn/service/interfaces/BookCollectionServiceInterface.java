@@ -113,7 +113,7 @@ public interface BookCollectionServiceInterface {
    * @param user User entity
    * @return List of BookCollection entities with books
    */
-  List<BookCollection> getUserCollectionsWithBooks(User user);
+  List<BookCollectionShow> getUserCollectionsWithBooks(User user);
 
   /**
    * Get all public collections

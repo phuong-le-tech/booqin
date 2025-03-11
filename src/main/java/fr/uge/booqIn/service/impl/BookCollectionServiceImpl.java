@@ -25,7 +25,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.logging.Logger;
 
 @Service
@@ -77,14 +76,17 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
   @Transactional
   public BookCollection createBookCollection(@NotNull @Valid BookCollection bookCollection) {
     validateBooksExist(bookCollection.getBooks());
-
+    System.out.println("ID: " + bookCollection.getId());
+    System.out.println("VALIDE BOOKS IN CREATE BOOK COLLECTION");
     // Ensure books collection is initialized
     if (bookCollection.getBooks() == null) {
       bookCollection.setBooks(new ArrayList<>());
     }
+    System.out.println("books collection is initialized");
 
     bookCollection.setCreatedAt(new Date());
     bookCollection.setUpdatedAt(new Date());
+    System.out.println("Dates create & update");
     return bookCollectionRepository.save(bookCollection);
   }
 
@@ -155,8 +157,11 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
   }
 
   @Transactional
-  public List<BookCollection> getUserCollectionsWithBooks(User user) {
-    return bookCollectionRepository.findByOwnerWithBooks(user);
+  public List<BookCollectionShow> getUserCollectionsWithBooks(User user) {
+    //return bookCollectionRepository.findByOwnerWithBooks(user);
+    return bookCollectionRepository.findByOwnerWithBooks(user)
+            .stream().map(bookCollectionMapper::toBookCollectionShow)
+            .toList();
   }
 
   @Transactional

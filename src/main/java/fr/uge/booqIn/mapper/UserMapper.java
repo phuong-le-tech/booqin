@@ -26,12 +26,16 @@ public class UserMapper {
    * Note: the collections must be initialized before calling this method
    */
   public UserShow toUserShow(User user) {
+    System.out.println("UserMapper.toUserShow");
+    System.out.println("USER BOOKS TO LEND: " + user.getBooksToLend());
+    System.out.println("USER COLLECTIONS: " + user.getCollections());
     return new UserShow(
             user.getId(),
             user.getFirstName(),
             user.getLastName(),
             user.getEmail(),
             user.getAddress(),
+            user.getBooksToLend(),
             user.getCollections(),
             user.getRole()
     );
