@@ -33,7 +33,6 @@ public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificat
   @Query("SELECT b FROM Book b JOIN FETCH b.isbns i WHERE i = :isbn")
   Optional<Book> findBookByIsbnInSet(String isbn);
 
-  @EntityGraph(attributePaths = {"isbns"})
   @Override
   Page<Book> findAll(@Nullable Specification<Book> spec, @NonNull Pageable pageable);
 }

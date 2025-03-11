@@ -7,7 +7,6 @@ public record BookIndex(
         Long id,
         String title,
         Set<String> authorNames,
-        Set<String> isbns,
         Date publicationDate
 ) {
 }
