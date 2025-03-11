@@ -1,29 +1,60 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Create Collection</title>
+    <link rel="stylesheet" type="text/css" th:href="@{/css/styles.css}"/>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
 </head>
-<body>
-<h1>Create a New Collection</h1>
-<form action="/collections/create" method="post">
-    <div>
-        <label for="title">Title:</label>
-        <input type="text" id="title" name="title" required>
+<body class="bg-gray-50 text-gray-900 p-8">
+<div class="max-w-6xl mx-auto">
+    <h1 class="text-4xl font-bold text-gray-800 mb-8 text-center">Create a New Collection</h1>
+
+    <div class="bg-white shadow-lg rounded-lg overflow-hidden mb-8">
+        <div class="p-6">
+            <form action="/collections/new" method="post" class="space-y-6">
+                <div class="grid grid-cols-1 gap-6">
+                    <div>
+                        <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Title:</label>
+                        <input type="text" id="title" name="title" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+
+                    <div>
+                        <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description:</label>
+                        <textarea id="description" name="description" rows="4"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                    </div>
+
+                    <div class="flex items-center">
+                        <input type="checkbox" id="isPublic" name="isPublic"
+                               class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                        <label for="isPublic" class="ml-2 block text-sm text-gray-700">Make this collection public</label>
+                    </div>
+                </div>
+
+                <div class="flex justify-center space-x-4">
+                    <button type="submit"
+                            class="inline-block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                        Create Collection
+                    </button>
+                    <a th:href="@{/collections}"
+                       class="inline-block px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+
+            <!-- Display error message if any -->
+            <div th:if="${error}" class="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                <p th:text="${error}"></p>
+            </div>
+        </div>
     </div>
-    <div>
-        <label for="description">Description:</label>
-        <textarea id="description" name="description"></textarea>
+
+    <div class="mt-6 text-center">
+        <a th:href="@{/collections}" class="inline-block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Back to My Collections</a>
     </div>
-    <div>
-        <label for="isPublic">Public:</label>
-        <input type="checkbox" id="isPublic" name="isPublic">
-    </div>
-    <button type="submit">Create Collection</button>
-</form>
-<!-- Display error message if any -->
-<div th:if="${error}">
-    <p th:text="${error}" style="color: red;"></p>
 </div>
 </body>
 </html>

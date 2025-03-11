@@ -3,6 +3,7 @@ package fr.uge.booqIn.dto.bookCollection;
 import fr.uge.booqIn.dto.user.UserShow;
 import fr.uge.booqIn.entity.Book;
 
+import java.util.Date;
 import java.util.List;
 
 public record BookCollectionDto(
@@ -12,6 +13,6 @@ public record BookCollectionDto(
         UserShow owner,
         boolean isPublic,
         List<Book> books,
-        String createdAt,
-        String updatedAt
+        Date createdAt,
+        Date updatedAt
 ) { }
