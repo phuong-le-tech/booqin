@@ -5,6 +5,7 @@ import { Layout } from "../Layout";
 import { Book } from "../../model/Book";
 import { Author } from "../../model/Author";
 import BookService from "../../services/BookService";
+import { VoteSection } from "../../components/vote/VoteSection";
 
 export const BookDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -249,7 +250,14 @@ export const BookDetail: React.FC = () => {
 
                         {/* Book Details */}
                         <div className="p-6 md:p-8 md:w-2/3 lg:w-3/4">
-                            <h1 className="text-3xl font-bold text-gray-800 mb-2">{book.title}</h1>
+                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-4">
+                                <h1 className="text-3xl font-bold text-gray-800">{book.title}</h1>
+
+                                {/* Vote Section */}
+                                <div className="flex-shrink-0">
+                                    <VoteSection entityId={book.id} entityType="book" />
+                                </div>
+                            </div>
 
                             {renderAuthors()}
 
