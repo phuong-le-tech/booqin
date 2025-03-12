@@ -12,7 +12,7 @@ import java.util.Set;
  * Entity representing a book.
  */
 @Entity
-public class Book {
+public class Book implements Votable {
 
   // -------------------- FIELDS --------------------
 
@@ -109,6 +109,7 @@ public class Book {
 
   // -------------------- GETTERS --------------------
 
+  @Override
   public Long getId() {
     return id;
   }
