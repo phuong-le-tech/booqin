@@ -15,7 +15,7 @@ export interface BookCollection {
 
 export interface BookCollectionShow {
     id: number;
-    name: string;
+    title: string;
     description: string;
     isPublic: boolean;
     books: Book[];

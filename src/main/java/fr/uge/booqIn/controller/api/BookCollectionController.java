@@ -6,7 +6,6 @@ import fr.uge.booqIn.dto.bookCollection.BookCollectionUpdate;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.BookCollection;
 import fr.uge.booqIn.entity.User;
-import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.factory.ApiResponse;
 import fr.uge.booqIn.mapper.BookCollectionMapper;
 import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
@@ -16,7 +15,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +22,6 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.logging.Logger;
 
 @RestController
@@ -175,10 +172,9 @@ public class BookCollectionController {
     List<BookCollectionShow> collections = bookCollectionService.getPublicCollections();
     System.out.println("Collections Size: " + collections.size());
     BookCollectionShow collection = collections.getFirst();
-    System.out.println("Collection name: " + collection.name());
+    System.out.println("Collection name: " + collection.title());
     System.out.println("Collection desc: " + collection.description());
     System.out.println("Collection books: " + collection.books().size());
-    System.out.println("Collection user books to lend nb: " + collection.user().booksToLend().size());
     return ResponseEntity.ok(ApiResponse.success("Public collections fetched", collections));
   }
 

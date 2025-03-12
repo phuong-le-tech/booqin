@@ -86,6 +86,7 @@ public class BookCollection {
   }
 
   public static class Builder {
+    private Long id;
     private String title;
     private String description;
     private User owner;
@@ -95,6 +96,11 @@ public class BookCollection {
     private Date updatedAt = new Date();
     private boolean isSmart = false;
     private CollectionType collectionType = CollectionType.NORMAL;
+
+    public Builder id(Long id) {
+      this.id = id;
+      return this;
+    }
 
     public Builder title(String title) {
       this.title = title;

@@ -21,7 +21,7 @@
             </thead>
             <tbody class="divide-y divide-gray-200">
             <tr th:each="collection : ${publicCollections}" class="hover:bg-gray-50">
-                <td class="px-6 py-4 text-sm text-gray-900" th:text="${collection.name}">Collection Title</td>
+                <td class="px-6 py-4 text-sm text-gray-900" th:text="${collection.title}">Collection Title</td>
                 <td class="px-6 py-4 text-sm text-gray-500" th:text="${collection.description}">Collection Description</td>
                 <td class="px-6 py-4 text-sm text-gray-500" th:text="${collection.user.firstName} + ' ' + ${collection.user.lastName}">Owner</td>
                 <td class="px-6 py-4 text-sm font-medium">

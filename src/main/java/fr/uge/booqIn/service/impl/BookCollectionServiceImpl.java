@@ -99,7 +99,7 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
     }
     verifyOwnership(bookCollection);
     validateBooksExist(bookCollection.getBooks());
-
+    System.out.println("VERIFS DONE TO PATCH");
     bookCollection.setUpdatedAt(new Date());
     return bookCollectionRepository.save(bookCollection);
   }
@@ -111,10 +111,10 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
 
     bookCollectionUpdate.name().ifPresent(bookCollection::setTitle);
     bookCollectionUpdate.description().ifPresent(bookCollection::setDescription);
-
+    bookCollection.setPublic(bookCollectionUpdate.isPublic());
     bookCollectionUpdate.books().ifPresent(books -> {
       validateBooksExist(books);
-      bookCollection.setBooks(books);
+      bookCollection.setBooks(new ArrayList<>(books));
     });
 
     bookCollection.setUpdatedAt(new Date());

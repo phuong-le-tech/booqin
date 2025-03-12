@@ -24,7 +24,7 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                 <tr th:each="collection : ${userPrivateCollections}" class="hover:bg-gray-100">
-                    <td class="px-6 py-4 text-sm text-gray-900" th:text="${collection.name}">Collection Title</td>
+                    <td class="px-6 py-4 text-sm text-gray-900" th:text="${collection.title}">Collection Title</td>
                     <td class="px-6 py-4 text-sm text-gray-500" th:text="${collection.description}">Collection Description</td>
                     <td class="px-6 py-4 text-sm text-gray-500" th:text="${collection.user.firstName} + ' ' + ${collection.user.lastName}">Owner</td>
                     <td class="px-6 py-4 text-sm font-medium">
@@ -62,7 +62,7 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                 <tr th:each="collection : ${userPublicCollections}" class="hover:bg-gray-100">
-                    <td class="px-6 py-4 text-sm text-gray-900" th:text="${collection.name}">Collection Title</td>
+                    <td class="px-6 py-4 text-sm text-gray-900" th:text="${collection.title}">Collection Title</td>
                     <td class="px-6 py-4 text-sm text-gray-500" th:text="${collection.description}">Collection Description</td>
                     <td class="px-6 py-4 text-sm text-gray-500" th:text="${collection.user.firstName} + ' ' + ${collection.user.lastName}">Owner</td>
                     <td class="px-6 py-4 text-sm font-medium">

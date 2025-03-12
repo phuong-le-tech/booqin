@@ -10,7 +10,6 @@ import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.factory.ApiResponse;
 import fr.uge.booqIn.factory.fixture.UserFactory;
 import fr.uge.booqIn.mapper.BookCollectionMapper;
-import fr.uge.booqIn.mapper.BookMapper;
 import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -84,7 +83,7 @@ public class BookCollectionWebControllerTest {
   @Test
   void testGetCollectionFound() {
     BookCollectionShow bookCollectionShow = mock(BookCollectionShow.class);
-    when(bookCollectionShow.name()).thenReturn("Test Collection");
+    when(bookCollectionShow.title()).thenReturn("Test Collection");
 
     when(bookCollectionService.findById(1L)).thenReturn(bookCollectionShow);
 
@@ -97,7 +96,7 @@ public class BookCollectionWebControllerTest {
     assertTrue(body.success());
     assertEquals("Collection found", body.message());
     assertNotNull(body.data());
-    assertEquals("Test Collection", body.data().name());
+    assertEquals("Test Collection", body.data().title());
 
     verify(bookCollectionService, times(1)).findById(1L);
   }
@@ -343,7 +342,7 @@ public class BookCollectionWebControllerTest {
     mockUser.setId(1L);
 
     BookCollectionShow bookCollectionShow = mock(BookCollectionShow.class);
-    when(bookCollectionShow.name()).thenReturn("New Title");
+    when(bookCollectionShow.title()).thenReturn("New Title");
     when(bookCollectionShow.description()).thenReturn("New Description");
 
     BookCollectionUpdate bookCollectionUpdate = mock(BookCollectionUpdate.class);
@@ -362,7 +361,7 @@ public class BookCollectionWebControllerTest {
     assertTrue(body.success());
     assertEquals("Collection updated successfully", body.message());
     assertNotNull(body.data());
-    assertEquals("New Title", body.data().name());
+    assertEquals("New Title", body.data().title());
     assertEquals("New Description", body.data().description());
 
     logger.info("Collection successfully updated via controller test");

@@ -8,7 +8,7 @@ import java.util.Set;
 
 public record BookCollectionShow(
         Long id,
-        String name,
+        String title,
         String description,
         boolean isPublic,
         Set<BookIndex> books,
