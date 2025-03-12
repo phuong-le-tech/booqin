@@ -1,6 +1,6 @@
 package fr.uge.booqIn.enums;
 
-public enum StatutPayment {
+public enum StatusPayment {
     PENDING,
     CONFIRMED,
     CANCELLED

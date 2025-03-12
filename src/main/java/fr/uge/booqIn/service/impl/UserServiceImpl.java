@@ -3,10 +3,13 @@ package fr.uge.booqIn.service.impl;
 import fr.uge.booqIn.dto.user.UserIndex;
 import fr.uge.booqIn.dto.user.UserShow;
 import fr.uge.booqIn.dto.user.UserUpdate;
+import fr.uge.booqIn.entity.Cart;
 import fr.uge.booqIn.entity.User;
+import fr.uge.booqIn.enums.StatusPayment;
 import fr.uge.booqIn.exception.DuplicateResourceException;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.mapper.UserMapper;
+import fr.uge.booqIn.repository.CartRepository;
 import fr.uge.booqIn.repository.UserRepository;
 import fr.uge.booqIn.service.interfaces.UserServiceInterface;
 import fr.uge.booqIn.specification.UserSpecification;
@@ -19,6 +22,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.Optional;
 
 
@@ -27,11 +31,14 @@ public class UserServiceImpl implements UserServiceInterface {
   private final UserRepository userRepository;
   private final UserMapper userMapper;
   private final PasswordEncoder passwordEncoder;
+  private final CartRepository cartRepository;
 
-  public UserServiceImpl(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder) {
+  public UserServiceImpl(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder,
+  CartRepository cartRepository) {
     this.userRepository = userRepository;
     this.userMapper = userMapper;
     this.passwordEncoder = passwordEncoder;
+    this.cartRepository = cartRepository;
   }
 
   @Override
@@ -70,6 +77,9 @@ public class UserServiceImpl implements UserServiceInterface {
     if (userRepository.findByEmail(user.getEmail()).isPresent()) {
       throw new DuplicateResourceException("User", "email", user.getEmail());
     }
+
+    Cart cart = new Cart();
+    cartRepository.save(cart);
 
     user.setPassword(passwordEncoder.encode(user.getPassword()));
 

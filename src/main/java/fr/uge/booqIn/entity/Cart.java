@@ -1,10 +1,10 @@
 package fr.uge.booqIn.entity;
 
 import jakarta.persistence.*;
-import fr.uge.booqIn.enums.StatutPayment;
+import fr.uge.booqIn.enums.StatusPayment;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -15,13 +15,9 @@ public class Cart {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @OneToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_id", nullable = false)
-  private User user;
-
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
-  private StatutPayment statut;
+  private StatusPayment status = StatusPayment.PENDING;
 
   @ManyToMany(fetch = FetchType.LAZY)
   @JoinTable(
@@ -29,7 +25,7 @@ public class Cart {
           joinColumns = @JoinColumn(name = "cart_id"),
           inverseJoinColumns = @JoinColumn(name = "book_id")
   )
-  private Set<Book> books;
+  private Set<Book> books = new HashSet<>();
 
   @Column(nullable = false)
   private LocalDateTime createdAt = LocalDateTime.now();
@@ -37,29 +33,25 @@ public class Cart {
   @Column(nullable = true)
   private String paymentIntentId;
 
-  public Cart(User user, StatutPayment statut, Set<Book> books) {
-    this.user = user;
-    this.statut = statut;
+  public Cart(StatusPayment status, Set<Book> books) {
+    this.status = status;
     this.books = books;
   }
 
   public Cart() {
+
   }
 
   public Long getId() {
     return id;
   }
 
-  public User getUser() {
-    return user;
+  public StatusPayment getStatus() {
+    return status;
   }
 
-  public StatutPayment getStatut() {
-    return statut;
-  }
-
-  public void setStatut(StatutPayment statut) {
-    this.statut = statut;
+  public void setStatut(StatusPayment status) {
+    this.status = status;
   }
 
   public Set<Book> getBooks() {
@@ -90,8 +82,7 @@ public class Cart {
   public String toString() {
     return "Cart{" +
             "id=" + id +
-            ", user=" + user +
-            ", statut=" + statut +
+            ", statut=" + status +
             ", books=" + books +
             ", createdAt=" + createdAt +
             '}';
