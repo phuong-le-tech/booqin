@@ -1,6 +1,5 @@
 package fr.uge.booqIn.entity;
 
-import fr.uge.booqIn.enums.StatutPayment;
 import fr.uge.booqIn.enums.UserRole;
 import jakarta.persistence.*;
 import jakarta.validation.Valid;
@@ -54,6 +53,10 @@ public class User implements UserDetails {
   @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<BookCollection> collections = new ArrayList<>();
 
+  @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+  @JoinColumn(name = "cart_id")
+  private Cart cart;
+
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "created_at", nullable = false, updatable = false)
   private Date createdAt = new Date();
@@ -61,11 +64,7 @@ public class User implements UserDetails {
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "updated_at")
   private Date updatedAt = new Date();
-  
-  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-  private Cart cart;
-  
-  
+
   public User() {
   }
 
@@ -76,8 +75,18 @@ public class User implements UserDetails {
     this.password = password;
     this.address = address;
     this.role = role;
-    this.cart = new Cart(this, StatutPayment.PENDING, new HashSet<>());
   }
+
+  public User(String fistName, String lastName, String email, String password, Address address, UserRole role, Cart cart) {
+    this.firstName = fistName;
+    this.lastName = lastName;
+    this.email = email;
+    this.password = password;
+    this.address = address;
+    this.role = role;
+    this.cart = cart;
+  }
+
 
   public Long getId() {
     return id;
@@ -98,6 +107,10 @@ public class User implements UserDetails {
   public Address getAddress() {
     return address;
   }
+
+    public Cart getCart() {
+        return cart;
+    }
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -172,6 +185,10 @@ public class User implements UserDetails {
     this.collections = collections;
   }
 
+    public void setCart(Cart cart) {
+        this.cart = cart;
+    }
+
   public void setCreatedAt(Date createdAt) {
     this.createdAt = createdAt;
   }
@@ -190,10 +207,6 @@ public class User implements UserDetails {
     book.setOwner(this);
   }
   
-  public Cart getCart() {
-    return cart;
-  }
-
   public void removeBookToLend(ToLendBook book) {
     booksToLend.remove(book);
   }

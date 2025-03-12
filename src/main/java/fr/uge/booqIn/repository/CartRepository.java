@@ -16,7 +16,6 @@ import java.util.Optional;
 
 @Repository
 public interface CartRepository extends JpaRepository<Cart, Long> {
-    Cart findByUser(User user);
     Optional<Cart> findByPaymentIntentId(String paymentIntentId);
 
 
@@ -29,6 +28,6 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
     @Modifying
     @Query(value = "DELETE FROM cart_books WHERE cart_id = :cartId AND book_id = :bookId", nativeQuery = true)
     void deleteBookFromCart(@Param("cartId") Long cartId, @Param("bookId") Long bookId);
-    
+
     
 }
