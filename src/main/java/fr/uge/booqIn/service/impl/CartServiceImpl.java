@@ -2,11 +2,9 @@ package fr.uge.booqIn.service.impl;
 
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.cart.ShopCartDto;
-import fr.uge.booqIn.dto.user.UserShow;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.Cart;
-import fr.uge.booqIn.entity.User;
-import fr.uge.booqIn.enums.StatutPayment;
+import fr.uge.booqIn.enums.StatusPayment;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.repository.BookRepository;
 import fr.uge.booqIn.repository.CartRepository;
@@ -15,7 +13,6 @@ import fr.uge.booqIn.service.interfaces.UserServiceInterface;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -41,7 +38,7 @@ public class CartServiceImpl implements CartServiceInterface {
   }
 
   @Override
-  public Cart updateCartStatus(Long cartId, StatutPayment status) {
+  public Cart updateCartStatus(Long cartId, StatusPayment status) {
     Cart cart = getCart(cartId);
     cart.setStatut(status);
     return cartRepository.save(cart);
@@ -100,7 +97,7 @@ public class CartServiceImpl implements CartServiceInterface {
   @Transactional
   public boolean clearCart(Long user) {
     Cart cart = getCart(user);
-    cart.setStatut(StatutPayment.PENDING);
+    cart.setStatut(StatusPayment.PENDING);
     cart.getBooks().clear();
     cartRepository.save(cart);
     return true;
