@@ -8,8 +8,10 @@ import com.stripe.exception.SignatureVerificationException;
 import com.stripe.param.checkout.SessionCreateParams;
 import fr.uge.booqIn.entity.Cart;
 import com.stripe.net.Webhook;
-import fr.uge.booqIn.enums.StatutPayment;
+import fr.uge.booqIn.entity.User;
+import fr.uge.booqIn.enums.StatusPayment;
 import fr.uge.booqIn.repository.CartRepository;
+import fr.uge.booqIn.repository.UserRepository;
 import fr.uge.booqIn.service.interfaces.BookLendingInterface;
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
@@ -34,12 +36,15 @@ public class StripeService {
     
     private static final double SHIPPING_COST = 5.99;
     private final CartRepository cartRepository;
-    private BookLendingInterface bookLendingService;
+    private final UserRepository userRepository;
+    private final BookLendingInterface bookLendingService;
     
     
-    public StripeService(CartRepository cartRepository, BookLendingInterface bookLendingService) {
+    public StripeService(CartRepository cartRepository, BookLendingInterface bookLendingService,
+                         UserRepository userRepository) {
         this.cartRepository = cartRepository;
         this.bookLendingService = bookLendingService;
+        this.userRepository = userRepository;
 
     }
     
@@ -64,7 +69,7 @@ public class StripeService {
                         HttpStatus.NOT_FOUND,
                         "Panier introuvable pour l'identifiant de paiement : " + paymentIntentId
                 ));
-        cart.setStatut(StatutPayment.CANCELLED);
+        cart.setStatut(StatusPayment.CANCELLED);
         cartRepository.save(cart);
     }
     
@@ -145,14 +150,18 @@ public class StripeService {
                             "Panier introuvable pour la session Stripe ID : " + sessionId
                     ));
             
-            cart.setStatut(StatutPayment.CONFIRMED);
+            cart.setStatut(StatusPayment.CONFIRMED);
             cartRepository.save(cart);
-            
+            User user = userRepository.findById(cart.getId())
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.NOT_FOUND,
+                            "Utilisateur introuvable pour le panier ID : " + cart.getId()
+                    ));
             for (var book : cart.getBooks()) {
-                bookLendingService.markAsShipped(book.getId(), cart.getUser().getId());
+                bookLendingService.markAsShipped(book.getId(), user.getId());
             }
             
-            System.out.println("✅ Statut de paiement mis à jour pour le panier ID : " + cart.getId() + " -> " + StatutPayment.CONFIRMED);
+            System.out.println("✅ Statut de paiement mis à jour pour le panier ID : " + cart.getId() + " -> " + StatusPayment.CONFIRMED);
         } catch (ResponseStatusException e) {
             System.out.println(e.getMessage());
         } catch (Exception e) {
@@ -174,7 +183,7 @@ public class StripeService {
                         "Panier introuvable pour la session Stripe ID : " + sessionId
                 ));
         
-        cart.setStatut(StatutPayment.CONFIRMED);
+        cart.setStatut(StatusPayment.CONFIRMED);
         cartRepository.save(cart);
         
         System.out.println("✅ Paiement confirmé pour le panier ID : " + cart.getId());

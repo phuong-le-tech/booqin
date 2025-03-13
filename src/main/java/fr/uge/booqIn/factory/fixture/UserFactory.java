@@ -2,6 +2,7 @@ package fr.uge.booqIn.factory.fixture;
 
 import com.github.javafaker.Faker;
 import fr.uge.booqIn.entity.Address;
+import fr.uge.booqIn.entity.Cart;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.UserRole;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,7 +19,7 @@ public class UserFactory {
         String lastName = faker.name().lastName();
         String email = faker.internet().emailAddress();
         String password = passwordEncoder.encode("password" + random.nextInt(1000));
-
+        Cart cart = new Cart();
         Address address = new Address(
                 String.valueOf(random.nextInt(200) + 1),
                 faker.address().streetName(),
@@ -26,6 +27,6 @@ public class UserFactory {
                 faker.address().zipCode()
         );
 
-        return new User(firstName, lastName, email, password, address, role);
+        return new User(firstName, lastName, email, password, address, role, cart);
     }
 }
