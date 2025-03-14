@@ -3,16 +3,22 @@ package fr.uge.booqIn.controller.web;
 import fr.uge.booqIn.dto.book.BookCreate;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
+import fr.uge.booqIn.dto.vote.VoteCount;
+import fr.uge.booqIn.dto.vote.VoteCreate;
+import fr.uge.booqIn.dto.vote.VoteResponse;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.User;
+import fr.uge.booqIn.enums.VoteType;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
+import fr.uge.booqIn.service.interfaces.VoteServiceInterface;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -24,9 +30,11 @@ import java.util.stream.Collectors;
 @RequestMapping("/books")
 public class BookWebController {
     private final BookServiceInterface bookService;
+    private final VoteServiceInterface voteServiceInterface;
 
-    public BookWebController(BookServiceInterface bookService) {
+    public BookWebController(BookServiceInterface bookService, VoteServiceInterface voteServiceInterface) {
         this.bookService = bookService;
+        this.voteServiceInterface = voteServiceInterface;
     }
 
     @GetMapping
@@ -38,7 +46,7 @@ public class BookWebController {
                               @RequestParam(value = "title", required = false) String title,
                               @RequestParam(value = "author", required = false) String author,
                               @RequestParam(value = "isbn", required = false) String isbn,
-                              Authentication authenfication) {
+                              @AuthenticationPrincipal User currentUser) {
 
         Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction) ?
             Sort.Direction.DESC : Sort.Direction.ASC;
@@ -53,18 +61,22 @@ public class BookWebController {
         model.addAttribute("sort", sort);
         model.addAttribute("direction", direction);
 
-        if(authenfication != null && authenfication.isAuthenticated()){
-            User user = (User) authenfication.getPrincipal();
-            model.addAttribute("userId",user.getId());
-        }
-
         return "book/list";
     }
 
     @GetMapping("/{id}")
-    public String getBookFromId(Model model, @PathVariable Long id) {
+    public String getBookFromId(Model model, @PathVariable Long id, @AuthenticationPrincipal User currentUser) {
         BookShow book = bookService.findById(id);
         model.addAttribute("book", book);
+        VoteCount count = voteServiceInterface.getVoteCounts(id, "BOOK");
+
+        model.addAttribute("votes", count);
+        if (currentUser != null) {
+            var voteUser = voteServiceInterface.getUserVoteType(currentUser.getId(),id,"BOOK");
+            model.addAttribute("userVote",voteUser.toString());
+            System.out.println(voteUser);
+            model.addAttribute("user",currentUser);
+        }
         return "book/bookDetails";
     }
 
@@ -110,5 +122,16 @@ public class BookWebController {
 
         bookService.createBook(book);
         return "redirect:/books";
+    }
+
+    @PostMapping("/vote")
+    public String vote(@RequestParam("bookId") Long bookId,
+                       @RequestParam("voteType") VoteType voteType,
+                       @AuthenticationPrincipal User currentUser) {
+        if (currentUser != null) {
+            VoteCreate voteCreate = new VoteCreate(currentUser.getId(), bookId, "BOOK", voteType);
+            voteServiceInterface.castVote(voteCreate);
+        }
+        return "redirect:/books/" + bookId;
     }
 }
