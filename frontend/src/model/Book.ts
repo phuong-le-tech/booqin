@@ -6,8 +6,7 @@ export interface BookIndex {
     id: number;
     title: string;
     authorNames: string[];
-    publicationDate: string;
-    isbns: string[];
+    publicationDate: Date;
 }
 
 // Modèle Book détaillé (BookShow)

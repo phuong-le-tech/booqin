@@ -6,23 +6,29 @@ import { BookCollection } from "../../model/BookCollection";
 import { collections } from "../../assets/testData";
 import Layout from "../../pages/Layout";
 import {AuthContext} from "../../context/AuthContext.tsx";
+import BookCollectionService from "../../services/BookCollectionService.ts";
 
 const CollectionDetails: React.FC = () => {
     const { user } = useContext(AuthContext);
     const { id } = useParams<{ id: string }>();
-    const [collection, setCollection] = useState<BookCollection | null>(null);
+    const [collection, setCollections] = useState<BookCollection | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const urlSearchParams = new URLSearchParams(location.search);
     const origin = urlSearchParams.get('origin');
 
     // USE REAL DATA IN BDD (use requests)
-    /*useEffect(() => {
+    useEffect(() => {
         const fetchCollection = async () => {
             try {
-                const response = await fetch(`/api/v1/collections/${id}`);
-                if (!response.ok) throw new Error("Failed to fetch collection");
-                const data: BookCollection = await response.json();
-                setCollection(data);
+                setLoading(true);
+                const collectionsData = await BookCollectionService.getUserCollections();
+                if (collectionsData && Array.isArray(collectionsData)) {
+                    setCollections(collectionsData);
+                } else {
+                    console.error("Unexpected data format:", collectionsData);
+                    setError("No public collections found");
+                }
             } catch (error) {
                 console.error("Error fetching collection details:", error);
             } finally {
@@ -31,14 +37,14 @@ const CollectionDetails: React.FC = () => {
         };
 
         fetchCollection();
-    }, [id]);*/
+    }, [id]);
     // USE TEST DATA
-    useEffect(() => {
+    /*useEffect(() => {
         // Chercher la collection dans les données de test
         const foundCollection = collections.find((col) => col.id === id);
-        setCollection(foundCollection ?? null);
+        set(foundCollection ?? null);
         setLoading(false);
-    }, [id]);
+    }, [id]);*/
 
     if (loading) return <div className="text-center py-8">Loading...</div>;
 
@@ -67,11 +73,11 @@ const CollectionDetails: React.FC = () => {
                                     {collection.books.map((book) => (
                                         <li key={book.id} className="p-4 border rounded-lg bg-white">
                                             <h3 className="text-lg font-bold">{book.title}</h3>
-                                            <p className="text-sm text-gray-600">{book.description}</p>
+                                            {/*<p className="text-sm text-gray-600">{book.description}</p>*/}
                                             <p className="text-sm text-gray-500">Published: {book.publicationDate}</p>
-                                            {book.authors.length > 0 && (
+                                            {book.authorNames.length > 0 && (
                                                 <p className="text-sm text-gray-500">
-                                                    Authors: {book.authors.map((author) => `${author.firstName} ${author.lastName}`).join(", ")}
+                                                    Authors: {book.authorNames.map((author) => `${author}`).join(", ")}
                                                 </p>
                                             )}
                                         </li>

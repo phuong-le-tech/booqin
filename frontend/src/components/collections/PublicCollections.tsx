@@ -22,12 +22,16 @@ const PublicCollections: React.FC = () => {
                 // const response = await axiosInstance.get(`/v1/collections/public`);
                 setLoading(true);
                 const publicCollectionsData = await BookCollectionService.getPublicCollections();
-                if (publicCollectionsData) {
-                    setCollections(publicCollectionsData.collections);
+                if (publicCollectionsData && Array.isArray(publicCollectionsData)) {
+                    console.log("PUBLIC COLLECTIONS FOUND");
+                    console.log("DATA:\n" + publicCollectionsData);
+                    setCollections(publicCollectionsData);
                 } else {
+                    console.error("Unexpected data format:", publicCollectionsData);
                     setError("No public collections found");
                 }
             } catch (err) {
+                console.error("Error fetching collections:", err);
                 setError(err.message);
             } finally {
                 setLoading(false);
@@ -64,9 +68,9 @@ const PublicCollections: React.FC = () => {
                                     <tbody className="divide-y divide-gray-200">
                                     {collections.map((collection) => (
                                         <tr key={collection.id} className="hover:bg-gray-100">
-                                            <td className="px-6 py-4 text-sm text-gray-800">{collection.name}</td>
+                                            <td className="px-6 py-4 text-sm text-gray-800">{collection.title}</td>
                                             <td className="px-6 py-4 text-sm text-gray-600">{collection.description}</td>
-                                            <td className="px-6 py-4 text-sm text-gray-600">{collection.owner.firstName} {collection.owner.lastName}</td>
+                                            <td className="px-6 py-4 text-sm text-gray-600">{collection.user.firstName} {collection.user.lastName}</td>
                                             <td className="px-6 py-4 text-sm font-medium">
                                                 <Link to={`/collections/${collection.id}?origin=public`}
                                                       className="text-indigo-600 hover:text-indigo-900">View</Link>

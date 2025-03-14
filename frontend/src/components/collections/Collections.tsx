@@ -1,28 +1,51 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { BookCollection } from "../../model/BookCollection";
+import {BookCollection, BookCollectionShow} from "../../model/BookCollection";
 import { AuthContext } from "../../context/AuthContext";
 import Layout from "../../pages/Layout";
 import { collections as testCollections } from "../../assets/testData";
+import BookCollectionService from "../../services/BookCollectionService.ts";
 
 const Collections: React.FC = () => {
     const { user } = useContext(AuthContext);
+    const [collections, setCollections] = useState<BookCollectionShow[]>([]);
     const [publicCollections, setPublicCollections] = useState<BookCollection[]>([]);
     const [privateCollections, setPrivateCollections] = useState<BookCollection[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Remplacer par un appel API pour récupérer les données réelles
-        const fetchUserCollections = async () => {
-            const userCollections = testCollections.filter((collection) => collection.owner.id === user?.id);
-            const publicUserCollections = userCollections.filter((collection) => collection.isPublic);
-            const privateUserCollections = userCollections.filter((collection) => !collection.isPublic);
-            setPublicCollections(publicUserCollections);
-            setPrivateCollections(privateUserCollections);
-            setLoading(false);
+        const fetchCollection = async () => {
+            try {
+                setLoading(true);
+                const collectionsData = await BookCollectionService.getUserCollections();
+                if (collectionsData && Array.isArray(collectionsData)) {
+                    setCollections(collectionsData);
+                } else {
+                    console.error("Unexpected data format:", collectionsData);
+                    // setError("No public collections found");
+                }
+            } catch (error) {
+                console.error("Error fetching collection details:", error);
+            } finally {
+                setLoading(false);
+            }
         };
-        fetchUserCollections();
-    }, [user]);
+
+        fetchCollection();
+    }, [collections]);
+
+    // useEffect(() => {
+    //     // Remplacer par un appel API pour récupérer les données réelles
+    //     const fetchUserCollections = async () => {
+    //         const userCollections = testCollections.filter((collection) => collection.owner.id === user?.id);
+    //         const publicUserCollections = userCollections.filter((collection) => collection.isPublic);
+    //         const privateUserCollections = userCollections.filter((collection) => !collection.isPublic);
+    //         setPublicCollections(publicUserCollections);
+    //         setPrivateCollections(privateUserCollections);
+    //         setLoading(false);
+    //     };
+    //     fetchUserCollections();
+    // }, [user]);
 
     if (loading) return <div className="text-center py-8">Loading...</div>;
 

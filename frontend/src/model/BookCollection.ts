@@ -1,14 +1,14 @@
 import {User} from "./User.ts";
-import {Book} from "./Book.ts";
+import {Book, BookIndex} from "./Book.ts";
 import {PageInfo} from "./Pagination.ts";
 
 export interface BookCollection {
     id: number
-    title: String,
-    description: String,
+    title: string,
+    description: string,
+    isPublic: boolean,
+    books: BookIndex[],
     owner: User,
-    isPublic: Boolean,
-    books: Book[],
     createdAt: Date,
     updatedAt: Date
 }
@@ -19,7 +19,7 @@ export interface BookCollectionShow {
     description: string;
     isPublic: boolean;
     books: Book[];
-    owner: User;
+    user: User;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -28,7 +28,7 @@ export interface BookCollectionIndex {
     id: number;
     title: string;
     description: string;
-    owner: string; // Assuming owner is represented by a name or identifier string
+    owner: User; // Assuming owner is represented by a name or identifier string
     isPublic: boolean;
 }
 

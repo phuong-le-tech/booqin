@@ -117,6 +117,8 @@ public class BookCollectionWebController {
     }
   }
 
+
+
   @GetMapping("/new")
   public String showCreateCollectionForm(Model model) {
     model.addAttribute("bookCollection", new BookCollection());
