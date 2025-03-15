@@ -1,8 +1,9 @@
 import {Link, useLocation} from "react-router-dom"
-import {LayoutDashboard, Book, LogOut, LibraryBigIcon, Library, Settings} from "lucide-react"
+import {LayoutDashboard, Book, LogOut, LibraryBigIcon, Library, Settings, BookOpen} from "lucide-react"
 import {useContext} from "react"
 import {AuthContext} from "../context/AuthContext.tsx"
 import AuthService from "../services/AuthService.ts"
+
 
 interface SidebarNavProps {
     onCloseSidebar?: () => void
@@ -18,6 +19,7 @@ const authenticatedNavItems = [
     {icon: Book, label: "Books", path: "/books", color: "text-green-300"},
     {icon: LibraryBigIcon, label: "Collections", path: "/collections/public", color: "text-purple-300"},
     {icon: Library, label: "My Collections", path: "/collections", color: "text-yellow-300"},
+    {icon: BookOpen, label: "My Loans", path: "/loans", color: "text-orange-300"},
 ]
 
 export function SidebarNav({ onCloseSidebar = () => {} }: SidebarNavProps) {
@@ -37,13 +39,11 @@ export function SidebarNav({ onCloseSidebar = () => {} }: SidebarNavProps) {
     }
 
     const handleNavClick = () => {
-        // Close sidebar on navigation (for mobile)
         if (onCloseSidebar) {
             onCloseSidebar()
         }
     }
 
-    // Check if user is admin
     const isAdmin = user && user.role === "ADMIN"
     console.log(user)
     return (

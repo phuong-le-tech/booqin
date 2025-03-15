@@ -213,7 +213,7 @@ public class BookServiceImpl implements BookServiceInterface {
     return str == null || str.isEmpty();
   }
 
-  private Book findBookById(Long id) {
+  public Book findBookById(Long id) {
     Book bookWithAuthors = bookRepository.findByIdWithAuthors(id)
             .orElseThrow(() -> new ResourceNotFoundException("Book", "id", id));
 
