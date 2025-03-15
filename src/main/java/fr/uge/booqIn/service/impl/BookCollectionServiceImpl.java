@@ -33,13 +33,15 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
   private static final Logger logger = Logger.getLogger(BookCollectionServiceImpl.class.getName());
   private final BookCollectionRepository bookCollectionRepository;
   private final BookRepository bookRepository;
+  private final BookServiceImpl bookService;
   private final BookCollectionMapper bookCollectionMapper;
 
   public BookCollectionServiceImpl(BookCollectionRepository bookCollectionRepository,
-                                   BookRepository bookRepository,
+                                   BookRepository bookRepository, BookServiceImpl bookService,
                                    BookCollectionMapper bookCollectionMapper) {
     this.bookCollectionRepository = bookCollectionRepository;
     this.bookRepository = bookRepository;
+    this.bookService = bookService;
     this.bookCollectionMapper = bookCollectionMapper;
   }
 
@@ -139,13 +141,10 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
   public BookCollection addBookToCollection(@NotNull Long collectionId, @NotNull Long bookId) {
     // Find the collection
     BookCollection collection = findBookCollectionById(collectionId);
-
     // Verify ownership
     verifyOwnership(collection);
-
     // Find the book
-    Book book = bookRepository.findById(bookId)
-            .orElseThrow(() -> new ResourceNotFoundException("Book", "id", bookId));
+    Book book = bookService.findBookById(bookId);
 
     // Add the book to collection
     collection.addBook(book);
@@ -186,11 +185,8 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
   @Transactional
   public BookCollection removeBookFromCollection(Long collectionId, Long bookId, User currentUser) {
     BookCollection collection = findBookCollectionById(collectionId);
-
     verifyOwnership(collection);
-
-    Book book = bookRepository.findById(bookId)
-            .orElseThrow(() -> new ResourceNotFoundException("Book", "id", bookId));
+    Book book = bookService.findBookById(bookId);
 
     collection.removeBook(book);
     collection.setUpdatedAt(new Date());

@@ -138,21 +138,22 @@ public class BookCollectionController {
    * Add a book to a collection
    */
   @PostMapping("/{collectionId}/books/{bookId}")
-  public ResponseEntity<ApiResponse<BookCollection>> addBookToCollection(
+  public ResponseEntity<ApiResponse<BookCollectionShow>> addBookToCollection(
           @PathVariable Long collectionId,
           @PathVariable Long bookId) {
 
     logger.info("📚 Adding book " + bookId + " to collection " + collectionId);
 
     BookCollection updated = bookCollectionService.addBookToCollection(collectionId, bookId);
-    return ResponseEntity.ok(ApiResponse.success("Book added to collection successfully", updated));
+    BookCollectionShow updatedShow = bookCollectionMapper.toBookCollectionShow(updated);
+    return ResponseEntity.ok(ApiResponse.success("Book added to collection successfully", updatedShow));
   }
 
   /**
    * Remove a book from a collection
    */
   @DeleteMapping("/{collectionId}/books/{bookId}")
-  public ResponseEntity<ApiResponse<BookCollection>> removeBookFromCollection(
+  public ResponseEntity<ApiResponse<BookCollectionShow>> removeBookFromCollection(
           @PathVariable Long collectionId,
           @PathVariable Long bookId,
           @AuthenticationPrincipal User currentUser) {
@@ -160,7 +161,8 @@ public class BookCollectionController {
     logger.info("🗑️ Removing book " + bookId + " from collection " + collectionId);
 
     BookCollection updated = bookCollectionService.removeBookFromCollection(collectionId, bookId, currentUser);
-    return ResponseEntity.ok(ApiResponse.success("Book removed from collection successfully", updated));
+    BookCollectionShow updatedShow = bookCollectionMapper.toBookCollectionShow(updated);
+    return ResponseEntity.ok(ApiResponse.success("Book removed from collection successfully", updatedShow));
   }
 
   /**
