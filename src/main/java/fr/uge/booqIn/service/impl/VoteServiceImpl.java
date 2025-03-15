@@ -8,10 +8,11 @@ import fr.uge.booqIn.entity.Vote;
 import fr.uge.booqIn.enums.VoteType;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.mapper.VoteMapper;
+import fr.uge.booqIn.model.Votable;
 import fr.uge.booqIn.repository.UserRepository;
 import fr.uge.booqIn.repository.VoteRepository;
 import fr.uge.booqIn.service.interfaces.VoteServiceInterface;
-import fr.uge.booqIn.strategy.VotableStrategyContext;
+import fr.uge.booqIn.strategy.EntityStrategyContext;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -24,11 +25,11 @@ import java.util.stream.Collectors;
 public class VoteServiceImpl implements VoteServiceInterface {
     private final VoteRepository voteRepository;
     private final UserRepository userRepository;
-    private final VotableStrategyContext strategyContext;
+    private final EntityStrategyContext strategyContext;
     private final VoteMapper voteMapper;
 
     public VoteServiceImpl(VoteRepository voteRepository, UserRepository userRepository,
-                           VotableStrategyContext strategyContext, VoteMapper voteMapper) {
+                           EntityStrategyContext strategyContext, VoteMapper voteMapper) {
         this.voteRepository = voteRepository;
         this.userRepository = userRepository;
         this.strategyContext = strategyContext;
@@ -41,17 +42,25 @@ public class VoteServiceImpl implements VoteServiceInterface {
         var user = userRepository.findById(voteCreate.userId())
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", voteCreate.userId()));
 
-        strategyContext.findByTypeAndId(voteCreate.entityType(), voteCreate.entityId());
+        var targetEntity = strategyContext.findByTypeAndId(
+                voteCreate.entityType(),
+                voteCreate.entityId());
+
+        if (!(targetEntity instanceof Votable)) {
+            throw new IllegalArgumentException("Entity of type " + voteCreate.entityType() + " is not votable");
+        }
+
+        Votable votable = (Votable) targetEntity;
 
         var existingVote = voteRepository.findByUserAndEntityIdAndEntityType(
-                user, voteCreate.entityId(), voteCreate.entityType());
+                user, votable.getId(), votable.getEntityType());
 
         Vote vote;
         if (existingVote.isPresent()) {
             vote = existingVote.get();
             vote.setVoteType(voteCreate.voteType());
         } else {
-            vote = new Vote(user, voteCreate.entityId(), voteCreate.entityType(), voteCreate.voteType());
+            vote = Vote.create(user, votable, voteCreate.voteType());
         }
 
         vote = voteRepository.save(vote);
@@ -65,7 +74,11 @@ public class VoteServiceImpl implements VoteServiceInterface {
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
 
-        strategyContext.findByTypeAndId(entityType, entityId);
+        var targetEntity = strategyContext.findByTypeAndId(entityType, entityId);
+
+        if (!(targetEntity instanceof Votable)) {
+            throw new IllegalArgumentException("Entity of type " + entityType + " is not votable");
+        }
 
         var vote = voteRepository.findByUserAndEntityIdAndEntityType(user, entityId, entityType)
                 .orElseThrow(() -> new ResourceNotFoundException("Vote", "user and entity",

@@ -1,4 +1,4 @@
-package fr.uge.booqIn.strategy;
+package fr.uge.booqIn.strategy.book;
 
 import fr.uge.booqIn.entity.Book;
 

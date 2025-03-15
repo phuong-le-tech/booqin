@@ -1,5 +1,8 @@
 package fr.uge.booqIn.entity;
 
+import fr.uge.booqIn.model.Commentable;
+import fr.uge.booqIn.model.PolymorphicEntity;
+import fr.uge.booqIn.model.Votable;
 import jakarta.persistence.*;
 
 import java.util.Date;
@@ -12,7 +15,8 @@ import java.util.Set;
  * Entity representing a book.
  */
 @Entity
-public class Book implements Votable {
+public class Book implements PolymorphicEntity, Votable, Commentable {
+  private static final String ENTITY_TYPE = "BOOK";
 
   // -------------------- FIELDS --------------------
 
@@ -110,6 +114,10 @@ public class Book implements Votable {
   // -------------------- GETTERS --------------------
 
   @Override
+  public String getEntityType() {
+    return ENTITY_TYPE;
+  }
+
   public Long getId() {
     return id;
   }

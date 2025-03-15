@@ -6,6 +6,7 @@ import { Book } from "../../model/Book";
 import { Author } from "../../model/Author";
 import BookService from "../../services/BookService";
 import { VoteSection } from "../../components/vote/VoteSection";
+import { CommentSection } from "../../components/comment/CommentSection";
 
 export const BookDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -255,7 +256,7 @@ export const BookDetail: React.FC = () => {
 
                                 {/* Vote Section */}
                                 <div className="flex-shrink-0">
-                                    <VoteSection entityId={book.id} entityType="book" />
+                                    <VoteSection entityId={book.id} entityType="BOOK" />
                                 </div>
                             </div>
 
@@ -295,6 +296,11 @@ export const BookDetail: React.FC = () => {
                             </div>
                         </div>
                     </div>
+                </div>
+
+                {/* Système de commentaires */}
+                <div className="mt-8 bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 p-6">
+                    <CommentSection entityId={book.id} entityType="BOOK" />
                 </div>
             </div>
         </Layout>
