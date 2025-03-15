@@ -125,7 +125,7 @@ public class BookCollectionWebController {
     return "collections/create";
   }
 
-  @PostMapping("/new") // TODO: changer le request body par un DTO
+  @PostMapping("/new")
   public String createCollection(
           @Valid @ModelAttribute("bookCollection") BookCollection bookCollection,
           @RequestParam(required = false) Boolean isPublic,

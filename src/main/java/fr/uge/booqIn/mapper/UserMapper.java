@@ -1,10 +1,8 @@
 package fr.uge.booqIn.mapper;
 
 import fr.uge.booqIn.dto.bookCollection.BookCollectionIndex;
-import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
 import fr.uge.booqIn.dto.user.UserIndex;
 import fr.uge.booqIn.dto.user.UserShow;
-import fr.uge.booqIn.dto.user.UserUpdate;
 import fr.uge.booqIn.entity.User;
 import org.springframework.stereotype.Component;
 
@@ -27,7 +25,9 @@ public class UserMapper {
             user.getId(),
             user.getFirstName(),
             user.getLastName(),
-            user.getEmail()
+            user.getEmail(),
+            user.getAddress(),
+            user.getRole()
     );
   }
 
@@ -36,19 +36,19 @@ public class UserMapper {
    * Note: the collections must be initialized before calling this method
    */
   public UserShow toUserShow(User user) {
-//    System.out.println("UserMapper.toUserShow");
-//    System.out.println("USER: " + user);
-//    System.out.println("USER COLLECTIONS: " + user.getCollections());
+    System.out.println("UserMapper.toUserShow");
+    System.out.println("USER: " + user);
+    //System.out.println("USER COLLECTIONS: " + user.getCollections());
     List<BookCollectionIndex> collectionShowList = user.getCollections().stream()
             .map(bookCollectionMapper::toBookCollectionIndex)
             .toList();
+    System.out.println("nb cl index: " + collectionShowList.size());
     return new UserShow(
             user.getId(),
             user.getFirstName(),
             user.getLastName(),
             user.getEmail(),
             user.getAddress(),
-            //user.getCollections(),
             //List.of(),
             collectionShowList,
             user.getRole()
@@ -63,6 +63,17 @@ public class UserMapper {
             "",
             userShow.address(),
             userShow.role()
+    );
+  }
+
+  public User userIndexToUser(UserIndex userIndex) {
+    return new User(
+            userIndex.firstName(),
+            userIndex.lastName(),
+            userIndex.email(),
+            "",
+            userIndex.address(),
+            userIndex.role()
     );
   }
 }

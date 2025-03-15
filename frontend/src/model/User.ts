@@ -18,3 +18,13 @@ export interface UserUpdateData {
     email: string;
     address: Address;
 }
+
+export interface UserShow {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+    address?: Address;
+    role?: string;
+}
+

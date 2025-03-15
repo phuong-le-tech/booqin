@@ -2,7 +2,7 @@
 
 import React, {useContext, useEffect, useState} from "react";
 import { useParams, Link } from "react-router-dom";
-import { BookCollection } from "../../model/BookCollection";
+import {BookCollection, BookCollectionShow} from "../../model/BookCollection";
 import { collections } from "../../assets/testData";
 import Layout from "../../pages/Layout";
 import {AuthContext} from "../../context/AuthContext.tsx";
@@ -11,7 +11,7 @@ import BookCollectionService from "../../services/BookCollectionService.ts";
 const CollectionDetails: React.FC = () => {
     const { user } = useContext(AuthContext);
     const { id } = useParams<{ id: string }>();
-    const [collection, setCollections] = useState<BookCollection | null>(null);
+    const [collection, setCollections] = useState<BookCollectionShow | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const urlSearchParams = new URLSearchParams(location.search);
@@ -22,8 +22,17 @@ const CollectionDetails: React.FC = () => {
         const fetchCollection = async () => {
             try {
                 setLoading(true);
-                const collectionsData = await BookCollectionService.getUserCollections();
-                if (collectionsData && Array.isArray(collectionsData)) {
+                // Parse id as number only if it's not "new"
+                const numericId = parseInt(id as string, 10);
+
+                // Check if id is a valid number
+                if (isNaN(numericId)) {
+                    setError("Invalid collection ID");
+                    setLoading(false);
+                    return;
+                }
+                const collectionsData = await BookCollectionService.getBookCollectionById(numericId);
+                if (collectionsData) {
                     setCollections(collectionsData);
                 } else {
                     console.error("Unexpected data format:", collectionsData);
@@ -38,20 +47,13 @@ const CollectionDetails: React.FC = () => {
 
         fetchCollection();
     }, [id]);
-    // USE TEST DATA
-    /*useEffect(() => {
-        // Chercher la collection dans les données de test
-        const foundCollection = collections.find((col) => col.id === id);
-        set(foundCollection ?? null);
-        setLoading(false);
-    }, [id]);*/
 
     if (loading) return <div className="text-center py-8">Loading...</div>;
 
     if (!collection) return <div className="text-center py-8">Collection not found.</div>;
 
     if (user) {
-        if (collection.owner.id !== user.id && !collection.isPublic) {
+        if (collection.user.id !== user.id && !collection.isPublic) {
             return <div className="text-center py-8">You don't have permission to view this collection.</div>;
         }
     }
@@ -73,7 +75,7 @@ const CollectionDetails: React.FC = () => {
                                     {collection.books.map((book) => (
                                         <li key={book.id} className="p-4 border rounded-lg bg-white">
                                             <h3 className="text-lg font-bold">{book.title}</h3>
-                                            {/*<p className="text-sm text-gray-600">{book.description}</p>*/}
+                                            <p className="text-sm text-gray-600">{book.description}</p>
                                             <p className="text-sm text-gray-500">Published: {book.publicationDate}</p>
                                             {book.authorNames.length > 0 && (
                                                 <p className="text-sm text-gray-500">

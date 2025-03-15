@@ -4,10 +4,8 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "../../pages/Layout.tsx";
 import {BookCollection, BookCollectionShow} from "../../model/BookCollection.ts";
-import {List} from "lucide-react";
-import {collections} from "../../assets/testData.ts";
-import axiosInstance from "../../services/AxiosInstance.ts";
 import BookCollectionService from "../../services/BookCollectionService.ts";
+import { getBookCount } from "../../utils/BookCollectionUtils";
 
 const PublicCollections: React.FC = () => {
     const [collections, setCollections] = useState<BookCollectionShow[]>([]);
@@ -19,9 +17,9 @@ const PublicCollections: React.FC = () => {
     useEffect(() => {
         const fetchCollections = async () => {
             try {
-                // const response = await axiosInstance.get(`/v1/collections/public`);
                 setLoading(true);
                 const publicCollectionsData = await BookCollectionService.getPublicCollections();
+                console.log("Public collections data:\n", publicCollectionsData);
                 if (publicCollectionsData && Array.isArray(publicCollectionsData)) {
                     console.log("PUBLIC COLLECTIONS FOUND");
                     console.log("DATA:\n" + publicCollectionsData);
@@ -63,6 +61,9 @@ const PublicCollections: React.FC = () => {
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Description</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Owner</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Number of Books
+                                        </th>
                                     </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200">
@@ -72,8 +73,11 @@ const PublicCollections: React.FC = () => {
                                             <td className="px-6 py-4 text-sm text-gray-600">{collection.description}</td>
                                             <td className="px-6 py-4 text-sm text-gray-600">{collection.user.firstName} {collection.user.lastName}</td>
                                             <td className="px-6 py-4 text-sm font-medium">
-                                                <Link to={`/collections/${collection.id}?origin=public`}
-                                                      className="text-indigo-600 hover:text-indigo-900">View</Link>
+                                                <Link to={`/collections/${collection.id}?origin=user`}
+                                                      className="text-indigo-600 hover:text-indigo-900 px-2 py-1 bg-indigo-100 rounded">View</Link>
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-gray-500">
+                                                {getBookCount(collection)}
                                             </td>
                                         </tr>
                                     ))}

@@ -3,7 +3,7 @@ package fr.uge.booqIn.mapper;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionIndex;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
-import fr.uge.booqIn.dto.user.UserShow;
+import fr.uge.booqIn.dto.user.UserIndex;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.BookCollection;
 import fr.uge.booqIn.entity.User;
@@ -31,10 +31,6 @@ public class BookCollectionMapper {
       return null;
     }
 
-//    Set<String> bookTitles = bookCollection.getBooks().stream()
-//            .map(Book::getTitle)
-//            .collect(Collectors.toSet());
-
     String ownerName = bookCollection.getOwner() != null ?
             bookCollection.getOwner().getFirstName() + " " + bookCollection.getOwner().getLastName() : "Unknown";
 
@@ -55,20 +51,17 @@ public class BookCollectionMapper {
       return null;
     }
 
-    Set<BookIndex> bookShows = bookCollection.getBooks().stream()
+    Set<BookIndex> bookIndexes = bookCollection.getBooks().stream()
             .map(bookMapper::toBookIndex)
             .collect(Collectors.toSet());
     User owner = bookCollection.getOwner();
-    List<BookCollectionIndex> collectionIndexList = owner.getCollections().stream()
-            .map(this::toBookCollectionIndex)
-            .toList();
-    UserShow userShow = new UserShow(
+
+    UserIndex userIndex = new UserIndex(
             owner.getId(),
             owner.getFirstName(),
             owner.getLastName(),
             owner.getEmail(),
             owner.getAddress(),
-            collectionIndexList,
             owner.getRole()
     );
 
@@ -77,9 +70,9 @@ public class BookCollectionMapper {
             bookCollection.getTitle(),
             bookCollection.getDescription(),
             bookCollection.isPublic(),
-            bookShows,
+            bookIndexes,
             //owner,
-            userShow,
+            userIndex,
             bookCollection.getCreatedAt(),
             bookCollection.getUpdatedAt()
     );
@@ -100,7 +93,7 @@ public class BookCollectionMapper {
             .description(bookCollectionShow.description())
             .isPublic(bookCollectionShow.isPublic())
             .books(books.stream().toList())
-            .owner(userMapper.userShowToUser(bookCollectionShow.user()))
+            .owner(userMapper.userIndexToUser(bookCollectionShow.user()))
             //.owner(bookCollectionShow.user())
             .createdAt(bookCollectionShow.createdAt())
             .updatedAt(bookCollectionShow.updatedAt())

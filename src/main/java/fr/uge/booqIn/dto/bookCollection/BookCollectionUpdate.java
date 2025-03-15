@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 public record BookCollectionUpdate(
-        Optional<String> name,
+        Optional<String> title,
         Optional<String> description,
         boolean isPublic,
         Optional<List<Book>> books

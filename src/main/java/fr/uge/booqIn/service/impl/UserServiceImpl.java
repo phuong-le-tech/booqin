@@ -5,7 +5,6 @@ import fr.uge.booqIn.dto.user.UserShow;
 import fr.uge.booqIn.dto.user.UserUpdate;
 import fr.uge.booqIn.entity.Cart;
 import fr.uge.booqIn.entity.User;
-import fr.uge.booqIn.enums.StatusPayment;
 import fr.uge.booqIn.exception.DuplicateResourceException;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.mapper.UserMapper;
@@ -22,7 +21,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.Optional;
 
 
@@ -146,7 +144,8 @@ public class UserServiceImpl implements UserServiceInterface {
             .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
 
     return new UserIndex(userWithCollections.getId(), userWithCollections.getFirstName(),
-            userWithCollections.getLastName(), userWithCollections.getEmail());
+            userWithCollections.getLastName(), userWithCollections.getEmail(),
+            userWithCollections.getAddress(), userWithCollections.getRole());
   }
 
   public User findUserById(Long id) {

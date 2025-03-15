@@ -6,7 +6,7 @@ import { PageInfo } from "../../model/Pagination"
 
 interface Collection {
     id: number
-    name: string
+    title: string
     description: string
     category: string
     createdBy: string
@@ -111,7 +111,7 @@ export const CollectionsTable: React.FC = () => {
     }
 
     const filteredCollections = collections.filter(collection =>
-        collection.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        collection.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         collection.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         collection.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         collection.createdBy?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -177,7 +177,7 @@ export const CollectionsTable: React.FC = () => {
                         filteredCollections.map((collection) => (
                             <tr key={collection.id} className="hover:bg-gray-50">
                                 <td className="py-2 px-4 border-b">{collection.id}</td>
-                                <td className="py-2 px-4 border-b">{collection.name}</td>
+                                <td className="py-2 px-4 border-b">{collection.title}</td>
                                 <td className="py-2 px-4 border-b">
                                     {collection.description.length > 50
                                         ? `${collection.description.substring(0, 50)}...`
@@ -281,7 +281,7 @@ export const CollectionsTable: React.FC = () => {
             {collectionToDelete && (
                 <DeleteConfirmModal
                     title="Delete Collection"
-                    message={`Are you sure you want to delete the collection "${collectionToDelete.name}"? This action cannot be undone.`}
+                    message={`Are you sure you want to delete the collection "${collectionToDelete.title}"? This action cannot be undone.`}
                     onConfirm={confirmDelete}
                     onCancel={() => setCollectionToDelete(null)}
                 />

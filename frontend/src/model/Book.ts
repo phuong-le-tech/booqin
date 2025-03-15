@@ -9,6 +9,14 @@ export interface BookIndex {
     publicationDate: Date;
 }
 
+export interface BookDetails {
+    id: number;
+    title: string;
+    description: string;
+    authorNames: string[];
+    publicationDate: Date;
+}
+
 // Modèle Book détaillé (BookShow)
 export interface Book {
     id: number;
