@@ -41,6 +41,11 @@ public interface VoteRepository extends JpaRepository<Vote, Long>, JpaSpecificat
     long countByEntityIdAndEntityTypeAndVoteType(Long entityId, String entityType, VoteType voteType);
 
     /**
+     * Count all votes for a specific entity
+     */
+    long countByEntityIdAndEntityType(Long entityId, String entityType);
+
+    /**
      * Delete all votes for a specific entity
      */
     void deleteAllByEntityIdAndEntityType(Long entityId, String entityType);
@@ -54,7 +59,7 @@ public interface VoteRepository extends JpaRepository<Vote, Long>, JpaSpecificat
      * Get vote score (upvotes - downvotes) for an entity
      */
     @Query("SELECT COUNT(CASE WHEN v.voteType = 'UPVOTE' THEN 1 END) - " +
-           "COUNT(CASE WHEN v.voteType = 'DOWNVOTE' THEN 1 END) " +
-           "FROM Vote v WHERE v.entityId = :entityId AND v.entityType = :entityType")
+            "COUNT(CASE WHEN v.voteType = 'DOWNVOTE' THEN 1 END) " +
+            "FROM Vote v WHERE v.entityId = :entityId AND v.entityType = :entityType")
     Integer getVoteScore(@Param("entityId") Long entityId, @Param("entityType") String entityType);
 }
