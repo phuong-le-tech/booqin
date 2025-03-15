@@ -9,7 +9,6 @@ import java.util.Set;
 
 public record BookShow(
         Long id,
-        Set<String> isbns,
         String title,
         Set<AuthorDto> authors,
         String description,
