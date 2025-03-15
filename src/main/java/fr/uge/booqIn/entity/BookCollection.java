@@ -13,6 +13,10 @@ public class BookCollection {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @Version
+  @Column(nullable = false)
+  private Long version;
+
   @Column(nullable = false)
   private String title;
 
@@ -22,7 +26,7 @@ public class BookCollection {
   @ManyToOne(fetch = FetchType.LAZY)
   private User owner;
 
-  @ManyToMany
+  @ManyToMany(fetch = FetchType.LAZY)
   private List<Book> books = new ArrayList<>();
 
   @Column(nullable = false)
@@ -150,6 +154,10 @@ public class BookCollection {
     return id;
   }
 
+  public Long getVersion() {
+    return version;
+  }
+
   public String getTitle() {
     return title;
   }
@@ -184,6 +192,10 @@ public class BookCollection {
 
   public void setId(Long id) {
     this.id = id;
+  }
+
+  public void setVersion(Long version) {
+    this.version = version;
   }
 
   public void setTitle(String name) {

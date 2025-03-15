@@ -1,13 +1,13 @@
 package fr.uge.booqIn.scheduler;
 
-import fr.uge.booqIn.Adapter.BookAPIs.BookFetcher;
-import fr.uge.booqIn.Adapter.BookAPIs.BookFetcherFactory;
+import fr.uge.booqIn.adapter.bookApi.BookFetcher;
+import fr.uge.booqIn.adapter.bookApi.BookFetcherFactory;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.BookLending;
 import fr.uge.booqIn.enums.BookStatus;
 import fr.uge.booqIn.repository.BookLendingRepository;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 

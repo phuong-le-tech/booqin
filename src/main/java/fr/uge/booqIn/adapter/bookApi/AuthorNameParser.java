@@ -1,4 +1,4 @@
-package fr.uge.booqIn.Adapter.BookAPIs;
+package fr.uge.booqIn.adapter.bookApi;
 
 import fr.uge.booqIn.entity.Author;
 import java.util.HashSet;

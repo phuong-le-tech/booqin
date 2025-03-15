@@ -1,4 +1,4 @@
-package fr.uge.booqIn.Adapter.BookAPIs.GoogleAPI;
+package fr.uge.booqIn.adapter.bookApi.googleApi;
 
 
 public record IndustryIdentifier(String type, String identifier) {

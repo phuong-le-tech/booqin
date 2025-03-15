@@ -1,7 +1,7 @@
-package fr.uge.booqIn.Adapter.BookAPIs.openlibrary;
+package fr.uge.booqIn.adapter.bookApi.openlibrary;
 
-import fr.uge.booqIn.Adapter.BookAPIs.AuthorNameParser;
-import fr.uge.booqIn.Adapter.BookAPIs.BookFetcher;
+import fr.uge.booqIn.adapter.bookApi.AuthorNameParser;
+import fr.uge.booqIn.adapter.bookApi.BookFetcher;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.singleton.WebClientSingleton;

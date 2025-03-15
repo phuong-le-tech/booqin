@@ -7,7 +7,7 @@ import fr.uge.booqIn.enums.BookStatus;
 import fr.uge.booqIn.repository.BookLendingRepository;
 import fr.uge.booqIn.repository.BookRepository;
 import fr.uge.booqIn.service.interfaces.BookLendingInterface;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 

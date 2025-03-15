@@ -9,7 +9,6 @@ import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.mapper.BookCollectionMapper;
 import fr.uge.booqIn.mapper.BookMapper;
-import fr.uge.booqIn.service.BookCollectionService;
 import fr.uge.booqIn.service.impl.BookServiceImpl;
 import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
 import jakarta.validation.Valid;

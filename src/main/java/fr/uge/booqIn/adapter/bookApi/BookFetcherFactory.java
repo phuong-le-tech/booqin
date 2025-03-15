@@ -1,4 +1,4 @@
-package fr.uge.booqIn.Adapter.BookAPIs;
+package fr.uge.booqIn.adapter.bookApi;
 
 public class BookFetcherFactory {
     private BookFetcherFactory(){

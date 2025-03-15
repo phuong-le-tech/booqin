@@ -12,7 +12,7 @@ import fr.uge.booqIn.repository.UserRepository;
 import fr.uge.booqIn.repository.VoteRepository;
 import fr.uge.booqIn.service.interfaces.VoteServiceInterface;
 import fr.uge.booqIn.strategy.VotableStrategyContext;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.stereotype.Service;

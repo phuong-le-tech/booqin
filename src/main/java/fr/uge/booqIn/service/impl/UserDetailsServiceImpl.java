@@ -1,4 +1,4 @@
-package fr.uge.booqIn.service;
+package fr.uge.booqIn.service.impl;
 
 import fr.uge.booqIn.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;

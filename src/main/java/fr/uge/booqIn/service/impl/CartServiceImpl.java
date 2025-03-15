@@ -10,7 +10,7 @@ import fr.uge.booqIn.repository.BookRepository;
 import fr.uge.booqIn.repository.CartRepository;
 import fr.uge.booqIn.service.interfaces.CartServiceInterface;
 import fr.uge.booqIn.service.interfaces.UserServiceInterface;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -38,6 +38,7 @@ public class CartServiceImpl implements CartServiceInterface {
   }
 
   @Override
+  @Transactional
   public Cart updateCartStatus(Long cartId, StatusPayment status) {
     Cart cart = getCart(cartId);
     cart.setStatut(status);

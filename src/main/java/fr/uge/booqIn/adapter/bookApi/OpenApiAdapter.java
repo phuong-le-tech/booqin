@@ -1,6 +1,6 @@
-package fr.uge.booqIn.Adapter.BookAPIs;
+package fr.uge.booqIn.adapter.bookApi;
 
-import fr.uge.booqIn.Adapter.BookAPIs.openlibrary.OpenAPI;
+import fr.uge.booqIn.adapter.bookApi.openlibrary.OpenAPI;
 import fr.uge.booqIn.entity.Book;
 
 import java.util.List;

@@ -20,6 +20,9 @@ public class Book implements Votable {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @Version
+  private Long version;
+
   @ElementCollection
   @CollectionTable(
           name = "book_isbn",
@@ -49,7 +52,6 @@ public class Book implements Votable {
           name = "book_category",
           joinColumns = @JoinColumn(name = "book_id")
   )
-
   @Column(name = "category")
   private Set<String> categories = new HashSet<>();
 

@@ -22,7 +22,8 @@ public class AuthMapper {
             user.getFirstName(),
             user.getLastName(),
             user.getEmail(),
-            user.getRole().name()
+            user.getRole().name(),
+            user.getAddress()
     );
   }
 }

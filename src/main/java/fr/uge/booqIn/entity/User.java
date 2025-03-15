@@ -18,6 +18,10 @@ public class User implements UserDetails {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @Version
+  @Column(nullable = false)
+  private Long version;
+
   @NotBlank(message = "First name is required")
   @Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters")
   @Column(nullable = false)
@@ -53,7 +57,7 @@ public class User implements UserDetails {
   @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<BookCollection> collections = new ArrayList<>();
 
-  @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+  @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
   @JoinColumn(name = "cart_id")
   private Cart cart;
 
@@ -90,6 +94,10 @@ public class User implements UserDetails {
 
   public Long getId() {
     return id;
+  }
+
+  public Long getVersion() {
+    return version;
   }
 
   public String getFirstName() {
@@ -147,6 +155,10 @@ public class User implements UserDetails {
 
   public Date getUpdatedAt() {
     return updatedAt;
+  }
+
+  public void setVersion(Long version) {
+    this.version = version;
   }
 
   public void setFirstName(String fistName) {
@@ -215,4 +227,9 @@ public class User implements UserDetails {
   public void removeCollection(BookCollection collection) {
     collections.remove(collection);
   }
+
+  public void addBookToCart(Book book) {
+    cart.addBook(book);
+  }
+
 }

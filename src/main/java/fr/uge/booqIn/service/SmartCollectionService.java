@@ -6,7 +6,7 @@ import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.factory.CriteriaStrategyFactory;
 import fr.uge.booqIn.repository.BookRepository;
 import fr.uge.booqIn.repository.BookCollectionRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 

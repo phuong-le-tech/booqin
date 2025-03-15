@@ -1,4 +1,4 @@
-package fr.uge.booqIn.Adapter.BookAPIs.openlibrary;
+package fr.uge.booqIn.adapter.bookApi.openlibrary;
 
 import java.util.List;
 

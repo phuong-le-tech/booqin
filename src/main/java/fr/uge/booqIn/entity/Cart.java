@@ -62,6 +62,10 @@ public class Cart {
     this.books = books;
   }
 
+  public void addBook(Book book) {
+    this.books.add(book);
+  }
+
   public LocalDateTime getCreatedAt() {
     return createdAt;
   }

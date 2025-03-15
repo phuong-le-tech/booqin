@@ -14,7 +14,7 @@ import fr.uge.booqIn.repository.CartRepository;
 import fr.uge.booqIn.repository.UserRepository;
 import fr.uge.booqIn.service.interfaces.BookLendingInterface;
 import jakarta.annotation.PostConstruct;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
