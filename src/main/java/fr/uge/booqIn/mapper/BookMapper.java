@@ -43,7 +43,6 @@ public class BookMapper {
         }
         return new BookShow(
                 book.getId(),
-                book.getIsbns(),
                 book.getTitle(),
                 book.getAuthors() != null ? book.getAuthors().stream()
                         .map(this::toAuthorDto)
