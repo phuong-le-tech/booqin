@@ -3,6 +3,7 @@ package fr.uge.booqIn.controller.web;
 import fr.uge.booqIn.dto.book.BookCreate;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
+import fr.uge.booqIn.dto.bookCollection.LiteCollection;
 import fr.uge.booqIn.dto.vote.VoteCount;
 import fr.uge.booqIn.dto.vote.VoteCreate;
 import fr.uge.booqIn.dto.vote.VoteResponse;
@@ -10,6 +11,7 @@ import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.VoteType;
+import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
 import fr.uge.booqIn.service.interfaces.VoteServiceInterface;
 import org.springframework.data.domain.Page;
@@ -31,10 +33,13 @@ import java.util.stream.Collectors;
 public class BookWebController {
     private final BookServiceInterface bookService;
     private final VoteServiceInterface voteServiceInterface;
+    private final BookCollectionServiceInterface bookCollectionService;
 
-    public BookWebController(BookServiceInterface bookService, VoteServiceInterface voteServiceInterface) {
+
+    public BookWebController(BookServiceInterface bookService, VoteServiceInterface voteServiceInterface, BookCollectionServiceInterface bookCollectionService) {
         this.bookService = bookService;
         this.voteServiceInterface = voteServiceInterface;
+      this.bookCollectionService = bookCollectionService;
     }
 
     @GetMapping
@@ -60,7 +65,12 @@ public class BookWebController {
         model.addAttribute("author", author);
         model.addAttribute("sort", sort);
         model.addAttribute("direction", direction);
-
+        if(currentUser != null) {
+            model.addAttribute("userId", currentUser.getId());
+            var b = bookCollectionService.getUserCollections(currentUser);
+            var bcc = b.stream().map(bc -> new LiteCollection(bc.getId(),bc.getTitle())).toList();
+            model.addAttribute("bookCollections", bcc);
+        }
         return "book/list";
     }
 
@@ -73,8 +83,9 @@ public class BookWebController {
         model.addAttribute("votes", count);
         if (currentUser != null) {
             var voteUser = voteServiceInterface.getUserVoteType(currentUser.getId(),id,"BOOK");
-            model.addAttribute("userVote",voteUser.toString());
-            System.out.println(voteUser);
+            if(voteUser != null) {
+                model.addAttribute("userVote",voteUser.toString());
+            }
             model.addAttribute("user",currentUser);
         }
         return "book/bookDetails";
@@ -134,4 +145,5 @@ public class BookWebController {
         }
         return "redirect:/books/" + bookId;
     }
+
 }
