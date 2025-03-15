@@ -1,14 +1,16 @@
 package fr.uge.booqIn.controller.api;
 
+import fr.uge.booqIn.dto.bookCollection.BookCollectionCreate;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionIndex;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionUpdate;
+import fr.uge.booqIn.dto.user.UserShow;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.BookCollection;
 import fr.uge.booqIn.entity.User;
-import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.factory.ApiResponse;
 import fr.uge.booqIn.mapper.BookCollectionMapper;
+import fr.uge.booqIn.mapper.UserMapper;
 import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,7 +18,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +25,6 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.logging.Logger;
 
 @RestController
@@ -66,18 +66,22 @@ public class BookCollectionController {
    * Create a new collection
    */
   @PostMapping("")
-  public ResponseEntity<ApiResponse<BookCollection>> createCollection(
-          @Valid @RequestBody BookCollection bookCollection,
+  public ResponseEntity<ApiResponse<BookCollectionShow>> createCollection(
+          @Valid @RequestBody BookCollectionCreate bookCollectionCreateDto,
           @AuthenticationPrincipal User currentUser) {
 
     logger.info("✅ Creating a new collection for user: " + currentUser.getUsername());
-
-    // Set the owner to the current user
+    BookCollection bookCollection = new BookCollection();
+    bookCollection.setTitle(bookCollectionCreateDto.title());
+    bookCollection.setDescription(bookCollectionCreateDto.description());
+    bookCollection.setPublic(bookCollectionCreateDto.isPublic());
     bookCollection.setOwner(currentUser);
 
-    BookCollection created = bookCollectionService.createBookCollection(bookCollection);
+    BookCollection createdCollection = bookCollectionService.createBookCollection(bookCollection);
+    BookCollectionShow collectionShow = bookCollectionMapper.toBookCollectionShow(createdCollection);
+
     return ResponseEntity.status(HttpStatus.CREATED)
-            .body(ApiResponse.success("Collection created successfully", created));
+            .body(ApiResponse.success("Collection created successfully", collectionShow));
   }
 
   /**
@@ -90,7 +94,6 @@ public class BookCollectionController {
 
     BookCollectionShow collection = bookCollectionService.findById(id);
     return ResponseEntity.ok(ApiResponse.success("Collection found", collection));
-
   }
 
   /**
@@ -129,7 +132,6 @@ public class BookCollectionController {
 
     BookCollectionShow updated = bookCollectionService.patchBookCollection(id, bookCollectionUpdate);
     return ResponseEntity.ok(ApiResponse.success("Collection updated successfully", updated));
-
   }
 
   /**
@@ -142,10 +144,8 @@ public class BookCollectionController {
 
     logger.info("📚 Adding book " + bookId + " to collection " + collectionId);
 
-
     BookCollection updated = bookCollectionService.addBookToCollection(collectionId, bookId);
     return ResponseEntity.ok(ApiResponse.success("Book added to collection successfully", updated));
-
   }
 
   /**
@@ -159,10 +159,8 @@ public class BookCollectionController {
 
     logger.info("🗑️ Removing book " + bookId + " from collection " + collectionId);
 
-
     BookCollection updated = bookCollectionService.removeBookFromCollection(collectionId, bookId, currentUser);
     return ResponseEntity.ok(ApiResponse.success("Book removed from collection successfully", updated));
-
   }
 
   /**
@@ -171,14 +169,7 @@ public class BookCollectionController {
   @GetMapping("/public")
   public ResponseEntity<ApiResponse<List<BookCollectionShow>>> getPublicCollections() {
     logger.info("✅ Fetching public collections");
-    //List<BookCollection> collections = bookCollectionService.getPublicCollections();
     List<BookCollectionShow> collections = bookCollectionService.getPublicCollections();
-    System.out.println("Collections Size: " + collections.size());
-    BookCollectionShow collection = collections.getFirst();
-    System.out.println("Collection name: " + collection.name());
-    System.out.println("Collection desc: " + collection.description());
-    System.out.println("Collection books: " + collection.books().size());
-    System.out.println("Collection user books to lend nb: " + collection.user().booksToLend().size());
     return ResponseEntity.ok(ApiResponse.success("Public collections fetched", collections));
   }
 
@@ -201,7 +192,6 @@ public class BookCollectionController {
   @GetMapping("/user/with-books")
   public ResponseEntity<ApiResponse<List<BookCollection>>> getUserCollectionsWithBooks(
           @AuthenticationPrincipal User currentUser) {
-
     logger.info("✅ Fetching collections with books for user: " + currentUser.getUsername());
 
     List<BookCollection> collections = bookCollectionService.getUserCollectionsWithBooks(currentUser)
@@ -218,9 +208,7 @@ public class BookCollectionController {
           @PathVariable Long bookId) {
 
     logger.info("📖 Fetching book " + bookId + " from collection " + collectionId);
-
     Book book = bookCollectionService.getBookFromCollection(collectionId, bookId);
-
     return ResponseEntity.ok(ApiResponse.success("Book fetched", book));
   }
 

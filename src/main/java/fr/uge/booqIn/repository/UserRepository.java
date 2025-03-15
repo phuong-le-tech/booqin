@@ -18,8 +18,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
   @Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.collections WHERE u.id = :id")
   Optional<User> findByIdWithCollections(Long id);
 
-  @Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.booksToLend WHERE u.id = :id")
-  Optional<User> findByIdWithBooksToLend(Long id);
+//  @Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.booksToLend WHERE u.id = :id")
+//  Optional<User> findByIdWithBooksToLend(Long id);
 
   Optional<User> findByEmail(String email);
 

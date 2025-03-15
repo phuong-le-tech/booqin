@@ -12,9 +12,11 @@
     <div class="bg-white shadow-lg rounded-lg overflow-hidden mb-8">
         <div class="p-6">
             <form th:action="@{/collections/{id}/edit(id=${bookCollection.id})}" th:object="${bookCollection}" method="post" class="space-y-6">
+                <input type="hidden" th:field="*{id}" />
+
                 <div class="space-y-2">
-                    <label for="name" class="text-sm font-medium text-gray-700">Collection Name</label>
-                    <input type="text" id="name" name="name" th:field="*{title}" required
+                    <label for="title" class="text-sm font-medium text-gray-700">Collection Name</label>
+                    <input type="text" id="title" name="title" th:field="*{title}" required
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                     <p th:if="${#fields.hasErrors('title')}" th:errors="*{title}" class="text-red-500 text-xs mt-1"></p>
                 </div>
@@ -27,7 +29,9 @@
                 </div>
 
                 <div class="flex items-center">
-                    <input type="checkbox" id="isPublic" name="isPublic" th:checked="*{public}"
+<!--                    <input type="checkbox" id="public" name="public" th:checked="*{public}"-->
+<!--                           class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">-->
+                    <input type="checkbox" id="isPublic" name="isPublic" value="true" th:checked="*{public}"
                            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
                     <label for="isPublic" class="ml-2 block text-sm text-gray-700">Make this collection public</label>
                     <p class="text-xs text-gray-500 ml-2">Public collections can be viewed by all users</p>
