@@ -48,9 +48,6 @@ public class User implements UserDetails {
   private UserRole role;
 
   @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
-  private Set<ToLendBook> booksToLend = new HashSet<>();
-
-  @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<BookCollection> collections = new ArrayList<>();
 
   @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
@@ -133,10 +130,6 @@ public class User implements UserDetails {
     return role;
   }
 
-  public Set<ToLendBook> getBooksToLend() {
-    return booksToLend;
-  }
-
   public List<BookCollection> getCollections() {
     return collections;
   }
@@ -177,10 +170,6 @@ public class User implements UserDetails {
     this.role = role;
   }
 
-  public void setBooksToLend(Set<ToLendBook> toBorrowBooks) {
-    this.booksToLend = toBorrowBooks;
-  }
-
   public void setCollections(List<BookCollection> collections) {
     this.collections = collections;
   }
@@ -201,16 +190,6 @@ public class User implements UserDetails {
     collections.add(collection);
     collection.setOwner(this);
   }
-
-  public void addBookToLend(ToLendBook book) {
-    booksToLend.add(book);
-    book.setOwner(this);
-  }
-  
-  public void removeBookToLend(ToLendBook book) {
-    booksToLend.remove(book);
-  }
-
 
   public void removeCollection(BookCollection collection) {
     collections.remove(collection);

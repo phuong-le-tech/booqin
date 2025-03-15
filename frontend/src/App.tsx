@@ -15,6 +15,7 @@ import {ShoppingCart} from "./pages/shoppingCart/ShoppingCart";
 import {Profile} from "./pages/user/Profile.tsx";
 import Collections from "./components/collections/Collections.tsx";
 import AdminPage from "./pages/admin/AdminPage.tsx";
+import CreateCollection from "./components/collections/CreateCollection.tsx";
 import { BookLending } from "./pages/bookLending/BookLending.tsx";
 
 const App: React.FC = () => {
@@ -45,6 +46,7 @@ const App: React.FC = () => {
                         <Route path="/collections/public" element={<PublicCollections />} />
                         <Route path="/collections/:id" element={<CollectionDetails />} />
                         <Route path="/admin" element={<AdminPage/>} />
+                        <Route path="/collections/new" element={<CreateCollection />} />
                     </Routes>
                     <ToastContainer
                         position="top-right"

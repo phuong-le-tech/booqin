@@ -3,7 +3,7 @@ import { X } from "lucide-react"
 
 interface Collection {
     id: number
-    name: string
+    title: string
     description: string
     category: string
     createdBy: string
@@ -23,7 +23,7 @@ export const CollectionEditModal: React.FC<CollectionEditModalProps> = ({
                                                                             onSave
                                                                         }) => {
     const [formData, setFormData] = useState({
-        name: collection.name || "",
+        name: collection.title || "",
         description: collection.description || "",
         category: collection.category || "",
         isPublic: collection.isPublic
@@ -48,10 +48,6 @@ export const CollectionEditModal: React.FC<CollectionEditModalProps> = ({
 
         if (!formData.description.trim()) {
             newErrors.description = "Description is required"
-        }
-
-        if (!formData.category.trim()) {
-            newErrors.category = "Category is required"
         }
 
         setErrors(newErrors)

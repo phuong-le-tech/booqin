@@ -15,6 +15,7 @@ import fr.uge.booqIn.specification.BookCollectionSpecification;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import org.hibernate.Hibernate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -82,12 +83,14 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
     if (bookCollection.getBooks() == null) {
       bookCollection.setBooks(new ArrayList<>());
     }
-    System.out.println("books collection is initialized");
-
     bookCollection.setCreatedAt(new Date());
     bookCollection.setUpdatedAt(new Date());
-    System.out.println("Dates create & update");
-    return bookCollectionRepository.save(bookCollection);
+
+    BookCollection savedCollection = bookCollectionRepository.save(bookCollection);
+    System.out.println("SAVED IN BDD");
+    System.out.println("CREATED BOOK COLLECTION:\n" + savedCollection);
+    //return bookCollectionMapper.toBookCollectionShow(savedCollection);
+    return savedCollection;
   }
 
   @Override
@@ -99,7 +102,7 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
     }
     verifyOwnership(bookCollection);
     validateBooksExist(bookCollection.getBooks());
-
+    System.out.println("VERIFS DONE TO PATCH");
     bookCollection.setUpdatedAt(new Date());
     return bookCollectionRepository.save(bookCollection);
   }
@@ -109,12 +112,12 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
   public BookCollectionShow patchBookCollection(@NotNull Long id, @NotNull @Valid BookCollectionUpdate bookCollectionUpdate) {
     BookCollection bookCollection = findBookCollectionById(id);
 
-    bookCollectionUpdate.name().ifPresent(bookCollection::setTitle);
+    bookCollectionUpdate.title().ifPresent(bookCollection::setTitle);
     bookCollectionUpdate.description().ifPresent(bookCollection::setDescription);
-
+    bookCollection.setPublic(bookCollectionUpdate.isPublic());
     bookCollectionUpdate.books().ifPresent(books -> {
       validateBooksExist(books);
-      bookCollection.setBooks(books);
+      bookCollection.setBooks(new ArrayList<>(books));
     });
 
     bookCollection.setUpdatedAt(new Date());
