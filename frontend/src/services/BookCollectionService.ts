@@ -69,7 +69,7 @@ class BookCollectionService {
 
     async addBookToCollection(collectionId: string | number, bookId: string | number) {
         try {
-            const response = await axios.post<ApiResponse<BookCollectionShow>>(`${API_URL}/${collectionId}/books/${bookId}`);
+            const response = await axios.post<ApiResponse<BookCollection>>(`${API_URL}/${collectionId}/books/${bookId}`);
             return response.data.data;
         } catch (error) {
             console.error(`Error adding book ${bookId} to collection ${collectionId}:`, error);
@@ -79,7 +79,7 @@ class BookCollectionService {
 
     async removeBookFromCollection(collectionId: string | number, bookId: string | number) {
         try {
-            const response = await axios.delete<ApiResponse<BookCollectionShow>>(`${API_URL}/${collectionId}/books/${bookId}`);
+            const response = await axios.delete<ApiResponse<BookCollection>>(`${API_URL}/${collectionId}/books/${bookId}`);
             return response.data.data;
         } catch (error) {
             console.error(`Error removing book ${bookId} from collection ${collectionId}:`, error);

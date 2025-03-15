@@ -71,8 +71,7 @@ public class BookCollectionMapper {
             bookCollection.getDescription(),
             bookCollection.isPublic(),
             bookIndexes,
-            //owner,
-            userIndex,
+            userIndex,  // owner
             bookCollection.getCreatedAt(),
             bookCollection.getUpdatedAt()
     );
