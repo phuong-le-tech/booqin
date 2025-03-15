@@ -15,6 +15,7 @@ import {ShoppingCart} from "./pages/shoppingCart/ShoppingCart";
 import {Profile} from "./pages/user/Profile.tsx";
 import Collections from "./components/collections/Collections.tsx";
 import AdminPage from "./pages/admin/AdminPage.tsx";
+import { BookLending } from "./pages/bookLending/BookLending.tsx";
 
 const App: React.FC = () => {
     return (
@@ -38,6 +39,7 @@ const App: React.FC = () => {
                         } />
                         <Route path={"/profile"} element={<Profile />} />
                         <Route path="/cart" element={<ShoppingCart />} />
+                        <Route path="/loans" element={<BookLending />} /> {/* Ajoutez cette nouvelle route */}
                         {/*<Route path="/books/:id" element={<BookDetails />} />*/}
                         <Route path="/collections" element={<Collections />} />
                         <Route path="/collections/public" element={<PublicCollections />} />
@@ -48,8 +50,7 @@ const App: React.FC = () => {
                         position="top-right"
                         autoClose={5000}
                         hideProgressBar={false}
-                        newestOnTop={false}
-                        closeOnClick
+                        newestOnTop={false} closeOnClick
                         rtl={false}
                         pauseOnFocusLoss
                         draggable

@@ -1,13 +1,18 @@
 package fr.uge.booqIn.entity;
 
+import fr.uge.booqIn.model.Commentable;
+import fr.uge.booqIn.model.PolymorphicEntity;
+import fr.uge.booqIn.model.Votable;
 import jakarta.persistence.*;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 @Entity
-public class BookCollection {
+public class BookCollection implements PolymorphicEntity, Commentable, Votable {
+  private static final String ENTITY_TYPE = "COLLECTION";
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -154,6 +159,11 @@ public class BookCollection {
 
   public Long getId() {
     return id;
+  }
+
+  @Override
+  public String getEntityType() {
+    return ENTITY_TYPE;
   }
 
   public String getTitle() {

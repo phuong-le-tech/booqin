@@ -103,7 +103,7 @@ public class BookCollectionWebController {
       logger.info("Collection found: " +  collectionOpt.title());
       BookShow bookShow = bookService.findById(bookId);
       Set<Author> authors = bookShow.authors().stream().map(bookMapper::toAuthor).collect(Collectors.toSet());
-      Book book = new Book.Builder().id(bookShow.id()).isbns(bookShow.isbns())
+      Book book = new Book.Builder().id(bookShow.id())
               .title(bookShow.title()).authors(authors).description(bookShow.description())
               .publicationDate(bookShow.publicationDate()).createdAt(bookShow.createdAt())
               .updatedAt(bookShow.updatedAt())

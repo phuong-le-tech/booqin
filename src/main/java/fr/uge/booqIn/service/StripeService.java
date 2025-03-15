@@ -157,8 +157,11 @@ public class StripeService {
                             HttpStatus.NOT_FOUND,
                             "Utilisateur introuvable pour le panier ID : " + cart.getId()
                     ));
+            
+            System.out.println("✅  Voici les livres qui vont être marqués comme expédiés :"  + cart.getBooks());
             for (var book : cart.getBooks()) {
-                bookLendingService.markAsShipped(book.getId(), user.getId());
+                System.out.println("✅ Livre marqué comme expédié pour le livre ID : " + book.getId());
+                bookLendingService.markAsPending(book.getId(), user.getId());
             }
             
             System.out.println("✅ Statut de paiement mis à jour pour le panier ID : " + cart.getId() + " -> " + StatusPayment.CONFIRMED);
@@ -174,21 +177,7 @@ public class StripeService {
         System.out.println("⚠️ Erreur lors du traitement de la " + contextName + ": " + e.getMessage());
     }
     
-    public void handleCheckoutSuccess(Session session) {
-        String sessionId = session.getId();
-        
-        Cart cart = cartRepository.findByPaymentIntentId(sessionId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Panier introuvable pour la session Stripe ID : " + sessionId
-                ));
-        
-        cart.setStatut(StatusPayment.CONFIRMED);
-        cartRepository.save(cart);
-        
-        System.out.println("✅ Paiement confirmé pour le panier ID : " + cart.getId());
-    }
-    
+
     
     
 
@@ -220,7 +209,6 @@ public class StripeService {
             Session session = Session.create(params);
             cart.setPaymentIntentId(session.getId());
             cartRepository.save(cart);
-            
             return session;
         } catch (Exception e) {
             throw new RuntimeException("Erreur lors de la création de la session Stripe", e);
