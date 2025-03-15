@@ -1,6 +1,9 @@
 package fr.uge.booqIn.entity;
 
 import fr.uge.booqIn.enums.VoteType;
+import fr.uge.booqIn.model.PolymorphicAssociation;
+import fr.uge.booqIn.model.PolymorphicEntity;
+import fr.uge.booqIn.model.Votable;
 import jakarta.persistence.*;
 
 /**
@@ -10,7 +13,7 @@ import jakarta.persistence.*;
 @Table(uniqueConstraints = {
         @UniqueConstraint(columnNames = {"user_id", "entity_id", "entity_type"})
 })
-public class Vote {
+public class Vote extends PolymorphicAssociation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -19,27 +22,21 @@ public class Vote {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "entity_id", nullable = false)
-    private Long entityId;
-
-    @Column(name = "entity_type", nullable = false)
-    private String entityType;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private VoteType voteType;
 
     public Vote() {}
 
-    public Vote(User user, Long entityId, String entityType, VoteType voteType) {
+    public Vote(User user, VoteType voteType) {
         this.user = user;
-        this.entityId = entityId;
-        this.entityType = entityType;
         this.voteType = voteType;
     }
 
-    public static Vote create(User user, Votable votable, String entityType, VoteType voteType) {
-        return new Vote(user, votable.getId(), entityType, voteType);
+    public static Vote create(User user, Votable votable, VoteType voteType) {
+        Vote vote = new Vote(user, voteType);
+        vote.setTargetEntity(votable);
+        return vote;
     }
 
     // Getters and setters
@@ -57,22 +54,6 @@ public class Vote {
 
     public void setUser(User user) {
         this.user = user;
-    }
-
-    public Long getEntityId() {
-        return entityId;
-    }
-
-    public void setEntityId(Long entityId) {
-        this.entityId = entityId;
-    }
-
-    public String getEntityType() {
-        return entityType;
-    }
-
-    public void setEntityType(String entityType) {
-        this.entityType = entityType;
     }
 
     public VoteType getVoteType() {

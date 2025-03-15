@@ -1,13 +1,19 @@
 package fr.uge.booqIn.entity;
 
+import fr.uge.booqIn.model.Commentable;
+import fr.uge.booqIn.model.PolymorphicEntity;
+import fr.uge.booqIn.model.Votable;
 import jakarta.persistence.*;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
-public class BookCollection {
+public class BookCollection implements PolymorphicEntity, Commentable, Votable {
+  private static final String ENTITY_TYPE = "COLLECTION";
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -158,6 +164,11 @@ public class BookCollection {
     return version;
   }
 
+  @Override
+  public String getEntityType() {
+    return ENTITY_TYPE;
+  }
+
   public String getTitle() {
     return title;
   }
@@ -238,5 +249,25 @@ public class BookCollection {
     if (!books.remove(book)) {
       throw new IllegalArgumentException("Book not found in collection");
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof BookCollection that)) return false;
+    return isPublic == that.isPublic &&
+            isSmart == that.isSmart &&
+            Objects.equals(title, that.title) &&
+            Objects.equals(description, that.description) &&
+            Objects.equals(owner, that.owner) &&
+            Objects.equals(books, that.books) &&
+            Objects.equals(createdAt, that.createdAt) &&
+            Objects.equals(updatedAt, that.updatedAt) &&
+            collectionType == that.collectionType;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(title, description, owner, books, isPublic, createdAt, updatedAt, isSmart, collectionType);
   }
 }

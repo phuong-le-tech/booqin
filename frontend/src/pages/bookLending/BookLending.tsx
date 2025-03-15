@@ -1,0 +1,440 @@
+import React, { useContext, useEffect, useState } from "react";
+import { Layout } from "../Layout";
+import axiosInstance from "../../services/AxiosInstance.ts";
+import { AuthContext } from "../../context/AuthContext.tsx";
+import { useNavigate } from "react-router-dom";
+
+type Book = {
+    id: number;
+    title: string;
+    isbns: string[];
+    authors: { id: number; firstName: string; lastName: string }[];
+    description: string;
+    publicationDate: string;
+};
+
+type User = {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+};
+
+export type BookLendingPages = {
+    id: number;
+    book: Book;
+    borrower: User;
+    lender: User;
+    status: string;
+    reservedAt: string;
+    startDate: string;
+    dueDate: string;
+    returnDate: string;
+};
+
+type LendingResponseDTO = {
+    borrowedBooks: BookLendingPages[];
+    lentBooks: BookLendingPages[];
+    containsAll: boolean;
+};
+
+export const BookLending: React.FC = () => {
+    const [lendingData, setLendingData] = useState<LendingResponseDTO | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<"borrowed" | "lent" | "all">("borrowed");
+    const navigate = useNavigate();
+    const auth = useContext(AuthContext);
+
+    // Récupérer les prêts de livres depuis l'API
+    useEffect(() => {
+        if (!auth.user?.id) return;
+
+        const fetchLendings = async () => {
+            try {
+                console.log("📚 Récupération des prêts pour userId:", auth.user.id);
+                const response = await axiosInstance.get(`/v1/loans/user/${auth.user.id}?type=${activeTab}`);
+
+                console.log("📚 Réponse des prêts:", response.data);
+
+                if (response.data?.success && response.data?.data) {
+                    setLendingData(response.data.data);
+                } else {
+                    throw new Error("Format de réponse inattendu");
+                }
+            } catch (err: any) {
+                console.error("❌ Erreur Axios détaillée:", err);
+                setError(err.response?.data?.message || "Erreur lors du chargement des prêts.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchLendings();
+    }, [auth.user?.id, activeTab]);
+
+    const handleChangeTab = (tab: "borrowed" | "lent" | "all") => {
+        setActiveTab(tab);
+        setLoading(true);
+    };
+
+    const formatDate = (dateString: string | null) => {
+        if (!dateString) return "Non définie";
+        const date = new Date(dateString);
+        return date.toLocaleDateString('fr-FR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    };
+
+    const getStatusBadgeClass = (status: string) => {
+        switch(status) {
+            case "RESERVED":
+                return "bg-yellow-100 text-yellow-800 border-yellow-300";
+            case "BORROWED":
+                return "bg-blue-100 text-blue-800 border-blue-300";
+            case "RETURNED":
+                return "bg-green-100 text-green-800 border-green-300";
+            case "SHIPPED":
+                return "bg-purple-100 text-purple-800 border-purple-300";
+            case "AVAILABLE":
+                return "bg-gray-100 text-gray-800 border-gray-300";
+            case "PENDING_SHIPMENT":
+                return "bg-orange-100 text-orange-800 border-orange-300";
+            default:
+                return "bg-gray-100 text-gray-800 border-gray-300";
+        }
+    };
+
+    const getStatusLabel = (status: string) => {
+        switch(status) {
+            case "RESERVED": return "Réservé";
+            case "BORROWED": return "Emprunté";
+            case "RETURNED": return "Retourné";
+            case "SHIPPED": return "Expédié";
+            case "AVAILABLE": return "Disponible";
+            case "PENDING_SHIPMENT": return "En attente d'expédition";
+            default: return status;
+        }
+    };
+
+    const handleReturn = async (lendingId: number) => {
+        if (!auth.user) return;
+
+        try {
+            const response = await axiosInstance.get(`/v1/loans/return-book?lendingId=${lendingId}`);
+            if (response.data?.success) {
+                // Rafraîchir les données
+                const updatedResponse = await axiosInstance.get(`/v1/loans/user/${auth.user.id}?type=${activeTab}`);
+                setLendingData(updatedResponse.data.data);
+                alert("Le livre a été marqué comme retourné !");
+            } else {
+                alert("Impossible de mettre à jour le statut du prêt.");
+            }
+        } catch (error) {
+            console.error("Erreur lors de la mise à jour du prêt :", error);
+            alert("Une erreur est survenue.");
+        }
+    };
+
+    const handleConfirmLoan = async (lendingId: number) => {
+        if (!auth.user) return;
+
+        try {
+            const response = await axiosInstance.get(`/v1/loans/confirm-loan?lendingId=${lendingId}`);
+            if (response.data?.success) {
+                // Rafraîchir les données
+                const updatedResponse = await axiosInstance.get(`/v1/loans/user/${auth.user.id}?type=${activeTab}`);
+                setLendingData(updatedResponse.data.data);
+                alert("Le prêt a été confirmé !");
+            } else {
+                alert("Impossible de confirmer le prêt.");
+            }
+        } catch (error) {
+            console.error("Erreur lors de la confirmation du prêt :", error);
+            alert("Une erreur est survenue.");
+        }
+    };
+
+    const handleShipBook = async (lendingId: number) => {
+        if (!auth.user) return;
+
+        try {
+            const response = await axiosInstance.get(`/v1/loans/ship-book?lendingId=${lendingId}`);
+            if (response.data?.success) {
+                // Rafraîchir les données
+                const updatedResponse = await axiosInstance.get(`/v1/loans/user/${auth.user.id}?type=${activeTab}`);
+                setLendingData(updatedResponse.data.data);
+                alert("Le livre a été marqué comme expédié !");
+            } else {
+                alert("Impossible de mettre à jour le statut d'expédition.");
+            }
+        } catch (error) {
+            console.error("Erreur lors de la mise à jour du statut d'expédition :", error);
+            alert("Une erreur est survenue.");
+        }
+    };
+
+    const getAuthorNames = (book: Book) => {
+        if (!book.authors || book.authors.length === 0) return "Auteur inconnu";
+        return book.authors.map(author => `${author.firstName} ${author.lastName}`).join(", ");
+    };
+
+    return (
+        <Layout>
+            <div className="container mx-auto px-4 py-12 flex flex-col items-center min-h-screen">
+                <h2 className="text-4xl font-bold mb-8 text-light-blue">
+                    Vos Prêts de Livres
+                </h2>
+
+                {/* Tabs */}
+                <div className="w-full max-w-6xl mb-8">
+                    <div className="flex border-b border-gray-200">
+                        <button
+                            onClick={() => handleChangeTab("borrowed")}
+                            className={`py-4 px-6 font-medium text-lg ${
+                                activeTab === "borrowed"
+                                    ? "border-b-2 border-light-blue text-light-blue"
+                                    : "text-gray-500 hover:text-gray-700"
+                            }`}
+                        >
+                            Livres Empruntés
+                        </button>
+                        <button
+                            onClick={() => handleChangeTab("lent")}
+                            className={`py-4 px-6 font-medium text-lg ${
+                                activeTab === "lent"
+                                    ? "border-b-2 border-light-blue text-light-blue"
+                                    : "text-gray-500 hover:text-gray-700"
+                            }`}
+                        >
+                            Livres Prêtés
+                        </button>
+                        <button
+                            onClick={() => handleChangeTab("all")}
+                            className={`py-4 px-6 font-medium text-lg ${
+                                activeTab === "all"
+                                    ? "border-b-2 border-light-blue text-light-blue"
+                                    : "text-gray-500 hover:text-gray-700"
+                            }`}
+                        >
+                            Tous les Prêts
+                        </button>
+                    </div>
+                </div>
+
+                {loading ? (
+                    <div className="w-full max-w-6xl flex justify-center p-12">
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-light-blue"></div>
+                    </div>
+                ) : error ? (
+                    <div className="w-full max-w-6xl bg-red-100 border border-red-300 rounded-lg p-6 text-center">
+                        <p className="text-red-600 text-lg font-medium">{error}</p>
+                    </div>
+                ) : (
+                    <div className="w-full max-w-6xl">
+                        {/* Livres empruntés */}
+                        {(activeTab === "borrowed" || activeTab === "all") && (
+                            <div className="mb-8">
+                                {activeTab === "all" && (
+                                    <h3 className="text-2xl font-semibold mb-4">Livres que vous avez empruntés</h3>
+                                )}
+
+                                {lendingData?.borrowedBooks && lendingData.borrowedBooks.length > 0 ? (
+                                    <div className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-200">
+                                        <div className="divide-y divide-gray-200">
+                                            {lendingData.borrowedBooks.map((lending) => (
+                                                <div key={lending.id} className="p-6 hover:bg-gray-50 transition-colors">
+                                                    <div className="flex flex-col lg:flex-row gap-6">
+                                                        <div className="h-40 w-28 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg flex items-center justify-center flex-shrink-0 border border-gray-200">
+                                                            <svg className="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                                            </svg>
+                                                        </div>
+
+                                                        <div className="flex-1">
+                                                            <div className="flex flex-col md:flex-row md:items-start md:justify-between">
+                                                                <div>
+                                                                    <h3 className="text-xl font-bold text-gray-800">{lending.book.title}</h3>
+                                                                    <p className="text-gray-600 mb-2">{getAuthorNames(lending.book)}</p>
+
+                                                                    <div className="flex items-center gap-2 mb-1">
+                                                                        <span className="text-gray-600 font-medium">Prêté par:</span>
+                                                                        <span>{lending.lender.firstName} {lending.lender.lastName}</span>
+                                                                    </div>
+
+                                                                    <div className="flex items-center gap-2 mb-1">
+                                                                        <span className="text-gray-600 font-medium">Statut:</span>
+                                                                        <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusBadgeClass(lending.status)}`}>
+                                                                            {getStatusLabel(lending.status)}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="mt-4 md:mt-0 md:text-right">
+                                                                    <div className="text-sm text-gray-600 mb-1">
+                                                                        <span className="font-medium">Date d'emprunt:</span> {formatDate(lending.startDate)}
+                                                                    </div>
+                                                                    <div className="text-sm text-gray-600 mb-1">
+                                                                        <span className="font-medium">Date de retour prévue:</span> {formatDate(lending.dueDate)}
+                                                                    </div>
+                                                                    {lending.returnDate && (
+                                                                        <div className="text-sm text-gray-600">
+                                                                            <span className="font-medium">Retourné le:</span> {formatDate(lending.returnDate)}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+
+                                                            {lending.status === "BORROWED" && (
+                                                                <div className="mt-4">
+                                                                    <button
+                                                                        onClick={() => handleReturn(lending.id)}
+                                                                        className="bg-light-blue hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+                                                                    >
+                                                                        Marquer comme retourné
+                                                                    </button>
+                                                                </div>
+                                                            )}
+
+                                                            {lending.status === "SHIPPED" && (
+                                                                <div className="mt-4">
+                                                                    <button
+                                                                        onClick={() => handleConfirmLoan(lending.id)}
+                                                                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+                                                                    >
+                                                                        Confirmer la réception
+                                                                    </button>
+                                                                </div>
+                                                            )}
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="bg-gray-50 rounded-xl p-12 text-center border border-gray-200 shadow-md">
+                                        <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                        </svg>
+                                        <p className="text-gray-700 text-xl font-medium">Vous n'avez aucun livre emprunté</p>
+                                        <p className="text-gray-500 mt-2 mb-6">Parcourez notre catalogue pour trouver des livres à emprunter</p>
+                                        <button
+                                            onClick={() => navigate("/books")}
+                                            className="bg-light-blue hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg transition duration-300"
+                                        >
+                                            Parcourir les livres
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Livres prêtés */}
+                        {(activeTab === "lent" || activeTab === "all") && (
+                            <div>
+                                {activeTab === "all" && (
+                                    <h3 className="text-2xl font-semibold mb-4">Livres que vous prêtez</h3>
+                                )}
+
+                                {lendingData?.lentBooks && lendingData.lentBooks.length > 0 ? (
+                                    <div className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-200">
+                                        <div className="divide-y divide-gray-200">
+                                            {lendingData.lentBooks.map((lending) => (
+                                                <div key={lending.id} className="p-6 hover:bg-gray-50 transition-colors">
+                                                    <div className="flex flex-col lg:flex-row gap-6">
+                                                        <div className="h-40 w-28 bg-gradient-to-br from-green-100 to-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 border border-gray-200">
+                                                            <svg className="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                                            </svg>
+                                                        </div>
+
+                                                        <div className="flex-1">
+                                                            <div className="flex flex-col md:flex-row md:items-start md:justify-between">
+                                                                <div>
+                                                                    <h3 className="text-xl font-bold text-gray-800">{lending.book.title}</h3>
+                                                                    <p className="text-gray-600 mb-2">{getAuthorNames(lending.book)}</p>
+
+                                                                    <div className="flex items-center gap-2 mb-1">
+                                                                        <span className="text-gray-600 font-medium">Emprunté par:</span>
+                                                                        <span>{lending.borrower.firstName} {lending.borrower.lastName}</span>
+                                                                    </div>
+
+                                                                    <div className="flex items-center gap-2 mb-1">
+                                                                        <span className="text-gray-600 font-medium">Statut:</span>
+                                                                        <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusBadgeClass(lending.status)}`}>
+                                                                            {getStatusLabel(lending.status)}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="mt-4 md:mt-0 md:text-right">
+                                                                    <div className="text-sm text-gray-600 mb-1">
+                                                                        <span className="font-medium">Date d'emprunt:</span> {formatDate(lending.startDate)}
+                                                                    </div>
+                                                                    <div className="text-sm text-gray-600 mb-1">
+                                                                        <span className="font-medium">Date de retour prévue:</span> {formatDate(lending.dueDate)}
+                                                                    </div>
+                                                                    {lending.returnDate && (
+                                                                        <div className="text-sm text-gray-600">
+                                                                            <span className="font-medium">Retourné le:</span> {formatDate(lending.returnDate)}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+
+                                                            {lending.status === "RESERVED" && (
+                                                                <div className="mt-4">
+                                                                    <button
+                                                                        onClick={() => handleConfirmLoan(lending.id)}
+                                                                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+                                                                    >
+                                                                        Confirmer le prêt
+                                                                    </button>
+                                                                </div>
+                                                            )}
+
+                                                            {lending.status === "PENDING_SHIPMENT" && (
+                                                                <div className="mt-4">
+                                                                    <button
+                                                                        onClick={() => handleShipBook(lending.id)}
+                                                                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+                                                                    >
+                                                                        Confirmer l'envoi
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="bg-gray-50 rounded-xl p-12 text-center border border-gray-200 shadow-md">
+                                        <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                        </svg>
+                                        <p className="text-gray-700 text-xl font-medium">Vous ne prêtez aucun livre actuellement</p>
+                                        <p className="text-gray-500 mt-2 mb-6">Ajoutez des livres à votre collection pour pouvoir les prêter</p>
+                                        <button
+                                            onClick={() => navigate("/profile")}
+                                            className="bg-light-blue hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg transition duration-300"
+                                        >
+                                            Gérer ma collection
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+        </Layout>
+    );
+};
+
+export default BookLending;

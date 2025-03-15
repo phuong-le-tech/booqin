@@ -23,10 +23,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -90,16 +86,15 @@ public class ConcurrentUserTest {
         // Given
         int numThreads = 10;
         final String email = "concurrent.test@example.com";
-        ExecutorService executor = Executors.newFixedThreadPool(numThreads);
-        CountDownLatch latch = new CountDownLatch(numThreads);
         AtomicInteger successCount = new AtomicInteger(0);
         AtomicInteger failureCount = new AtomicInteger(0);
         AtomicReference<Long> createdUserId = new AtomicReference<>(null);
 
+        List<Thread> threads = new ArrayList<>();
         // When : tous les threads tentent de créer un utilisateur avec le même email
         for (int i = 0; i < numThreads; i++) {
             final int threadNum = i;
-            executor.submit(() -> {
+            var thread = new Thread(() -> {
                 try {
                     User user = new User(
                             "TestFirstName" + threadNum,
@@ -119,18 +114,16 @@ public class ConcurrentUserTest {
                 } catch (Exception e) {
                     failureCount.incrementAndGet();
                     logger.info("Thread {} failed to create user: {}", threadNum, e.getMessage());
-                } finally {
-                    latch.countDown();
                 }
             });
+            threads.add(thread);
+            thread.start();
         }
 
-        // Attente de la fin de tous les threads
-        boolean completed = latch.await(10, TimeUnit.SECONDS);
-        executor.shutdown();
-
+        for (Thread thread : threads) {
+            thread.join();
+        }
         // Then
-        logger.info("Concurrent user creation test completed: {}", completed);
         logger.info("Successful creations: {}", successCount.get());
         logger.info("Failed creations: {}", failureCount.get());
 
@@ -158,16 +151,16 @@ public class ConcurrentUserTest {
         // Given : récupérer l'ID de l'utilisateur créé dans le setup
         Long testUserId = createdUserIds.get(0);
         int numThreads = 10;
-        ExecutorService executor = Executors.newFixedThreadPool(numThreads);
-        CountDownLatch latch = new CountDownLatch(numThreads);
+
         AtomicInteger successCount = new AtomicInteger(0);
         AtomicInteger failureCount = new AtomicInteger(0);
         AtomicInteger concurrentModCount = new AtomicInteger(0);
 
+        var threads = new ArrayList<Thread>();
         // When : plusieurs threads tentent de mettre à jour l'utilisateur simultanément
         for (int i = 0; i < numThreads; i++) {
             final int threadNum = i;
-            executor.submit(() -> {
+            var thread = new Thread(() -> {
                 try {
                     UserUpdate userUpdate = new UserUpdate(
                             java.util.Optional.of("UpdatedFirstName" + threadNum),
@@ -185,18 +178,18 @@ public class ConcurrentUserTest {
                 } catch (Exception e) {
                     failureCount.incrementAndGet();
                     logger.info("Thread {} failed to update user: {}", threadNum, e.getMessage());
-                } finally {
-                    latch.countDown();
                 }
             });
+            threads.add(thread);
+            thread.start();
         }
 
-        // Attente de la fin de tous les threads
-        boolean completed = latch.await(10, TimeUnit.SECONDS);
-        executor.shutdown();
+        for (var thread : threads) {
+            thread.join();
+        }
+
 
         // Then
-        logger.info("Concurrent user patch test completed: {}", completed);
         logger.info("Successful updates: {}", successCount.get());
         logger.info("Concurrent modification failures: {}", concurrentModCount.get());
         logger.info("Other failures: {}", failureCount.get());

@@ -15,6 +15,10 @@ public class Cart {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @Version
+  @Column(nullable = false)
+  private Long version;
+
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private StatusPayment status = StatusPayment.PENDING;
@@ -44,6 +48,18 @@ public class Cart {
 
   public Long getId() {
     return id;
+  }
+
+  public void setId(Long id) {
+    this.id = id;
+  }
+
+  public Long getVersion() {
+    return version;
+  }
+
+  public void setVersion(Long version) {
+    this.version = version;
   }
 
   public StatusPayment getStatus() {

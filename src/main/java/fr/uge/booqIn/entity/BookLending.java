@@ -26,21 +26,20 @@ public class BookLending {
   private BookStatus status = BookStatus.AVAILABLE;
   
   @Column
-  private LocalDateTime reservedAt;  // ⏳ Gère la réservation temporaire (20 min)
+  private LocalDateTime reservedAt;
   
   @Column
-  private LocalDateTime startDate; // 📅 Date de début du prêt
+  private LocalDateTime startDate;
   
   @Column
-  private LocalDateTime dueDate; // 📅 Date limite de retour
+  private LocalDateTime dueDate;
   
   @Column
-  private LocalDateTime returnDate; // 📅 Date effective de retour
+  private LocalDateTime returnDate;
   
   public BookLending() {
   }
   
-  // 📌 Constructeur utilisé lors de la création d'un prêt
   public BookLending(Book book, User lender, User borrower) {
     this.book = book;
     this.lender = lender;
@@ -117,5 +116,5 @@ public class BookLending {
     return reservedAt != null && reservedAt.plusMinutes(20).isBefore(LocalDateTime.now());
   }
   
-
+  
 }

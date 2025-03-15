@@ -25,9 +25,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -107,16 +104,16 @@ public class ConcurrentAuthTest {
         // Given
         int numThreads = 10;
         String baseEmail = "concurrent.register.test@example.com";
-        ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
-        CountDownLatch latch = new CountDownLatch(numThreads);
+
         AtomicInteger successCount = new AtomicInteger(0);
         AtomicInteger failureCount = new AtomicInteger(0);
 
+        var threads = new ArrayList<Thread>();
         // When: tous les threads tentent de s'inscrire avec le même email
         for (int i = 0; i < numThreads; i++) {
             final int threadNum = i;
             final String email = baseEmail; // même email pour tous
-            executorService.submit(() -> {
+            var thread = new Thread(() -> {
                 try {
                     RegisterDto registerDto = createRegisterDto("ConcurrentUser" + threadNum, "Test" + threadNum, email);
                     User user = authService.register(registerDto);
@@ -128,18 +125,18 @@ public class ConcurrentAuthTest {
                 } catch (Exception e) {
                     failureCount.incrementAndGet();
                     logger.info("Thread {} failed to register user: {}", threadNum, e.getMessage());
-                } finally {
-                    latch.countDown();
                 }
             });
+            threads.add(thread);
+            thread.start();
         }
 
-        // Wait for all threads to complete
-        boolean completed = latch.await(10, TimeUnit.SECONDS);
-        executorService.shutdown();
+        for(Thread thread : threads) {
+            thread.join();
+        }
+
 
         // Then
-        logger.info("Concurrent registration test completed: {}", completed);
         logger.info("Successful registrations: {}", successCount.get());
         logger.info("Failed registrations: {}", failureCount.get());
 
@@ -157,16 +154,16 @@ public class ConcurrentAuthTest {
     public void testConcurrentLogin() throws Exception {
         // Given
         int numThreads = 10;
-        ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
-        CountDownLatch latch = new CountDownLatch(numThreads);
+
         AtomicInteger successCount = new AtomicInteger(0);
         AtomicInteger failureCount = new AtomicInteger(0);
         AtomicReference<String> firstRefreshToken = new AtomicReference<>(null);
 
+        var threads = new ArrayList<Thread>();
         // When: tous les threads se connectent simultanément
         for (int i = 0; i < numThreads; i++) {
             final int threadNum = i;
-            executorService.submit(() -> {
+            var thread = new Thread(() -> {
                 try {
                     LoginDto loginDto = new LoginDto("test.auth.concurrent@example.com", "Password123");
                     AuthResponse response = authService.login(loginDto);
@@ -178,18 +175,17 @@ public class ConcurrentAuthTest {
                 } catch (Exception e) {
                     failureCount.incrementAndGet();
                     logger.info("Thread {} failed to login: {}", threadNum, e.getMessage());
-                } finally {
-                    latch.countDown();
                 }
             });
+            threads.add(thread);
+            thread.start();
         }
 
-        // Wait for all threads to complete
-        boolean completed = latch.await(10, TimeUnit.SECONDS);
-        executorService.shutdown();
+        for (Thread thread : threads) {
+            thread.join();
+        }
 
         // Then
-        logger.info("Concurrent login test completed: {}", completed);
         logger.info("Successful logins: {}", successCount.get());
         logger.info("Failed logins: {}", failureCount.get());
 
@@ -213,20 +209,19 @@ public class ConcurrentAuthTest {
         assertNotNull(testRefreshToken.get(), "Refresh token should be available");
 
         int numThreads = 5;
-        ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
-        CountDownLatch startLatch = new CountDownLatch(1); // pour démarrer simultanément
-        CountDownLatch completionLatch = new CountDownLatch(numThreads);
+
         AtomicInteger successCount = new AtomicInteger(0);
         AtomicInteger failureCount = new AtomicInteger(0);
         AtomicInteger tokenReuseCount = new AtomicInteger(0);
         String refreshToken = testRefreshToken.get();
 
+        var threads = new ArrayList<Thread>();
         // When: tous les threads tentent de rafraîchir le même token
         for (int i = 0; i < numThreads; i++) {
             final int threadNum = i;
-            executorService.submit(() -> {
+            var thread = new Thread(() -> {
                 try {
-                    startLatch.await();
+
                     AuthResponse response = authService.refreshToken(refreshToken);
                     if (response != null && response.accessToken() != null) {
                         successCount.incrementAndGet();
@@ -243,19 +238,17 @@ public class ConcurrentAuthTest {
                 } catch (Exception e) {
                     failureCount.incrementAndGet();
                     logger.info("Thread {} failed to refresh token: {}", threadNum, e.getMessage());
-                } finally {
-                    completionLatch.countDown();
                 }
             });
+            threads.add(thread);
+            thread.start();
         }
 
-        // When: démarrer tous les threads simultanément et attendre la fin
-        startLatch.countDown();
-        boolean completed = completionLatch.await(10, TimeUnit.SECONDS);
-        executorService.shutdown();
+        for (Thread thread : threads) {
+            thread.join();
+        }
 
         // Then
-        logger.info("Concurrent token refresh test completed: {}", completed);
         logger.info("Successful refreshes: {}", successCount.get());
         logger.info("Token reuse detections: {}", tokenReuseCount.get());
         logger.info("Other failures: {}", failureCount.get());
@@ -285,18 +278,18 @@ public class ConcurrentAuthTest {
         }
 
         int numThreads = 10; // plus de threads que d'utilisateurs
-        ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
-        CountDownLatch latch = new CountDownLatch(numThreads);
+
         AtomicInteger successCount = new AtomicInteger(0);
         AtomicInteger failureCount = new AtomicInteger(0);
 
+        var threads = new ArrayList<Thread>();
         // When: exécuter des opérations de logout concurrentes
         for (int i = 0; i < numThreads; i++) {
             final int threadNum = i;
             final int userIndex = threadNum % testUsers.size(); // alterner entre utilisateurs
             final Long userId = testUsers.get(userIndex).getId();
             final String token = tokens.get(userIndex);
-            executorService.submit(() -> {
+            var thread = new Thread(() -> {
                 try {
                     authService.invalidateUserSessions(userId);
                     jwtService.revokeToken(token);
@@ -305,18 +298,17 @@ public class ConcurrentAuthTest {
                 } catch (Exception e) {
                     failureCount.incrementAndGet();
                     logger.info("Thread {} failed to perform logout: {}", threadNum, e.getMessage());
-                } finally {
-                    latch.countDown();
                 }
             });
+            threads.add(thread);
+            thread.start();
         }
 
-        // Wait for all threads to complete
-        boolean completed = latch.await(10, TimeUnit.SECONDS);
-        executorService.shutdown();
+        for (Thread thread : threads) {
+            thread.join();
+        }
 
         // Then
-        logger.info("Concurrent logout test completed: {}", completed);
         logger.info("Successful operations: {}", successCount.get());
         logger.info("Failed operations: {}", failureCount.get());
 

@@ -28,10 +28,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -199,16 +195,16 @@ public class ConcurrentBookCollectionTest {
         // Given: retrieve the ID of the collection created in setup
         Long testCollectionId = createdCollectionIds.get(0);
         int numThreads = 10;
-        ExecutorService executor = Executors.newFixedThreadPool(numThreads);
-        CountDownLatch latch = new CountDownLatch(numThreads);
+
         AtomicInteger successCount = new AtomicInteger(0);
         AtomicInteger failureCount = new AtomicInteger(0);
         AtomicInteger concurrentModCount = new AtomicInteger(0);
 
+        var threads = new ArrayList<Thread>();
         // When: multiple threads attempt to update the collection simultaneously
         for (int i = 0; i < numThreads; i++) {
             final int threadNum = i;
-            executor.submit(() -> {
+            var thread = new Thread(() -> {
                 try {
                     // Set up security context for each thread
                     SecurityContextHolder.getContext().setAuthentication(
@@ -230,18 +226,17 @@ public class ConcurrentBookCollectionTest {
                 } catch (Exception e) {
                     failureCount.incrementAndGet();
                     logger.info("Thread {} failed to update collection: {}", threadNum, e.getMessage());
-                } finally {
-                    latch.countDown();
                 }
             });
+            threads.add(thread);
+            thread.start();
         }
 
-        // Wait for all threads to complete
-        boolean completed = latch.await(10, TimeUnit.SECONDS);
-        executor.shutdown();
+        for (var thread : threads) {
+            thread.join();
+        }
 
         // Then
-        logger.info("Concurrent collection patch test completed: {}", completed);
         logger.info("Successful updates: {}", successCount.get());
         logger.info("Concurrent modification failures: {}", concurrentModCount.get());
         logger.info("Other failures: {}", failureCount.get());
@@ -266,11 +261,12 @@ public class ConcurrentBookCollectionTest {
         // Given: retrieve the ID of the collection created in setup
         Long testCollectionId = createdCollectionIds.get(0);
         int numThreads = 10;
-        ExecutorService executor = Executors.newFixedThreadPool(numThreads);
-        CountDownLatch latch = new CountDownLatch(numThreads);
+
         AtomicInteger successCount = new AtomicInteger(0);
         AtomicInteger failureCount = new AtomicInteger(0);
         AtomicInteger concurrentModCount = new AtomicInteger(0);
+
+        var threads = new ArrayList<Thread>();
 
         // Create 10 books for testing
         List<Long> bookIds = new ArrayList<>();
@@ -302,7 +298,7 @@ public class ConcurrentBookCollectionTest {
         for (int i = 0; i < numThreads; i++) {
             final int threadNum = i;
             final Long bookId = bookIds.get(i);
-            executor.submit(() -> {
+            var thread = new Thread(() -> {
                 try {
                     // Set up security context for each thread
                     SecurityContextHolder.getContext().setAuthentication(
@@ -318,18 +314,17 @@ public class ConcurrentBookCollectionTest {
                 } catch (Exception e) {
                     failureCount.incrementAndGet();
                     logger.info("Thread {} failed to add book: {}", threadNum, e.getMessage());
-                } finally {
-                    latch.countDown();
                 }
             });
+            threads.add(thread);
+            thread.start();
         }
 
-        // Wait for all threads to complete
-        boolean completed = latch.await(10, TimeUnit.SECONDS);
-        executor.shutdown();
+        for (var thread : threads) {
+            thread.join();
+        }
 
         // Then
-        logger.info("Concurrent add book test completed: {}", completed);
         logger.info("Successful additions: {}", successCount.get());
         logger.info("Concurrent modification failures: {}", concurrentModCount.get());
         logger.info("Other failures: {}", failureCount.get());
@@ -357,12 +352,11 @@ public class ConcurrentBookCollectionTest {
         // Given: retrieve the ID of the collection created in setup
         Long testCollectionId = createdCollectionIds.get(0);
         int numThreads = 5;
-        ExecutorService executor = Executors.newFixedThreadPool(numThreads);
-        CountDownLatch latch = new CountDownLatch(numThreads);
+
         AtomicInteger successCount = new AtomicInteger(0);
         AtomicInteger failureCount = new AtomicInteger(0);
         AtomicInteger concurrentModCount = new AtomicInteger(0);
-
+        var threads = new ArrayList<Thread>();
         // Add books to the collection first
         List<Long> bookIds = new ArrayList<>();
         for (int i = 0; i < numThreads; i++) {
@@ -399,7 +393,7 @@ public class ConcurrentBookCollectionTest {
         for (int i = 0; i < numThreads; i++) {
             final int threadNum = i;
             final Long bookId = bookIds.get(i);
-            executor.submit(() -> {
+            var thread = new Thread(() -> {
                 try {
                     // Set up security context for each thread
                     SecurityContextHolder.getContext().setAuthentication(
@@ -415,18 +409,17 @@ public class ConcurrentBookCollectionTest {
                 } catch (Exception e) {
                     failureCount.incrementAndGet();
                     logger.info("Thread {} failed to remove book: {}", threadNum, e.getMessage());
-                } finally {
-                    latch.countDown();
                 }
             });
+            threads.add(thread);
+            thread.start();
         }
 
-        // Wait for all threads to complete
-        boolean completed = latch.await(10, TimeUnit.SECONDS);
-        executor.shutdown();
+        for (var thread : threads) {
+            thread.join();
+        }
 
         // Then
-        logger.info("Concurrent remove book test completed: {}", completed);
         logger.info("Successful removals: {}", successCount.get());
         logger.info("Concurrent modification failures: {}", concurrentModCount.get());
         logger.info("Other failures: {}", failureCount.get());
