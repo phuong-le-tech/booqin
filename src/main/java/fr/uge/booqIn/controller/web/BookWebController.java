@@ -3,11 +3,9 @@ package fr.uge.booqIn.controller.web;
 import fr.uge.booqIn.dto.book.BookCreate;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
-import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
 import fr.uge.booqIn.dto.bookCollection.LiteCollection;
 import fr.uge.booqIn.dto.vote.VoteCount;
 import fr.uge.booqIn.dto.vote.VoteCreate;
-import fr.uge.booqIn.dto.vote.VoteResponse;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.User;
@@ -21,7 +19,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -39,11 +36,12 @@ public class BookWebController {
     private final CommentServiceInterface commentService;
 
 
-    public BookWebController(BookServiceInterface bookService, VoteServiceInterface voteServiceInterface, BookCollectionServiceInterface bookCollectionService, CommentServiceInterface commentService) {
+    public BookWebController(BookServiceInterface bookService, VoteServiceInterface voteServiceInterface,
+                             BookCollectionServiceInterface bookCollectionService, CommentServiceInterface commentService) {
         this.bookService = bookService;
         this.voteServiceInterface = voteServiceInterface;
-      this.bookCollectionService = bookCollectionService;
-      this.commentService = commentService;
+        this.bookCollectionService = bookCollectionService;
+        this.commentService = commentService;
     }
 
     @GetMapping
@@ -75,7 +73,6 @@ public class BookWebController {
             var bcc = b.stream().map(bc -> new LiteCollection(bc.getId(),bc.getTitle())).toList();
             model.addAttribute("bookCollections", bcc);
         }
-
         return "book/list";
     }
 
@@ -88,8 +85,10 @@ public class BookWebController {
         var comments = commentService.getCommentTreeByEntity(id,"BOOK");
 
         model.addAttribute("votes", count);
-        model.addAttribute("comments", comments);     // Add this line
-        model.addAttribute("commentCount", totalComments);  // Add this line
+        model.addAttribute("comments", comments);
+        model.addAttribute("commentCount", totalComments);
+        model.addAttribute("entityType", "BOOK"); // Ajout pour le formulaire de commentaire
+        model.addAttribute("entityId", id); // Ajout pour le formulaire de commentaire
 
         if (currentUser != null) {
             var voteUser = voteServiceInterface.getUserVoteType(currentUser.getId(),id,"BOOK");
@@ -156,5 +155,4 @@ public class BookWebController {
         }
         return "redirect:/books/" + bookId;
     }
-
 }
