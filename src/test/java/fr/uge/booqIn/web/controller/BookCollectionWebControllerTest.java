@@ -297,10 +297,10 @@ public class BookCollectionWebControllerTest {
 
     when(bookCollectionService.getUserCollections(mockUser)).thenReturn(userCollections);
 
-    ResponseEntity<ApiResponse<List<BookCollection>>> response = bookCollectionController.getUserCollections(mockUser);
+    ResponseEntity<ApiResponse<List<BookCollectionShow>>> response = bookCollectionController.getUserCollections(mockUser);
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    ApiResponse<List<BookCollection>> body = response.getBody();
+    ApiResponse<List<BookCollectionShow>> body = response.getBody();
     assertNotNull(body);
     assertTrue(body.success());
     assertEquals("User collections fetched", body.message());

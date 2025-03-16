@@ -24,7 +24,7 @@ const Collections: React.FC = () => {
         try {
             setLoading(true);
             const userCollectionsData = await BookCollectionService.getUserCollections();
-
+            console.log("USER COLLECTIONS\n", userCollectionsData);
             if (userCollectionsData && Array.isArray(userCollectionsData)) {
                 const userCollections = userCollectionsData.filter((collection) => collection.user.id === user?.id);
                 console.log("USER COLLECTION CORRECT ID:\n", userCollections);

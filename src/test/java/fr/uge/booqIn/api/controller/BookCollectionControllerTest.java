@@ -337,13 +337,13 @@ class BookCollectionControllerTest {
         when(bookCollectionService.getUserCollections(any(User.class))).thenReturn(userCollections);
 
         // When
-        ResponseEntity<ApiResponse<List<BookCollection>>> response =
+        ResponseEntity<ApiResponse<List<BookCollectionShow>>> response =
                 bookCollectionController.getUserCollections(dummyUser);
 
         // Then
         assertNotNull(response);
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        ApiResponse<List<BookCollection>> apiResponse = response.getBody();
+        ApiResponse<List<BookCollectionShow>> apiResponse = response.getBody();
         assertNotNull(apiResponse);
         assertTrue(apiResponse.success());
         assertEquals("User collections fetched", apiResponse.message());
@@ -363,7 +363,7 @@ class BookCollectionControllerTest {
 
         // When
         ResponseEntity<ApiResponse<List<BookCollectionShow>>> response =
-                bookCollectionController.getUserCollectionsWithBooks(dummyUser);
+                bookCollectionController.getUserCollections(dummyUser);
 
         // Then
         assertNotNull(response);

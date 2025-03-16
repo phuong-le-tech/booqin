@@ -8,8 +8,8 @@ class BookCollectionService {
 
     async getUserCollections() {
         try {
-            const response = await axios.get<ApiResponse<BookCollection>>(`${API_URL}`);
-            return response.data.data.content;
+            const response = await axios.get<ApiResponse<BookCollectionShow[]>>(`${API_URL}/user`);
+            return response.data.data;
         } catch (error) {
             console.error('Error fetching user collections:', error);
             throw error;
