@@ -3,6 +3,7 @@ package fr.uge.booqIn.controller.web;
 import fr.uge.booqIn.dto.book.BookCreate;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
+import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
 import fr.uge.booqIn.dto.bookCollection.LiteCollection;
 import fr.uge.booqIn.dto.vote.VoteCount;
 import fr.uge.booqIn.dto.vote.VoteCreate;
@@ -13,6 +14,7 @@ import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.VoteType;
 import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
+import fr.uge.booqIn.service.interfaces.CommentServiceInterface;
 import fr.uge.booqIn.service.interfaces.VoteServiceInterface;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -34,12 +36,14 @@ public class BookWebController {
     private final BookServiceInterface bookService;
     private final VoteServiceInterface voteServiceInterface;
     private final BookCollectionServiceInterface bookCollectionService;
+    private final CommentServiceInterface commentService;
 
 
-    public BookWebController(BookServiceInterface bookService, VoteServiceInterface voteServiceInterface, BookCollectionServiceInterface bookCollectionService) {
+    public BookWebController(BookServiceInterface bookService, VoteServiceInterface voteServiceInterface, BookCollectionServiceInterface bookCollectionService, CommentServiceInterface commentService) {
         this.bookService = bookService;
         this.voteServiceInterface = voteServiceInterface;
       this.bookCollectionService = bookCollectionService;
+      this.commentService = commentService;
     }
 
     @GetMapping
@@ -71,6 +75,7 @@ public class BookWebController {
             var bcc = b.stream().map(bc -> new LiteCollection(bc.getId(),bc.getTitle())).toList();
             model.addAttribute("bookCollections", bcc);
         }
+
         return "book/list";
     }
 
@@ -79,8 +84,13 @@ public class BookWebController {
         BookShow book = bookService.findById(id);
         model.addAttribute("book", book);
         VoteCount count = voteServiceInterface.getVoteCounts(id, "BOOK");
+        var totalComments = commentService.countByEntity(id,"BOOK");
+        var comments = commentService.getCommentTreeByEntity(id,"BOOK");
 
         model.addAttribute("votes", count);
+        model.addAttribute("comments", comments);     // Add this line
+        model.addAttribute("commentCount", totalComments);  // Add this line
+
         if (currentUser != null) {
             var voteUser = voteServiceInterface.getUserVoteType(currentUser.getId(),id,"BOOK");
             if(voteUser != null) {
@@ -88,6 +98,7 @@ public class BookWebController {
             }
             model.addAttribute("user",currentUser);
         }
+
         return "book/bookDetails";
     }
 

@@ -15,6 +15,7 @@ import fr.uge.booqIn.specification.BookCollectionSpecification;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import org.hibernate.Hibernate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -32,13 +33,15 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
   private static final Logger logger = Logger.getLogger(BookCollectionServiceImpl.class.getName());
   private final BookCollectionRepository bookCollectionRepository;
   private final BookRepository bookRepository;
+  private final BookServiceImpl bookService;
   private final BookCollectionMapper bookCollectionMapper;
 
   public BookCollectionServiceImpl(BookCollectionRepository bookCollectionRepository,
-                                   BookRepository bookRepository,
+                                   BookRepository bookRepository, BookServiceImpl bookService,
                                    BookCollectionMapper bookCollectionMapper) {
     this.bookCollectionRepository = bookCollectionRepository;
     this.bookRepository = bookRepository;
+    this.bookService = bookService;
     this.bookCollectionMapper = bookCollectionMapper;
   }
 
@@ -82,12 +85,14 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
     if (bookCollection.getBooks() == null) {
       bookCollection.setBooks(new ArrayList<>());
     }
-    System.out.println("books collection is initialized");
-
     bookCollection.setCreatedAt(new Date());
     bookCollection.setUpdatedAt(new Date());
-    System.out.println("Dates create & update");
-    return bookCollectionRepository.save(bookCollection);
+
+    BookCollection savedCollection = bookCollectionRepository.save(bookCollection);
+    System.out.println("SAVED IN BDD");
+    System.out.println("CREATED BOOK COLLECTION:\n" + savedCollection);
+    //return bookCollectionMapper.toBookCollectionShow(savedCollection);
+    return savedCollection;
   }
 
   @Override
@@ -99,7 +104,7 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
     }
     verifyOwnership(bookCollection);
     validateBooksExist(bookCollection.getBooks());
-
+    System.out.println("VERIFS DONE TO PATCH");
     bookCollection.setUpdatedAt(new Date());
     return bookCollectionRepository.save(bookCollection);
   }
@@ -109,12 +114,12 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
   public BookCollectionShow patchBookCollection(@NotNull Long id, @NotNull @Valid BookCollectionUpdate bookCollectionUpdate) {
     BookCollection bookCollection = findBookCollectionById(id);
 
-    bookCollectionUpdate.name().ifPresent(bookCollection::setTitle);
+    bookCollectionUpdate.title().ifPresent(bookCollection::setTitle);
     bookCollectionUpdate.description().ifPresent(bookCollection::setDescription);
-
+    bookCollection.setPublic(bookCollectionUpdate.isPublic());
     bookCollectionUpdate.books().ifPresent(books -> {
       validateBooksExist(books);
-      bookCollection.setBooks(books);
+      bookCollection.setBooks(new ArrayList<>(books));
     });
 
     bookCollection.setUpdatedAt(new Date());
@@ -136,13 +141,10 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
   public BookCollection addBookToCollection(@NotNull Long collectionId, @NotNull Long bookId) {
     // Find the collection
     BookCollection collection = findBookCollectionById(collectionId);
-
     // Verify ownership
     verifyOwnership(collection);
-
     // Find the book
-    Book book = bookRepository.findById(bookId)
-            .orElseThrow(() -> new ResourceNotFoundException("Book", "id", bookId));
+    Book book = bookService.findBookById(bookId);
 
     // Add the book to collection
     collection.addBook(book);
@@ -183,11 +185,8 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
   @Transactional
   public BookCollection removeBookFromCollection(Long collectionId, Long bookId, User currentUser) {
     BookCollection collection = findBookCollectionById(collectionId);
-
     verifyOwnership(collection);
-
-    Book book = bookRepository.findById(bookId)
-            .orElseThrow(() -> new ResourceNotFoundException("Book", "id", bookId));
+    Book book = bookService.findBookById(bookId);
 
     collection.removeBook(book);
     collection.setUpdatedAt(new Date());

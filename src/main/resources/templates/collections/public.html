@@ -16,12 +16,12 @@
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Owner</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nb of Books</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Number of Books</th>
             </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
             <tr th:each="collection : ${publicCollections}" class="hover:bg-gray-50">
-                <td class="px-6 py-4 text-sm text-gray-900" th:text="${collection.name}">Collection Title</td>
+                <td class="px-6 py-4 text-sm text-gray-900" th:text="${collection.title}">Collection Title</td>
                 <td class="px-6 py-4 text-sm text-gray-500" th:text="${collection.description}">Collection Description</td>
                 <td class="px-6 py-4 text-sm text-gray-500" th:text="${collection.user.firstName} + ' ' + ${collection.user.lastName}">Owner</td>
                 <td class="px-6 py-4 text-sm font-medium">

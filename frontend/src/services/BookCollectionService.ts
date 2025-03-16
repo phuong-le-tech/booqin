@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { BookCollectionIndex, BookCollectionShow, BookCollectionUpdate } from '../model/BookCollection';
+import {BookCollection, BookCollectionIndex, BookCollectionShow, BookCollectionUpdate} from '../model/BookCollection';
 import { ApiResponse } from '../model/ApiResponse';
 
 const API_URL = '/api/v1/collections';
@@ -8,25 +8,16 @@ class BookCollectionService {
 
     async getUserCollections() {
         try {
-            const response = await axios.get<ApiResponse<BookCollectionShow[]>>(`${API_URL}`);
-            return response.data.data;
+            const response = await axios.get<ApiResponse<BookCollection>>(`${API_URL}`);
+            return response.data.data.content;
         } catch (error) {
             console.error('Error fetching user collections:', error);
             throw error;
         }
     }
 
-    async getUserCollectionsWithBooks() {
-        try {
-            const response = await axios.get<ApiResponse<BookCollectionShow[]>>(`${API_URL}/user/with-books`);
-            return response.data.data;
-        } catch (error) {
-            console.error('Error fetching user collections with books:', error);
-            throw error;
-        }
-    }
-
-    async getBookCollectionById(id: string | number) {
+    async getBookCollectionById(id: number) {
+        console.log("ID SERV: ", id);
         try {
             const response = await axios.get<ApiResponse<BookCollectionShow>>(`${API_URL}/${id}`);
             return response.data.data;
@@ -38,7 +29,7 @@ class BookCollectionService {
 
     async createBookCollection(collectionData: any) {
         try {
-            const response = await axios.post<ApiResponse<BookCollectionShow>>(API_URL, collectionData);
+            const response = await axios.post<ApiResponse<BookCollection>>(API_URL, collectionData);
             return response.data.data;
         } catch (error) {
             console.error('Error creating book collection:', error);
@@ -78,7 +69,7 @@ class BookCollectionService {
 
     async addBookToCollection(collectionId: string | number, bookId: string | number) {
         try {
-            const response = await axios.post<ApiResponse<BookCollectionShow>>(`${API_URL}/${collectionId}/books/${bookId}`);
+            const response = await axios.post<ApiResponse<BookCollection>>(`${API_URL}/${collectionId}/books/${bookId}`);
             return response.data.data;
         } catch (error) {
             console.error(`Error adding book ${bookId} to collection ${collectionId}:`, error);
@@ -88,7 +79,7 @@ class BookCollectionService {
 
     async removeBookFromCollection(collectionId: string | number, bookId: string | number) {
         try {
-            const response = await axios.delete<ApiResponse<BookCollectionShow>>(`${API_URL}/${collectionId}/books/${bookId}`);
+            const response = await axios.delete<ApiResponse<BookCollection>>(`${API_URL}/${collectionId}/books/${bookId}`);
             return response.data.data;
         } catch (error) {
             console.error(`Error removing book ${bookId} from collection ${collectionId}:`, error);

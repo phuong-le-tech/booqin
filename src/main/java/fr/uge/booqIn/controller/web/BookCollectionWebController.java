@@ -2,6 +2,7 @@ package fr.uge.booqIn.controller.web;
 
 import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
+import fr.uge.booqIn.dto.bookCollection.BookCollectionUpdate;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.BookCollection;
@@ -9,21 +10,16 @@ import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.mapper.BookCollectionMapper;
 import fr.uge.booqIn.mapper.BookMapper;
-import fr.uge.booqIn.service.BookCollectionService;
 import fr.uge.booqIn.service.impl.BookServiceImpl;
 import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
 import jakarta.validation.Valid;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -104,7 +100,7 @@ public class BookCollectionWebController {
     logger.info("Adding book with ID " + bookId + " to collection with ID " + collectionId);
     try {
       BookCollectionShow collectionOpt = bookCollectionService.findById(collectionId);
-      logger.info("Collection found: " +  collectionOpt.name());
+      logger.info("Collection found: " +  collectionOpt.title());
       BookShow bookShow = bookService.findById(bookId);
       Set<Author> authors = bookShow.authors().stream().map(bookMapper::toAuthor).collect(Collectors.toSet());
       Book book = new Book.Builder().id(bookShow.id())
@@ -121,13 +117,37 @@ public class BookCollectionWebController {
     }
   }
 
+  // GetMapping ici casse le truc
+  @GetMapping("/{collectionId}/books/{bookId}/remove")
+  public String removeBookFromCollection(
+          @PathVariable Long collectionId,
+          @PathVariable Long bookId,
+          @AuthenticationPrincipal User currentUser,
+          Model model) {
+    logger.info("Removing book with ID " + bookId + " from collection with ID " + collectionId);
+    try {
+      // Verify that the current user owns the collection
+      BookCollectionShow collection = bookCollectionService.findById(collectionId);
+      if (!verifyIsSameUser(currentUser, collection)) {
+        return "redirect:/collections?error=notOwner";
+      }
+
+      // Remove the book from the collection
+      bookCollectionService.removeBookFromCollection(collectionId, bookId, currentUser);
+      return "redirect:/collections/" + collectionId + "?success=bookRemoved";
+    } catch (ResourceNotFoundException e) {
+      logger.warning("Error removing book: " + e.getMessage());
+      return "redirect:/collections/" + collectionId + "?error=notFound";
+    }
+  }
+
   @GetMapping("/new")
   public String showCreateCollectionForm(Model model) {
     model.addAttribute("bookCollection", new BookCollection());
     return "collections/create";
   }
 
-  @PostMapping("/new") // TODO: changer le request body par un DTO
+  @PostMapping("/new")
   public String createCollection(
           @Valid @ModelAttribute("bookCollection") BookCollection bookCollection,
           @RequestParam(required = false) Boolean isPublic,
@@ -152,12 +172,13 @@ public class BookCollectionWebController {
       if (!verifyIsSameUser(currentUser, collection)) {
         return "redirect:/collections?error=notOwner";
       }
-
       // Convert DTO to entity for form binding
-      BookCollection bookCollection = bookCollectionMapper.bookCollectionShowToBookCollection(collection);
-      model.addAttribute("bookCollection", bookCollection);
+      //BookCollection bookCollection = bookCollectionMapper.bookCollectionShowToBookCollection(collection);
+      model.addAttribute("bookCollection", collection);
       return "collections/edit";
     } catch (ResourceNotFoundException e) {
+      model.addAttribute("error", e.getMessage());
+      System.out.println("ERROR WHEN FORM EDIT");
       return "redirect:/collections?error=notFound";
     }
   }
@@ -167,30 +188,38 @@ public class BookCollectionWebController {
           @PathVariable Long id,
           @Valid @ModelAttribute("bookCollection") BookCollection bookCollection,
           BindingResult bindingResult,
-          @RequestParam(required = false) Boolean isPublic,
+          @RequestParam(name = "isPublic", required = false) Boolean isPublic,
           @AuthenticationPrincipal User currentUser,
           Model model) {
     if (bindingResult.hasErrors()) {
-      return "collections/edit";
+      System.out.println("BINDING ERRORS: " + bindingResult.getAllErrors());
+      return "redirect:/collections?error=notFound";
     }
-
     try {
       BookCollectionShow existingCollection = bookCollectionService.findById(id);
-      // Verify that the current user owns the collection
       if (!verifyIsSameUser(currentUser, existingCollection)) {
         return "redirect:/collections?error=notOwner";
       }
 
+      System.out.println("isPublic: " + isPublic);
       // Update only allowed fields
       bookCollection.setId(id);
       bookCollection.setOwner(currentUser);
-      bookCollection.setPublic(isPublic != null && isPublic);
+      bookCollection.setPublic(isPublic != null);
 
-      BookCollection updatedCollection = bookCollectionService.updateBookCollection(bookCollection);
+      BookCollectionUpdate bookCollectionUpdate = new BookCollectionUpdate(
+              Optional.of(bookCollection.getTitle()),
+              Optional.of(bookCollection.getDescription()),
+              isPublic != null,
+              Optional.of(existingCollection.books().stream()
+                      .map(bookMapper::bookIndexToBook)
+                      .toList())
+      );
+      BookCollectionShow updatedCollection = bookCollectionService.patchBookCollection(id, bookCollectionUpdate);
       return "redirect:/collections";
     } catch (ResourceNotFoundException e) {
       model.addAttribute("error", e.getMessage());
-      return "collections/edit";
+      return "redirect:/collections";
     }
   }
 
