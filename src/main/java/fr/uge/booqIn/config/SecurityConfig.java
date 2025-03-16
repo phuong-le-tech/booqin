@@ -72,7 +72,7 @@ public class SecurityConfig {
                                 .csrf(AbstractHttpConfigurer::disable)
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers("/auth/**", "/home", "/h2-console/**", "/static/**",
-                                                                "/favicon.ico", "/books/**", "/books/{id}", "/carts/**" , "/api/v1/stripe/webhook")
+                                                                "/favicon.ico", "/books/**", "/books/{id}","/comments/*", "/carts/**" , "/api/v1/stripe/webhook")
                                         
                                                 .permitAll()
                                                 .anyRequest().authenticated())

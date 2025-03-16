@@ -3,17 +3,22 @@ package fr.uge.booqIn.controller.web;
 import fr.uge.booqIn.dto.book.BookCreate;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
-import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
+import fr.uge.booqIn.dto.bookCollection.LiteCollection;
+import fr.uge.booqIn.dto.vote.VoteCount;
+import fr.uge.booqIn.dto.vote.VoteCreate;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.User;
+import fr.uge.booqIn.enums.VoteType;
+import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
+import fr.uge.booqIn.service.interfaces.CommentServiceInterface;
+import fr.uge.booqIn.service.interfaces.VoteServiceInterface;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -26,9 +31,17 @@ import java.util.stream.Collectors;
 @RequestMapping("/books")
 public class BookWebController {
     private final BookServiceInterface bookService;
+    private final VoteServiceInterface voteServiceInterface;
+    private final BookCollectionServiceInterface bookCollectionService;
+    private final CommentServiceInterface commentService;
 
-    public BookWebController(BookServiceInterface bookService) {
+
+    public BookWebController(BookServiceInterface bookService, VoteServiceInterface voteServiceInterface,
+                             BookCollectionServiceInterface bookCollectionService, CommentServiceInterface commentService) {
         this.bookService = bookService;
+        this.voteServiceInterface = voteServiceInterface;
+        this.bookCollectionService = bookCollectionService;
+        this.commentService = commentService;
     }
 
     @GetMapping
@@ -40,7 +53,7 @@ public class BookWebController {
                               @RequestParam(value = "title", required = false) String title,
                               @RequestParam(value = "author", required = false) String author,
                               @RequestParam(value = "isbn", required = false) String isbn,
-                              Authentication authenfication) {
+                              @AuthenticationPrincipal User currentUser) {
 
         Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction) ?
             Sort.Direction.DESC : Sort.Direction.ASC;
@@ -54,19 +67,37 @@ public class BookWebController {
         model.addAttribute("author", author);
         model.addAttribute("sort", sort);
         model.addAttribute("direction", direction);
-
-        if(authenfication != null && authenfication.isAuthenticated()){
-            User user = (User) authenfication.getPrincipal();
-            model.addAttribute("userId",user.getId());
+        if(currentUser != null) {
+            model.addAttribute("userId", currentUser.getId());
+            var b = bookCollectionService.getUserCollections(currentUser);
+            var bcc = b.stream().map(bc -> new LiteCollection(bc.getId(),bc.getTitle())).toList();
+            model.addAttribute("bookCollections", bcc);
         }
-
         return "book/list";
     }
 
     @GetMapping("/{id}")
-    public String getBookFromId(Model model, @PathVariable Long id) {
+    public String getBookFromId(Model model, @PathVariable Long id, @AuthenticationPrincipal User currentUser) {
         BookShow book = bookService.findById(id);
         model.addAttribute("book", book);
+        VoteCount count = voteServiceInterface.getVoteCounts(id, "BOOK");
+        var totalComments = commentService.countByEntity(id,"BOOK");
+        var comments = commentService.getCommentTreeByEntity(id,"BOOK");
+
+        model.addAttribute("votes", count);
+        model.addAttribute("comments", comments);
+        model.addAttribute("commentCount", totalComments);
+        model.addAttribute("entityType", "BOOK"); // Ajout pour le formulaire de commentaire
+        model.addAttribute("entityId", id); // Ajout pour le formulaire de commentaire
+
+        if (currentUser != null) {
+            var voteUser = voteServiceInterface.getUserVoteType(currentUser.getId(),id,"BOOK");
+            if(voteUser != null) {
+                model.addAttribute("userVote",voteUser.toString());
+            }
+            model.addAttribute("user",currentUser);
+        }
+
         return "book/bookDetails";
     }
 
@@ -112,5 +143,16 @@ public class BookWebController {
 
         bookService.createBook(book);
         return "redirect:/books";
+    }
+
+    @PostMapping("/vote")
+    public String vote(@RequestParam("bookId") Long bookId,
+                       @RequestParam("voteType") VoteType voteType,
+                       @AuthenticationPrincipal User currentUser) {
+        if (currentUser != null) {
+            VoteCreate voteCreate = new VoteCreate(currentUser.getId(), bookId, "BOOK", voteType);
+            voteServiceInterface.castVote(voteCreate);
+        }
+        return "redirect:/books/" + bookId;
     }
 }
