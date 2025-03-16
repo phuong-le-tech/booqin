@@ -1,0 +1,35 @@
+<div class="max-w-4xl mx-auto">
+    <h1 class="text-3xl font-bold text-gray-900 mb-6">Public Collections</h1>
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <table class="min-w-full">
+            <thead class="bg-gray-50">
+            <tr>
+                <th class="px-6 py-3 text-left text-base font-medium text-gray-700 uppercase tracking-wider">Name</th>
+                <th class="px-6 py-3 text-left text-base font-medium text-gray-700 uppercase tracking-wider">Description</th>
+                <th class="px-6 py-3 text-left text-base font-medium text-gray-700 uppercase tracking-wider">Owner</th>
+                <th class="px-6 py-3 text-left text-base font-medium text-gray-700 uppercase tracking-wider">Actions</th>
+                <th class="px-6 py-3 text-left text-base font-medium text-gray-700 uppercase tracking-wider">Number of Books</th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+            <tr th:each="collection : ${publicCollections}" class="hover:bg-gray-50">
+                <td class="px-6 py-4 text-base text-gray-700" th:text="${collection.title}">Collection Title</td>
+                <td class="px-6 py-4 text-base text-gray-700" th:text="${collection.description}">Collection Description</td>
+                <td class="px-6 py-4 text-base text-gray-700" th:text="${collection.user.firstName} + ' ' + ${collection.user.lastName}">Owner</td>
+                <td class="px-6 py-4 text-base font-medium">
+                    <div class="flex space-x-2">
+                        <a th:href="@{/collections/{id}(id=${collection.id})}" class="bg-blue-600 px-2 py-1 text-white text-base rounded hover:opacity-90">
+                            View
+                        </a>
+                    </div>
+                </td>
+                <td class="px-6 py-4 text-base text-gray-600" th:text="${collection.books.size()}">Nb Books</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-6 text-center">
+        <a th:href="@{/}" class="bg-blue-600 inline-block px-4 py-2 text-white rounded-lg hover:opacity-90">Back to Home</a>
+    </div>
+</div>

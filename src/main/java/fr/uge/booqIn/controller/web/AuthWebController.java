@@ -36,7 +36,7 @@ public class AuthWebController {
     System.out.println(registerDto);
     try {
       authService.register(registerDto);
-      return "home/index";
+      return "Home";
     } catch (Exception e) {
       model.addAttribute("error", e.getMessage());
       return "auth/register";
