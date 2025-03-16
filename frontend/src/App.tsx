@@ -42,7 +42,7 @@ const App: React.FC = () => {
                         <Route path="/cart" element={<ShoppingCart />} />
                         <Route path="/dashboard" element={<BookLending />} /> {/* Ajoutez cette nouvelle route */}
                         {/*<Route path="/books/:id" element={<BookDetails />} />*/}
-                        <Route path="/collections" element={<Collections />} />
+                        <Route path="/collections/user" element={<Collections />} />
                         <Route path="/collections/public" element={<PublicCollections />} />
                         <Route path="/collections/:id" element={<CollectionDetails />} />
                         <Route path="/admin" element={<AdminPage/>} />
