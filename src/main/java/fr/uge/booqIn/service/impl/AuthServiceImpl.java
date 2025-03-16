@@ -69,6 +69,7 @@ public class AuthServiceImpl implements AuthServiceInterface {
       throw new DuplicateResourceException("User", "email", registerDto.email());
     });
 
+
     Cart cart = new Cart();
     cartRepository.save(cart);
 

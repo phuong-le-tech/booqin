@@ -76,4 +76,5 @@ public interface UserServiceInterface {
 
 
   UserIndex findUserByIdToIndex(@NotNull Long id);
+  User findUserById(@NotNull Long id);
 }

@@ -38,8 +38,8 @@ public class CartServiceImpl implements CartServiceInterface {
   @Override
   @Transactional
   public Cart getCart(Long cartId) {
-    var user = userService.findUserByIdToIndex(cartId);
-    return cartRepository.findById(user.id())
+   var  user = userService.findUserById(cartId);
+    return cartRepository.findById(user.getCart().getId())
             .orElseThrow(() -> new ResourceNotFoundException("Cart", "id", cartId));
   }
 
@@ -66,23 +66,23 @@ public class CartServiceImpl implements CartServiceInterface {
   public boolean addBookToCart(Long userId, Long bookId) {
     Book book = bookRepository.findById(bookId)
             .orElseThrow(() -> new ResourceNotFoundException("Book", "id", bookId));
-
+    
     Cart cart = getCart(userId);
-    System.out.println("Book " + cart.getBooks());
-
+    System.out.println("Book "  + cart.getBooks());
+    
     if (!cart.getBooks().contains(book)) {
       cart.getBooks().add(book);
-      System.out.println("Book added to cart." + cartRepository.save(cart));
+      System.out.println("Book added to cart."  + cartRepository.save(cart));
 
       return true;
     }
-
+    
     System.out.println("Book already exists, not adding.");
     System.out.println("Cart: " + cart.getBooks());
-
+    
     return false;
   }
-
+  
 
   @Override
   @Transactional
@@ -92,8 +92,8 @@ public class CartServiceImpl implements CartServiceInterface {
           backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
   )
   public boolean removeBookFromCart(Long user, Long bookId) {
-    cartRepository.deleteBookFromCart(user, bookId);
-    return true;
+      cartRepository.deleteBookFromCart(user, bookId);
+      return true;
   }
 
   @Override
