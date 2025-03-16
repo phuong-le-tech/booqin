@@ -1,12 +1,4 @@
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title>Book Grid</title>
-    <!-- Ajout de Tailwind CSS via CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-50 p-6">
+<!-- Contenu à insérer dans le layout -->
 <!-- En-tête avec titre et bouton d'ajout -->
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold text-gray-800">Books Collection</h1>
@@ -25,17 +17,17 @@
         <div class="flex flex-col">
             <label for="title" class="text-sm font-medium text-gray-700 mb-1">Title</label>
             <input type="text" id="title" name="title" th:value="${title}"
-                   class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                   class="border border-gray-700 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900">
         </div>
         <div class="flex flex-col">
             <label for="author" class="text-sm font-medium text-gray-700 mb-1">Author</label>
             <input type="text" id="author" name="author" th:value="${author}"
-                   class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                   class="border border-gray-700 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900">
         </div>
         <div class="flex flex-col">
             <label for="isbn" class="text-sm font-medium text-gray-700 mb-1">ISBN</label>
             <input type="text" id="isbn" name="isbn" th:value="${isbn}"
-                   class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                   class="border border-gray-700 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900">
         </div>
         <div class="flex flex-col items-end justify-end">
             <button type="submit"
@@ -75,9 +67,9 @@
                     <button type="submit" class="w-full text-center py-2 px-4 bg-green-600 text-white text-sm font-medium rounded-lg transition hover:bg-green-700">Add to Cart</button>
                 </form>
                 <!-- Bouton Add to Collection -->
-<!--                <a th:href="@{/collections/{collectionId}/books/add(collectionId=${collection.id})}" class="flex-1 text-center py-2 px-4 bg-indigo-600 text-white text-sm font-medium rounded-lg transition hover:bg-indigo-700">-->
-<!--                    Add to Collection-->
-<!--                </a>-->
+                <!--                <a th:href="@{/collections/{collectionId}/books/add(collectionId=${collection.id})}" class="flex-1 text-center py-2 px-4 bg-indigo-600 text-white text-sm font-medium rounded-lg transition hover:bg-indigo-700">-->
+                <!--                    Add to Collection-->
+                <!--                </a>-->
             </div>
         </div>
     </div>

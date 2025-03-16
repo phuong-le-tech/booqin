@@ -86,7 +86,7 @@ public class SecurityConfig {
                                                 .failureUrl("/auth/login?error=true")
                                                 .permitAll())
                                 .logout(logout -> logout
-                                                .logoutUrl("/logout") // ou "/auth/logout"
+                                                .logoutUrl("/auth/logout") // ou "/auth/logout"
                                                 .logoutSuccessUrl("/home")
                                                 .permitAll())
                                 .headers(headers -> headers.frameOptions().disable());

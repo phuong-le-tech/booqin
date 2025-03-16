@@ -1,0 +1,15 @@
+<div class="flex items-center justify-center min-h-screen bg-gray-100 py-12">
+    <div class="bg-white p-8 rounded-lg shadow-lg max-w-md w-full mx-auto text-center">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">Déconnexion</h1>
+
+        <p class="text-gray-600 mb-6">Êtes-vous sûr de vouloir vous déconnecter ?</p>
+
+        <form th:action="@{/auth/logout}" method="post">
+            <button type="submit" class="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition duration-300">
+                Se déconnecter
+            </button>
+        </form>
+
+        <a href="/" class="mt-4 inline-block text-blue-600 hover:underline">Retour à l'accueil</a>
+    </div>
+</div>
