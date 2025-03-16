@@ -12,15 +12,20 @@ import fr.uge.booqIn.repository.CartRepository;
 import fr.uge.booqIn.repository.UserRepository;
 import fr.uge.booqIn.service.interfaces.UserServiceInterface;
 import fr.uge.booqIn.specification.UserSpecification;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.ConcurrentModificationException;
 import java.util.Optional;
 
 
@@ -86,45 +91,54 @@ public class UserServiceImpl implements UserServiceInterface {
 
   @Override
   @Transactional
+  @Retryable(
+          maxAttemptsExpression = "${spring.retry.max-attempts}",
+          retryFor = {ConcurrentModificationException.class, ObjectOptimisticLockingFailureException.class},
+          backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
+  )
   public User updateUser(@NotNull @Valid User user) {
-    Optional<User> existingUserWithEmail = userRepository.findByEmail(user.getEmail());
-    if (existingUserWithEmail.isPresent() && !existingUserWithEmail.get().getId().equals(user.getId())) {
-      throw new DuplicateResourceException("User", "email", user.getEmail());
-    }
+      Optional<User> existingUserWithEmail = userRepository.findByEmail(user.getEmail());
+      if (existingUserWithEmail.isPresent() && !existingUserWithEmail.get().getId().equals(user.getId())) {
+        throw new DuplicateResourceException("User", "email", user.getEmail());
+      }
 
-    if (user.getPassword() != null && !user.getPassword().isEmpty() &&
-            !passwordEncoder.matches(user.getPassword(), existingUserWithEmail.get().getPassword())) {
-      user.setPassword(passwordEncoder.encode(user.getPassword()));
-    }
-
-    return userRepository.save(user);
+      if (user.getPassword() != null && !user.getPassword().isEmpty() &&
+              !passwordEncoder.matches(user.getPassword(), existingUserWithEmail.get().getPassword())) {
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+      }
+      return userRepository.save(user);
   }
 
   @Override
   @Transactional
-  public User patchUser(@NotNull Long id, @NotNull @Valid UserUpdate userUpdate) {
-    User user = findUserById(id);
+  @Retryable(
+          maxAttemptsExpression = "${spring.retry.max-attempts}",
+          retryFor = {ConcurrentModificationException.class, ObjectOptimisticLockingFailureException.class},
+          backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
+  )
+  public UserUpdate patchUser(@NotNull Long id, @NotNull @Valid UserUpdate userUpdate) {
+      User user = findUserById(id);
 
-    userUpdate.email().ifPresent(newEmail -> {
-      if (!newEmail.equals(user.getEmail())) {
-        if (userRepository.findByEmail(newEmail).isPresent()) {
-          throw new DuplicateResourceException("User", "email", newEmail);
+      userUpdate.email().ifPresent(newEmail -> {
+        if (!newEmail.equals(user.getEmail())) {
+          if (userRepository.findByEmail(newEmail).isPresent()) {
+            throw new DuplicateResourceException("User", "email", newEmail);
+          }
+          user.setEmail(newEmail);
         }
-        user.setEmail(newEmail);
-      }
-    });
+      });
 
-    userUpdate.firstName().ifPresent(user::setFirstName);
-    userUpdate.lastName().ifPresent(user::setLastName);
-    userUpdate.address().ifPresent(user::setAddress);
+      userUpdate.firstName().ifPresent(user::setFirstName);
+      userUpdate.lastName().ifPresent(user::setLastName);
+      userUpdate.address().ifPresent(user::setAddress);
 
-    userUpdate.password().ifPresent(newPassword -> {
-      if (!newPassword.isEmpty()) {
-        user.setPassword(passwordEncoder.encode(newPassword));
-      }
-    });
-
-    return userRepository.save(user);
+      userUpdate.password().ifPresent(newPassword -> {
+        if (!newPassword.isEmpty()) {
+          user.setPassword(passwordEncoder.encode(newPassword));
+        }
+      });
+      userRepository.save(user);
+      return userUpdate;
   }
 
 
@@ -151,5 +165,10 @@ public class UserServiceImpl implements UserServiceInterface {
   public User findUserById(Long id) {
     return userRepository.findByIdWithCollections(id)
             .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+  }
+
+  @Recover
+  public UserUpdate recoverFromOptimisticLockingFailure(ObjectOptimisticLockingFailureException ex, Long id, UserUpdate userUpdate) {
+    throw new ConcurrentModificationException("The user has been modified by someone else. Please try again.", ex);
   }
 }

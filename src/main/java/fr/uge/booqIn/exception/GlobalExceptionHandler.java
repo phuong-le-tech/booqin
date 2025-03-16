@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.Instant;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -267,5 +268,23 @@ public class GlobalExceptionHandler {
     return ResponseEntity
             .status(status)
             .body(ApiResponse.error("Resource not found.", errorResponse));
+  }
+
+  @ExceptionHandler(ConcurrentModificationException.class)
+  public ResponseEntity<ApiResponse<ErrorResponse>> handleConcurrentModificationException(
+          ConcurrentModificationException ex,
+          HttpServletRequest request
+  ) {
+    HttpStatus status = HttpStatus.CONFLICT;
+    ErrorResponse errorResponse = new ErrorResponse(
+            status.value(),
+            ex.getMessage(),
+            request.getRequestURI(),
+            Instant.now()
+    );
+
+    return ResponseEntity
+            .status(status)
+            .body(ApiResponse.error("Concurrent modification error.", errorResponse));
   }
 }

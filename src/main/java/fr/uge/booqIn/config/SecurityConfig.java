@@ -1,7 +1,7 @@
 package fr.uge.booqIn.config;
 
 import fr.uge.booqIn.filter.JwtAuthFilter;
-import fr.uge.booqIn.service.UserDetailsServiceImpl;
+import fr.uge.booqIn.service.impl.UserDetailsServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;

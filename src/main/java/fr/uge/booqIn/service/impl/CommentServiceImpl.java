@@ -17,11 +17,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.lang.NonNull;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDateTime;
+import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Objects;
 
@@ -81,6 +86,11 @@ public class CommentServiceImpl implements CommentServiceInterface {
 
     @Override
     @Transactional
+    @Retryable(
+            maxAttemptsExpression = "${spring.retry.max-attempts}",
+            retryFor = {ConcurrentModificationException.class, ObjectOptimisticLockingFailureException.class},
+            backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
+    )
     public CommentDTO create(@NonNull CommentCreateDTO createDTO) {
         logger.info("Creating a new comment");
 
@@ -116,6 +126,11 @@ public class CommentServiceImpl implements CommentServiceInterface {
 
     @Override
     @Transactional
+    @Retryable(
+            maxAttemptsExpression = "${spring.retry.max-attempts}",
+            retryFor = {ConcurrentModificationException.class, ObjectOptimisticLockingFailureException.class},
+            backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
+    )
     public Comment createComment(@NonNull @Validated Comment comment) {
         logger.info("Creating a new comment from entity");
 
@@ -135,6 +150,11 @@ public class CommentServiceImpl implements CommentServiceInterface {
 
     @Override
     @Transactional
+    @Retryable(
+            maxAttemptsExpression = "${spring.retry.max-attempts}",
+            retryFor = {ConcurrentModificationException.class, ObjectOptimisticLockingFailureException.class},
+            backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
+    )
     public CommentDTO update(@NonNull Long commentId, @NonNull Long userId, @NonNull CommentUpdateDTO updateDTO) {
         logger.info("Updating comment with id: {}", commentId);
 
@@ -153,6 +173,11 @@ public class CommentServiceImpl implements CommentServiceInterface {
 
     @Override
     @Transactional
+    @Retryable(
+            maxAttemptsExpression = "${spring.retry.max-attempts}",
+            retryFor = {ConcurrentModificationException.class, ObjectOptimisticLockingFailureException.class},
+            backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
+    )
     public Comment updateComment(@NonNull @Validated Comment comment) {
         logger.info("Updating comment from entity with id: {}", comment.getId());
 
@@ -166,6 +191,11 @@ public class CommentServiceImpl implements CommentServiceInterface {
 
     @Override
     @Transactional
+    @Retryable(
+            maxAttemptsExpression = "${spring.retry.max-attempts}",
+            retryFor = {ConcurrentModificationException.class, ObjectOptimisticLockingFailureException.class},
+            backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
+    )
     public void delete(@NonNull Long commentId, @NonNull Long userId) {
         logger.info("Deleting comment with id: {}", commentId);
 
@@ -242,5 +272,35 @@ public class CommentServiceImpl implements CommentServiceInterface {
     private Comment findCommentById(Long id) {
         return commentRepository.findWithUserById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Comment", "id", id));
+    }
+
+    @Recover
+    public CommentDTO recoverFromOptimisticLockingFailureOnCreate(ObjectOptimisticLockingFailureException ex, @NonNull CommentCreateDTO createDTO) {
+        logger.error("Optimistic locking failure during comment creation: {}", ex.getMessage());
+        throw new ConcurrentModificationException("The comment could not be created due to concurrent modifications. Please try again.", ex);
+    }
+
+    @Recover
+    public Comment recoverFromOptimisticLockingFailureOnCreateComment(ObjectOptimisticLockingFailureException ex, @NonNull @Validated Comment comment) {
+        logger.error("Optimistic locking failure during comment creation: {}", ex.getMessage());
+        throw new ConcurrentModificationException("The comment could not be created due to concurrent modifications. Please try again.", ex);
+    }
+
+    @Recover
+    public CommentDTO recoverFromOptimisticLockingFailureOnUpdate(ObjectOptimisticLockingFailureException ex, @NonNull Long commentId, @NonNull Long userId, @NonNull CommentUpdateDTO updateDTO) {
+        logger.error("Optimistic locking failure during comment update: {}", ex.getMessage());
+        throw new ConcurrentModificationException("The comment has been modified by someone else. Please try again.", ex);
+    }
+
+    @Recover
+    public Comment recoverFromOptimisticLockingFailureOnUpdateComment(ObjectOptimisticLockingFailureException ex, @NonNull @Validated Comment comment) {
+        logger.error("Optimistic locking failure during comment update: {}", ex.getMessage());
+        throw new ConcurrentModificationException("The comment has been modified by someone else. Please try again.", ex);
+    }
+
+    @Recover
+    public void recoverFromOptimisticLockingFailureOnDelete(ObjectOptimisticLockingFailureException ex, @NonNull Long commentId, @NonNull Long userId) {
+        logger.error("Optimistic locking failure during comment deletion: {}", ex.getMessage());
+        throw new ConcurrentModificationException("The comment has been modified by someone else. Please try again.", ex);
     }
 }

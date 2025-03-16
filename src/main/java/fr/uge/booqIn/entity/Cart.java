@@ -15,6 +15,10 @@ public class Cart {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @Version
+  @Column(nullable = false)
+  private Long version;
+
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private StatusPayment status = StatusPayment.PENDING;
@@ -46,6 +50,18 @@ public class Cart {
     return id;
   }
 
+  public void setId(Long id) {
+    this.id = id;
+  }
+
+  public Long getVersion() {
+    return version;
+  }
+
+  public void setVersion(Long version) {
+    this.version = version;
+  }
+
   public StatusPayment getStatus() {
     return status;
   }
@@ -60,6 +76,10 @@ public class Cart {
 
   public void setBooks(Set<Book> books) {
     this.books = books;
+  }
+
+  public void addBook(Book book) {
+    this.books.add(book);
   }
 
   public LocalDateTime getCreatedAt() {
