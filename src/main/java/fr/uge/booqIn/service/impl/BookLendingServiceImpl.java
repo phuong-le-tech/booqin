@@ -6,11 +6,14 @@ import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.BookLending;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.BookStatus;
+import fr.uge.booqIn.event.BookNotAvailableEvent;
+import fr.uge.booqIn.event.BookReturnedEvent;
 import fr.uge.booqIn.mapper.BookLendingMapper;
 import fr.uge.booqIn.repository.BookLendingRepository;
 import fr.uge.booqIn.repository.BookRepository;
 import fr.uge.booqIn.service.interfaces.BookLendingInterface;
 import jakarta.transaction.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 
@@ -29,13 +32,15 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   private final BookRepository bookRepository;
   private final BookLendingMapper bookLendingMapper;
   private final  BookServiceImpl bookService;
+  private final ApplicationEventPublisher eventPublisher;
   
-  public BookLendingServiceImpl(BookLendingRepository bookLendingRepository , UserServiceImpl userService , BookRepository bookRepository, BookLendingMapper bookLendingMapper, BookServiceImpl bookService) {
+  public BookLendingServiceImpl(BookLendingRepository bookLendingRepository , UserServiceImpl userService , BookRepository bookRepository, BookLendingMapper bookLendingMapper, BookServiceImpl bookService,  ApplicationEventPublisher eventPublisher) {
     this.bookLendingRepository = bookLendingRepository;
     this.userService = userService;
     this.bookRepository = bookRepository;
     this.bookLendingMapper = bookLendingMapper;
     this.bookService = bookService;
+    this.eventPublisher = eventPublisher;
   }
   
   
@@ -81,7 +86,7 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     lending.setReturnDate(null);
     
     bookLendingRepository.save(lending);
-    
+    eventPublisher.publishEvent(new BookReturnedEvent(lending.getBook().getId()));
     return true;
   }
   
@@ -92,24 +97,25 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     Optional<User> optionalUser = Optional.ofNullable(userService.findUserById(borrowerId));
     
     if (optionalBook.isEmpty() || optionalUser.isEmpty()) {
+      System.out.println("Book or user not found");
       return false;
     }
     
     Book book = optionalBook.get();
     User borrower = optionalUser.get();
     
-
-    Optional<BookLending> existingLoan = bookLendingRepository.findByBookId(bookId);
-    
-    if (existingLoan.isPresent()) {
-      BookLending lending = existingLoan.get();
-      if (lending.getStatus() != BookStatus.AVAILABLE) {
-        return false;
-      }
+    var bookLending =  findBookLendingByBookId(bookId);
+    if (bookLending.isEmpty()) {
+      System.out.println("Book already reserved");
+      eventPublisher.publishEvent(new BookNotAvailableEvent(bookId, borrowerId));
+      return false;
     }
-    BookLending newLoan = new BookLending(book, borrower, borrower);
-    bookLendingRepository.save(newLoan);
-    
+    var bl = bookLending.get();
+    bl.setBorrower(borrower);
+    bl.setReservedAt(LocalDateTime.now());
+    bl.setStatus(BookStatus.RESERVED);
+    bookLendingRepository.save(bl);
+
     return true;
   }
   
@@ -232,7 +238,6 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     return new LendingResponseDTO(borrowedBooks, lentBooks, containsAll);
   }
   
-  
   public List<BookLending> findUserOwnedLendings(Long userId) {
     User user = userService.findUserById(userId);
     return bookLendingRepository.findByLender(user);
@@ -265,7 +270,11 @@ public class BookLendingServiceImpl implements BookLendingInterface {
       bookLending.getBook().setIsbns(completeBook.getIsbns());
     }
   }
-  
+  @Override
+  @Transactional
+  public Optional<BookLending> findBookLendingByBookId(Long bookId) {
+    return Optional.ofNullable(bookLendingRepository.findByBookIdAndBorrowerIsNullAndStatus(bookId, BookStatus.AVAILABLE));
+  }
   
 }
 

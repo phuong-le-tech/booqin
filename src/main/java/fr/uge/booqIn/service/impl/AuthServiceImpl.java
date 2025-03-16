@@ -4,6 +4,7 @@ import fr.uge.booqIn.dto.auth.AuthResponse;
 import fr.uge.booqIn.dto.auth.LoginDto;
 import fr.uge.booqIn.dto.auth.RegisterDto;
 import fr.uge.booqIn.dto.auth.UserMeDto;
+import fr.uge.booqIn.entity.Cart;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.UserRole;
 import fr.uge.booqIn.mapper.AuthMapper;
@@ -45,14 +46,15 @@ public class AuthServiceImpl implements AuthServiceInterface {
     userRepository.findByEmail(registerDto.email()).ifPresent(u -> {
       throw new IllegalArgumentException("Email already taken");
     });
-
+    Cart cart = new Cart();
     User user = new User(
             registerDto.firstName(),
             registerDto.lastName(),
             registerDto.email(),
             passwordEncoder.encode(registerDto.password()),
             registerDto.address(),
-            UserRole.USER
+            UserRole.USER,
+            cart
     );
 
     return userRepository.save(user);

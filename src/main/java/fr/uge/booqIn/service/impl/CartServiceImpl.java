@@ -32,8 +32,8 @@ public class CartServiceImpl implements CartServiceInterface {
 
   @Override
   public Cart getCart(Long cartId) {
-   var  user = userService.findUserByIdToIndex(cartId);
-    return cartRepository.findById(user.id())
+   var  user = userService.findUserById(cartId);
+    return cartRepository.findById(user.getCart().getId())
             .orElseThrow(() -> new ResourceNotFoundException("Cart", "id", cartId));
   }
 
