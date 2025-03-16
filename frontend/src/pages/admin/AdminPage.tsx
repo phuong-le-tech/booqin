@@ -11,7 +11,7 @@ export const AdminPage: React.FC = () => {
     return (
         <Layout>
             <div className="p-4 sm:p-6 md:p-8">
-                <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-primary">Admin Dashboard</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-black">Admin Dashboard</h1>
 
                 {/* Tabs */}
                 <div className="mb-6 border-b border-gray-200">
@@ -20,7 +20,7 @@ export const AdminPage: React.FC = () => {
                             <button
                                 className={`inline-block p-4 rounded-t-lg ${
                                     activeTab === 'users'
-                                        ? 'text-primary font-semibold border-b-2 border-primary'
+                                        ? 'text-black font-semibold border-b-2 border-primary'
                                         : 'text-gray-500 hover:text-gray-600'
                                 }`}
                                 onClick={() => setActiveTab('users')}
@@ -32,7 +32,7 @@ export const AdminPage: React.FC = () => {
                             <button
                                 className={`inline-block p-4 rounded-t-lg ${
                                     activeTab === 'books'
-                                        ? 'text-primary font-semibold border-b-2 border-primary'
+                                        ? 'text-black font-semibold border-b-2 border-primary'
                                         : 'text-gray-500 hover:text-gray-600'
                                 }`}
                                 onClick={() => setActiveTab('books')}
@@ -44,7 +44,7 @@ export const AdminPage: React.FC = () => {
                             <button
                                 className={`inline-block p-4 rounded-t-lg ${
                                     activeTab === 'collections'
-                                        ? 'text-primary font-semibold border-b-2 border-primary'
+                                        ? 'text-black font-semibold border-b-2 border-primary'
                                         : 'text-gray-500 hover:text-gray-600'
                                 }`}
                                 onClick={() => setActiveTab('collections')}

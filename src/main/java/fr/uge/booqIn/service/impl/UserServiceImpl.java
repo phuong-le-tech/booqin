@@ -154,25 +154,17 @@ public class UserServiceImpl implements UserServiceInterface {
   @Override
   @Transactional
   public UserIndex findUserByIdToIndex(Long userId) {
-    User user = userRepository.findByIdWithBooksToLend(userId)
+    User userWithCollections = userRepository.findByIdWithCollections(userId)
             .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
-    User userWithCollections = userRepository.findByIdWithBooksToLend(userId)
-            .orElse(user);
 
     return new UserIndex(userWithCollections.getId(), userWithCollections.getFirstName(),
-            userWithCollections.getLastName(), userWithCollections.getEmail());
+            userWithCollections.getLastName(), userWithCollections.getEmail(),
+            userWithCollections.getAddress(), userWithCollections.getRole());
   }
 
   public User findUserById(Long id) {
-    User userWithCollections = userRepository.findByIdWithCollections(id)
+    return userRepository.findByIdWithCollections(id)
             .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
-
-    User userWithBooksToLend = userRepository.findByIdWithBooksToLend(id)
-            .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
-
-    userWithCollections.setBooksToLend(userWithBooksToLend.getBooksToLend());
-
-    return userWithCollections;
   }
 
   @Recover

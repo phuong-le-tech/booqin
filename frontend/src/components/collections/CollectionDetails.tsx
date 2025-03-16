@@ -2,27 +2,42 @@
 
 import React, {useContext, useEffect, useState} from "react";
 import { useParams, Link } from "react-router-dom";
-import { BookCollection } from "../../model/BookCollection";
+import {BookCollection, BookCollectionShow} from "../../model/BookCollection";
 import { collections } from "../../assets/testData";
 import Layout from "../../pages/Layout";
 import {AuthContext} from "../../context/AuthContext.tsx";
+import BookCollectionService from "../../services/BookCollectionService.ts";
 
 const CollectionDetails: React.FC = () => {
     const { user } = useContext(AuthContext);
     const { id } = useParams<{ id: string }>();
-    const [collection, setCollection] = useState<BookCollection | null>(null);
+    const [collection, setCollections] = useState<BookCollectionShow | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const urlSearchParams = new URLSearchParams(location.search);
     const origin = urlSearchParams.get('origin');
 
     // USE REAL DATA IN BDD (use requests)
-    /*useEffect(() => {
+    useEffect(() => {
         const fetchCollection = async () => {
             try {
-                const response = await fetch(`/api/v1/collections/${id}`);
-                if (!response.ok) throw new Error("Failed to fetch collection");
-                const data: BookCollection = await response.json();
-                setCollection(data);
+                setLoading(true);
+                // Parse id as number only if it's not "new"
+                const numericId = parseInt(id as string, 10);
+
+                // Check if id is a valid number
+                if (isNaN(numericId)) {
+                    setError("Invalid collection ID");
+                    setLoading(false);
+                    return;
+                }
+                const collectionsData = await BookCollectionService.getBookCollectionById(numericId);
+                if (collectionsData) {
+                    setCollections(collectionsData);
+                } else {
+                    console.error("Unexpected data format:", collectionsData);
+                    setError("No public collections found");
+                }
             } catch (error) {
                 console.error("Error fetching collection details:", error);
             } finally {
@@ -31,13 +46,6 @@ const CollectionDetails: React.FC = () => {
         };
 
         fetchCollection();
-    }, [id]);*/
-    // USE TEST DATA
-    useEffect(() => {
-        // Chercher la collection dans les données de test
-        const foundCollection = collections.find((col) => col.id === id);
-        setCollection(foundCollection ?? null);
-        setLoading(false);
     }, [id]);
 
     if (loading) return <div className="text-center py-8">Loading...</div>;
@@ -45,7 +53,7 @@ const CollectionDetails: React.FC = () => {
     if (!collection) return <div className="text-center py-8">Collection not found.</div>;
 
     if (user) {
-        if (collection.owner.id !== user.id && !collection.isPublic) {
+        if (collection.user.id !== user.id && !collection.isPublic) {
             return <div className="text-center py-8">You don't have permission to view this collection.</div>;
         }
     }
@@ -69,9 +77,9 @@ const CollectionDetails: React.FC = () => {
                                             <h3 className="text-lg font-bold">{book.title}</h3>
                                             <p className="text-sm text-gray-600">{book.description}</p>
                                             <p className="text-sm text-gray-500">Published: {book.publicationDate}</p>
-                                            {book.authors.length > 0 && (
+                                            {book.authorNames.length > 0 && (
                                                 <p className="text-sm text-gray-500">
-                                                    Authors: {book.authors.map((author) => `${author.firstName} ${author.lastName}`).join(", ")}
+                                                    Authors: {book.authorNames.map((author) => `${author}`).join(", ")}
                                                 </p>
                                             )}
                                         </li>
