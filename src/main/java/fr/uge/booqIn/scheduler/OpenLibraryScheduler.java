@@ -31,8 +31,8 @@ public class OpenLibraryScheduler {
       this.openApiAdapter = BookFetcherFactory.adapter("open");
       
     }
-
-    @Scheduled(cron = "* * 2 * * *")    // * * 2 * * * -> every 2am
+    
+    @Scheduled(cron = "* */2 * * * *")    // * * 2 * * * -> every 2am
     public void fetchOpenLibraryBooks() {
         List<String> authors = authorIterator.getNextBatch();
 
