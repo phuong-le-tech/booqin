@@ -9,6 +9,7 @@ import org.springframework.validation.annotation.Validated;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 public class BookCollection implements PolymorphicEntity, Commentable, Votable {
@@ -17,6 +18,10 @@ public class BookCollection implements PolymorphicEntity, Commentable, Votable {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
+
+  @Version
+  @Column(nullable = false)
+  private Long version;
 
   @Column(nullable = false)
   private String title;
@@ -27,7 +32,7 @@ public class BookCollection implements PolymorphicEntity, Commentable, Votable {
   @ManyToOne(fetch = FetchType.LAZY)
   private User owner;
 
-  @ManyToMany
+  @ManyToMany(fetch = FetchType.LAZY)
   private List<Book> books = new ArrayList<>();
 
   @Column(nullable = false)
@@ -161,6 +166,10 @@ public class BookCollection implements PolymorphicEntity, Commentable, Votable {
     return id;
   }
 
+  public Long getVersion() {
+    return version;
+  }
+
   @Override
   public String getEntityType() {
     return ENTITY_TYPE;
@@ -200,6 +209,10 @@ public class BookCollection implements PolymorphicEntity, Commentable, Votable {
 
   public void setId(Long id) {
     this.id = id;
+  }
+
+  public void setVersion(Long version) {
+    this.version = version;
   }
 
   public void setTitle(String name) {
@@ -242,5 +255,25 @@ public class BookCollection implements PolymorphicEntity, Commentable, Votable {
     if (!books.remove(book)) {
       throw new IllegalArgumentException("Book not found in collection");
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof BookCollection that)) return false;
+    return isPublic == that.isPublic &&
+            isSmart == that.isSmart &&
+            Objects.equals(title, that.title) &&
+            Objects.equals(description, that.description) &&
+            Objects.equals(owner, that.owner) &&
+            Objects.equals(books, that.books) &&
+            Objects.equals(createdAt, that.createdAt) &&
+            Objects.equals(updatedAt, that.updatedAt) &&
+            collectionType == that.collectionType;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(title, description, owner, books, isPublic, createdAt, updatedAt, isSmart, collectionType);
   }
 }

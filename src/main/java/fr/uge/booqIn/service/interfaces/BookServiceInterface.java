@@ -49,9 +49,8 @@ public interface BookServiceInterface {
    * Save book from API
    *
    * @param book Book entity to create
-   * @return
    */
-  Book saveFromApi(@NotNull @Valid Book book);
+  void saveFromApi(@NotNull @Valid Book book);
   /**
    * Update book (all fields)
    *

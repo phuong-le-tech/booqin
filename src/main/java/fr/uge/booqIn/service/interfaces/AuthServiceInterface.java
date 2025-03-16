@@ -7,35 +7,51 @@ import fr.uge.booqIn.dto.auth.UserMeDto;
 import fr.uge.booqIn.entity.User;
 import org.springframework.security.core.Authentication;
 
-/**
- * Service responsible for authentication operations
- */
 public interface AuthServiceInterface {
 
   /**
-   * Register a new user
+   * Registers a new user
+   * Handles concurrent registration attempts for the same email
    *
-   * @param registerDto Registration data
-   * @return The created user
-   * @throws IllegalArgumentException if email is already taken
+   * @param registerDto the registration data
+   * @return the created user
+   * @throws fr.uge.booqIn.exception.DuplicateResourceException if email already exists
    */
   User register(RegisterDto registerDto);
 
   /**
-   * Authenticate a user and generate JWT tokens
+   * Authenticates a user and returns JWT tokens
    *
-   * @param loginDto Login credentials
-   * @return Authentication response containing access and refresh tokens
+   * @param loginDto the login credentials
+   * @return AuthResponse containing access and refresh tokens
    * @throws org.springframework.security.authentication.BadCredentialsException if credentials are invalid
    */
   AuthResponse login(LoginDto loginDto);
 
   /**
-   * Get current authenticated user information
+   * Retrieves current user data from the authentication context
    *
-   * @param authentication Current authentication context
-   * @return DTO with user information
+   * @param authentication the current authentication context
+   * @return UserMeDto containing user data
    * @throws IllegalStateException if user is not authenticated
    */
   UserMeDto getCurrentUser(Authentication authentication);
+
+  /**
+   * Refreshes user tokens using a valid refresh token
+   * Handles token reuse attempts and concurrency issues
+   *
+   * @param refreshToken the JWT refresh token
+   * @return AuthResponse containing new access and refresh tokens
+   * @throws IllegalStateException if token is invalid, expired, or reused
+   */
+  AuthResponse refreshToken(String refreshToken);
+
+  /**
+   * Invalidates all sessions for a user by forcing version increment
+   *
+   * @param userId the user ID
+   * @throws IllegalStateException if user not found
+   */
+  void invalidateUserSessions(Long userId);
 }

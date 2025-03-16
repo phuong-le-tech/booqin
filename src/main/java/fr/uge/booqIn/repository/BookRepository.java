@@ -17,6 +17,10 @@ import java.util.Optional;
 @Repository
 public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificationExecutor<Book> {
 
+  @Override
+  @Query("SELECT DISTINCT b FROM Book b LEFT JOIN FETCH b.isbns WHERE b.id = :id")
+  Optional<Book> findById(@NonNull Long id);
+
   @Query("SELECT DISTINCT b FROM Book b LEFT JOIN FETCH b.authors WHERE b.id = :id")
   Optional<Book> findByIdWithAuthors(@NonNull Long id);
 
