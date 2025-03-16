@@ -7,10 +7,12 @@ import fr.uge.booqIn.repository.AuthorRepository;
 import fr.uge.booqIn.repository.BookCollectionRepository;
 import fr.uge.booqIn.repository.BookRepository;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
+@Component
 public class GlobalCollectionService {
   private final BookCollectionRepository bookCollectionRepository;
   private final BookRepository bookRepository;
