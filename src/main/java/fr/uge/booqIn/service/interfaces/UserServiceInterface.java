@@ -64,7 +64,7 @@ public interface UserServiceInterface {
    * @throws fr.uge.booqIn.exception.DuplicateResourceException if email already exists
    * @throws jakarta.validation.ValidationException             if validation fails
    */
-  User patchUser(@NotNull Long id, @NotNull @Valid UserUpdate userUpdate);
+  UserUpdate patchUser(@NotNull Long id, @NotNull @Valid UserUpdate userUpdate);
 
   /**
    * Delete user by ID

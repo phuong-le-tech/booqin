@@ -12,6 +12,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface BookCollectionRepository extends JpaRepository<BookCollection, Long>, JpaSpecificationExecutor<BookCollection> {
+  @Override
+  @Query("SELECT bc FROM BookCollection bc LEFT JOIN FETCH bc.books")
+  Optional<BookCollection> findById(Long id);
 
   @Query("SELECT bc FROM BookCollection bc LEFT JOIN FETCH bc.books WHERE bc.id = :id")
   Optional<BookCollection> findByIdWithBooks(@Param("id") Long id);

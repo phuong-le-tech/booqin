@@ -83,10 +83,10 @@ public class UserController {
 
   @PatchMapping("/{id}")
   @PreAuthorize("hasRole('ADMIN') or authentication.principal.id == #id" )
-  public ResponseEntity<ApiResponse<User>> patchUser(@PathVariable Long id, @RequestBody UserUpdate user) {
+  public ResponseEntity<ApiResponse<UserUpdate>> patchUser(@PathVariable Long id, @RequestBody UserUpdate user) {
     logger.info("🔄 Mise à jour partielle de l'utilisateur avec id: {}", id);
 
-    User updatedUser = userService.patchUser(id, user);
+    UserUpdate updatedUser = userService.patchUser(id, user);
 
     return ResponseEntity.ok(ApiResponse.success("User updated successfully", updatedUser));
   }

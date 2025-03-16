@@ -24,7 +24,10 @@ public class Book implements PolymorphicEntity, Votable, Commentable {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @ElementCollection
+  @Version
+  private Long version;
+
+  @ElementCollection(fetch = FetchType.LAZY)
   @CollectionTable(
           name = "book_isbn",
           joinColumns = @JoinColumn(name = "book_id"),
@@ -53,7 +56,6 @@ public class Book implements PolymorphicEntity, Votable, Commentable {
           name = "book_category",
           joinColumns = @JoinColumn(name = "book_id")
   )
-
   @Column(name = "category")
   private Set<String> categories = new HashSet<>();
 
@@ -120,6 +122,10 @@ public class Book implements PolymorphicEntity, Votable, Commentable {
 
   public Long getId() {
     return id;
+  }
+
+  public Long getVersion() {
+    return version;
   }
 
   public String getTitle() {

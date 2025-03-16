@@ -1,7 +1,7 @@
 package fr.uge.booqIn.filter;
 
 import fr.uge.booqIn.service.JwtService;
-import fr.uge.booqIn.service.UserDetailsServiceImpl;
+import fr.uge.booqIn.service.impl.UserDetailsServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;

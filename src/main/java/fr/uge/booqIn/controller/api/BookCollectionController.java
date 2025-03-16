@@ -192,12 +192,11 @@ public class BookCollectionController {
    * Get all collections with books for the current user
    */
   @GetMapping("/user/with-books")
-  public ResponseEntity<ApiResponse<List<BookCollection>>> getUserCollectionsWithBooks(
+  public ResponseEntity<ApiResponse<List<BookCollectionShow>>> getUserCollectionsWithBooks(
           @AuthenticationPrincipal User currentUser) {
     logger.info("✅ Fetching collections with books for user: " + currentUser.getUsername());
 
-    List<BookCollection> collections = bookCollectionService.getUserCollectionsWithBooks(currentUser)
-            .stream().map(bookCollectionMapper::bookCollectionShowToBookCollection).toList();
+    List<BookCollectionShow> collections = bookCollectionService.getUserCollectionsWithBooks(currentUser);
     return ResponseEntity.ok(ApiResponse.success("User collections with books fetched", collections));
   }
 
