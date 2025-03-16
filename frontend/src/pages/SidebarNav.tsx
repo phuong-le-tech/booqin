@@ -18,7 +18,7 @@ const authenticatedNavItems = [
     {icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", color: "text-blue-300"},
     {icon: Book, label: "Books", path: "/books", color: "text-green-300"},
     {icon: LibraryBigIcon, label: "Collections", path: "/collections/public", color: "text-purple-300"},
-    {icon: Library, label: "My Collections", path: "/collections", color: "text-yellow-300"},
+    {icon: Library, label: "My Collections", path: "/collections/user", color: "text-yellow-300"},
 ]
 
 export function SidebarNav({ onCloseSidebar = () => {} }: SidebarNavProps) {
