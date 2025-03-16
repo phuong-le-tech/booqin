@@ -18,6 +18,10 @@ public class User implements UserDetails {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @Version
+  @Column(nullable = false)
+  private Long version;
+
   @NotBlank(message = "First name is required")
   @Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters")
   @Column(nullable = false)
@@ -50,7 +54,7 @@ public class User implements UserDetails {
   @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<BookCollection> collections = new ArrayList<>();
 
-  @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+  @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
   @JoinColumn(name = "cart_id")
   private Cart cart;
 
@@ -87,6 +91,10 @@ public class User implements UserDetails {
 
   public Long getId() {
     return id;
+  }
+
+  public Long getVersion() {
+    return version;
   }
 
   public String getFirstName() {
@@ -142,6 +150,10 @@ public class User implements UserDetails {
     return updatedAt;
   }
 
+  public void setVersion(Long version) {
+    this.version = version;
+  }
+
   public void setFirstName(String fistName) {
     this.firstName = fistName;
   }
@@ -193,5 +205,22 @@ public class User implements UserDetails {
 
   public void removeCollection(BookCollection collection) {
     collections.remove(collection);
+  }
+
+  public void addBookToCart(Book book) {
+    cart.addBook(book);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    User user = (User) o;
+    return email.equals(user.email);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(email);
   }
 }

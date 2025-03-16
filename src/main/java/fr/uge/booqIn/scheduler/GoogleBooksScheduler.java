@@ -1,7 +1,7 @@
 package fr.uge.booqIn.scheduler;
 
-import fr.uge.booqIn.Adapter.BookAPIs.BookFetcher;
-import fr.uge.booqIn.Adapter.BookAPIs.BookFetcherFactory;
+import fr.uge.booqIn.adapter.bookApi.BookFetcher;
+import fr.uge.booqIn.adapter.bookApi.BookFetcherFactory;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -22,7 +22,8 @@ public class GoogleBooksScheduler {
         this.googleBooksFetcher = BookFetcherFactory.adapter("google");
     }
 
-    @Scheduled(cron = "* * 1 * * *")
+    //@Scheduled(cron = "* * 1 * * *")
+    @Scheduled(cron = "0 */1 * * * *")
     public void fetchGoogleBooks() {
         List<String> authors = authorIterator.getNextBatch();
 

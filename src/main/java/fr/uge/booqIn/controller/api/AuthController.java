@@ -33,13 +33,14 @@ public class AuthController {
   public ResponseEntity<ApiResponse<AuthResponse>> login(
           @RequestBody @Valid LoginDto data,
           HttpServletResponse response) {
+
     AuthResponse tokens = authService.login(data);
 
     addCookie(response, "jwt", tokens.accessToken(), 30 * 60);
     addCookie(response, "jwt-refresh", tokens.refreshToken(), 7 * 24 * 60 * 60);
 
     return ResponseEntity.ok(
-            ApiResponse.success("Connexion réussie !", tokens));
+            ApiResponse.success("Login successful", tokens));
   }
 
   @PostMapping("/register")
@@ -52,12 +53,32 @@ public class AuthController {
   }
 
   @PostMapping("/logout")
-  public ResponseEntity<ApiResponse<Void>> logout(HttpServletResponse response) {
+  public ResponseEntity<ApiResponse<Void>> logout(
+          HttpServletRequest request,
+          HttpServletResponse response,
+          Authentication authentication) {
+    String accessToken = getCookieValue(request, "jwt");
+    String refreshToken = getCookieValue(request, "jwt-refresh");
+
+    if (accessToken != null) {
+      jwtService.revokeToken(accessToken);
+    }
+
+    if (refreshToken != null) {
+      jwtService.revokeToken(refreshToken);
+    }
+
+    if (authentication != null && authentication.isAuthenticated()) {
+      User user = (User) authentication.getPrincipal();
+      authService.invalidateUserSessions(user.getId());
+    }
+
     addCookie(response, "jwt", null, 0);
     addCookie(response, "jwt-refresh", null, 0);
 
     return ResponseEntity.ok(
             ApiResponse.success("Logged out successfully", null));
+
   }
 
   @PostMapping("/refresh")
@@ -72,38 +93,52 @@ public class AuthController {
               .body(ApiResponse.error("Refresh token is missing"));
     }
 
-    try {
-      String username = jwtService.extractUsername(refreshToken);
-      String newAccessToken = jwtService.generateAccessToken(username);
-
-      addCookie(response, "jwt", newAccessToken, 30 * 60);
-
-      return ResponseEntity.ok(
-              ApiResponse.success("Access Token refreshed successfully", newAccessToken));
-    } catch (Exception e) {
+    if (jwtService.isTokenExpired(refreshToken)) {
       return ResponseEntity
               .status(HttpStatus.UNAUTHORIZED)
-              .body(ApiResponse.error("Invalid refresh token"));
+              .body(ApiResponse.error("Refresh token has expired"));
     }
+
+    if (jwtService.isTokenRevoked(refreshToken)) {
+      return ResponseEntity
+              .status(HttpStatus.UNAUTHORIZED)
+              .body(ApiResponse.error("Refresh token has been revoked"));
+    }
+
+    if (!jwtService.recordRefreshTokenUsage(refreshToken)) {
+      jwtService.revokeToken(refreshToken);
+
+      return ResponseEntity
+              .status(HttpStatus.UNAUTHORIZED)
+              .body(ApiResponse.error("Token reuse detected. Please login again."));
+    }
+
+    AuthResponse tokens = authService.refreshToken(refreshToken);
+
+    addCookie(response, "jwt", tokens.accessToken(), 30 * 60);
+    addCookie(response, "jwt-refresh", tokens.refreshToken(), 7 * 24 * 60 * 60);
+
+    return ResponseEntity.ok(
+            ApiResponse.success("Access Token refreshed successfully", tokens.accessToken()));
   }
 
   @GetMapping("/me")
   public ResponseEntity<ApiResponse<UserMeDto>> me(Authentication authentication) {
-    UserMeDto userMeDto = authService.getCurrentUser(authentication);
-    return ResponseEntity.ok(
-            ApiResponse.success("Current user data", userMeDto));
+      UserMeDto userMeDto = authService.getCurrentUser(authentication);
+      return ResponseEntity.ok(
+              ApiResponse.success("Current user data", userMeDto));
   }
 
   /*
    * =======================
-   * Méthodes utilitaires
+   * Utility methods
    * =======================
    */
 
   private void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
     Cookie cookie = new Cookie(name, value);
     cookie.setHttpOnly(true);
-    cookie.setSecure(false); // Mettre true en production (HTTPS)
+    cookie.setSecure(false); // Set to true in production (HTTPS)
     cookie.setPath("/");
     cookie.setMaxAge(maxAge);
     response.addCookie(cookie);
