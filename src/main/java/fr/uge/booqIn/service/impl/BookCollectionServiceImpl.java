@@ -191,7 +191,6 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
   @Override
   @Transactional
   public List<BookCollectionShow> getUserCollectionsWithBooks(User user) {
-    //return bookCollectionRepository.findByOwnerWithBooks(user);
     return bookCollectionRepository.findByOwnerWithBooks(user)
             .stream().map(bookCollectionMapper::toBookCollectionShow)
             .toList();

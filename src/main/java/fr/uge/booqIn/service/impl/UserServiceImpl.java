@@ -162,6 +162,7 @@ public class UserServiceImpl implements UserServiceInterface {
             userWithCollections.getAddress(), userWithCollections.getRole());
   }
 
+  @Override
   public User findUserById(Long id) {
     return userRepository.findByIdWithCollections(id)
             .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));

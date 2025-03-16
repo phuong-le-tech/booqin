@@ -40,10 +40,9 @@ public class BookLending {
   public BookLending() {
   }
   
-  public BookLending(Book book, User lender, User borrower) {
+  public BookLending(Book book, User lender) {
     this.book = book;
     this.lender = lender;
-    this.borrower = borrower;
     this.status = BookStatus.RESERVED;
     this.reservedAt = LocalDateTime.now(); // Réservation immédiate
   }

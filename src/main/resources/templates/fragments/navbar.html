@@ -103,7 +103,7 @@
             <a th:if="${isAdmin}" href="/admin" class="text-white hover:bg-gray-700 block px-3 py-2 rounded-md text-base font-medium">Admin</a>
 
             <!-- Logout for mobile -->
-            <form th:if="${isAuthenticated}" th:action="@{/auth/logout}" method="post" class="block px-3 py-2">
+            <form th:if="${isAuthenticated}" th:action="@{/templates/pages/auth/logout}" method="post" class="block px-3 py-2">
                 <button type="submit" class="text-red-400 hover:text-red-300 font-medium">Logout</button>
             </form>
         </div>

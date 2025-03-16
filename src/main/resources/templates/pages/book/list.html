@@ -43,8 +43,8 @@
     </form>
 </div>
 
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-6" th:if="${not #lists.isEmpty(books)}">
-    <div th:each="book : ${books}" class="bg-white border border-gray-200 rounded-xl shadow-sm flex flex-col transition duration-300 hover:shadow-md hover:-translate-y-1">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" th:if="${not #lists.isEmpty(books)}">
+    <div th:each="book : ${books}" class="bg-white border border-gray-200 rounded-xl shadow-sm flex flex-col transition duration-300 hover:shadow-md hover:-translate-y-1 book-item">
         <div class="w-full h-48 flex justify-center items-center text-2xl text-white rounded-t-xl"
              th:style="'background-color: ' + ${T(java.lang.String).format('#%06x', T(java.lang.Math).abs(book.id().hashCode()) % 0xFFFFFF)}">
             <span th:text="${book.title().substring(0, 1).toUpperCase()}"></span>
@@ -126,3 +126,173 @@
         <span class="nav-icon">&#8594;</span>
     </button>
 </div>
+</body>
+<script th:if="${userId != null}" th:inline="javascript">
+    // Get the collections data from Thymeleaf model
+    const userCollections = /*[[${bookCollections}]]*/ [];
+
+    function addToCollection(bookId, collectionId) {
+        console.log(`Adding book ${bookId} to collection ${collectionId}`);
+
+        // Create form data
+        const formData = new FormData();
+        formData.append('bookId', bookId);
+
+        // Make AJAX POST request
+        fetch(`/collections/${collectionId}/books/add`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => {
+                if (response.ok) {
+                    // Show success message
+                    const successPopup = document.getElementById('success-popup');
+                    if (successPopup) {
+                        successPopup.classList.remove('hidden');
+                        setTimeout(() => {
+                            successPopup.classList.add('hidden');
+                        }, 2000);
+                    } else {
+                        alert(`Book successfully added to collection!`);
+                    }
+                    return response.text();
+                } else {
+                    throw new Error('Failed to add book to collection');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to add book to collection. Please try again.');
+            });
+
+        // Close the modal after adding
+        const modal = document.getElementById('collection-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+
+        return false; // Prevent default link behavior
+    }
+
+    function showCollectionsModal(bookId) {
+        // Remove any existing modal
+        const existingModal = document.getElementById('collection-modal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        // Create modal backdrop and container
+        const modal = document.createElement('div');
+        modal.id = 'collection-modal';
+        modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
+
+        // Create modal content
+        let modalContent = `
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden transform transition-all">
+                <div class="bg-blue-600 px-4 py-3 flex justify-between items-center">
+                    <h3 class="text-lg font-medium text-white">Add to Collection</h3>
+                    <button onclick="document.getElementById('collection-modal').classList.add('hidden')" class="text-white hover:text-gray-200 focus:outline-none">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="p-4 max-h-96 overflow-y-auto">`;
+
+        // Add collections list
+        if (userCollections && userCollections.length > 0) {
+            modalContent += `<div class="space-y-2">`;
+            userCollections.forEach(collection => {
+                modalContent += `
+                    <div class="hover:bg-gray-100 p-2 rounded-md cursor-pointer flex items-center"
+                         onclick="addToCollection('${bookId}', '${collection.id}')">
+                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white mr-3">
+                            ${collection.title.charAt(0).toUpperCase()}
+                        </div>
+                        <div class="font-medium">${collection.title}</div>
+                    </div>`;
+            });
+            modalContent += `</div>`;
+        } else {
+            modalContent += `
+                <div class="text-center py-8">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                    </svg>
+                    <p class="mt-2 text-gray-500">No collections available</p>
+                    <p class="text-sm text-gray-400 mt-1">Create a collection first to add books</p>
+                </div>`;
+        }
+
+        modalContent += `
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button onclick="document.getElementById('collection-modal').classList.add('hidden')" class="w-full sm:w-auto px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 focus:outline-none">
+                        Cancel
+                    </button>
+                </div>
+            </div>`;
+
+        modal.innerHTML = modalContent;
+        document.body.appendChild(modal);
+
+        // Create success popup if it doesn't exist
+        if (!document.getElementById('success-popup')) {
+            const successPopup = document.createElement('div');
+            successPopup.id = 'success-popup';
+            successPopup.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg hidden transform transition-all duration-300';
+            successPopup.innerHTML = `Book successfully added to collection! <span class="ml-2">✓</span>`;
+            document.body.appendChild(successPopup);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.book-item').forEach(function(bookItem) {
+            bookItem.addEventListener('contextmenu', function(event) {
+                event.preventDefault();
+
+                // Remove any existing dropdown menus
+                const existingMenus = document.querySelectorAll('.dropdown-menu');
+                existingMenus.forEach(menu => menu.remove());
+
+                // Create new dropdown menu
+                const dropdownMenu = document.createElement('div');
+                dropdownMenu.classList.add('dropdown-menu', 'absolute', 'bg-white', 'shadow-lg', 'rounded-md', 'p-2', 'z-50');
+
+                // Position the dropdown near the cursor
+                dropdownMenu.style.top = `${event.pageY}px`;
+                dropdownMenu.style.left = `${event.pageX}px`;
+
+                // Get the book ID from the closest parent element
+                const bookElement = bookItem.closest('.bg-white.border');
+                const bookId = bookElement ? bookElement.querySelector('form input[name="bookId"]').value : 'placeholder-book-id';
+
+                // Set the dropdown HTML content with just one option to open the modal
+                dropdownMenu.innerHTML = `
+                <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-200 rounded-md" onclick="event.preventDefault(); showCollectionsModal('${bookId}');">
+                    Ajouter à une collection
+                </a>`;
+
+                document.body.appendChild(dropdownMenu);
+
+                // Close dropdown when clicking anywhere else
+                document.addEventListener('click', function closeMenu() {
+                    dropdownMenu.remove();
+                    document.removeEventListener('click', closeMenu);
+                });
+
+                // Close dropdown when pressing escape
+                document.addEventListener('keydown', function escHandler(e) {
+                    if (e.key === 'Escape') {
+                        dropdownMenu.remove();
+                        document.removeEventListener('keydown', escHandler);
+                    }
+                });
+            });
+        });
+    });
+</script>
+</html>
