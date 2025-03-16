@@ -63,8 +63,8 @@ class UserControllerTest {
         String email = "john.doe@example.com";
 
         List<UserIndex> userList = List.of(
-                new UserIndex(1L, "John", "Doe", "john.doe@example.com"),
-                new UserIndex(2L, "Jane", "Doe", "jane.doe@example.com")
+                new UserIndex(1L, "John", "Doe", "john.doe@example.com", null, UserRole.USER),
+                new UserIndex(2L, "Jane", "Doe", "jane.doe@example.com", null, UserRole.USER)
         );
         Page<UserIndex> userPage = new PageImpl<>(userList);
 
@@ -105,8 +105,8 @@ class UserControllerTest {
         String email = null;
 
         List<UserIndex> userList = List.of(
-                new UserIndex(2L, "Jane", "Doe", "jane.doe@example.com"),
-                new UserIndex(1L, "John", "Doe", "john.doe@example.com")
+                new UserIndex(2L, "Jane", "Doe", "jane.doe@example.com", null, UserRole.USER),
+                new UserIndex(1L, "John", "Doe", "john.doe@example.com", null, UserRole.USER)
         );
         Page<UserIndex> userPage = new PageImpl<>(userList);
 
@@ -137,7 +137,8 @@ class UserControllerTest {
         Long userId = 1L;
         Address address = createTestAddress();
         UserShow userShow = new UserShow(
-                userId, "John", "Doe", "john.doe@example.com", address, new HashSet<>(), new ArrayList<>(), UserRole.USER
+                userId, "John", "Doe", "john.doe@example.com", address,
+                new ArrayList<>(), UserRole.USER
         );
         when(userService.findById(eq(userId))).thenReturn(userShow);
 

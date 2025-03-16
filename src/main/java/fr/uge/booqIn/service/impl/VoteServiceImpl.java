@@ -16,8 +16,13 @@ import org.springframework.transaction.annotation.Transactional;
 import fr.uge.booqIn.strategy.EntityStrategyContext;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
+import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,6 +43,11 @@ public class VoteServiceImpl implements VoteServiceInterface {
 
     @Override
     @Transactional
+    @Retryable(
+            maxAttemptsExpression = "${spring.retry.max-attempts}",
+            retryFor = {ConcurrentModificationException.class, ObjectOptimisticLockingFailureException.class},
+            backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
+    )
     public VoteResponse castVote(@NotNull @Valid VoteCreate voteCreate) {
         var user = userRepository.findById(voteCreate.userId())
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", voteCreate.userId()));
@@ -46,13 +56,11 @@ public class VoteServiceImpl implements VoteServiceInterface {
                 voteCreate.entityType(),
                 voteCreate.entityId());
 
-        if (!(targetEntity instanceof Votable)) {
+        if (!(targetEntity instanceof Votable votable)) {
             throw new IllegalArgumentException("Entity of type " + voteCreate.entityType() + " is not votable");
         }
 
-        Votable votable = (Votable) targetEntity;
-
-        var existingVote = voteRepository.findByUserAndEntityIdAndEntityType(
+      var existingVote = voteRepository.findByUserAndEntityIdAndEntityType(
                 user, votable.getId(), votable.getEntityType());
 
         Vote vote;
@@ -69,6 +77,11 @@ public class VoteServiceImpl implements VoteServiceInterface {
 
     @Override
     @Transactional
+    @Retryable(
+            maxAttemptsExpression = "${spring.retry.max-attempts}",
+            retryFor = {ConcurrentModificationException.class, ObjectOptimisticLockingFailureException.class},
+            backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
+    )
     public VoteResponse updateVote(@NotNull Long userId, @NotNull Long entityId,
                                    @NotNull String entityType, @NotNull @Valid VoteUpdate voteUpdate) {
         var user = userRepository.findById(userId)
@@ -92,6 +105,11 @@ public class VoteServiceImpl implements VoteServiceInterface {
 
     @Override
     @Transactional
+    @Retryable(
+            maxAttemptsExpression = "${spring.retry.max-attempts}",
+            retryFor = {ConcurrentModificationException.class, ObjectOptimisticLockingFailureException.class},
+            backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
+    )
     public void deleteVote(@NotNull Long userId, @NotNull Long entityId, @NotNull String entityType) {
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
@@ -170,5 +188,27 @@ public class VoteServiceImpl implements VoteServiceInterface {
 
         var vote = voteRepository.findByUserAndEntityIdAndEntityType(user, entityId, entityType);
         return vote.map(Vote::getVoteType).orElse(null);
+    }
+
+    @Recover
+    public VoteResponse recoverFromOptimisticLockingFailureOnCastVote(ObjectOptimisticLockingFailureException ex, @NotNull @Valid VoteCreate voteCreate) {
+        throw new ConcurrentModificationException("The vote has been modified by someone else. Please try again.", ex);
+    }
+
+    @Recover
+    public VoteResponse recoverFromOptimisticLockingFailureOnUpdateVote(ObjectOptimisticLockingFailureException ex,
+                                                                        @NotNull Long userId,
+                                                                        @NotNull Long entityId,
+                                                                        @NotNull String entityType,
+                                                                        @NotNull @Valid VoteUpdate voteUpdate) {
+        throw new ConcurrentModificationException("The vote has been modified by someone else. Please try again.", ex);
+    }
+
+    @Recover
+    public void recoverFromOptimisticLockingFailureOnDeleteVote(ObjectOptimisticLockingFailureException ex,
+                                                                @NotNull Long userId,
+                                                                @NotNull Long entityId,
+                                                                @NotNull String entityType) {
+        throw new ConcurrentModificationException("The vote has been modified by someone else. Please try again.", ex);
     }
 }

@@ -1,5 +1,6 @@
-package fr.uge.booqIn.controller.api;
+package fr.uge.booqIn.web.controller;
 
+import fr.uge.booqIn.controller.api.BookCollectionController;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionUpdate;
 import fr.uge.booqIn.entity.Book;

@@ -148,6 +148,11 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
 
   @Override
   @Transactional
+  @Retryable(
+          maxAttemptsExpression = "${spring.retry.max-attempts}",
+          retryFor = {ConcurrentModificationException.class, ObjectOptimisticLockingFailureException.class},
+          backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
+  )
   public void deleteBookCollection(@NotNull Long id) {
     User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     BookCollection bookCollection = findBookCollectionById(id);
@@ -183,6 +188,7 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
     return bookCollectionRepository.findByOwner(user);
   }
 
+  @Override
   @Transactional
   public List<BookCollectionShow> getUserCollectionsWithBooks(User user) {
     //return bookCollectionRepository.findByOwnerWithBooks(user);

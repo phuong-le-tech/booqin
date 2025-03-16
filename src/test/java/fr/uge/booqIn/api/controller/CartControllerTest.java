@@ -9,6 +9,7 @@ import fr.uge.booqIn.dto.cart.ShopCartDto;
 import fr.uge.booqIn.dto.user.UserIndex;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.BookLending;
+import fr.uge.booqIn.enums.UserRole;
 import fr.uge.booqIn.factory.ApiResponse;
 import fr.uge.booqIn.service.interfaces.BookLendingInterface;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
@@ -62,7 +63,7 @@ class CartControllerTest {
         Long userId = 1L;
         Long bookId = 1L;
         CartDto cartDto = new CartDto(userId, bookId);
-        UserIndex userIndex = new UserIndex(userId, "John", "Doe", "john.doe@example.com");
+        UserIndex userIndex = new UserIndex(userId, "John", "Doe", "john.doe@example.com", null, UserRole.USER);
         BookShow bookShow = new BookShow(
                 bookId,
                 Set.of("1234567890"),
@@ -105,7 +106,7 @@ class CartControllerTest {
         Long userId = 1L;
         Long bookId = 1L;
         CartDto cartDto = new CartDto(userId, bookId);
-        UserIndex userIndex = new UserIndex(userId, "John", "Doe", "john.doe@example.com");
+        UserIndex userIndex = new UserIndex(userId, "John", "Doe", "john.doe@example.com", null, UserRole.USER);
         BookShow bookShow = new BookShow(
                 bookId,
                 Set.of("1234567890"),
@@ -143,7 +144,7 @@ class CartControllerTest {
         Long userId = 1L;
         Long bookId = 1L;
         CartDto cartDto = new CartDto(userId, bookId);
-        UserIndex userIndex = new UserIndex(userId, "John", "Doe", "john.doe@example.com");
+        UserIndex userIndex = new UserIndex(userId, "John", "Doe", "john.doe@example.com", null, UserRole.USER);
         BookShow bookShow = new BookShow(
                 bookId,
                 Set.of("1234567890"),
@@ -209,7 +210,7 @@ class CartControllerTest {
         // Given
         Long userId = 1L;
         Long bookId = 1L;
-        UserIndex userIndex = new UserIndex(userId, "John", "Doe", "john.doe@example.com");
+        UserIndex userIndex = new UserIndex(userId, "John", "Doe", "john.doe@example.com", null, UserRole.USER);
         BookShow bookShow = new BookShow(
                 bookId,
                 Set.of("1234567890"),
@@ -275,7 +276,7 @@ class CartControllerTest {
     void getUserCart_ShouldReturnCart() {
         // Given
         Long userId = 1L;
-        UserIndex userIndex = new UserIndex(userId, "John", "Doe", "john.doe@example.com");
+        UserIndex userIndex = new UserIndex(userId, "John", "Doe", "john.doe@example.com", null, UserRole.USER);
         List<fr.uge.booqIn.dto.book.BookIndex> bookIndexes = List.of(
                 new BookIndex(1L, "Book 1", Set.of("Author 1"), new Date()),
                 new BookIndex(2L, "Book 2", Set.of("Author 2"), new Date())
@@ -329,7 +330,7 @@ class CartControllerTest {
     void clearCart_ShouldReturnSuccess() {
         // Given
         Long userId = 1L;
-        UserIndex userIndex = new UserIndex(userId, "John", "Doe", "john.doe@example.com");
+        UserIndex userIndex = new UserIndex(userId, "John", "Doe", "john.doe@example.com", null, UserRole.USER);
         List<BookLending> lendings = Collections.emptyList(); // Remplacer par un type approprié si nécessaire
 
         when(userService.findUserByIdToIndex(userId)).thenReturn(userIndex);
@@ -385,7 +386,7 @@ class CartControllerTest {
     void clearCart_FailureToClear_ShouldReturnError() {
         // Given
         Long userId = 1L;
-        UserIndex userIndex = new UserIndex(userId, "John", "Doe", "john.doe@example.com");
+        UserIndex userIndex = new UserIndex(userId, "John", "Doe", "john.doe@example.com", null, UserRole.USER);
         List<BookLending> lendings = Collections.emptyList();
 
         when(userService.findUserByIdToIndex(userId)).thenReturn(userIndex);

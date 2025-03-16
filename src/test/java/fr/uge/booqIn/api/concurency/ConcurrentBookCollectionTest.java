@@ -212,9 +212,10 @@ public class ConcurrentBookCollectionTest {
                     );
 
                     BookCollectionUpdate collectionUpdate = new BookCollectionUpdate(
-                            java.util.Optional.of("UpdatedCollection" + threadNum),
-                            java.util.Optional.of("UpdatedDescription" + threadNum),
-                            java.util.Optional.empty()
+                            Optional.of("UpdatedCollection" + threadNum),
+                           Optional.of("UpdatedDescription" + threadNum),
+                            true,
+                            Optional.empty()
                     );
 
                     bookCollectionService.patchBookCollection(testCollectionId, collectionUpdate);
