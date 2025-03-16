@@ -117,7 +117,29 @@ public class BookCollectionWebController {
     }
   }
 
+  // GetMapping ici casse le truc
+  @GetMapping("/{collectionId}/books/{bookId}/remove")
+  public String removeBookFromCollection(
+          @PathVariable Long collectionId,
+          @PathVariable Long bookId,
+          @AuthenticationPrincipal User currentUser,
+          Model model) {
+    logger.info("Removing book with ID " + bookId + " from collection with ID " + collectionId);
+    try {
+      // Verify that the current user owns the collection
+      BookCollectionShow collection = bookCollectionService.findById(collectionId);
+      if (!verifyIsSameUser(currentUser, collection)) {
+        return "redirect:/collections?error=notOwner";
+      }
 
+      // Remove the book from the collection
+      bookCollectionService.removeBookFromCollection(collectionId, bookId, currentUser);
+      return "redirect:/collections/" + collectionId + "?success=bookRemoved";
+    } catch (ResourceNotFoundException e) {
+      logger.warning("Error removing book: " + e.getMessage());
+      return "redirect:/collections/" + collectionId + "?error=notFound";
+    }
+  }
 
   @GetMapping("/new")
   public String showCreateCollectionForm(Model model) {

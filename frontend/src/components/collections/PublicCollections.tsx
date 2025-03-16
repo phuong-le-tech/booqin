@@ -19,10 +19,8 @@ const PublicCollections: React.FC = () => {
             try {
                 setLoading(true);
                 const publicCollectionsData = await BookCollectionService.getPublicCollections();
-                console.log("Public collections data:\n", publicCollectionsData);
                 if (publicCollectionsData && Array.isArray(publicCollectionsData)) {
                     console.log("PUBLIC COLLECTIONS FOUND");
-                    console.log("DATA:\n" + publicCollectionsData);
                     setCollections(publicCollectionsData);
                 } else {
                     console.error("Unexpected data format:", publicCollectionsData);
