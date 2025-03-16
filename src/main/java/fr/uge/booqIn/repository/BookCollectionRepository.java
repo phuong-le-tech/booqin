@@ -36,4 +36,9 @@ public interface BookCollectionRepository extends JpaRepository<BookCollection, 
 
   @Query("SELECT c FROM BookCollection c WHERE c.isPublic = true AND c.isSmart = true")
   List<BookCollection> findSmartCollections();
+
+  Optional<BookCollection> findByTitleAndCollectionType(String title, BookCollection.CollectionType collectionType);
+
+  List<BookCollection> findByCollectionType(BookCollection.CollectionType collectionType);
+
 }

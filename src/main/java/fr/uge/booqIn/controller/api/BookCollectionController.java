@@ -190,18 +190,6 @@ public class BookCollectionController {
   }
 
   /**
-   * Get all collections with books for the current user
-   */
-  /*@GetMapping("/user/with-books")
-  public ResponseEntity<ApiResponse<List<BookCollectionShow>>> getUserCollectionsWithBooks(
-          @AuthenticationPrincipal User currentUser) {
-    logger.info("✅ Fetching collections with books for user: " + currentUser.getUsername());
-
-    List<BookCollectionShow> collections = bookCollectionService.getUserCollectionsWithBooks(currentUser);
-    return ResponseEntity.ok(ApiResponse.success("User collections with books fetched", collections));
-  }
-*/
-  /**
    * Get a specific book from a collection
    */
   @GetMapping("/{collectionId}/books/{bookId}")
@@ -213,5 +201,4 @@ public class BookCollectionController {
     Book book = bookCollectionService.getBookFromCollection(collectionId, bookId);
     return ResponseEntity.ok(ApiResponse.success("Book fetched", book));
   }
-
 }

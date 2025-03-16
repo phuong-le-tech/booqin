@@ -12,6 +12,8 @@ import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -35,4 +37,7 @@ public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificat
 
   @Override
   Page<Book> findAll(@Nullable Specification<Book> spec, @NonNull Pageable pageable);
+
+  // Méthode pour trouver les livres plus récents qu'une date donnée
+  List<Book> findByCreatedAtAfter(Date date);
 }

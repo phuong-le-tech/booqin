@@ -199,6 +199,10 @@ public class BookCollection implements PolymorphicEntity, Commentable, Votable {
     return isSmart;
   }
 
+  public CollectionType getCollectionType() {
+    return collectionType;
+  }
+
   public Date getCreatedAt() {
     return createdAt;
   }
@@ -245,6 +249,10 @@ public class BookCollection implements PolymorphicEntity, Commentable, Votable {
 
   public void setSmart(boolean isSmart) {
     this.isSmart = isSmart;
+  }
+
+  public void setCollectionType(CollectionType collectionType) {
+    this.collectionType = collectionType;
   }
 
   public void addBook(Book book) {
