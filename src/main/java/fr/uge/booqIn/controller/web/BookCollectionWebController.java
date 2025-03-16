@@ -13,12 +13,14 @@ import fr.uge.booqIn.mapper.BookMapper;
 import fr.uge.booqIn.service.impl.BookServiceImpl;
 import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -26,47 +28,72 @@ import java.util.stream.Collectors;
 @Controller
 @RequestMapping("/collections")
 public class BookCollectionWebController {
-//  private final BookCollectionService bookCollectionService;
   private final BookCollectionServiceInterface bookCollectionService;
   private final BookServiceImpl bookService;
   private final BookMapper bookMapper = new BookMapper();
   private final BookCollectionMapper bookCollectionMapper = new BookCollectionMapper();
   private final Logger logger = Logger.getLogger(BookCollectionWebController.class.getName());
+  private final HomeWebController homeWebController;
 
-  public BookCollectionWebController(BookCollectionServiceInterface bookCollectionService, BookServiceImpl bookService) {
+  @Autowired
+  public BookCollectionWebController(BookCollectionServiceInterface bookCollectionService,
+                                     BookServiceImpl bookService,
+                                     HomeWebController homeWebController) {
     this.bookCollectionService = bookCollectionService;
     this.bookService = bookService;
+    this.homeWebController = homeWebController;
   }
 
   @GetMapping("/public")
-  public String showPublicCollections(Model model) {
-    //List<BookCollection> collections = bookCollectionService.getPublicCollections();
+  public String showPublicCollections(Model model, Principal principal) {
+    // Préparer le modèle commun
+    homeWebController.prepareModel(model, principal, "collections-public");
+
+    // Récupérer les collections publiques
     List<BookCollectionShow> collections = bookCollectionService.getPublicCollections();
     model.addAttribute("publicCollections", collections);
-    return "collections/public";
+
+    // Définir le titre et le contenu
+    model.addAttribute("title", "BooqIn - Public Collections");
+    model.addAttribute("content", "pages/collections/public");
+
+    return "layout";
   }
 
   @GetMapping()
-  public String showUserCollections(Model model, @AuthenticationPrincipal User currentUser) {
+  public String showUserCollections(Model model, @AuthenticationPrincipal User currentUser, Principal principal) {
+    // Préparer le modèle commun
+    homeWebController.prepareModel(model, principal, "collections");
+
     List<BookCollectionShow> collections = bookCollectionService.getUserCollectionsWithBooks(currentUser);
     List<BookCollectionShow> userPublicCollections = collections.stream().filter(BookCollectionShow::isPublic).toList();
     List<BookCollectionShow> userPrivateCollections = collections.stream().filter(collection -> !collection.isPublic()).toList();
     model.addAttribute("collections", collections);
     model.addAttribute("userPublicCollections", userPublicCollections);
     model.addAttribute("userPrivateCollections", userPrivateCollections);
-    return "collections/userCollections";
-  } // TODO: rajouter pagination pour les collections, et pour le contenu d'une collection
+
+    // Définir le titre et le contenu
+    model.addAttribute("title", "BooqIn - My Collections");
+    model.addAttribute("content", "pages/collections/userCollections");
+
+    return "layout";
+  }
 
   @GetMapping("/{id}")
-  public String showCollectionDetails(@PathVariable Long id, Model model) {
+  public String showCollectionDetails(@PathVariable Long id, Model model, Principal principal) {
     try {
+      // Préparer le modèle commun
+      homeWebController.prepareModel(model, principal, "collection-details");
+
       BookCollectionShow collection = bookCollectionService.findById(id);
       System.out.println("BookCollection was found !");
-      System.out.println("BookCollection: " + collection);
-      System.out.println("Collection size: " + collection.books().size());
-      System.out.println("Collection: \n" + collection);
       model.addAttribute("collection", collection);
-      return "collections/details";
+
+      // Définir le titre et le contenu
+      model.addAttribute("title", "BooqIn - " + collection.title());
+      model.addAttribute("content", "pages/collections/details");
+
+      return "layout";
     } catch (ResourceNotFoundException e) {
       System.out.println("Collection not found: " + e.getMessage());
       return "redirect:/collections";
@@ -74,19 +101,25 @@ public class BookCollectionWebController {
   }
 
   @GetMapping("/{collectionId}/books/add")
-  public String showAddBookForm(@PathVariable Long collectionId, Model model) {
-    BookCollectionShow bookCollection = bookCollectionService.findById(collectionId);
+  public String showAddBookForm(@PathVariable Long collectionId, Model model, Principal principal) {
     try {
-      // TODO: A REMPLACER PAR LA GRILLE DE BOOKS AVEC PAGINATION ???
-      //  PAGINER PAR ALPHABET ??
+      // Préparer le modèle commun
+      homeWebController.prepareModel(model, principal, "collection-add-book");
+
+      BookCollectionShow bookCollection = bookCollectionService.findById(collectionId);
       List<Book> books = bookService.findAll().stream().limit(10).toList();
       model.addAttribute("collectionId", collectionId);
       model.addAttribute("collection", bookCollection);
       model.addAttribute("books", books);
-      return "collections/addBook";
+
+      // Définir le titre et le contenu
+      model.addAttribute("title", "BooqIn - Add Book to Collection");
+      model.addAttribute("content", "pages/collections/addBook");
+
+      return "layout";
     } catch (ResourceNotFoundException e) {
       System.out.println("Collection not found or empty");
-      return "redirect:/collections"; // Rediriger si la collection n'est pas trouvée
+      return "redirect:/collections";
     }
   }
 
@@ -95,7 +128,8 @@ public class BookCollectionWebController {
           @PathVariable Long collectionId,
           @RequestParam Long bookId,
           @AuthenticationPrincipal User currentUser,
-          Model model
+          Model model,
+          Principal principal
   ) {
     logger.info("Adding book with ID " + bookId + " to collection with ID " + collectionId);
     try {
@@ -112,12 +146,18 @@ public class BookCollectionWebController {
       return "redirect:/collections/" + collectionId;
     } catch (ResourceNotFoundException e) {
       logger.warning("Resource not found: " + e.getMessage());
+
+      // Préparer le modèle commun même en cas d'erreur
+      homeWebController.prepareModel(model, principal, "collection-add-book");
+
       model.addAttribute("error", e.getMessage());
-      return "collections/addBook";
+      model.addAttribute("title", "BooqIn - Error");
+      model.addAttribute("content", "pages/collections/addBook");
+
+      return "layout";
     }
   }
 
-  // GetMapping ici casse le truc
   @GetMapping("/{collectionId}/books/{bookId}/remove")
   public String removeBookFromCollection(
           @PathVariable Long collectionId,
@@ -142,9 +182,17 @@ public class BookCollectionWebController {
   }
 
   @GetMapping("/new")
-  public String showCreateCollectionForm(Model model) {
+  public String showCreateCollectionForm(Model model, Principal principal) {
+    // Préparer le modèle commun
+    homeWebController.prepareModel(model, principal, "collection-create");
+
     model.addAttribute("bookCollection", new BookCollection());
-    return "collections/create";
+
+    // Définir le titre et le contenu
+    model.addAttribute("title", "BooqIn - Create Collection");
+    model.addAttribute("content", "pages/collections/create");
+
+    return "layout";
   }
 
   @PostMapping("/new")
@@ -152,7 +200,8 @@ public class BookCollectionWebController {
           @Valid @ModelAttribute("bookCollection") BookCollection bookCollection,
           @RequestParam(required = false) Boolean isPublic,
           @AuthenticationPrincipal User currentUser,
-          Model model) {
+          Model model,
+          Principal principal) {
     try {
       bookCollection.setOwner(currentUser);
       bookCollection.setPublic(isPublic != null && isPublic);
@@ -160,22 +209,34 @@ public class BookCollectionWebController {
       System.out.println("Collection created: " + createdCollection);
       return "redirect:/collections";
     } catch (ResourceNotFoundException e) {
+      // Préparer le modèle commun même en cas d'erreur
+      homeWebController.prepareModel(model, principal, "collection-create");
+
       model.addAttribute("error", e.getMessage());
-      return "collections/create";
+      model.addAttribute("title", "BooqIn - Error");
+      model.addAttribute("content", "pages/collections/create");
+
+      return "layout";
     }
   }
 
   @GetMapping("/{id}/edit")
-  public String showEditCollectionForm(@PathVariable Long id, Model model, @AuthenticationPrincipal User currentUser) {
+  public String showEditCollectionForm(@PathVariable Long id, Model model, @AuthenticationPrincipal User currentUser, Principal principal) {
     try {
+      // Préparer le modèle commun
+      homeWebController.prepareModel(model, principal, "collection-edit");
+
       BookCollectionShow collection = bookCollectionService.findById(id);
       if (!verifyIsSameUser(currentUser, collection)) {
         return "redirect:/collections?error=notOwner";
       }
-      // Convert DTO to entity for form binding
-      //BookCollection bookCollection = bookCollectionMapper.bookCollectionShowToBookCollection(collection);
       model.addAttribute("bookCollection", collection);
-      return "collections/edit";
+
+      // Définir le titre et le contenu
+      model.addAttribute("title", "BooqIn - Edit Collection");
+      model.addAttribute("content", "pages/collections/edit");
+
+      return "layout";
     } catch (ResourceNotFoundException e) {
       model.addAttribute("error", e.getMessage());
       System.out.println("ERROR WHEN FORM EDIT");
@@ -190,7 +251,8 @@ public class BookCollectionWebController {
           BindingResult bindingResult,
           @RequestParam(name = "isPublic", required = false) Boolean isPublic,
           @AuthenticationPrincipal User currentUser,
-          Model model) {
+          Model model,
+          Principal principal) {
     if (bindingResult.hasErrors()) {
       System.out.println("BINDING ERRORS: " + bindingResult.getAllErrors());
       return "redirect:/collections?error=notFound";
@@ -198,7 +260,7 @@ public class BookCollectionWebController {
     try {
       BookCollectionShow existingCollection = bookCollectionService.findById(id);
       if (!verifyIsSameUser(currentUser, existingCollection)) {
-        return "redirect:/collections?error=notOwner";
+        return "redirect:/pages/collections?error=notOwner";
       }
 
       System.out.println("isPublic: " + isPublic);
@@ -218,8 +280,14 @@ public class BookCollectionWebController {
       BookCollectionShow updatedCollection = bookCollectionService.patchBookCollection(id, bookCollectionUpdate);
       return "redirect:/collections";
     } catch (ResourceNotFoundException e) {
+      // Préparer le modèle commun même en cas d'erreur
+      homeWebController.prepareModel(model, principal, "collection-edit");
+
       model.addAttribute("error", e.getMessage());
-      return "redirect:/collections";
+      model.addAttribute("title", "BooqIn - Error");
+      model.addAttribute("content", "pages/collections/edit");
+
+      return "layout";
     }
   }
 
