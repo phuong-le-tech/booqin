@@ -40,7 +40,7 @@ const App: React.FC = () => {
                         } />
                         <Route path={"/profile"} element={<Profile />} />
                         <Route path="/cart" element={<ShoppingCart />} />
-                        <Route path="/loans" element={<BookLending />} /> {/* Ajoutez cette nouvelle route */}
+                        <Route path="/loans" element={<BookLending />} />
                         {/*<Route path="/books/:id" element={<BookDetails />} />*/}
                         <Route path="/collections" element={<Collections />} />
                         <Route path="/collections/public" element={<PublicCollections />} />
