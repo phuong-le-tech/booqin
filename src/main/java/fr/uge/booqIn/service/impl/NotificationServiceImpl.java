@@ -8,6 +8,8 @@ import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.NotificationStatus;
 import fr.uge.booqIn.event.BookNotAvailableEvent;
 import fr.uge.booqIn.event.BookReturnedEvent;
+import fr.uge.booqIn.exception.ResourceNotFoundException;
+import fr.uge.booqIn.mapper.NotificationMappeur;
 import fr.uge.booqIn.repository.BookNotificationQueueRepository;
 import fr.uge.booqIn.repository.BookRepository;
 import fr.uge.booqIn.repository.UserRepository;
@@ -32,17 +34,18 @@ public class NotificationServiceImpl implements NotificationServiceInterface {
   private final BookRepository bookRepository;
   private final UserRepository userRepository;
   private final BookLendingInterface bookLendingService;
+  private final NotificationMappeur notificationMappeur;
   
-  @Autowired
   public NotificationServiceImpl(
           BookNotificationQueueRepository notificationQueueRepository,
           BookRepository bookRepository,
           UserRepository userRepository,
-          BookLendingInterface bookLendingService) {
+          BookLendingInterface bookLendingService, NotificationMappeur notificationMappeur) {
     this.notificationQueueRepository = notificationQueueRepository;
     this.bookRepository = bookRepository;
     this.userRepository = userRepository;
     this.bookLendingService = bookLendingService;
+    this.notificationMappeur = notificationMappeur;
   }
   
   @Override
@@ -58,10 +61,10 @@ public class NotificationServiceImpl implements NotificationServiceInterface {
     
 
     Book book = bookRepository.findById(bookId)
-            .orElseThrow(() -> new IllegalArgumentException("Livre non trouvé avec l'ID: " + bookId));
+            .orElseThrow(() -> new ResourceNotFoundException("Livre non trouvé avec l'ID: " + bookId));
     
     User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("Utilisateur non trouvé avec l'ID: " + userId));
+            .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé avec l'ID: " + userId));
     
 
     int position = notificationQueueRepository.findMaxPositionByBookId(bookId)
@@ -166,7 +169,7 @@ public class NotificationServiceImpl implements NotificationServiceInterface {
     
 
     return notifications.stream()
-            .map(this::convertToDTO)
+            .map(notificationMappeur::mapToBookNotificationDTO)
             .collect(Collectors.toList());
   }
   
@@ -176,31 +179,6 @@ public class NotificationServiceImpl implements NotificationServiceInterface {
   }
   
   
-  private BookNotificationDTO convertToDTO(BookNotificationQueue notification) {
-    Book book = notification.getBook();
-    
-    return BookNotificationDTO.builder()
-            .id(notification.getId())
-            .bookId(book.getId())
-            .bookTitle(book.getTitle())
-            .authorNames(getAuthorNames(book))
-            .status(notification.getStatus())
-            .expiresAt(notification.getReservationExpiresAt())
-            .position(notification.getPosition())
-            .createdAt(notification.getCreatedAt())
-            .build();
-  }
-  
-
-  private String getAuthorNames(Book book) {
-    if (book.getAuthors() == null || book.getAuthors().isEmpty()) {
-      return "Auteur inconnu";
-    }
-    
-    return book.getAuthors().stream()
-            .map(author -> author.getFirstName() + " " + author.getLastName())
-            .collect(Collectors.joining(", "));
-  }
   
   @EventListener
   public void handleBookReturnedEvent(BookReturnedEvent event) {

@@ -107,4 +107,8 @@ public class BookNotificationQueue {
   public Integer getPosition() {
     return position;
   }
+  
+  public void setId(Long id) {
+    this.id = id;
+  }
 }
