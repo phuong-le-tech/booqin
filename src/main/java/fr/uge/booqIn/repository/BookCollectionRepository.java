@@ -7,14 +7,16 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.lang.NonNull;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface BookCollectionRepository extends JpaRepository<BookCollection, Long>, JpaSpecificationExecutor<BookCollection> {
   @Override
-  @Query("SELECT bc FROM BookCollection bc LEFT JOIN FETCH bc.books")
-  Optional<BookCollection> findById(Long id);
+  @Query("SELECT bc FROM BookCollection bc LEFT JOIN FETCH bc.books WHERE bc.id = :id")
+  @NonNull
+  Optional<BookCollection> findById(@Param("id") Long id);
 
   @Query("SELECT bc FROM BookCollection bc LEFT JOIN FETCH bc.books WHERE bc.id = :id")
   Optional<BookCollection> findByIdWithBooks(@Param("id") Long id);
