@@ -4,76 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${title} ?: 'BooqIn'">BooqIn</title>
-    <!-- Link to external CSS file -->
-    <link rel="stylesheet" th:href="@{/css/global.css}">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .main-container {
+            min-height: calc(100vh - 4rem); /* 100vh - navbar height */
+        }
+        .navbar-color {
+            background-color: #111827;
+        }
+        .footer-color {
+            background-color: #111827;
+        }
+    </style>
 </head>
-<body>
-<!-- Header with logo -->
-<header class="header">
-    <div class="container header-container">
-        <a href="/" class="logo">BooqIn</a>
+<body class="bg-gray-100">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
 
-        <div th:if="${isAuthenticated}">
-            <span th:text="${'Hello, ' + username}">Hello, User</span>
-        </div>
-
-        <!-- Simple auth buttons -->
-        <div th:unless="${isAuthenticated}" class="auth-actions">
-            <a href="/auth/login" class="btn btn-light">Login</a>
-            <a href="/auth/register" class="btn btn-light" style="margin-left: 0.5rem;">Register</a>
-        </div>
-
-        <!-- Mobile menu toggle button -->
-        <button class="menu-toggle">☰</button>
-    </div>
-</header>
-
-<!-- Main Navigation -->
-<nav class="main-nav">
-    <div class="container nav-container">
-        <ul class="nav-list" id="navList">
-            <li class="nav-item">
-                <a href="/home" class="nav-link" th:classappend="${currentPage == 'home'} ? 'active' : ''">Home</a>
-            </li>
-            <li class="nav-item">
-                <a href="/books" class="nav-link" th:classappend="${currentPage == 'books'} ? 'active' : ''">Books</a>
-            </li>
-            <li class="nav-item">
-                <a href="/collections" class="nav-link" th:classappend="${currentPage == 'collections'} ? 'active' : ''">Collections</a>
-            </li>
-
-            <!-- Only show these items if user is authenticated -->
-            <li class="nav-item" th:if="${isAuthenticated}">
-                <a href="/dashboard" class="nav-link" th:classappend="${currentPage == 'dashboard'} ? 'active' : ''">Dashboard</a>
-            </li>
-            <li class="nav-item" th:if="${isAuthenticated}">
-                <a href="/my-collections" class="nav-link" th:classappend="${currentPage == 'my-collections'} ? 'active' : ''">My Collections</a>
-            </li>
-
-            <!-- Admin link -->
-            <li class="nav-item" th:if="${isAdmin}">
-                <a href="/admin" class="nav-link" th:classappend="${currentPage == 'admin'} ? 'active' : ''">Admin Panel</a>
-            </li>
-
-            <!-- Logout button for authenticated users -->
-            <li class="nav-item" th:if="${isAuthenticated}">
-                <form th:action="@{/auth/logout}" method="post" style="display:inline;">
-                    <button type="submit" class="nav-link btn-danger" style="border:none;">Logout</button>
-                </form>
-            </li>
-        </ul>
-    </div>
-</nav>
-
-<!-- Main content -->
-<main class="main-content">
-    <div class="container">
-        <!-- This is the fixed part - using th:insert instead of th:replace -->
-        <div th:insert="${content}">
-            <!-- Content will be inserted here -->
-            <p>Default content</p>
-        </div>
+<main class="main-container py-6">
+    <div class="container mx-auto px-4" th:insert="${content}">
     </div>
 </main>
+
+<footer class="footer-color text-white py-4">
+    <div class="container mx-auto px-4 text-center text-sm">
+        <p>&copy; 2025 BooqIn. All rights reserved.</p>
+    </div>
+</footer>
 </body>
 </html>

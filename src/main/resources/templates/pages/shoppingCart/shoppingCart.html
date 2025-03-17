@@ -1,0 +1,87 @@
+<div class="container mx-auto px-4 py-8">
+    <h2 class="text-3xl font-bold text-center mb-8 text-gray-800">Votre Panier</h2>
+
+    <!-- Panier vide -->
+    <div th:if="${cart == null or cart.books.isEmpty()}" class="bg-white rounded-lg shadow-md p-8 text-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+        <p class="text-lg font-medium text-gray-700 mb-4">Votre panier est vide.</p>
+        <a th:href="@{/books}" class="inline-block px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition duration-300">
+            Parcourir la boutique
+        </a>
+    </div>
+
+    <!-- Panier avec produits -->
+    <div th:if="${cart != null and not cart.books.isEmpty()}" class="bg-white rounded-lg shadow-md overflow-hidden">
+        <!-- En-tête du tableau -->
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-base font-medium text-gray-700 uppercase tracking-wider">
+                        Titre
+                    </th>
+                    <th class="px-6 py-3 text-left text-base font-medium text-gray-700 uppercase tracking-wider">
+                        Auteur
+                    </th>
+                    <th class="px-6 py-3 text-right text-base font-medium text-gray-700 uppercase tracking-wider">
+                        Actions
+                    </th>
+                </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                <tr th:each="book : ${cart.books}" class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900" th:text="${book.title}">Titre du livre</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-700" th:text="${book.authorNames != null and !book.authorNames.isEmpty() ? #strings.listJoin(book.authorNames, ', ') : 'Auteur inconnu'}">Auteur</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <form th:action="@{/cart/remove-book}" method="post">
+                            <input type="hidden" name="userId" th:value="${cart.userId}">
+                            <input type="hidden" name="bookId" th:value="${book.id}">
+                            <button type="submit" class="text-red-600 hover:text-red-900">Supprimer</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Récapitulatif de la commande -->
+        <div class="p-6 border-t border-gray-200">
+            <div class="flex justify-end space-y-2 flex-col items-end">
+                <p class="text-sm text-gray-700"><span class="font-medium">Sous-total:</span> <span th:text="${#numbers.formatDecimal(subtotal, 1, 2) + ' €'}">0.00 €</span></p>
+                <p class="text-sm text-gray-700"><span class="font-medium">Frais de livraison:</span> 5.99 €</p>
+                <p class="text-lg font-bold text-gray-900 mt-2"><span>Total:</span> <span th:text="${#numbers.formatDecimal(total, 1, 2) + ' €'}">0.00 €</span></p>
+
+                <div class="flex mt-4 space-x-4">
+                    <form th:action="@{/cart/clear-cart}" method="post">
+                        <input type="hidden" name="userId" th:value="${cart.userId}">
+                        <button type="submit" class="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50">
+                            Vider le panier
+                        </button>
+                    </form>
+
+                    <form th:action="@{/payment/checkout}" method="post">
+                        <input type="hidden" name="cartId" th:value="${cart.id}">
+                        <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50">
+                            Payer maintenant
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messages d'erreur ou de succès -->
+    <div th:if="${error}" class="mt-4 p-4 bg-red-100 border border-red-300 text-red-700 rounded-md">
+        <p th:text="${error}">Message d'erreur</p>
+    </div>
+
+    <div th:if="${success}" class="mt-4 p-4 bg-green-100 border border-green-300 text-green-700 rounded-md">
+        <p th:text="${success}">Message de succès</p>
+    </div>
+</div>
