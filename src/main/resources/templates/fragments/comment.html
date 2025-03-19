@@ -109,7 +109,7 @@
     <!-- Nested Replies (recursively display child comments) -->
     <div th:if="${!comment.replies.isEmpty()}" class="ml-12">
         <div th:each="reply : ${comment.replies}">
-            <div th:replace="fragments/comment :: commentItem(comment=${reply}, depth=${depth + 1})"></div>
+            <div th:replace="~{fragments/comment :: commentItem(comment=${reply}, depth=${depth + 1})}"></div>
         </div>
     </div>
 </div>

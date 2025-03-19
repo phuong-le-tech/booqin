@@ -14,6 +14,7 @@ import fr.uge.booqIn.mapper.BookCollectionMapper;
 import fr.uge.booqIn.mapper.BookMapper;
 import fr.uge.booqIn.service.impl.BookServiceImpl;
 import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
+import fr.uge.booqIn.service.interfaces.CommentServiceInterface;
 import fr.uge.booqIn.service.interfaces.VoteServiceInterface;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,7 @@ import java.util.stream.Collectors;
 public class BookCollectionWebController {
   private final BookCollectionServiceInterface bookCollectionService;
   private final VoteServiceInterface voteService;
+  private final CommentServiceInterface commentServiceInterface;
   private final BookServiceImpl bookService;
   private final BookMapper bookMapper = new BookMapper();
   private final BookCollectionMapper bookCollectionMapper = new BookCollectionMapper();
@@ -40,11 +42,12 @@ public class BookCollectionWebController {
   private final HomeWebController homeWebController;
 
   @Autowired
-  public BookCollectionWebController(BookCollectionServiceInterface bookCollectionService, VoteServiceInterface voteService,
+  public BookCollectionWebController(BookCollectionServiceInterface bookCollectionService, VoteServiceInterface voteService, CommentServiceInterface commentServiceInterface,
                                      BookServiceImpl bookService,
                                      HomeWebController homeWebController) {
     this.bookCollectionService = bookCollectionService;
     this.voteService = voteService;
+    this.commentServiceInterface = commentServiceInterface;
     this.bookService = bookService;
     this.homeWebController = homeWebController;
   }
@@ -85,7 +88,7 @@ public class BookCollectionWebController {
   }
 
   @GetMapping("/{id}")
-  public String showCollectionDetails(@PathVariable Long id, Model model, Principal principal) {
+  public String showCollectionDetails(@PathVariable Long id, Model model, Principal principal, @AuthenticationPrincipal User currentUser) {
     try {
       // Préparer le modèle commun
       homeWebController.prepareModel(model, principal, "collection-details");
@@ -93,11 +96,17 @@ public class BookCollectionWebController {
       BookCollectionShow collection = bookCollectionService.findById(id);
       System.out.println("BookCollection was found !");
       model.addAttribute("collection", collection);
-
       // Définir le titre et le contenu
       model.addAttribute("title", "BooqIn - " + collection.title());
       model.addAttribute("content", "pages/collections/details");
-
+      model.addAttribute("votes",voteService.getVoteCounts(id,"COLLECTION"));
+      var totalComments = commentServiceInterface.countByEntity(id,"COLLECTION");
+      var comments = commentServiceInterface.getCommentTreeByEntity(id,"COLLECTION");
+      if(currentUser!=null) {
+        model.addAttribute("user", currentUser);
+      }
+      model.addAttribute("comments", comments);
+      model.addAttribute("commentCount", totalComments);
       return "layout";
     } catch (ResourceNotFoundException e) {
       System.out.println("Collection not found: " + e.getMessage());
