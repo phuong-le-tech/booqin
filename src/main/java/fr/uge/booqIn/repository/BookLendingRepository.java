@@ -5,6 +5,7 @@ import fr.uge.booqIn.entity.BookLending;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.BookStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,7 +17,7 @@ public interface BookLendingRepository extends JpaRepository<BookLending, Long> 
   List<BookLending> findByStatusAndReservedAtBefore(BookStatus status, LocalDateTime expirationTime);
   Optional<BookLending> findByBookAndBorrower(Book book  , User user);
   List<BookLending> findByBorrower(User user);
-  List<BookLending> findByLender(User lender);
+  List<BookLending> findBookLendingsByLender(User lender);
   BookLending findByBookIdAndBorrowerIsNullAndStatus(Long bookId, BookStatus status);
   
 }

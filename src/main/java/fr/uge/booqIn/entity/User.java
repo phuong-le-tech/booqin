@@ -50,7 +50,10 @@ public class User implements UserDetails {
   @NotNull(message = "User role is required")
   @Enumerated(EnumType.STRING)
   private UserRole role;
-
+  
+  @OneToMany(mappedBy = "lender", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  private List<BookLending> lentBooks = new ArrayList<>();
+  
   @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<BookCollection> collections = new ArrayList<>();
 
@@ -202,6 +205,13 @@ public class User implements UserDetails {
     collections.add(collection);
     collection.setOwner(this);
   }
+  public List<BookLending> getLentBooks() {
+    return lentBooks;
+  }
+  
+  public void setLentBooks(List<BookLending> lentBooks) {
+    this.lentBooks = lentBooks;
+  }
 
   public void removeCollection(BookCollection collection) {
     collections.remove(collection);
@@ -223,4 +233,21 @@ public class User implements UserDetails {
   public int hashCode() {
     return Objects.hash(email);
   }
+  
+  public void addLentBook(BookLending bookLending) {
+    if (bookLending != null) {
+      lentBooks.add(bookLending);
+      bookLending.setLender(this);
+    }
+  }
+  
+  public void removeLentBook(BookLending bookLending) {
+    if (bookLending != null && lentBooks.contains(bookLending)) {
+      lentBooks.remove(bookLending);
+      if (bookLending.getLender() == this) {
+        bookLending.setLender(null);
+      }
+    }
+  }
 }
+
