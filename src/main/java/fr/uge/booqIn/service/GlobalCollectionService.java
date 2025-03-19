@@ -3,6 +3,7 @@ package fr.uge.booqIn.service;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.BookCollection;
+import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.repository.AuthorRepository;
 import fr.uge.booqIn.repository.BookCollectionRepository;
 import fr.uge.booqIn.repository.BookRepository;
@@ -49,6 +50,7 @@ public class GlobalCollectionService {
       } else {
         // Créer une nouvelle collection pour cet auteur
         authorCollection = new BookCollection();
+        authorCollection.setId(1L); // By default, we assign it to the admin
         authorCollection.setTitle(collectionTitle);
         authorCollection.setDescription("Collection automatique des livres de " +
                 author.getFirstName() + " " + author.getLastName());
@@ -82,6 +84,7 @@ public class GlobalCollectionService {
     } else {
       // Créer une nouvelle collection pour les nouveautés
       recentBooksCollection = new BookCollection();
+      recentBooksCollection.setId(1L); // By default, we assign it to the admin
       recentBooksCollection.setTitle(recentBooksTitle);
       recentBooksCollection.setDescription("Livres ajoutés sur la plateforme au cours des 30 derniers jours");
       recentBooksCollection.setPublic(true);
