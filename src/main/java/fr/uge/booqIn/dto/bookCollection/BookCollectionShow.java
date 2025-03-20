@@ -4,6 +4,7 @@ import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.user.UserIndex;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 public record BookCollectionShow(
@@ -11,8 +12,9 @@ public record BookCollectionShow(
         String title,
         String description,
         boolean isPublic,
-        Set<BookIndex> books,
+        List<BookIndex> books,
         UserIndex user,
+        String collectionType,
         Date createdAt,
         Date updatedAt
 ) {}
