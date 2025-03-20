@@ -1,14 +1,58 @@
 // src/components/BookGrid.tsx
-import React from 'react';
+import React, {useState, useEffect, useContext} from 'react';
 import { BookCard } from './BookCard';
 import { BookIndex } from '../model/Book';
+import axiosInstance from "../services/AxiosInstance.ts";
+import {AuthContext} from "../context/AuthContext.tsx";
 
 interface BookGridProps {
     books: BookIndex[];
     isLoading: boolean;
+    userId?: number;
 }
 
-export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading }) => {
+export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading, userId }) => {
+    const [lentBooks, setLentBooks] = useState<number[]>([]);
+    const [borrowedBooks, setBorrowedBooks] = useState<number[]>([]);
+    const { user } = useContext(AuthContext);
+    const userIds = user?.id;
+
+    const fetchUserBooks = async () => {
+        if (!userIds) {
+            console.warn("userId is undefined, skipping lending fetch");
+            return;
+        }
+
+        try {
+            console.log(`Fetching user book data for user ${userIds}`);
+            // Utiliser l'endpoint que nous avons créé précédemment
+            const response = await axiosInstance.get(`/v1/loans/user/${userIds}?type=all`);
+            console.log("User books response:", response);
+
+            if (response.data?.success && response.data?.data) {
+                // Extraire les IDs des livres prêtés
+                const lentBookIds = response.data.data.lentBooks.map((book: any) => book.book.id);
+                setLentBooks(lentBookIds);
+
+                // Extraire les IDs des livres empruntés
+                const borrowedBookIds = response.data.data.borrowedBooks.map((book: any) => book.book.id);
+                setBorrowedBooks(borrowedBookIds);
+            } else {
+                console.warn("Unexpected response format from /v1/loans/user", response);
+            }
+        } catch (err: any) {
+            console.error("Error fetching user books:", err);
+        }
+    };
+
+    useEffect(() => {
+        fetchUserBooks();
+    }, [userIds]);
+
+    const handleLendingChange = () => {
+        fetchUserBooks();
+    };
+
     if (isLoading) {
         // Skeleton loading state
         return (
@@ -30,7 +74,13 @@ export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading }) => {
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {books.map(book => (
-                <BookCard key={book.id} book={book} />
+                <BookCard
+                    key={book.id}
+                    book={book}
+                    lentBooks={lentBooks}
+                    borrowedBooks={borrowedBooks}
+                    onLendingChange={handleLendingChange}
+                />
             ))}
         </div>
     );

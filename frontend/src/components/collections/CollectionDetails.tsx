@@ -5,7 +5,8 @@ import {BookCollection, BookCollectionShow} from "../../model/BookCollection";
 import Layout from "../../pages/Layout";
 import {AuthContext} from "../../context/AuthContext.tsx";
 import BookCollectionService from "../../services/BookCollectionService.ts";
-import BookService from "../../services/BookService.ts"; // Assurez-vous de créer ce service
+import BookService from "../../services/BookService.ts";
+import axiosInstance from "../../services/AxiosInstance.ts"; // Ajout de l'import pour axiosInstance
 
 const CollectionDetails: React.FC = () => {
     const navigate = useNavigate();
@@ -22,10 +23,22 @@ const CollectionDetails: React.FC = () => {
     const [availableBooks, setAvailableBooks] = useState<any[]>([]);
     const [loadingBooks, setLoadingBooks] = useState(false);
 
+    // Nouveaux états pour les livres prêtés/empruntés
+    const [lentBooks, setLentBooks] = useState<number[]>([]);
+    const [borrowedBooks, setBorrowedBooks] = useState<number[]>([]);
+    const [lendingLoading, setLendingLoading] = useState<number | null>(null);
+
     // Fetch collection data
     useEffect(() => {
         fetchCollection();
     }, [id]);
+
+    // Nouveau useEffect pour charger les informations de prêt
+    useEffect(() => {
+        if (user) {
+            fetchUserBooks();
+        }
+    }, [user]);
 
     const fetchCollection = async () => {
         try {
@@ -52,6 +65,35 @@ const CollectionDetails: React.FC = () => {
             setLoading(false);
         }
     };
+
+    // Nouvelle fonction pour charger les informations de prêt
+    const fetchUserBooks = async () => {
+        if (!user?.id) {
+            console.warn("userId is undefined, skipping lending fetch");
+            return;
+        }
+
+        try {
+            console.log(`Fetching user book data for user ${user.id}`);
+            const response = await axiosInstance.get(`/v1/loans/user/${user.id}?type=all`);
+            console.log("User books response:", response);
+
+            if (response.data?.success && response.data?.data) {
+                // Extraire les IDs des livres prêtés
+                const lentBookIds = response.data.data.lentBooks.map((book: any) => book.book.id);
+                setLentBooks(lentBookIds);
+
+                // Extraire les IDs des livres empruntés
+                const borrowedBookIds = response.data.data.borrowedBooks.map((book: any) => book.book.id);
+                setBorrowedBooks(borrowedBookIds);
+            } else {
+                console.warn("Unexpected response format from /v1/loans/user", response);
+            }
+        } catch (err: any) {
+            console.error("Error fetching user books:", err);
+        }
+    };
+
     const handleRemoveBook = async (bookId: number) => {
         if (!window.confirm("Are you sure you want to remove this book from the collection?")) {
             return;
@@ -67,6 +109,70 @@ const CollectionDetails: React.FC = () => {
             setError("Failed to remove book from collection.");
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Nouvelle fonction pour ajouter un livre à la liste de prêt
+    const addToLoanable = async (bookId: number) => {
+        if (!user?.id) return;
+
+        setLendingLoading(bookId);
+        try {
+            const params = new URLSearchParams();
+            params.append('bookId', bookId.toString());
+            params.append('userId', user.id.toString());
+
+            const response = await axiosInstance.post("/v1/loans/make-loanable", params);
+
+            if (response.data?.success) {
+                alert("Book added to your lending list");
+                fetchUserBooks(); // Rafraîchir la liste des livres prêtés
+            } else {
+                alert("Failed to add book to lending list");
+            }
+        } catch (error: any) {
+            console.error("Error adding book to lending list:", error);
+            console.error("Response data:", error.response?.data);
+            alert(error.response?.data?.message || "Failed to add book to lending list");
+        } finally {
+            setLendingLoading(null);
+        }
+    };
+
+    // Nouvelle fonction pour retirer un livre de la liste de prêt
+    const removeFromLoanable = async (bookId: number) => {
+        if (!user?.id) return;
+
+        setLendingLoading(bookId);
+        try {
+            const response = await axiosInstance.delete("/v1/loans/remove-loanable", {
+                params: {
+                    bookId: bookId,
+                    userId: user.id
+                }
+            });
+
+            if (response.data?.success) {
+                alert("Book removed from your lending list");
+                fetchUserBooks(); // Rafraîchir la liste des livres prêtés
+            } else {
+                alert("Failed to remove book from lending list");
+            }
+        } catch (error: any) {
+            console.error("Error removing book from lending list:", error);
+            console.error("Response data:", error.response?.data);
+            alert(error.response?.data?.message || "Failed to remove book from lending list");
+        } finally {
+            setLendingLoading(null);
+        }
+    };
+
+    // Fonction pour gérer l'ajout ou le retrait d'un livre de la liste de prêt
+    const handleLendingToggle = (bookId: number) => {
+        if (lentBooks.includes(bookId)) {
+            removeFromLoanable(bookId);
+        } else {
+            addToLoanable(bookId);
         }
     };
 
@@ -143,8 +249,15 @@ const CollectionDetails: React.FC = () => {
                             {collection.books.length > 0 ? (
                                 <ul className="space-y-4">
                                     {collection.books.map((book) => (
-                                        <li key={book.id} className="p-4 border rounded-lg bg-white">
-                                            <div className="flex justify-between items-start">
+                                        <li key={book.id} className="p-4 border rounded-lg bg-white relative">
+                                            {/* Badge pour indiquer un livre emprunté */}
+                                            {borrowedBooks.includes(book.id) && (
+                                                <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full z-10">
+                                                    Prêté
+                                                </div>
+                                            )}
+                                            {/* Structure du livre avec les informations en haut et les boutons en bas */}
+                                            <div>
                                                 <div>
                                                     <h3 className="text-lg font-bold">{book.title}</h3>
                                                     <p className="text-sm text-gray-600">{book.description}</p>
@@ -155,14 +268,31 @@ const CollectionDetails: React.FC = () => {
                                                         </p>
                                                     )}
                                                 </div>
-                                                {isOwner && (
-                                                    <button
-                                                        onClick={() => handleRemoveBook(book.id)}
-                                                        className="px-3 py-1 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 transition-colors"
-                                                    >
-                                                        Remove
-                                                    </button>
-                                                )}
+
+                                                {/* Boutons placés en bas */}
+                                                <div className="flex space-x-2 mt-4">
+
+
+                                                    {user && !borrowedBooks.includes(book.id) && (
+                                                        lentBooks.includes(book.id) ? (
+                                                            <button
+                                                                onClick={() => removeFromLoanable(book.id)}
+                                                                className="px-3 py-1 text-white text-sm rounded-md transition-colors bg-yellow-500 hover:bg-yellow-600"
+                                                                disabled={lendingLoading === book.id}
+                                                            >
+                                                                {lendingLoading === book.id ? "Processing..." : "Remove from lending"}
+                                                            </button>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => addToLoanable(book.id)}
+                                                                className="px-3 py-1 text-white text-sm rounded-md transition-colors bg-green-500 hover:bg-green-600"
+                                                                disabled={lendingLoading === book.id}
+                                                            >
+                                                                {lendingLoading === book.id ? "Processing..." : "Add to lending"}
+                                                            </button>
+                                                        )
+                                                    )}
+                                                </div>
                                             </div>
                                         </li>
                                     ))}
