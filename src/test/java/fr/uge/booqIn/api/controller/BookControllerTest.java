@@ -7,7 +7,7 @@ import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.dto.book.BookUpdate;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
-import fr.uge.booqIn.entity.BookCollection;
+import fr.uge.booqIn.entity.AbstractBookCollection;
 import fr.uge.booqIn.exception.DuplicateResourceException;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.factory.ApiResponse;
@@ -336,7 +336,7 @@ class BookControllerTest {
         Set<String> isbns = new HashSet<>(Collections.singleton("1234567890"));
         Set<AuthorDto> authorDtos = new HashSet<>(Collections.singleton(new AuthorDto(1L, "John", "Doe")));
         Set<String> categories = new HashSet<>(Collections.singleton("Fiction"));
-        List<BookCollection> collections = new ArrayList<>();
+        List<AbstractBookCollection> collections = new ArrayList<>();
 
         BookUpdate bookUpdate = new BookUpdate(
                 Optional.of("Patched Book"),

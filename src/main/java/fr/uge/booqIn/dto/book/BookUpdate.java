@@ -1,6 +1,6 @@
 package fr.uge.booqIn.dto.book;
 
-import fr.uge.booqIn.entity.BookCollection;
+import fr.uge.booqIn.entity.AbstractBookCollection;
 
 import java.util.Date;
 import java.util.List;
@@ -12,6 +12,6 @@ public record BookUpdate(
         Optional<Set<String>> isbns,
         Optional<String> description,
         Optional<Date> publicationDate,
-        Optional<List<BookCollection>> collections
+        Optional<List<AbstractBookCollection>> collections
 ) {
 }

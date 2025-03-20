@@ -1,5 +1,5 @@
 import axios from 'axios';
-import {BookCollection, BookCollectionIndex, BookCollectionShow, BookCollectionUpdate} from '../model/BookCollection';
+import {BookCollection, BookCollectionShow, BookCollectionUpdate} from '../model/BookCollection';
 import { ApiResponse } from '../model/ApiResponse';
 
 const API_URL = '/api/v1/collections';
@@ -33,16 +33,6 @@ class BookCollectionService {
             return response.data.data;
         } catch (error) {
             console.error('Error creating book collection:', error);
-            throw error;
-        }
-    }
-
-    async updateBookCollection(id: string | number, collectionData: any) {
-        try {
-            const response = await axios.put<ApiResponse<BookCollectionShow>>(`${API_URL}/${id}`, collectionData);
-            return response.data.data;
-        } catch (error) {
-            console.error(`Error updating book collection with id ${id}:`, error);
             throw error;
         }
     }

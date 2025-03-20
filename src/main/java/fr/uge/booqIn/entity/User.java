@@ -50,12 +50,12 @@ public class User implements UserDetails {
   @NotNull(message = "User role is required")
   @Enumerated(EnumType.STRING)
   private UserRole role;
-  
+
   @OneToMany(mappedBy = "lender", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   private List<BookLending> lentBooks = new ArrayList<>();
-  
+
   @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<BookCollection> collections = new ArrayList<>();
+  private List<AbstractBookCollection> collections = new ArrayList<>();
 
   @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
   @JoinColumn(name = "cart_id")
@@ -72,25 +72,55 @@ public class User implements UserDetails {
   public User() {
   }
 
-  public User(String fistName, String lastName, String email, String password, Address address, UserRole role) {
-    this.firstName = fistName;
+  public User(String firstName, String lastName, String email, String password, Address address, UserRole role) {
+    this.firstName = firstName;
     this.lastName = lastName;
     this.email = email;
     this.password = password;
     this.address = address;
     this.role = role;
+
+    // Initialize default collections
+    initializeDefaultCollections();
   }
 
-  public User(String fistName, String lastName, String email, String password, Address address, UserRole role, Cart cart) {
-    this.firstName = fistName;
+  public User(String firstName, String lastName, String email, String password, Address address, UserRole role, Cart cart) {
+    this.firstName = firstName;
     this.lastName = lastName;
     this.email = email;
     this.password = password;
     this.address = address;
     this.role = role;
     this.cart = cart;
+
+    // Initialize default collections
+    initializeDefaultCollections();
   }
 
+  /**
+   * Initializes default collections for new users:
+   * 1. Liked Books - Smart collection of books the user has liked
+   * 2. Followed Users' Books - Smart collection of books from followed users' public collections
+   */
+  private void initializeDefaultCollections() {
+    // Create "Liked Books" smart collection
+    SmartBookCollection likedBooksCollection = new SmartBookCollection();
+    likedBooksCollection.setTitle("Liked Books");
+    likedBooksCollection.setDescription("Automatic collection of books that the user has liked");
+    likedBooksCollection.setOwner(this);
+    likedBooksCollection.setPublic(false);
+
+    // Create "Followed Users' Books" smart collection
+    SmartBookCollection followedUsersCollection = new SmartBookCollection();
+    followedUsersCollection.setTitle("Followed Users' Books");
+    followedUsersCollection.setDescription("Automatic collection of books from users that the user follows");
+    followedUsersCollection.setOwner(this);
+    followedUsersCollection.setPublic(false);
+
+    // Add collections to user
+    this.collections.add(likedBooksCollection);
+    this.collections.add(followedUsersCollection);
+  }
 
   public Long getId() {
     return id;
@@ -108,6 +138,9 @@ public class User implements UserDetails {
     return lastName;
   }
 
+  public String getFullName() {
+    return firstName + " " + lastName;
+  }
   public String getEmail() {
     return email;
   }
@@ -116,9 +149,9 @@ public class User implements UserDetails {
     return address;
   }
 
-    public Cart getCart() {
-        return cart;
-    }
+  public Cart getCart() {
+    return cart;
+  }
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -141,7 +174,7 @@ public class User implements UserDetails {
     return role;
   }
 
-  public List<BookCollection> getCollections() {
+  public List<AbstractBookCollection> getCollections() {
     return collections;
   }
 
@@ -157,8 +190,8 @@ public class User implements UserDetails {
     this.version = version;
   }
 
-  public void setFirstName(String fistName) {
-    this.firstName = fistName;
+  public void setFirstName(String firstName) {
+    this.firstName = firstName;
   }
 
   public void setLastName(String lastName) {
@@ -185,13 +218,13 @@ public class User implements UserDetails {
     this.role = role;
   }
 
-  public void setCollections(List<BookCollection> collections) {
+  public void setCollections(List<AbstractBookCollection> collections) {
     this.collections = collections;
   }
 
-    public void setCart(Cart cart) {
-        this.cart = cart;
-    }
+  public void setCart(Cart cart) {
+    this.cart = cart;
+  }
 
   public void setCreatedAt(Date createdAt) {
     this.createdAt = createdAt;
@@ -201,24 +234,68 @@ public class User implements UserDetails {
     this.updatedAt = updatedAt;
   }
 
-  public void addCollection(BookCollection collection) {
+  public void addCollection(AbstractBookCollection collection) {
     collections.add(collection);
     collection.setOwner(this);
   }
   public List<BookLending> getLentBooks() {
     return lentBooks;
   }
-  
+
   public void setLentBooks(List<BookLending> lentBooks) {
     this.lentBooks = lentBooks;
   }
 
-  public void removeCollection(BookCollection collection) {
+  public void removeCollection(AbstractBookCollection collection) {
     collections.remove(collection);
   }
 
   public void addBookToCart(Book book) {
     cart.addBook(book);
+  }
+
+  /**
+   * Gets the user's "Liked Books" collection
+   * @return The smart collection of liked books or null if not found
+   */
+  public SmartBookCollection getLikedBooksCollection() {
+    return collections.stream()
+            .filter(c -> c instanceof SmartBookCollection && "Livres que j'ai aimés".equals(c.getTitle()))
+            .map(c -> (SmartBookCollection) c)
+            .findFirst()
+            .orElse(null);
+  }
+
+  /**
+   * Gets the user's "Followed Users' Books" collection
+   * @return The smart collection of books from followed users or null if not found
+   */
+  public SmartBookCollection getFollowedUsersCollection() {
+    return collections.stream()
+            .filter(c -> c instanceof SmartBookCollection && "Livres des utilisateurs que je suis".equals(c.getTitle()))
+            .map(c -> (SmartBookCollection) c)
+            .findFirst()
+            .orElse(null);
+  }
+
+  @Override
+  public boolean isAccountNonExpired() {
+    return true;
+  }
+
+  @Override
+  public boolean isAccountNonLocked() {
+    return true;
+  }
+
+  @Override
+  public boolean isCredentialsNonExpired() {
+    return true;
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return true;
   }
 
   @Override
@@ -233,14 +310,14 @@ public class User implements UserDetails {
   public int hashCode() {
     return Objects.hash(email);
   }
-  
+
   public void addLentBook(BookLending bookLending) {
     if (bookLending != null) {
       lentBooks.add(bookLending);
       bookLending.setLender(this);
     }
   }
-  
+
   public void removeLentBook(BookLending bookLending) {
     if (bookLending != null && lentBooks.contains(bookLending)) {
       lentBooks.remove(bookLending);
