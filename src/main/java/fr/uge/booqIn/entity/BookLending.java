@@ -43,8 +43,7 @@ public class BookLending {
   public BookLending(Book book, User lender) {
     this.book = book;
     this.lender = lender;
-    this.status = BookStatus.RESERVED;
-    this.reservedAt = LocalDateTime.now(); // Réservation immédiate
+    this.reservedAt = LocalDateTime.now();
   }
   
   public Long getId() {
