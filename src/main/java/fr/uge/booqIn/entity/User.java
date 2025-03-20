@@ -109,7 +109,6 @@ public class User implements UserDetails {
     likedBooksCollection.setDescription("Automatic collection of books that the user has liked");
     likedBooksCollection.setOwner(this);
     likedBooksCollection.setPublic(false);
-    likedBooksCollection.setCriteriaJson("{\"type\":\"liked_by_user\",\"userId\":" + this.id + "}");
 
     // Create "Followed Users' Books" smart collection
     SmartBookCollection followedUsersCollection = new SmartBookCollection();
@@ -117,7 +116,6 @@ public class User implements UserDetails {
     followedUsersCollection.setDescription("Automatic collection of books from users that the user follows");
     followedUsersCollection.setOwner(this);
     followedUsersCollection.setPublic(false);
-    followedUsersCollection.setCriteriaJson("{\"type\":\"from_followed_users\",\"userId\":" + this.id + "}");
 
     // Add collections to user
     this.collections.add(likedBooksCollection);

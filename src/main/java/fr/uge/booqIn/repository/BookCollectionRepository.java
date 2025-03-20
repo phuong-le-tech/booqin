@@ -48,6 +48,6 @@ public interface BookCollectionRepository extends JpaRepository<AbstractBookColl
   Optional<AbstractBookCollection> findByTitleAndType(@Param("title") String title,
                                                       @Param("type") Class<? extends AbstractBookCollection> type);
 
-  @Query("SELECT bc FROM GlobalBookCollection bc WHERE bc.title = :title")
+  @Query("SELECT bc FROM GlobalBookCollection bc WHERE bc.title LIKE :title")
   Optional<GlobalBookCollection> findGlobalCollectionByTitle(@Param("title") String title);
 }

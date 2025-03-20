@@ -8,5 +8,5 @@ public record BookCollectionCreate(
          String title,
          String description,
          boolean isPublic,
-         Optional<Map<String, Object>> criteria
+         Optional<String> criteria
 ) {}
