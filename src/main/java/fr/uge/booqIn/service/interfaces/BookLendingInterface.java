@@ -34,4 +34,8 @@ public interface BookLendingInterface {
   
   
   Optional<BookLending> findBookLendingByBookId(Long bookId);
+  
+  boolean loanable (Long bookId, Long userId);
+  
+  boolean isNoMoreLoanable(Long bookId , Long userId);
 }

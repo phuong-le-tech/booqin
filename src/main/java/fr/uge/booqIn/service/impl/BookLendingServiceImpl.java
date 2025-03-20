@@ -11,6 +11,7 @@ import fr.uge.booqIn.event.BookReturnedEvent;
 import fr.uge.booqIn.mapper.BookLendingMapper;
 import fr.uge.booqIn.repository.BookLendingRepository;
 import fr.uge.booqIn.repository.BookRepository;
+import fr.uge.booqIn.repository.UserRepository;
 import fr.uge.booqIn.service.interfaces.BookLendingInterface;
 
 import org.springframework.context.ApplicationEventPublisher;
@@ -38,15 +39,16 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   private final BookLendingMapper bookLendingMapper;
   private final  BookServiceImpl bookService;
   private final ApplicationEventPublisher eventPublisher;
+  private final UserRepository userRepository;
   
-  public BookLendingServiceImpl(BookLendingRepository bookLendingRepository , UserServiceImpl userService , BookRepository bookRepository, BookLendingMapper bookLendingMapper, BookServiceImpl bookService, ApplicationEventPublisher eventPublisher, ApplicationEventPublisher eventPublisher1) {
+  public BookLendingServiceImpl(BookLendingRepository bookLendingRepository , UserServiceImpl userService , BookRepository bookRepository, BookLendingMapper bookLendingMapper, BookServiceImpl bookService, ApplicationEventPublisher eventPublisher, ApplicationEventPublisher eventPublisher1, UserRepository userRepository) {
     this.bookLendingRepository = bookLendingRepository;
     this.userService = userService;
     this.bookRepository = bookRepository;
     this.bookLendingMapper = bookLendingMapper;
     this.bookService = bookService;
     this.eventPublisher = eventPublisher;
-
+    this.userRepository = userRepository;
   }
   
   
@@ -250,19 +252,22 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   @Transactional
   public List<BookLendingShow> findBorrowedLendingsAsDTO(Long userId) {
     User user = userService.findUserById(userId);
-    List<BookLending> lendings = bookLendingRepository.findByBorrower(user);
-    for (BookLending lending : lendings) {
-      initializeBookLendingLazyRelations(lending);
+    List<BookLending> borrows = bookLendingRepository.findByBorrower(user);
+    System.out.println(borrows);
+    for (BookLending borrow : borrows) {
+      initializeBookLendingLazyRelations(borrow);
     }
-    return lendings.stream()
+    return borrows.stream()
             .map(bookLendingMapper::toBookLendingShow)
             .collect(Collectors.toList());
   }
   
   @Transactional
   public List<BookLendingShow> findLentBooksAsDTO(Long userId) {
+    System.out.println("Finding lent books ================================= ");
     User user = userService.findUserById(userId);
-    List<BookLending> lendings = bookLendingRepository.findByLender(user);
+    List<BookLending> lendings = bookLendingRepository.findBookLendingsByLender(user);
+    System.out.println(lendings);
     
     for (BookLending lending : lendings) {
       initializeBookLendingLazyRelations(lending);
@@ -291,7 +296,7 @@ public class BookLendingServiceImpl implements BookLendingInterface {
 
   public List<BookLending> findUserOwnedLendings(Long userId) {
     User user = userService.findUserById(userId);
-    return bookLendingRepository.findByLender(user);
+    return bookLendingRepository.findBookLendingsByLender(user);
   }
 
   public Map<String, List<BookLending>> findAllUserLendings(Long userId) {
@@ -299,7 +304,7 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     Map<String, List<BookLending>> result = new HashMap<>();
     
     result.put("borrowed", bookLendingRepository.findByBorrower(user));
-    result.put("lent", bookLendingRepository.findByLender(user));
+    result.put("lent", bookLendingRepository.findBookLendingsByLender(user));
     
     return result;
   }
@@ -356,6 +361,66 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   public Optional<BookLending> findBookLendingByBookId(Long bookId) {
     return Optional.ofNullable(bookLendingRepository.findByBookIdAndBorrowerIsNullAndStatus(bookId, BookStatus.AVAILABLE));
   }
+  
+
+    @Override
+    @Transactional
+    public boolean loanable(Long bookId, Long userId) {
+
+      Optional<Book> bookOpt = bookRepository.findById(bookId);
+      if (bookOpt.isEmpty()) {
+        return false;
+      }
+      Book book = bookOpt.get();
+      
+      User user = userService.findUserById(userId);
+      if (user == null) {
+        return false;
+      }
+
+      boolean alreadyLoanable = user.getLentBooks().stream()
+              .anyMatch(toL -> toL.getBook().getId().equals(bookId));
+      
+      if (alreadyLoanable) {
+        return false;
+      }
+      
+      var booklend = new BookLending(book , user);
+      bookLendingRepository.save(booklend);
+      user.addLentBook(booklend);
+      userRepository.save(user);
+      return true;
+  }
+  
+  @Override
+  @Transactional
+  public boolean isNoMoreLoanable(Long bookId, Long userId) {
+    Optional<Book> bookOpt = bookRepository.findById(bookId);
+    if (bookOpt.isEmpty()) {
+      System.out.println("Book not found");
+      return false;
+    }
+    Book book = bookOpt.get();
+    
+    User user = userService.findUserById(userId);
+    if (user == null) {
+      System.out.println("User not found");
+      return false;
+    }
+    Optional<BookLending>  bookLending = userRepository.findById(userId).get().getLentBooks().stream()
+            .filter(toL -> toL.getBook().getId().equals(bookId))
+            .findFirst();
+    
+    if (bookLending.isEmpty()) {
+      return false;
+    }
+    
+    user.removeLentBook(bookLending.get());
+    bookLendingRepository.delete(bookLending.get());
+    userRepository.save(user);
+    return true;
+  }
+  
   @Recover
   public boolean recoverFromOptimisticLockingFailureOnMarkAsReturn(ObjectOptimisticLockingFailureException ex, Long bookId, Long userId) {
     throw new ConcurrentModificationException("The book lending has been modified by someone else. Please try again.", ex);

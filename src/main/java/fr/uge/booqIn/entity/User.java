@@ -51,6 +51,9 @@ public class User implements UserDetails {
   @Enumerated(EnumType.STRING)
   private UserRole role;
 
+  @OneToMany(mappedBy = "lender", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  private List<BookLending> lentBooks = new ArrayList<>();
+
   @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<AbstractBookCollection> collections = new ArrayList<>();
 
@@ -102,16 +105,16 @@ public class User implements UserDetails {
   private void initializeDefaultCollections() {
     // Create "Liked Books" smart collection
     SmartBookCollection likedBooksCollection = new SmartBookCollection();
-    likedBooksCollection.setTitle("Livres que j'ai aimés");
-    likedBooksCollection.setDescription("Collection automatique des livres que j'ai aimés");
+    likedBooksCollection.setTitle("Liked Books");
+    likedBooksCollection.setDescription("Automatic collection of books that the user has liked");
     likedBooksCollection.setOwner(this);
     likedBooksCollection.setPublic(false);
     likedBooksCollection.setCriteriaJson("{\"type\":\"liked_by_user\",\"userId\":" + this.id + "}");
 
     // Create "Followed Users' Books" smart collection
     SmartBookCollection followedUsersCollection = new SmartBookCollection();
-    followedUsersCollection.setTitle("Livres des utilisateurs que je suis");
-    followedUsersCollection.setDescription("Collection automatique des livres présents dans les collections publiques des utilisateurs que je suis");
+    followedUsersCollection.setTitle("Followed Users' Books");
+    followedUsersCollection.setDescription("Automatic collection of books from users that the user follows");
     followedUsersCollection.setOwner(this);
     followedUsersCollection.setPublic(false);
     followedUsersCollection.setCriteriaJson("{\"type\":\"from_followed_users\",\"userId\":" + this.id + "}");
@@ -237,6 +240,13 @@ public class User implements UserDetails {
     collections.add(collection);
     collection.setOwner(this);
   }
+  public List<BookLending> getLentBooks() {
+    return lentBooks;
+  }
+
+  public void setLentBooks(List<BookLending> lentBooks) {
+    this.lentBooks = lentBooks;
+  }
 
   public void removeCollection(AbstractBookCollection collection) {
     collections.remove(collection);
@@ -302,4 +312,21 @@ public class User implements UserDetails {
   public int hashCode() {
     return Objects.hash(email);
   }
+
+  public void addLentBook(BookLending bookLending) {
+    if (bookLending != null) {
+      lentBooks.add(bookLending);
+      bookLending.setLender(this);
+    }
+  }
+
+  public void removeLentBook(BookLending bookLending) {
+    if (bookLending != null && lentBooks.contains(bookLending)) {
+      lentBooks.remove(bookLending);
+      if (bookLending.getLender() == this) {
+        bookLending.setLender(null);
+      }
+    }
+  }
 }
+
