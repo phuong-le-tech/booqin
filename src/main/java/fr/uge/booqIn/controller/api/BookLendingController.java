@@ -84,4 +84,39 @@ public class BookLendingController {
     
     return ResponseEntity.ok(ApiResponse.success(message, responseDTO));
   }
+
+  @PostMapping("/make-loanable")
+  public ResponseEntity<ApiResponse<Boolean>> makeBookLoanable(
+          @RequestParam Long bookId,
+          @RequestParam Long userId) {
+    boolean added = bookLendingInterface.loanable(bookId, userId);
+    return added
+            ? ResponseEntity.ok(ApiResponse.success("Book added to lending list", true))
+            : ResponseEntity.badRequest().body(ApiResponse.error("Failed to add book to lending list", false));
+  }
+  
+
+  @DeleteMapping("/remove-loanable")
+  public ResponseEntity<ApiResponse<Boolean>> removeBookFromLoanable(
+          @RequestParam Long bookId,
+          @RequestParam Long userId) {
+    boolean removed = bookLendingInterface.isNoMoreLoanable(bookId, userId);
+    
+    return removed
+            ? ResponseEntity.ok(ApiResponse.success("Book removed from lending list", true))
+            : ResponseEntity.badRequest().body(ApiResponse.error("Failed to remove book from lending list", false));
+  }
+  
+  @GetMapping("/my-lendings")
+  public ResponseEntity<ApiResponse<LendingResponseDTO>> getCurrentUserLendings(
+          @RequestParam Long userId) {
+    LendingResponseDTO responseDTO = bookLendingInterface.findAllUserLendingsAsDTO(userId, "lent");
+    if (responseDTO.lentBooks().isEmpty()) {
+      return ResponseEntity.ok(ApiResponse.success("No lent books found", responseDTO));
+    }else{
+      return ResponseEntity.ok(ApiResponse.success("User lent books retrieved", responseDTO));
+    }
+  }
+  
+  
 }

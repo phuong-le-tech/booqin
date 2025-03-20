@@ -157,6 +157,42 @@ export const BookLending: React.FC = () => {
         }
     };
 
+
+    const removeFromLoanable = async (id: number) => {
+        if (!auth.user?.id) return;
+
+        setLoading(true);
+        try {
+            const response = await axiosInstance.delete("/v1/loans/remove-loanable", {
+                params: {
+                    bookId: id,
+                    userId: auth.user?.id
+                }
+            });
+
+            if (response.data?.success) {
+                alert("Book removed from your lending list");
+
+                // Update the local state to remove the book
+                setLendingData((prevData) => {
+                    if (!prevData) return prevData;
+
+                    const updatedLentBooks = prevData.lentBooks.filter((lending) => lending.book.id !== id);
+                    return { ...prevData, lentBooks: updatedLentBooks };
+                });
+            } else {
+                alert("Failed to remove book from lending list");
+            }
+        } catch (error: any) {
+            console.error("Error removing book from lending list:", error);
+            console.error("Response data:", error.response?.data);
+            alert(error.response?.data?.message || "Failed to remove book from lending list");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
     const handleShipBook = async (lendingId: number) => {
         if (!auth.user) return;
 
@@ -336,89 +372,125 @@ export const BookLending: React.FC = () => {
                         {/* Livres prêtés */}
                         {(activeTab === "lent" || activeTab === "all") && (
                             <div>
-                                {activeTab === "all" && (
-                                    <h3 className="text-2xl font-semibold mb-4">Livres que vous prêtez</h3>
-                                )}
+                                {/* Livres prêtés avec emprunteur */}
+                                {lendingData?.lentBooks && lendingData.lentBooks.filter(lending => lending.borrower).length > 0 && (
+                                    <div className="mb-8">
+                                        {activeTab === "all" && (
+                                            <h3 className="text-2xl font-semibold mb-4">Livres actuellement prêtés</h3>
+                                        )}
 
-                                {lendingData?.lentBooks && lendingData.lentBooks.length > 0 ? (
-                                    <div className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-200">
-                                        <div className="divide-y divide-gray-200">
-                                            {lendingData.lentBooks.map((lending) => (
-                                                <div key={lending.id} className="p-6 hover:bg-gray-50 transition-colors">
-                                                    <div className="flex flex-col lg:flex-row gap-6">
-                                                        <div className="h-40 w-28 bg-gradient-to-br from-green-100 to-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 border border-gray-200">
-                                                            <svg className="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                                                            </svg>
-                                                        </div>
-
-                                                        <div className="flex-1">
-                                                            <div className="flex flex-col md:flex-row md:items-start md:justify-between">
-                                                                <div>
-                                                                    <h3 className="text-xl font-bold text-gray-800">{lending.book.title}</h3>
-                                                                    <p className="text-gray-600 mb-2">{getAuthorNames(lending.book)}</p>
-
-                                                                    <div className="flex items-center gap-2 mb-1">
-                                                                        <span className="text-gray-600 font-medium">Emprunté par:</span>
-                                                                        <span>{lending.borrower.firstName} {lending.borrower.lastName}</span>
-                                                                    </div>
-
-                                                                    <div className="flex items-center gap-2 mb-1">
-                                                                        <span className="text-gray-600 font-medium">Statut:</span>
-                                                                        <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusBadgeClass(lending.status)}`}>
-                                                                            {getStatusLabel(lending.status)}
-                                                                        </span>
-                                                                    </div>
+                                        <div className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-200">
+                                            <div className="divide-y divide-gray-200">
+                                                {lendingData.lentBooks
+                                                    .filter(lending => lending.borrower)
+                                                    .map((lending) => (
+                                                        <div key={lending.id} className="p-6 hover:bg-gray-50 transition-colors">
+                                                            <div className="flex flex-col lg:flex-row gap-6">
+                                                                <div className="h-40 w-28 bg-gradient-to-br from-green-100 to-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 border border-gray-200">
+                                                                    <svg className="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                                                    </svg>
                                                                 </div>
 
-                                                                <div className="mt-4 md:mt-0 md:text-right">
-                                                                    <div className="text-sm text-gray-600 mb-1">
-                                                                        <span className="font-medium">Date d'emprunt:</span> {formatDate(lending.startDate)}
-                                                                    </div>
-                                                                    <div className="text-sm text-gray-600 mb-1">
-                                                                        <span className="font-medium">Date de retour prévue:</span> {formatDate(lending.dueDate)}
-                                                                    </div>
-                                                                    {lending.returnDate && (
-                                                                        <div className="text-sm text-gray-600">
-                                                                            <span className="font-medium">Retourné le:</span> {formatDate(lending.returnDate)}
+                                                                <div className="flex-1">
+                                                                    <div className="flex flex-col md:flex-row md:items-start md:justify-between">
+                                                                        <div>
+                                                                            <h3 className="text-xl font-bold text-gray-800">{lending.book.title}</h3>
+                                                                            <p className="text-gray-600 mb-2">{getAuthorNames(lending.book)}</p>
+
+                                                                            <div className="flex items-center gap-2 mb-1">
+                                                                                <span className="text-gray-600 font-medium">Emprunté par:</span>
+                                                                                <span>{lending.borrower.firstName} {lending.borrower.lastName}</span>
+                                                                            </div>
+
+                                                                            <div className="flex items-center gap-2 mb-1">
+                                                                                <span className="text-gray-600 font-medium">Statut:</span>
+                                                                                <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusBadgeClass(lending.status)}`}>
+                                                        {getStatusLabel(lending.status)}
+                                                    </span>
+                                                                            </div>
                                                                         </div>
-                                                                    )}
+
+                                                                        <div className="mt-4 md:mt-0 md:text-right">
+                                                                            <div className="text-sm text-gray-600 mb-1">
+                                                                                <span className="font-medium">Date d'emprunt:</span> {formatDate(lending.startDate)}
+                                                                            </div>
+                                                                            <div className="text-sm text-gray-600 mb-1">
+                                                                                <span className="font-medium">Date de retour prévue:</span> {formatDate(lending.dueDate)}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
                                                                 </div>
                                                             </div>
-
-                                                            {lending.status === "RESERVED" && (
-                                                                <div className="mt-4">
-                                                                    <button
-                                                                        onClick={() => handleConfirmLoan(lending.id)}
-                                                                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
-                                                                    >
-                                                                        Confirmer le prêt
-                                                                    </button>
-                                                                </div>
-                                                            )}
-
-                                                            {lending.status === "PENDING_SHIPMENT" && (
-                                                                <div className="mt-4">
-                                                                    <button
-                                                                        onClick={() => handleShipBook(lending.id)}
-                                                                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
-                                                                    >
-                                                                        Confirmer l'envoi
-                                                                    </button>
-                                                                </div>
-                                                            )}
                                                         </div>
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                    ))}
+                                            </div>
                                         </div>
                                     </div>
-                                ) : (
+                                )}
+
+                                {/* Livres disponibles pour prêt */}
+                                {lendingData?.lentBooks && lendingData.lentBooks.filter(lending => !lending.borrower).length > 0 && (
+                                    <div>
+                                        {activeTab === "all" && (
+                                            <h3 className="text-2xl font-semibold mb-4">Livres disponibles pour prêt</h3>
+                                        )}
+
+                                        <div className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-200">
+                                            <div className="divide-y divide-gray-200">
+                                                {lendingData.lentBooks
+                                                    .filter(lending => !lending.borrower)
+                                                    .map((lending) => (
+                                                        <div key={lending.id} className="p-6 hover:bg-gray-50 transition-colors">
+                                                            <div className="flex flex-col lg:flex-row gap-6">
+                                                                <div className="h-40 w-28 bg-gradient-to-br from-yellow-100 to-orange-100 rounded-lg flex items-center justify-center flex-shrink-0 border border-gray-200">
+                                                                    <svg className="w-12 h-12 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                                    </svg>
+                                                                </div>
+
+                                                                <div className="flex-1">
+                                                                    <div className="flex flex-col md:flex-row md:items-start md:justify-between">
+                                                                        <div>
+                                                                            <h3 className="text-xl font-bold text-gray-800">{lending.book.title}</h3>
+                                                                            <p className="text-gray-600 mb-2">{getAuthorNames(lending.book)}</p>
+
+                                                                            <div className="flex items-center gap-2 mb-1">
+                                                                                <span className="text-gray-600 font-medium">Statut:</span>
+                                                                                <span className="px-3 py-1 rounded-full text-sm font-medium border bg-yellow-100 text-yellow-800 border-yellow-300">
+                                                                                    Disponible pour prêt
+                                                                                </span>
+                                                                            </div>
+                                                                            <button
+                                                                                onClick={() => removeFromLoanable(lending.book.id)}
+                                                                                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors mt-4"
+                                                                            >
+                                                                                Retirer de la liste de prêt
+                                                                            </button>
+                                                                        </div>
+
+                                                                        <div className="mt-4 md:mt-0 md:text-right">
+                                                                            <div className="text-sm text-gray-600 mb-1">
+                                                                                <span className="font-medium">Mis à disposition le:</span> {formatDate(lending.reservedAt)}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Message si aucun livre n'est disponible */}
+                                {lendingData?.lentBooks && lendingData.lentBooks.length === 0 && (
                                     <div className="bg-gray-50 rounded-xl p-12 text-center border border-gray-200 shadow-md">
                                         <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                         </svg>
-                                        <p className="text-gray-700 text-xl font-medium">Vous ne prêtez aucun livre actuellement</p>
+                                        <p className="text-gray-700 text-xl font-medium">Vous n'avez aucun livre dans votre collection</p>
                                         <p className="text-gray-500 mt-2 mb-6">Ajoutez des livres à votre collection pour pouvoir les prêter</p>
                                         <button
                                             onClick={() => navigate("/profile")}
