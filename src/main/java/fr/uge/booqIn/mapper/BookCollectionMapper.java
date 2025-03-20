@@ -1,101 +1,83 @@
 package fr.uge.booqIn.mapper;
 
-import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionIndex;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
 import fr.uge.booqIn.dto.user.UserIndex;
-import fr.uge.booqIn.entity.Book;
-import fr.uge.booqIn.entity.BookCollection;
-import fr.uge.booqIn.entity.User;
+import fr.uge.booqIn.entity.AbstractBookCollection;
+import fr.uge.booqIn.entity.GlobalBookCollection;
+import fr.uge.booqIn.entity.NormalBookCollection;
+import fr.uge.booqIn.entity.SmartBookCollection;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
+/**
+ * Mapper for converting between BookCollection entities and DTOs.
+ * Handles the polymorphic nature of book collections.
+ */
 @Component
 public class BookCollectionMapper {
   private final BookMapper bookMapper = new BookMapper();
-  private final UserMapper userMapper = new UserMapper(this);
-
-//  public BookCollectionMapper(UserMapper userMapper) {
-//    this.userMapper = userMapper;
-//  }
 
 
   /**
-   * Maps BookCollection entity to BookCollectionIndex DTO
+   * Converts a book collection entity to an index DTO.
+   * The index DTO contains basic information for listing collections.
+   *
+   * @param collection The collection entity to convert
+   * @return A BookCollectionIndex DTO
    */
-  public BookCollectionIndex toBookCollectionIndex(BookCollection bookCollection) {
-    if (bookCollection == null) {
-      return null;
-    }
-
-    String ownerName = bookCollection.getOwner() != null ?
-            bookCollection.getOwner().getFirstName() + " " + bookCollection.getOwner().getLastName() : "Unknown";
-
+  public BookCollectionIndex toBookCollectionIndex(AbstractBookCollection collection) {
     return new BookCollectionIndex(
-            bookCollection.getId(),
-            bookCollection.getTitle(),
-            bookCollection.getDescription(),
-            ownerName,
-            bookCollection.isPublic()
+            collection.getId(),
+            collection.getTitle(),
+            collection.getDescription(),
+            collection.getOwner().getFullName(),
+            collection.isPublic()
     );
   }
 
   /**
-   * Maps BookCollection entity to BookCollectionShow DTO
+   * Converts a book collection entity to a show DTO.
+   * The show DTO contains detailed information including all books.
+   *
+   * @param collection The collection entity to convert
+   * @return A BookCollectionShow DTO
    */
-  public BookCollectionShow toBookCollectionShow(BookCollection bookCollection) {
-    if (bookCollection == null) {
-      return null;
-    }
+  public BookCollectionShow toBookCollectionShow(AbstractBookCollection collection) {
 
-    Set<BookIndex> bookIndexes = bookCollection.getBooks().stream()
-            .map(bookMapper::toBookIndex)
-            .collect(Collectors.toSet());
-    User owner = bookCollection.getOwner();
-
-    UserIndex userIndex = new UserIndex(
-            owner.getId(),
-            owner.getFirstName(),
-            owner.getLastName(),
-            owner.getEmail(),
-            owner.getAddress(),
-            owner.getRole()
+    UserIndex user = new UserIndex(
+            collection.getOwner().getId(),
+            collection.getOwner().getFirstName(),
+            collection.getOwner().getLastName(),
+            collection.getOwner().getEmail(),
+            collection.getOwner().getAddress(),
+            collection.getOwner().getRole()
     );
-
     return new BookCollectionShow(
-            bookCollection.getId(),
-            bookCollection.getTitle(),
-            bookCollection.getDescription(),
-            bookCollection.isPublic(),
-            bookIndexes,
-            userIndex,  // owner
-            bookCollection.getCreatedAt(),
-            bookCollection.getUpdatedAt()
+            collection.getId(),
+            collection.getTitle(),
+            collection.getDescription(),
+            collection.isPublic(),
+            collection.getBooks().stream().map(bookMapper::toBookIndex).toList(),
+            user,
+            getCollectionType(collection),
+            collection.getCreatedAt(),
+            collection.getUpdatedAt()
     );
   }
 
-  public BookCollection bookCollectionShowToBookCollection(BookCollectionShow bookCollectionShow) {
-    if (bookCollectionShow == null) {
-      return null;
-    }
-    Set<Book> books = bookCollectionShow.books().stream()
-            .map(bookMapper::bookIndexToBook)
-            .collect(Collectors.toSet());
-
-    System.out.println("ID IN BOOK COLLECTION CONVERT SHOW TO ENTITY: " + bookCollectionShow.id());
-    return new BookCollection.Builder()
-            .id(bookCollectionShow.id())
-            .title(bookCollectionShow.title())
-            .description(bookCollectionShow.description())
-            .isPublic(bookCollectionShow.isPublic())
-            .books(books.stream().toList())
-            .owner(userMapper.userIndexToUser(bookCollectionShow.user()))
-            //.owner(bookCollectionShow.user())
-            .createdAt(bookCollectionShow.createdAt())
-            .updatedAt(bookCollectionShow.updatedAt())
-            .build();
+  /**
+   * Determines the string representation of the collection type
+   * based on the actual type of the collection entity.
+   *
+   * @param collection The collection entity
+   * @return A string representing the collection type
+   */
+  private String getCollectionType(AbstractBookCollection collection) {
+    return switch (collection) {
+      case NormalBookCollection normalBookCollection -> "NORMAL";
+      case SmartBookCollection smartBookCollection -> "SMART";
+      case GlobalBookCollection globalBookCollection -> "GLOBAL";
+      case null, default -> throw new IllegalArgumentException("Invalid collection type");
+    };
   }
 }
