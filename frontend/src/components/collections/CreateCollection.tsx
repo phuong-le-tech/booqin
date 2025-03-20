@@ -140,7 +140,7 @@ const CreateCollection: React.FC = () => {
                                         {loading ? "Creating..." : "Create Collection"}
                                     </button>
                                     <Link
-                                        to="/collections"
+                                        to="/collections/user"
                                         className="inline-block px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
                                     >
                                         Cancel
@@ -158,7 +158,7 @@ const CreateCollection: React.FC = () => {
                     </div>
 
                     <div className="mt-6 text-center">
-                        <Link to="/collections" className="inline-block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                        <Link to="/collections/public" className="inline-block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
                             Back to My Collections
                         </Link>
                     </div>

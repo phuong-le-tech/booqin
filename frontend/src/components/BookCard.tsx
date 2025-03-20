@@ -3,15 +3,29 @@ import { Link } from 'react-router-dom';
 import { BookIndex } from '../model/Book';
 import axiosInstance from "../services/AxiosInstance";
 import { AuthContext } from "../context/AuthContext";
+import { toast } from "react-toastify";
+
+// Type pour les informations de prêt
+interface LoanInfo {
+    bookId: number;
+    state: string;
+}
 
 interface BookCardProps {
     book: BookIndex;
     borrowedBooks?: number[];
     lentBooks?: number[];
-    onLendingChange?: () => void; // Nouvelle prop pour notifier le parent des changements
+    loanStates?: LoanInfo[]; // État de prêt
+    onLendingChange?: () => void;
 }
 
-export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], lentBooks = [], onLendingChange }) => {
+export const BookCard: React.FC<BookCardProps> = ({
+                                                      book,
+                                                      borrowedBooks = [],
+                                                      lentBooks = [],
+                                                      loanStates = [],
+                                                      onLendingChange
+                                                  }) => {
     const { id } = book;
     const { user } = useContext(AuthContext);
     const userId = user?.id;
@@ -19,11 +33,28 @@ export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], le
     const [loading, setLoading] = useState<boolean>(false);
     const [isBorrowed, setIsBorrowed] = useState<boolean>(false);
 
+    // Vérifier si le livre a le statut "BORROWED" ou une variante similaire
+    const isBookBorrowed = loanStates.some(loan => {
+        // Normaliser l'ID et l'état pour la comparaison
+        const bookIdMatches = loan.bookId === id;
+        // Vérifier plusieurs variantes possibles de l'état "BORROWED"
+        const stateIsBorrowed =
+            loan.state === "BORROWED" ||
+            loan.state === "borrowed" ||
+            loan.state === "BORROWING" ||
+            loan.state === "1" || // Parfois les états sont stockés comme des nombres/strings
+            loan.state === 1;     // ou des nombres
+
+        return bookIdMatches && stateIsBorrowed;
+    });
+
     useEffect(() => {
+        // Vérifier si le livre est dans la liste des empruntés
         setIsBorrowed(borrowedBooks.includes(id));
+
+        // Vérifier si le livre est dans la liste des prêtables
         setIsLoanable(lentBooks.includes(id));
     }, [borrowedBooks, lentBooks, id]);
-
 
     const getBookCoverColor = (bookId: number) => {
         const colors = [
@@ -51,19 +82,17 @@ export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], le
             const response = await axiosInstance.post("/v1/loans/make-loanable", params);
 
             if (response.data?.success) {
-                alert("Book added to your lending list");
+                toast.success("Livre ajouté à votre liste de prêt");
                 setIsLoanable(true);
                 // Notifier le parent pour rafraîchir la liste des livres prêtés
                 if (onLendingChange) {
                     onLendingChange();
                 }
             } else {
-                alert("Failed to add book to lending list");
+                toast.error("Impossible d'ajouter le livre à la liste de prêt");
             }
         } catch (error: any) {
-            console.error("Error adding book to lending list:", error);
-            console.error("Response data:", error.response?.data);
-            alert(error.response?.data?.message || "Failed to add book to lending list");
+            toast.error(error.response?.data?.message || "Échec lors de l'ajout du livre à la liste de prêt");
         } finally {
             setLoading(false);
         }
@@ -82,19 +111,17 @@ export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], le
             });
 
             if (response.data?.success) {
-                alert("Book removed from your lending list");
+                toast.success("Livre retiré de votre liste de prêt");
                 setIsLoanable(false);
                 // Notifier le parent pour rafraîchir la liste des livres prêtés
                 if (onLendingChange) {
                     onLendingChange();
                 }
             } else {
-                alert("Failed to remove book from lending list");
+                toast.error("Impossible de retirer le livre de la liste de prêt");
             }
         } catch (error: any) {
-            console.error("Error removing book from lending list:", error);
-            console.error("Response data:", error.response?.data);
-            alert(error.response?.data?.message || "Failed to remove book from lending list");
+            toast.error(error.response?.data?.message || "Échec lors du retrait du livre de la liste de prêt");
         } finally {
             setLoading(false);
         }
@@ -108,11 +135,10 @@ export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], le
             });
 
             if (response.status === 200) {
-                alert("The book has been added to cart");
+                toast.success("Le livre a été ajouté au panier");
             }
         } catch (error: any) {
-            console.error("Error adding book to cart", error);
-            console.log(error.response?.data);
+            toast.error("Erreur lors de l'ajout du livre au panier");
         }
     };
 
@@ -130,8 +156,8 @@ export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], le
 
     return (
         <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col h-full relative">
-            {/* Nouveau badge pour indiquer un livre prêté */}
-            {isBorrowed && (
+            {/* Badge "Prêté" uniquement si le livre a le statut BORROWED */}
+            {isBookBorrowed && (
                 <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full z-10">
                     Prêté
                 </div>
@@ -142,7 +168,7 @@ export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], le
                     className="w-full h-48 flex items-center justify-center flex-shrink-0"
                     style={{
                         backgroundColor: getBookCoverColor(book.id),
-                        opacity: isBorrowed ? 0.6 : 1 // Réduit l'opacité si le livre est prêté
+                        opacity: isBookBorrowed ? 0.6 : 1 // Réduit l'opacité si le livre a le statut BORROWED
                     }}
                 >
                     <span className="text-white text-5xl font-bold">
@@ -173,17 +199,17 @@ export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], le
 
             {/* Action buttons */}
             <div className="p-3 space-y-2">
-                {/* Add to Cart button - désactivé si le livre est prêté */}
+                {/* Add to Cart button - désactivé si le livre a le statut BORROWED */}
                 <button
                     onClick={addToCart}
                     className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
-                    disabled={isBorrowed}
+                    disabled={isBookBorrowed}
                 >
                     Add to cart
                 </button>
 
-                {/* Bouton de prêt - caché si le livre est prêté */}
-                {!isBorrowed && user && (
+                {/* Bouton de prêt - caché si le livre a le statut BORROWED */}
+                {!isBookBorrowed && user && (
                     <button
                         onClick={isLoanable ? removeFromLoanable : addToLoanable}
                         className={`w-full px-4 py-2 rounded-lg transition ${

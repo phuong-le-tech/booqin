@@ -271,7 +271,14 @@ const CollectionDetails: React.FC = () => {
 
                                                 {/* Boutons placés en bas */}
                                                 <div className="flex space-x-2 mt-4">
-
+                                                    {isOwner && (
+                                                        <button
+                                                            onClick={() => handleRemoveBook(book.id)}
+                                                            className="px-3 py-1 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 transition-colors"
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                    )}
 
                                                     {user && !borrowedBooks.includes(book.id) && (
                                                         lentBooks.includes(book.id) ? (

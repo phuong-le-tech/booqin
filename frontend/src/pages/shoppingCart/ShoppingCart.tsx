@@ -3,6 +3,7 @@ import { Layout } from "../Layout";
 import axiosInstance from "../../services/AxiosInstance.ts";
 import { AuthContext } from "../../context/AuthContext.tsx";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 type Book = {
     id: string;
@@ -49,11 +50,13 @@ export const ShoppingCart: React.FC = () => {
                 const processedCart = processCart(parsedCart);
 
                 // Log de diagnostic
-                if (parsedCart.books.length !== processedCart.books.length) {
-                    console.warn('Doublons détectés et supprimés', {
-                        originaux: parsedCart.books.length,
-                        traités: processedCart.books.length
-                    });
+                if (!(processedCart) || parsedCart.books.length !== processedCart.books.length) {
+                    if (processedCart) {
+                        console.warn('Doublons détectés et supprimés', {
+                            originaux: parsedCart.books.length,
+                            traités: processedCart.books.length
+                        });
+                    }
                 }
 
                 setCart(processedCart);
@@ -75,7 +78,7 @@ export const ShoppingCart: React.FC = () => {
                 console.log("📦 Récupération du panier pour userId:", auth.user.id);
                 const response = await axiosInstance.get(`/v1/carts/user-cart/${auth.user.id}`);
 
-                console.log("📦 Réponse brute de l’API:", response.data);
+                console.log("📦 Réponse brute de l'API:", response.data);
 
                 if (response.data?.success && response.data?.data) {
                     console.log("📚 Livres avant traitement :", response.data.data.books);
@@ -131,12 +134,15 @@ export const ShoppingCart: React.FC = () => {
                     localStorage.setItem("cart", JSON.stringify(updatedCart));
                     return updatedCart;
                 });
+
+                // Notification de succès
+                toast.success("Le livre a été supprimé du panier");
             } else {
-                alert("Impossible de supprimer le livre.");
+                toast.error("Impossible de supprimer le livre du panier");
             }
         } catch (error: any) {
             console.error("❌ Erreur lors de la suppression du livre du panier", error);
-            alert("Erreur lors de la suppression du livre.");
+            toast.error("Erreur lors de la suppression du livre");
         }
     };
 
@@ -152,13 +158,13 @@ export const ShoppingCart: React.FC = () => {
             if (response.status === 200) {
                 setCart(null);
                 localStorage.removeItem("cart");
-                alert("Votre panier a été vidé !");
+                toast.success("Votre panier a été vidé !");
             } else {
-                alert("Impossible de vider le panier.");
+                toast.error("Impossible de vider le panier");
             }
         } catch (error: any) {
             console.error("❌ Erreur lors du vidage du panier", error);
-            alert("Une erreur est survenue lors du vidage du panier.");
+            toast.error("Une erreur est survenue lors du vidage du panier");
         }
     };
 
@@ -174,12 +180,15 @@ export const ShoppingCart: React.FC = () => {
             const response = await axiosInstance.post(`v1/payment/checkout?cartId=${cart.id}`);
             if (response.data && response.data.success) {
                 console.log("Création de session Stripe réussie", response.data.data);
+                toast.info("Redirection vers la page de paiement...");
                 window.location.href = response.data.data;
             } else {
                 console.error("Erreur lors de la création de la session Stripe", response);
+                toast.error("Erreur lors de la préparation du paiement");
             }
         } catch (error) {
             console.error("Erreur Axios lors du paiement :", error);
+            toast.error("Impossible de traiter le paiement pour le moment");
         }
     };
 

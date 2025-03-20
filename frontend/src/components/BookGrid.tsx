@@ -4,6 +4,13 @@ import { BookCard } from './BookCard';
 import { BookIndex } from '../model/Book';
 import axiosInstance from "../services/AxiosInstance.ts";
 import {AuthContext} from "../context/AuthContext.tsx";
+import { toast } from "react-toastify";
+
+// Type pour les informations de prêt - ajusté pour correspondre à la structure réelle
+interface LoanInfo {
+    bookId: number;
+    state: string;
+}
 
 interface BookGridProps {
     books: BookIndex[];
@@ -14,34 +21,95 @@ interface BookGridProps {
 export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading, userId }) => {
     const [lentBooks, setLentBooks] = useState<number[]>([]);
     const [borrowedBooks, setBorrowedBooks] = useState<number[]>([]);
+    const [loanStates, setLoanStates] = useState<LoanInfo[]>([]);
     const { user } = useContext(AuthContext);
     const userIds = user?.id;
 
     const fetchUserBooks = async () => {
         if (!userIds) {
-            console.warn("userId is undefined, skipping lending fetch");
             return;
         }
 
         try {
-            console.log(`Fetching user book data for user ${userIds}`);
-            // Utiliser l'endpoint que nous avons créé précédemment
             const response = await axiosInstance.get(`/v1/loans/user/${userIds}?type=all`);
-            console.log("User books response:", response);
 
             if (response.data?.success && response.data?.data) {
-                // Extraire les IDs des livres prêtés
-                const lentBookIds = response.data.data.lentBooks.map((book: any) => book.book.id);
-                setLentBooks(lentBookIds);
+                // Adapter l'extraction des données en fonction de la structure réelle
+                // Vérifier d'abord si lentBooks existe et est un tableau
+                if (Array.isArray(response.data.data.lentBooks)) {
+                    // Extraire les IDs des livres prêtés en s'adaptant à la structure
+                    const lentBookIds = response.data.data.lentBooks.map((loan: any) => {
+                        // Vérifier la structure pour accéder à l'ID du livre correctement
+                        if (loan.book && typeof loan.book.id === 'number') {
+                            return loan.book.id;
+                        } else if (loan.bookId) {
+                            // Structure alternative possible
+                            return loan.bookId;
+                        } else if (typeof loan.id === 'number') {
+                            // Autre structure alternative
+                            return loan.id;
+                        }
+                        return null;
+                    }).filter(id => id !== null) as number[];
 
-                // Extraire les IDs des livres empruntés
-                const borrowedBookIds = response.data.data.borrowedBooks.map((book: any) => book.book.id);
-                setBorrowedBooks(borrowedBookIds);
+                    setLentBooks(lentBookIds);
+
+                    // Adapter l'extraction des états de prêt
+                    const loanStatesData = response.data.data.lentBooks.map((loan: any) => {
+                        let bookId: number | null = null;
+                        let state: string | null = null;
+
+                        // Déterminer l'ID du livre
+                        if (loan.book && typeof loan.book.id === 'number') {
+                            bookId = loan.book.id;
+                        } else if (loan.bookId) {
+                            bookId = loan.bookId;
+                        } else if (typeof loan.id === 'number') {
+                            bookId = loan.id;
+                        }
+
+                        // Déterminer l'état du prêt
+                        if (typeof loan.state === 'string') {
+                            state = loan.state;
+                        } else if (loan.status) {
+                            // Structure alternative possible
+                            state = loan.status;
+                        } else if (loan.loanState) {
+                            // Autre structure alternative
+                            state = loan.loanState;
+                        }
+
+                        if (bookId !== null && state !== null) {
+                            return { bookId, state };
+                        }
+                        return null;
+                    }).filter(info => info !== null) as LoanInfo[];
+
+                    setLoanStates(loanStatesData);
+                } else {
+                    toast.warning("Format de données inattendu pour les livres prêtés");
+                }
+
+                // Faire de même pour les livres empruntés
+                if (Array.isArray(response.data.data.borrowedBooks)) {
+                    const borrowedBookIds = response.data.data.borrowedBooks.map((loan: any) => {
+                        if (loan.book && typeof loan.book.id === 'number') {
+                            return loan.book.id;
+                        } else if (loan.bookId) {
+                            return loan.bookId;
+                        } else if (typeof loan.id === 'number') {
+                            return loan.id;
+                        }
+                        return null;
+                    }).filter(id => id !== null) as number[];
+
+                    setBorrowedBooks(borrowedBookIds);
+                }
             } else {
-                console.warn("Unexpected response format from /v1/loans/user", response);
+                toast.warning("Format de réponse inattendu lors du chargement de vos livres");
             }
         } catch (err: any) {
-            console.error("Error fetching user books:", err);
+            toast.error("Erreur lors du chargement de vos livres");
         }
     };
 
@@ -79,6 +147,7 @@ export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading, userId }) 
                     book={book}
                     lentBooks={lentBooks}
                     borrowedBooks={borrowedBooks}
+                    loanStates={loanStates}
                     onLendingChange={handleLendingChange}
                 />
             ))}

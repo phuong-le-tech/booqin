@@ -15,4 +15,18 @@ public record BookCollectionShow(
         UserIndex user,
         Date createdAt,
         Date updatedAt
-) {}
+) {
+  
+  public String toString() {
+    return "BookCollectionShow{" +
+            "id=" + id +
+            ", title='" + title + '\'' +
+            ", description='" + description + '\'' +
+            ", isPublic=" + isPublic +
+            ", books=" + books +
+            ", user=" + user +
+            ", createdAt=" + createdAt +
+            ", updatedAt=" + updatedAt +
+            '}';
+  }
+}
