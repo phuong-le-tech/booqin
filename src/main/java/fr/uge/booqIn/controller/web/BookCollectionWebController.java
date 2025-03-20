@@ -5,11 +5,11 @@ import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionUpdate;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
-import fr.uge.booqIn.entity.BookCollection;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.mapper.BookCollectionMapper;
 import fr.uge.booqIn.mapper.BookMapper;
+import fr.uge.booqIn.model.BookCollection;
 import fr.uge.booqIn.service.impl.BookServiceImpl;
 import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
 import jakarta.validation.Valid;
@@ -173,7 +173,7 @@ public class BookCollectionWebController {
       }
 
       // Remove the book from the collection
-      bookCollectionService.removeBookFromCollection(collectionId, bookId, currentUser);
+      bookCollectionService.removeBookFromCollection(collectionId, bookId);
       return "redirect:/collections/" + collectionId + "?success=bookRemoved";
     } catch (ResourceNotFoundException e) {
       logger.warning("Error removing book: " + e.getMessage());
@@ -186,7 +186,7 @@ public class BookCollectionWebController {
     // Préparer le modèle commun
     homeWebController.prepareModel(model, principal, "collection-create");
 
-    model.addAttribute("bookCollection", new BookCollection());
+    model.addAttribute("bookCollection", null);
 
     // Définir le titre et le contenu
     model.addAttribute("title", "BooqIn - Create Collection");
@@ -195,11 +195,9 @@ public class BookCollectionWebController {
     return "layout";
   }
 
-  @PostMapping("/new")
+  /*@PostMapping("/new")
   public String createCollection(
-          @Valid @ModelAttribute("bookCollection") BookCollection bookCollection,
-          @RequestParam(required = false) Boolean isPublic,
-          @AuthenticationPrincipal User currentUser,
+          @Valid @ModelAttribute("bookCollection") BookCollectionCreate bookCollection,
           Model model,
           Principal principal) {
     try {
@@ -218,7 +216,7 @@ public class BookCollectionWebController {
 
       return "layout";
     }
-  }
+  }*/
 
   @GetMapping("/{id}/edit")
   public String showEditCollectionForm(@PathVariable Long id, Model model, @AuthenticationPrincipal User currentUser, Principal principal) {
@@ -272,12 +270,9 @@ public class BookCollectionWebController {
       BookCollectionUpdate bookCollectionUpdate = new BookCollectionUpdate(
               Optional.of(bookCollection.getTitle()),
               Optional.of(bookCollection.getDescription()),
-              isPublic != null,
-              Optional.of(existingCollection.books().stream()
-                      .map(bookMapper::bookIndexToBook)
-                      .toList())
+              isPublic != null
       );
-      BookCollectionShow updatedCollection = bookCollectionService.patchBookCollection(id, bookCollectionUpdate);
+      BookCollectionShow updatedCollection = bookCollectionService.updateBookCollection(id, bookCollectionUpdate);
       return "redirect:/collections";
     } catch (ResourceNotFoundException e) {
       // Préparer le modèle commun même en cas d'erreur

@@ -1,5 +1,6 @@
 package fr.uge.booqIn.repository;
 
+import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 
 import org.springframework.data.domain.Page;
@@ -8,10 +9,13 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -35,4 +39,12 @@ public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificat
 
   @Override
   Page<Book> findAll(@Nullable Specification<Book> spec, @NonNull Pageable pageable);
+
+  // Méthode pour trouver les livres plus récents qu'une date donnée
+  List<Book> findByCreatedAtAfter(Date date);
+
+  List<Book> findByAuthorsContaining(Author author);
+
+  @Query("SELECT b FROM Book b WHERE b.createdAt >= :date")
+  List<Book> findRecentBooks(@Param("date") Date date);
 }

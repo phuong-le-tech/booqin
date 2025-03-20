@@ -1,6 +1,7 @@
 package fr.uge.booqIn.repository;
 
 import fr.uge.booqIn.entity.User;
+import fr.uge.booqIn.enums.UserRole;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -24,4 +25,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
   Optional<User> findByEmail(String email);
 
   Optional<User> findByCartId(Long cartId);
+
+  Optional<User> findByRole(UserRole role);
 }
