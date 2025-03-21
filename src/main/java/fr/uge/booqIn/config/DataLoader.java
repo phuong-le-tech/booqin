@@ -23,8 +23,22 @@ public class DataLoader {
                 admin.setPassword(passwordEncoder.encode("admin123"));
                 userRepository.save(admin);
                 System.out.println("✅ Admin user created: admin@booqin.com / admin123");
+                User user = UserFactory.createUser(passwordEncoder, UserRole.USER);
+                user.setEmail("user@booqin.com");
+                user.setPassword(passwordEncoder.encode("user123"));
+                userRepository.save(user);
+                System.out.println("✅ User created: user@booqin.com / user123");
             } else {
                 System.out.println("ℹ️ Admin user already exists.");
+            }
+            if (userRepository.findByEmail("user@booqin.com").isEmpty()) {
+                User user = UserFactory.createUser(passwordEncoder, UserRole.USER);
+                user.setEmail("user@booqin.com");
+                user.setPassword(passwordEncoder.encode("user123"));
+                userRepository.save(user);
+                System.out.println("✅ User created: user@booqin.com / user123");
+            } else {
+                System.out.println("ℹ️ User user already exists.");
             }
             if (userRepository.count() <= 1) {
                 IntStream.range(0, 10).forEach(i -> {

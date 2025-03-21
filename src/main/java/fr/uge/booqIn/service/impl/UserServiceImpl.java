@@ -1,13 +1,17 @@
 package fr.uge.booqIn.service.impl;
 
+import fr.uge.booqIn.dto.bookCollection.BookCollectionIndex;
 import fr.uge.booqIn.dto.user.UserIndex;
 import fr.uge.booqIn.dto.user.UserShow;
 import fr.uge.booqIn.dto.user.UserUpdate;
+import fr.uge.booqIn.entity.AbstractBookCollection;
 import fr.uge.booqIn.entity.Cart;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.exception.DuplicateResourceException;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
+import fr.uge.booqIn.mapper.BookCollectionMapper;
 import fr.uge.booqIn.mapper.UserMapper;
+import fr.uge.booqIn.repository.BookCollectionRepository;
 import fr.uge.booqIn.repository.CartRepository;
 import fr.uge.booqIn.repository.UserRepository;
 import fr.uge.booqIn.service.interfaces.UserServiceInterface;
@@ -26,6 +30,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ConcurrentModificationException;
+import java.util.List;
 import java.util.Optional;
 
 
@@ -36,12 +41,16 @@ public class UserServiceImpl implements UserServiceInterface {
   private final PasswordEncoder passwordEncoder;
   private final CartRepository cartRepository;
 
-  public UserServiceImpl(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder,
-  CartRepository cartRepository) {
+  public UserServiceImpl(
+          UserRepository userRepository,
+          UserMapper userMapper,
+          PasswordEncoder passwordEncoder,
+          CartRepository cartRepository) {
     this.userRepository = userRepository;
     this.userMapper = userMapper;
     this.passwordEncoder = passwordEncoder;
     this.cartRepository = cartRepository;
+
   }
 
   @Override
@@ -97,16 +106,16 @@ public class UserServiceImpl implements UserServiceInterface {
           backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
   )
   public User updateUser(@NotNull @Valid User user) {
-      Optional<User> existingUserWithEmail = userRepository.findByEmail(user.getEmail());
-      if (existingUserWithEmail.isPresent() && !existingUserWithEmail.get().getId().equals(user.getId())) {
-        throw new DuplicateResourceException("User", "email", user.getEmail());
-      }
+    Optional<User> existingUserWithEmail = userRepository.findByEmail(user.getEmail());
+    if (existingUserWithEmail.isPresent() && !existingUserWithEmail.get().getId().equals(user.getId())) {
+      throw new DuplicateResourceException("User", "email", user.getEmail());
+    }
 
-      if (user.getPassword() != null && !user.getPassword().isEmpty() &&
-              !passwordEncoder.matches(user.getPassword(), existingUserWithEmail.get().getPassword())) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-      }
-      return userRepository.save(user);
+    if (user.getPassword() != null && !user.getPassword().isEmpty() &&
+            !passwordEncoder.matches(user.getPassword(), existingUserWithEmail.get().getPassword())) {
+      user.setPassword(passwordEncoder.encode(user.getPassword()));
+    }
+    return userRepository.save(user);
   }
 
   @Override
@@ -117,28 +126,28 @@ public class UserServiceImpl implements UserServiceInterface {
           backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
   )
   public UserUpdate patchUser(@NotNull Long id, @NotNull @Valid UserUpdate userUpdate) {
-      User user = findUserById(id);
+    User user = findUserById(id);
 
-      userUpdate.email().ifPresent(newEmail -> {
-        if (!newEmail.equals(user.getEmail())) {
-          if (userRepository.findByEmail(newEmail).isPresent()) {
-            throw new DuplicateResourceException("User", "email", newEmail);
-          }
-          user.setEmail(newEmail);
+    userUpdate.email().ifPresent(newEmail -> {
+      if (!newEmail.equals(user.getEmail())) {
+        if (userRepository.findByEmail(newEmail).isPresent()) {
+          throw new DuplicateResourceException("User", "email", newEmail);
         }
-      });
+        user.setEmail(newEmail);
+      }
+    });
 
-      userUpdate.firstName().ifPresent(user::setFirstName);
-      userUpdate.lastName().ifPresent(user::setLastName);
-      userUpdate.address().ifPresent(user::setAddress);
+    userUpdate.firstName().ifPresent(user::setFirstName);
+    userUpdate.lastName().ifPresent(user::setLastName);
+    userUpdate.address().ifPresent(user::setAddress);
 
-      userUpdate.password().ifPresent(newPassword -> {
-        if (!newPassword.isEmpty()) {
-          user.setPassword(passwordEncoder.encode(newPassword));
-        }
-      });
-      userRepository.save(user);
-      return userUpdate;
+    userUpdate.password().ifPresent(newPassword -> {
+      if (!newPassword.isEmpty()) {
+        user.setPassword(passwordEncoder.encode(newPassword));
+      }
+    });
+    userRepository.save(user);
+    return userUpdate;
   }
 
 

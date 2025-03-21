@@ -1,5 +1,7 @@
 package fr.uge.booqIn.controller.api;
 
+import fr.uge.booqIn.dto.bookCollection.BookCollectionIndex;
+import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
 import fr.uge.booqIn.dto.user.UserIndex;
 import fr.uge.booqIn.dto.user.UserShow;
 import fr.uge.booqIn.dto.user.UserUpdate;
