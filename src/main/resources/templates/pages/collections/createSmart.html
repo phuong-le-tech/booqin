@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Créer une collection intelligente</title>
+</head>
+<body>
+<div class="container">
+    <h1>Créer une nouvelle collection intelligente</h1>
+
+    <div th:if="${error}" class="alert alert-danger" role="alert">
+        <p th:text="${error}">Erreur</p>
+    </div>
+
+    <form th:action="@{/collections/smart/new}" method="post">
+        <div class="mb-3">
+            <label for="title" class="form-label">Titre</label>
+            <input type="text" class="form-control" id="title" name="title" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+        </div>
+
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="isPublic" name="isPublic">
+            <label class="form-check-label" for="isPublic">Collection publique</label>
+        </div>
+
+        <h3>Critères de sélection automatique</h3>
+
+        <!-- Critères par genre -->
+        <div class="mb-3">
+            <label for="genre" class="form-label">Genre</label>
+            <select class="form-select" id="genre" name="criteria[genre]">
+                <option value="">Sélectionner un genre (optionnel)</option>
+                <option value="roman">Roman</option>
+                <option value="science-fiction">Science-Fiction</option>
+                <option value="fantasy">Fantasy</option>
+                <option value="policier">Policier</option>
+                <option value="thriller">Thriller</option>
+                <option value="biographie">Biographie</option>
+                <option value="essai">Essai</option>
+            </select>
+        </div>
+
+        <!-- Critères par date de publication -->
+        <div class="mb-3">
+            <label for="publishedAfter" class="form-label">Publié après</label>
+            <input type="date" class="form-control" id="publishedAfter" name="criteria[publishedAfter]">
+        </div>
+
+        <div class="mb-3">
+            <label for="publishedBefore" class="form-label">Publié avant</label>
+            <input type="date" class="form-control" id="publishedBefore" name="criteria[publishedBefore]">
+        </div>
+
+        <!-- Critères par note -->
+        <div class="mb-3">
+            <label for="minRating" class="form-label">Note minimale</label>
+            <input type="number" class="form-control" id="minRating" name="criteria[minRating]" min="0" max="5" step="0.1">
+        </div>
+
+        <!-- Critères par nombre de pages -->
+        <div class="mb-3">
+            <label for="maxPages" class="form-label">Nombre de pages maximum</label>
+            <input type="number" class="form-control" id="maxPages" name="criteria[maxPages]" min="0">
+        </div>
+
+        <!-- Critères par langue -->
+        <div class="mb-3">
+            <label class="form-label">Langues</label>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="fr" id="languageFr" name="criteria[languages]">
+                <label class="form-check-label" for="languageFr">Français</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="en" id="languageEn" name="criteria[languages]">
+                <label class="form-check-label" for="languageEn">Anglais</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="es" id="languageEs" name="criteria[languages]">
+                <label class="form-check-label" for="languageEs">Espagnol</label>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Créer la collection</button>
+        <a th:href="@{/collections}" class="btn btn-secondary">Annuler</a>
+    </form>
+</div>
+</body>
+</html>

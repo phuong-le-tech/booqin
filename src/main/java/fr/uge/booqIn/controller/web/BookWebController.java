@@ -90,7 +90,7 @@ public class BookWebController {
         if(currentUser != null) {
             model.addAttribute("userId", currentUser.getId());
             var b = bookCollectionService.getUserCollections(currentUser);
-            var bcc = b.stream().map(bc -> new LiteCollection(bc.getId(),bc.getTitle())).toList();
+            var bcc = b.stream().map(bc -> new LiteCollection(bc.id(),bc.title())).toList();
             model.addAttribute("bookCollections", bcc);
 
             try {

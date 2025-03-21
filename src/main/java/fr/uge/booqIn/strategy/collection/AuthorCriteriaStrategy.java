@@ -7,15 +7,27 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class AuthorCriteriaStrategy implements CollectionCriteriaStrategy {
-  private Set<Author> authors = new HashSet<>();
+  private final String authorName;
 
-  public AuthorCriteriaStrategy(Set<Author> authors) {
-    this.authors = authors;
+  public AuthorCriteriaStrategy(String authorName) {
+    this.authorName = authorName.toLowerCase();
   }
 
 
   @Override
   public boolean satisfy(Book book) {
-    return book.getAuthors().containsAll(authors);
+    return book.getAuthors().stream()
+            .anyMatch(this::matchesAuthor);
+  }
+
+  private boolean matchesAuthor(Author author) {
+    String fullName = (author.getFirstName() + " " + author.getLastName()).toLowerCase();
+    if (fullName.contains(authorName)) {
+      return true;
+    }
+    if (author.getLastName().toLowerCase().contains(authorName)) {
+      return true;
+    }
+    return author.getFirstName().toLowerCase().contains(authorName);
   }
 }

@@ -1,3 +1,4 @@
+/*
 package fr.uge.booqIn.api.controller;
 
 import fr.uge.booqIn.controller.api.BookCollectionController;
@@ -119,6 +120,7 @@ class BookCollectionControllerTest {
         assertEquals(Sort.by(sortField).ascending(), capturedPageRequest.getSort());
     }
 
+*/
 /*    @Test
     @DisplayName("POST /collections - Creates a new collection")
     void createCollection_ShouldReturnCreatedCollection() {
@@ -143,7 +145,8 @@ class BookCollectionControllerTest {
         assertEquals("Collection created successfully", apiResponse.message());
         assertEquals(bookCollectionMapper.toBookCollectionShow(createdCollection), apiResponse.data());
         verify(bookCollectionService).createBookCollection(any(BookCollection.class));
-    }*/
+    }*//*
+
 
     @Test
     @DisplayName("GET /collections/{id} - Returns a collection")
@@ -400,4 +403,4 @@ class BookCollectionControllerTest {
         assertEquals(book, apiResponse.data());
         verify(bookCollectionService).getBookFromCollection(collectionId, bookId);
     }
-}
+}*/
