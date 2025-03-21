@@ -31,6 +31,8 @@ public class BookCollectionMapper {
             collection.getTitle(),
             collection.getDescription(),
             collection.getOwner().getFullName(),
+            collection.getOwner().getId(),
+            collection.getBooks().size(),
             collection.isPublic()
     );
   }

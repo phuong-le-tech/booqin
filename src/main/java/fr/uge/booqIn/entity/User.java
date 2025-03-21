@@ -1,6 +1,7 @@
 package fr.uge.booqIn.entity;
 
 import fr.uge.booqIn.enums.UserRole;
+import fr.uge.booqIn.model.Followable;
 import jakarta.persistence.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
@@ -12,7 +13,8 @@ import java.util.*;
 
 @Entity
 @Table(name="users")
-public class User implements UserDetails {
+public class User implements UserDetails, Followable {
+  private static final String ENTITY_TYPE = "USER";
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -184,6 +186,11 @@ public class User implements UserDetails {
 
   public Date getUpdatedAt() {
     return updatedAt;
+  }
+
+  @Override
+  public String getEntityType() {
+    return ENTITY_TYPE;
   }
 
   public void setVersion(Long version) {
