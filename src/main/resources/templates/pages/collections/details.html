@@ -10,7 +10,12 @@
 
         <h2 class="text-2xl font-semibold text-gray-800 mb-4">Books in This Collection</h2>
         <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <div th:each="book : ${collection.books}" class="bg-gray-50 shadow-md rounded-lg overflow-hidden transition-transform transform hover:scale-105">
+            <div th:each="book : ${collection.books}" class="bg-gray-50 shadow-md rounded-lg overflow-hidden transition-transform transform hover:scale-105 relative">
+                <!-- Badge pour les livres empruntés -->
+                <div th:if="${borrowedBooks != null && borrowedBooks.contains(book.id)}" class="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full z-10">
+                    Prêté
+                </div>
+
                 <div class="p-6">
                     <h3 class="text-xl font-semibold text-gray-900" th:text="${book.title}">Book Title</h3>
                     <p class="text-gray-500 mb-2" th:text="${book.publicationDate}">Publication Date</p>
@@ -22,17 +27,53 @@
                         </span>
                     </p>
 
-                    <a th:href="@{/collections/{collectionId}/books/{bookId}/remove(collectionId=${collection.id},bookId=${book.id})}"
-                       onclick="return confirm('Are you sure you want to remove this book from the collection?');"
-                       class="inline-block px-3 py-1 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 transition-colors">
-                        Remove
-                    </a>
+                    <!-- Boutons d'action -->
+                    <div class="flex space-x-2 mt-4">
+                        <!-- Supprimer le livre (seulement pour le propriétaire) -->
+                        <a th:if="${isOwner}"
+                           th:href="@{/collections/{collectionId}/books/{bookId}/remove(collectionId=${collection.id},bookId=${book.id})}"
+                           onclick="return confirm('Are you sure you want to remove this book from the collection?');"
+                           class="inline-block px-3 py-1 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 transition-colors">
+                            Remove
+                        </a>
+
+                        <!-- Gestion des prêts (si connecté et livre pas déjà emprunté) -->
+                        <th:block th:if="${currentUser != null && (borrowedBooks == null || !borrowedBooks.contains(book.id))}">
+                            <!-- Si le livre est déjà dans la liste de prêt -->
+                            <form th:if="${lentBooks != null && lentBooks.contains(book.id)}"
+                                  th:action="@{/loans/remove-loanable}"
+                                  method="post">
+                                <input type="hidden" name="bookId" th:value="${book.id}" />
+                                <input type="hidden" name="userId" th:value="${currentUser.id}" />
+                                <button type="submit"
+                                        class="px-3 py-1 text-white text-sm rounded-md transition-colors bg-yellow-500 hover:bg-yellow-600">
+                                    Remove from lending
+                                </button>
+                            </form>
+
+                            <!-- Si le livre n'est pas encore dans la liste de prêt -->
+                            <form th:if="${lentBooks == null || !lentBooks.contains(book.id)}"
+                                  th:action="@{/loans/make-loanable}"
+                                  method="post">
+                                <input type="hidden" name="bookId" th:value="${book.id}" />
+                                <input type="hidden" name="userId" th:value="${currentUser.id}" />
+                                <button type="submit"
+                                        class="px-3 py-1 text-white text-sm rounded-md transition-colors bg-green-500 hover:bg-green-600">
+                                    Add to lending
+                                </button>
+                            </form>
+                        </th:block>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="mt-6">
-            <a th:href="@{/collections/{collectionId}/books/add(collectionId=${collection.id})}" class="inline-block px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-300">Add Book</a>
+        <!-- Bouton pour ajouter un livre (seulement pour le propriétaire) -->
+        <div class="mt-6" th:if="${isOwner}">
+            <a th:href="@{/collections/{collectionId}/books/add(collectionId=${collection.id})}"
+               class="inline-block px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-300">
+                Add Book
+            </a>
         </div>
 
         <div class="mt-6 space-x-4 text-center">

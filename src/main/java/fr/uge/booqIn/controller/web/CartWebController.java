@@ -1,9 +1,11 @@
 package fr.uge.booqIn.controller.web;
 
 import fr.uge.booqIn.dto.cart.ShopCartDto;
+import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.service.impl.CartServiceImpl;
 import fr.uge.booqIn.service.impl.UserServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -28,18 +30,18 @@ public class CartWebController {
   }
 
   @GetMapping()
-  public String viewCart(@RequestParam(required = false) Long userId, Model model, Principal principal) {
+  public String viewCart(@AuthenticationPrincipal User currentUser, Model model, Principal principal) {
     // Préparer le modèle commun
     homeWebController.prepareModel(model, principal, "cart");
 
-    if (userId == null) {
+    if (currentUser.getId() == null) {
       model.addAttribute("error", "Utilisateur non spécifié. Veuillez vous connecter.");
       model.addAttribute("title", "BooqIn - Erreur");
       model.addAttribute("content", "pages/error");
       return "layout"; // Utiliser le layout avec la page d'erreur
     }
 
-    Optional<ShopCartDto> cartOptional = Optional.ofNullable(cartService.getCartDto(userId));
+    Optional<ShopCartDto> cartOptional = Optional.ofNullable(cartService.getCartDto(currentUser.getId() ));
 
     if (cartOptional.isEmpty()) {
       model.addAttribute("cart", null);

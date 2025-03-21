@@ -4,16 +4,15 @@ import fr.uge.booqIn.dto.book.BookCreate;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.dto.bookCollection.LiteCollection;
+import fr.uge.booqIn.dto.lending.LendingResponseDTO;
 import fr.uge.booqIn.dto.vote.VoteCount;
 import fr.uge.booqIn.dto.vote.VoteCreate;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.User;
+import fr.uge.booqIn.enums.BookStatus;
 import fr.uge.booqIn.enums.VoteType;
-import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
-import fr.uge.booqIn.service.interfaces.BookServiceInterface;
-import fr.uge.booqIn.service.interfaces.CommentServiceInterface;
-import fr.uge.booqIn.service.interfaces.VoteServiceInterface;
+import fr.uge.booqIn.service.interfaces.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -37,20 +36,23 @@ public class BookWebController {
     private final BookCollectionServiceInterface bookCollectionService;
     private final CommentServiceInterface commentService;
     private final HomeWebController homeWebController;
+    private final BookLendingInterface bookLendingInterface;
 
     @Autowired
     public BookWebController(BookServiceInterface bookService,
                              VoteServiceInterface voteServiceInterface,
                              BookCollectionServiceInterface bookCollectionService,
                              CommentServiceInterface commentService,
-                             HomeWebController homeWebController) {
+                             HomeWebController homeWebController,
+                             BookLendingInterface bookLendingInterface) {
         this.bookService = bookService;
         this.voteServiceInterface = voteServiceInterface;
         this.bookCollectionService = bookCollectionService;
         this.commentService = commentService;
         this.homeWebController = homeWebController;
+      this.bookLendingInterface = bookLendingInterface;
     }
-
+    
     @GetMapping
     public String getAllBooks(Model model,
                               @RequestParam(value = "page", defaultValue = "0") int page,
@@ -60,16 +62,16 @@ public class BookWebController {
                               @RequestParam(value = "query", required = false) String query,
                               @AuthenticationPrincipal User currentUser,
                               Principal principal) {
-
+        
         // Préparer le modèle commun
         homeWebController.prepareModel(model, principal, "books");
-
+        
         // Configurer la pagination et le tri
         Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction) ?
                 Sort.Direction.DESC : Sort.Direction.ASC;
         Sort sortObj = Sort.by(sortDirection, sort);
         Pageable pageable = PageRequest.of(page, size, sortObj);
-
+        
         // Recherche unifiée si query est fourni, sinon recherche classique
         Page<BookIndex> booksPage;
         if (query != null && !query.trim().isEmpty()) {
@@ -77,25 +79,43 @@ public class BookWebController {
         } else {
             booksPage = bookService.findBooks(null, null, null, pageable);
         }
-
+        
         model.addAttribute("books", booksPage.getContent());
         model.addAttribute("totalPages", booksPage.getTotalPages());
         model.addAttribute("currentPage", page);
         model.addAttribute("query", query);
         model.addAttribute("sort", sort);
         model.addAttribute("direction", direction);
-
+        
         if(currentUser != null) {
             model.addAttribute("userId", currentUser.getId());
             var b = bookCollectionService.getUserCollections(currentUser);
             var bcc = b.stream().map(bc -> new LiteCollection(bc.getId(),bc.getTitle())).toList();
             model.addAttribute("bookCollections", bcc);
-        }
 
+            try {
+                LendingResponseDTO lendingData = bookLendingInterface.findAllUserLendingsAsDTO(currentUser.getId(), "all");
+                List<Long> lentBooks = lendingData.lentBooks().stream()
+                        .filter(lending -> lending.status() == BookStatus.AVAILABLE)
+                        .map(lending -> lending.book().id())
+                        .collect(Collectors.toList());
+                List<Long> borrowedBooks = lendingData.lentBooks().stream()
+                        .filter(lending -> lending.status() == BookStatus.BORROWED)
+                        .map(lending -> lending.book().id())
+                        .collect(Collectors.toList());
+                model.addAttribute("lentBooks", lentBooks);
+                model.addAttribute("borrowedBooks", borrowedBooks);
+                System.out.println("Lending info added to model: lentBooks=" + lentBooks.size() + ", borrowedBooks=" + borrowedBooks.size());
+            } catch (Exception e) {
+                model.addAttribute("lentBooks", Collections.emptyList());
+                model.addAttribute("borrowedBooks", Collections.emptyList());
+            }
+        }
+        
         // Définir le titre et le template de contenu
         model.addAttribute("title", "BooqIn - Books");
         model.addAttribute("content", "pages/book/list");
-
+        
         return "layout";
     }
 
