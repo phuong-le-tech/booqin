@@ -1,10 +1,12 @@
 package fr.uge.booqIn.service;
 
 import fr.uge.booqIn.entity.Book;
+import fr.uge.booqIn.entity.EventLog;
 import fr.uge.booqIn.event.BookCreatedEvent;
 import fr.uge.booqIn.event.BookNotAvailableEvent;
 import fr.uge.booqIn.event.BookReturnedEvent;
 import fr.uge.booqIn.event.DomainEvent;
+import fr.uge.booqIn.repository.EventLogRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
@@ -22,14 +24,16 @@ import org.springframework.stereotype.Service;
 public class EventPublisherService {
   private final Logger logger = LoggerFactory.getLogger(EventPublisherService.class);
   private final ApplicationEventPublisher eventPublisher;
+  private final EventLogRepository eventLogRepository;
 
   /**
    * Creates a new EventPublisherService with the given ApplicationEventPublisher.
    * 
    * @param eventPublisher The Spring event publisher
    */
-  public EventPublisherService(ApplicationEventPublisher eventPublisher) {
+  public EventPublisherService(ApplicationEventPublisher eventPublisher, EventLogRepository eventLogRepository) {
     this.eventPublisher = eventPublisher;
+    this.eventLogRepository = eventLogRepository;
   }
 
   /**
@@ -40,6 +44,9 @@ public class EventPublisherService {
   public void publishEvent(DomainEvent event) {
     logger.debug("Publishing event: {} [ID: {}]",
         event.getClass().getSimpleName(), event.getEventId());
+    
+    EventLog eventLog = new EventLog(event,"{}");
+    eventLogRepository.save(eventLog);
     eventPublisher.publishEvent(event);
   }
 

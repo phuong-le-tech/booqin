@@ -167,14 +167,15 @@ public class NotificationServiceImpl implements NotificationServiceInterface {
   public void sendBookAvailableNotification(User user, Book book, LocalDateTime expiresAt) {
 
   }
-
-/*  @EventListener
+  
+  @EventListener
   public void handleBookReturnedEvent(BookReturnedEvent event) {
-    processNextInQueue(event.getBookId());
+    processNextInQueue(event.bookId());
   }
-
+  
   @EventListener
   public void handleBookNotAvailableEvent(BookNotAvailableEvent event) {
-    addToNotificationQueue(event.getBookId(), event.getUserId());
-  }*/
+    
+    boolean added = addToNotificationQueue(event.bookId(), event.userId());
+  }
 }
