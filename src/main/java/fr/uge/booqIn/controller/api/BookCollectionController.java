@@ -16,8 +16,6 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/v1/collections")
 public class BookCollectionController {
@@ -37,7 +35,7 @@ public class BookCollectionController {
           @RequestParam(defaultValue = "asc") String sortDirection,
           @RequestParam(required = false) String title,
           @RequestParam(required = false) String description,
-          @RequestParam(required = false) Long userId) {
+          @RequestParam(required = false) boolean isPublic) {
 
     Sort sort = sortDirection.equalsIgnoreCase("desc") ?
             Sort.by(sortField).descending() :
@@ -45,7 +43,7 @@ public class BookCollectionController {
 
     Pageable pageable = PageRequest.of(page, size, sort);
 
-    Page<BookCollectionIndex> collections = bookCollectionService.findBookCollections(title, description, userId, pageable);
+    Page<BookCollectionIndex> collections = bookCollectionService.findBookCollections(title, description, isPublic, pageable);
     return ResponseEntity.ok(ApiResponse.success("Collections found", collections));
   }
 
@@ -62,7 +60,7 @@ public class BookCollectionController {
   @GetMapping("/{id}")
   @PreAuthorize("@collectionSecurity.canAccessCollection(#id) or hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<BookCollectionShow>> getCollection(@PathVariable Long id) {
-    BookCollectionShow collection = bookCollectionService.findById(id);
+    BookCollectionShow collection = bookCollectionService.findBookCollectionById(id);
     return ResponseEntity.ok(ApiResponse.success("Collection found", collection));
   }
 
@@ -76,11 +74,10 @@ public class BookCollectionController {
   }
 
   @PatchMapping("/{id}")
-  @PreAuthorize("@collectionSecurity.canAccessCollection(#id) or hasRole('ADMIN')")
+  @PreAuthorize("@collectionSecurity.isCollectionOwner(#id) or hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<BookCollectionShow>> updateBookCollection(
           @PathVariable Long id,
           @Valid @RequestBody BookCollectionUpdate bookCollectionUpdate) {
-
 
     BookCollectionShow updated = bookCollectionService.updateBookCollection(id, bookCollectionUpdate);
     return ResponseEntity.ok(ApiResponse.success("Collection updated successfully", updated));
@@ -106,16 +103,73 @@ public class BookCollectionController {
   }
 
   @GetMapping("/public")
-  public ResponseEntity<ApiResponse<List<BookCollectionShow>>> getPublicCollections() {
-    List<BookCollectionShow> collections = bookCollectionService.getPublicCollections();
+  public ResponseEntity<ApiResponse<Page<BookCollectionShow>>> getPublicCollections(
+          @RequestParam(defaultValue = "0") int page,
+          @RequestParam(defaultValue = "10") int size,
+          @RequestParam(defaultValue = "id") String sortField,
+          @RequestParam(defaultValue = "asc") String sortDirection) {
+
+    Sort sort = sortDirection.equalsIgnoreCase("desc") ?
+            Sort.by(sortField).descending() :
+            Sort.by(sortField).ascending();
+
+    Pageable pageable = PageRequest.of(page, size, sort);
+
+    Page<BookCollectionShow> collections = bookCollectionService.getPublicCollections(pageable);
     return ResponseEntity.ok(ApiResponse.success("Public collections fetched", collections));
   }
 
-  @GetMapping("/user")
-  public ResponseEntity<ApiResponse<List<BookCollectionShow>>> getUserCollections(
+  @GetMapping("/user/public")
+  public ResponseEntity<ApiResponse<Page<BookCollectionIndex>>> getPublicUserCollection(
+          @RequestParam(defaultValue = "0") int page,
+          @RequestParam(defaultValue = "10") int size,
+          @RequestParam(defaultValue = "id") String sortField,
+          @RequestParam(defaultValue = "asc") String sortDirection,
           @AuthenticationPrincipal User currentUser) {
 
-    List<BookCollectionShow> collections = bookCollectionService.getUserCollections(currentUser);
-    return ResponseEntity.ok(ApiResponse.success("User collections fetched", collections));
+    Sort sort = sortDirection.equalsIgnoreCase("desc") ?
+            Sort.by(sortField).descending() :
+            Sort.by(sortField).ascending();
+
+    Pageable pageable = PageRequest.of(page, size, sort);
+
+    Page<BookCollectionIndex> collections = bookCollectionService.getPublicUserCollection(currentUser, pageable);
+    return ResponseEntity.ok(ApiResponse.success("Public user collection", collections));
+  }
+
+  @GetMapping("/user/private")
+  public ResponseEntity<ApiResponse<Page<BookCollectionIndex>>> getPrivateUserCollection(
+          @RequestParam(defaultValue = "0") int page,
+          @RequestParam(defaultValue = "10") int size,
+          @RequestParam(defaultValue = "id") String sortField,
+          @RequestParam(defaultValue = "asc") String sortDirection,
+          @AuthenticationPrincipal User currentUser) {
+
+    Sort sort = sortDirection.equalsIgnoreCase("desc") ?
+            Sort.by(sortField).descending() :
+            Sort.by(sortField).ascending();
+
+    Pageable pageable = PageRequest.of(page, size, sort);
+
+    Page<BookCollectionIndex> collections = bookCollectionService.getPrivateUserCollection(currentUser, pageable);
+    return ResponseEntity.ok(ApiResponse.success("Private user collection", collections));
+  }
+
+  @GetMapping("/user/books")
+  public ResponseEntity<ApiResponse<Page<BookCollectionShow>>> getUserCollectionsWithBooks(
+          @RequestParam(defaultValue = "0") int page,
+          @RequestParam(defaultValue = "10") int size,
+          @RequestParam(defaultValue = "id") String sortField,
+          @RequestParam(defaultValue = "asc") String sortDirection,
+          @AuthenticationPrincipal User currentUser) {
+
+    Sort sort = sortDirection.equalsIgnoreCase("desc") ?
+            Sort.by(sortField).descending() :
+            Sort.by(sortField).ascending();
+
+    Pageable pageable = PageRequest.of(page, size, sort);
+
+    Page<BookCollectionShow> collections = bookCollectionService.getUserCollectionsWithBooks(currentUser, pageable);
+    return ResponseEntity.ok(ApiResponse.success("User collections with books fetched", collections));
   }
 }

@@ -6,8 +6,6 @@ interface Collection {
     title: string
     description: string
     category: string
-    createdBy: string
-    bookCount: number
     isPublic: boolean
 }
 

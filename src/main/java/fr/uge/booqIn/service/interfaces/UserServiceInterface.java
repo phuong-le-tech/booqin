@@ -1,5 +1,6 @@
 package fr.uge.booqIn.service.interfaces;
 
+import fr.uge.booqIn.dto.bookCollection.BookCollectionIndex;
 import fr.uge.booqIn.dto.user.UserIndex;
 import fr.uge.booqIn.dto.user.UserShow;
 import fr.uge.booqIn.dto.user.UserUpdate;
@@ -9,6 +10,8 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.validation.annotation.Validated;
+
+import java.util.List;
 
 @Validated
 public interface UserServiceInterface {
@@ -73,7 +76,6 @@ public interface UserServiceInterface {
    * @throws fr.uge.booqIn.exception.ResourceNotFoundException if user not found
    */
   void deleteUser(@NotNull Long id);
-
 
   UserIndex findUserByIdToIndex(@NotNull Long id);
   User findUserById(@NotNull Long id);

@@ -1,5 +1,5 @@
 import {Link, useLocation} from "react-router-dom"
-import {LayoutDashboard, Book, LogOut, LibraryBigIcon, Library, Settings} from "lucide-react"
+import {LayoutDashboard, Book, LogOut, LibraryBigIcon, Library, Settings, Users} from "lucide-react"
 import {useContext} from "react"
 import {AuthContext} from "../context/AuthContext.tsx"
 import AuthService from "../services/AuthService.ts"
@@ -19,6 +19,7 @@ const authenticatedNavItems = [
     {icon: Book, label: "Books", path: "/books", color: "text-green-300"},
     {icon: LibraryBigIcon, label: "Collections", path: "/collections/public", color: "text-purple-300"},
     {icon: Library, label: "My Collections", path: "/collections/user", color: "text-yellow-300"},
+    {icon: Users, label: "Following", path: "/following", color: "text-pink-300"},
 ]
 
 export function SidebarNav({ onCloseSidebar = () => {} }: SidebarNavProps) {
@@ -44,7 +45,6 @@ export function SidebarNav({ onCloseSidebar = () => {} }: SidebarNavProps) {
     }
 
     const isAdmin = user && user.role === "ADMIN"
-    console.log(user)
     return (
         <div className="bg-navbar w-64 p-4 border-r flex flex-col h-full">
             <nav className="space-y-2 flex-1">
