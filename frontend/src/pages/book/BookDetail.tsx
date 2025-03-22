@@ -8,7 +8,7 @@ import BookService from "../../services/BookService";
 import { VoteSection } from "../../components/vote/VoteSection";
 import { CommentSection } from "../../components/comment/CommentSection";
 import FollowButton from "../../components/follow/FollowButton.tsx";
-import {AuthContext} from "../../context/AuthContext.tsx";
+import {useAuth} from "../../context/AuthContext.tsx";
 
 export const BookDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -17,7 +17,7 @@ export const BookDetail: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [isbnExpanded, setIsbnExpanded] = useState<boolean>(false);
     const [authorsExpanded, setAuthorsExpanded] = useState<boolean>(false);
-    const { user } = useContext(AuthContext);
+    const { user } = useAuth();
 
     useEffect(() => {
         const fetchBookDetails = async () => {

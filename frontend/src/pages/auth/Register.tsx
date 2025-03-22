@@ -1,7 +1,7 @@
-import { useState, type ChangeEvent, type FormEvent, useContext } from "react"
-import { useNavigate, Link } from "react-router-dom"
+import { useState, type ChangeEvent, type FormEvent, useEffect } from "react"
+import { useNavigate, Link, useLocation } from "react-router-dom"
 import { toast } from "react-toastify"
-import { AuthContext } from "../../context/AuthContext.tsx"
+import { useAuth } from "../../context/AuthContext"
 import AuthService from "../../services/AuthService.ts"
 import { Eye, EyeOff } from "lucide-react"
 import type { Address } from "../../model/Address.ts"
@@ -31,7 +31,17 @@ export const Register = () => {
     const [showPassword, setShowPassword] = useState<boolean>(false)
     const [isLoading, setIsLoading] = useState<boolean>(false)
     const navigate = useNavigate()
-    const { setUser } = useContext(AuthContext)
+    const location = useLocation()
+
+    // Use our enhanced auth hook instead of context
+    const { login, isAuthenticated } = useAuth()
+
+    // If already authenticated, redirect to home
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate("/")
+        }
+    }, [isAuthenticated, navigate])
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target
@@ -49,11 +59,19 @@ export const Register = () => {
         e.preventDefault()
         setIsLoading(true)
         try {
+            // First register the user
             await AuthService.register(formData)
             toast.success("Registration successful!")
-            const user = await AuthService.login({ login: formData.email, password: formData.password })
-            setUser(user)
-            navigate("/")
+
+            // Then log them in using our centralized login function
+            await login(formData.email, formData.password)
+
+            // Navigate to home (or redirect URL if exists)
+            const redirectUrl = localStorage.getItem('redirectAfterLogin') || "/"
+            if (localStorage.getItem('redirectAfterLogin')) {
+                localStorage.removeItem('redirectAfterLogin')
+            }
+            navigate(redirectUrl)
         } catch (error: any) {
             toast.error(error.message || "Registration failed. Please try again.")
         } finally {

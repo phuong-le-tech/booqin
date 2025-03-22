@@ -12,10 +12,13 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -23,6 +26,14 @@ public class AuthController {
 
   private final AuthServiceInterface authService;
   private final JwtService jwtService;
+
+  private static final String ACCESS_TOKEN_COOKIE_NAME = "jwt";
+  private static final String REFRESH_TOKEN_COOKIE_NAME = "jwt-refresh";
+
+  @Value("${security.jwt.token.access-expiration}")
+  private long ACCESS_TOKEN_EXPIRATION;
+  @Value("${security.jwt.token.refresh-expiration}")
+  private long REFRESH_TOKEN_EXPIRATION;
 
   public AuthController(AuthServiceInterface authService, JwtService jwtService) {
     this.authService = authService;
@@ -36,8 +47,8 @@ public class AuthController {
 
     AuthResponse tokens = authService.login(data);
 
-    addCookie(response, "jwt", tokens.accessToken(), 30 * 60);
-    addCookie(response, "jwt-refresh", tokens.refreshToken(), 7 * 24 * 60 * 60);
+    addCookie(response, ACCESS_TOKEN_COOKIE_NAME, tokens.accessToken(), ACCESS_TOKEN_EXPIRATION);
+    addCookie(response, REFRESH_TOKEN_COOKIE_NAME, tokens.refreshToken(), REFRESH_TOKEN_EXPIRATION);
 
     return ResponseEntity.ok(
             ApiResponse.success("Login successful", tokens));
@@ -57,24 +68,19 @@ public class AuthController {
           HttpServletRequest request,
           HttpServletResponse response,
           Authentication authentication) {
-    String accessToken = getCookieValue(request, "jwt");
-    String refreshToken = getCookieValue(request, "jwt-refresh");
+    var accessToken = getCookieValue(request, ACCESS_TOKEN_COOKIE_NAME);
+    var refreshToken = getCookieValue(request, REFRESH_TOKEN_COOKIE_NAME);
 
-    if (accessToken != null) {
-      jwtService.revokeToken(accessToken);
-    }
-
-    if (refreshToken != null) {
-      jwtService.revokeToken(refreshToken);
-    }
+    accessToken.ifPresent(jwtService::revokeToken);
+    refreshToken.ifPresent(jwtService::revokeToken);
 
     if (authentication != null && authentication.isAuthenticated()) {
       User user = (User) authentication.getPrincipal();
       authService.invalidateUserSessions(user.getId());
     }
 
-    addCookie(response, "jwt", null, 0);
-    addCookie(response, "jwt-refresh", null, 0);
+    addCookie(response, ACCESS_TOKEN_COOKIE_NAME, null, 0);
+    addCookie(response, REFRESH_TOKEN_COOKIE_NAME, null, 0);
 
     return ResponseEntity.ok(
             ApiResponse.success("Logged out successfully", null));
@@ -85,15 +91,16 @@ public class AuthController {
   public ResponseEntity<ApiResponse<String>> refreshToken(
           HttpServletRequest request,
           HttpServletResponse response) {
-    String refreshToken = getCookieValue(request, "jwt-refresh");
 
-    if (refreshToken == null) {
+    var refreshToken = getCookieValue(request, REFRESH_TOKEN_COOKIE_NAME);
+
+    if (refreshToken.isEmpty()) {
       return ResponseEntity
               .status(HttpStatus.UNAUTHORIZED)
               .body(ApiResponse.error("Refresh token is missing"));
     }
 
-    if (jwtService.isTokenExpired(refreshToken)) {
+/*    if (jwtService.isTokenExpired(refreshToken)) {
       return ResponseEntity
               .status(HttpStatus.UNAUTHORIZED)
               .body(ApiResponse.error("Refresh token has expired"));
@@ -103,20 +110,10 @@ public class AuthController {
       return ResponseEntity
               .status(HttpStatus.UNAUTHORIZED)
               .body(ApiResponse.error("Refresh token has been revoked"));
-    }
-
-    if (!jwtService.recordRefreshTokenUsage(refreshToken)) {
-      jwtService.revokeToken(refreshToken);
-
-      return ResponseEntity
-              .status(HttpStatus.UNAUTHORIZED)
-              .body(ApiResponse.error("Token reuse detected. Please login again."));
-    }
-
-    AuthResponse tokens = authService.refreshToken(refreshToken);
-
-    addCookie(response, "jwt", tokens.accessToken(), 30 * 60);
-    addCookie(response, "jwt-refresh", tokens.refreshToken(), 7 * 24 * 60 * 60);
+    }*/
+    AuthResponse tokens = authService.refreshToken(refreshToken.get());
+    addCookie(response, ACCESS_TOKEN_COOKIE_NAME, tokens.accessToken(), ACCESS_TOKEN_EXPIRATION);
+    addCookie(response, REFRESH_TOKEN_COOKIE_NAME, tokens.refreshToken(), REFRESH_TOKEN_EXPIRATION);
 
     return ResponseEntity.ok(
             ApiResponse.success("Access Token refreshed successfully", tokens.accessToken()));
@@ -135,24 +132,25 @@ public class AuthController {
    * =======================
    */
 
-  private void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
+  private void addCookie(HttpServletResponse response, String name, String value, long maxAgeMillis) {
     Cookie cookie = new Cookie(name, value);
     cookie.setHttpOnly(true);
     cookie.setSecure(false); // Set to true in production (HTTPS)
     cookie.setPath("/");
-    cookie.setMaxAge(maxAge);
+    cookie.setMaxAge((int)(maxAgeMillis / 1000));
+    System.out.println("Cookie added: " + cookie.getName() + "=" + cookie.getValue());
     response.addCookie(cookie);
   }
 
-  private String getCookieValue(HttpServletRequest request, String cookieName) {
+  private Optional<String> getCookieValue(HttpServletRequest request, String cookieName) {
     if (request.getCookies() == null) {
-      return null;
+      return Optional.empty();
     }
     for (Cookie cookie : request.getCookies()) {
       if (cookieName.equals(cookie.getName())) {
-        return cookie.getValue();
+        return Optional.of(cookie.getValue());
       }
     }
-    return null;
+    return Optional.empty();
   }
 }

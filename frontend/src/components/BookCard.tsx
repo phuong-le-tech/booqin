@@ -1,8 +1,8 @@
-import React, {useContext, useState, useEffect} from 'react';
+import React, { useState, useEffect} from 'react';
 import { Link } from 'react-router-dom';
 import { BookIndex } from '../model/Book';
 import axiosInstance from "../services/AxiosInstance";
-import { AuthContext } from "../context/AuthContext";
+import { useAuth } from "../context/AuthContext";
 
 interface BookCardProps {
     book: BookIndex;
@@ -13,7 +13,7 @@ interface BookCardProps {
 
 export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], lentBooks = [], onLendingChange }) => {
     const { id } = book;
-    const { user } = useContext(AuthContext);
+    const { user } = useAuth();
     const userId = user?.id;
     const [isLoanable, setIsLoanable] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(false);
