@@ -1,9 +1,9 @@
 // In CollectionDetails.tsx
-import React, {useContext, useEffect, useState} from "react";
+import React, { useEffect, useState} from "react";
 import {useParams, Link, useNavigate} from "react-router-dom";
 import { BookCollectionShow} from "../../model/BookCollection";
 import Layout from "../../pages/Layout";
-import {AuthContext} from "../../context/AuthContext.tsx";
+import {useAuth} from "../../context/AuthContext.tsx";
 import BookCollectionService from "../../services/BookCollectionService.ts";
 import BookService from "../../services/BookService.ts";
 import axiosInstance from "../../services/AxiosInstance.ts";
@@ -11,7 +11,7 @@ import FollowButton from "../../components/follow/FollowButton.tsx"; // Added im
 
 const CollectionDetails: React.FC = () => {
     const navigate = useNavigate();
-    const { user } = useContext(AuthContext);
+    const { user } = useAuth();
     const { id } = useParams<{ id: string }>();
     const [collection, setCollection] = useState<BookCollectionShow | null>(null);
     const [loading, setLoading] = useState(true);

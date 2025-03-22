@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { BookCollectionIndex, BookCollectionShow } from "../../model/BookCollection";
-import { AuthContext } from "../../context/AuthContext";
+import {BookCollectionIndex} from "../../model/BookCollection";
+import { useAuth } from "../../context/AuthContext";
 import Layout from "../../pages/Layout";
 import BookCollectionService from "../../services/BookCollectionService";
 import CollectionEditModal from "../modal/CollectionEditModal.tsx";
@@ -13,7 +13,8 @@ import { PageInfo } from "../../model/Pagination";
 type TabType = "ALL" | "PRIVATE" | "PUBLIC" | "SMART" | "GLOBAL";
 
 const Collections: React.FC = () => {
-    const { user } = useContext(AuthContext);
+    const { user } = useAuth();
+    const [collections, setCollections] = useState<BookCollectionIndex[]>([]);
     const [allCollections, setAllCollections] = useState<BookCollectionIndex[]>([]);
     const [privateCollections, setPrivateCollections] = useState<BookCollectionIndex[]>([]);
     const [publicCollections, setPublicCollections] = useState<BookCollectionIndex[]>([]);
@@ -113,8 +114,8 @@ const Collections: React.FC = () => {
             console.log(`[DEBUG] Collection type counts: SMART=${typeCounts.SMART}, GLOBAL=${typeCounts.GLOBAL}, NORMAL=${typeCounts.NORMAL}`);
 
         } catch (error) {
-            console.error("[DEBUG] Error fetching collections:", error);
-            setError("Error loading collections");
+            console.error("Error fetching collections:", error);
+            setError("Error fetching collections");
         } finally {
             setLoading(false);
         }
@@ -415,14 +416,6 @@ const Collections: React.FC = () => {
                                             <p className="text-lg text-gray-600">
                                                 No collections found for this category.
                                             </p>
-                                            <div className="mt-8 flex justify-center space-x-4">
-                                                <Link to="/collections/new" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                                                    Create New Collection
-                                                </Link>
-                                                <Link to="/collections/smart/new" className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
-                                                    Create Smart Collection
-                                                </Link>
-                                            </div>
                                         </div>
                                     ) : (
                                         <div className="bg-white shadow rounded-lg overflow-hidden mb-8">

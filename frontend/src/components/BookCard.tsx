@@ -1,15 +1,16 @@
-import React, {useContext, useState, useEffect} from 'react';
+import React, { useState, useEffect} from 'react';
 import { Link } from 'react-router-dom';
 import { BookIndex } from '../model/Book';
 import axiosInstance from "../services/AxiosInstance";
-import { AuthContext } from "../context/AuthContext";
-import { toast } from "react-toastify";
 
+import { toast } from "react-toastify";
+import { useAuth } from "../context/AuthContext";
 // Type pour les informations de prêt
 interface LoanInfo {
     bookId: number;
     state: string;
 }
+
 
 interface BookCardProps {
     book: BookIndex;
@@ -27,7 +28,7 @@ export const BookCard: React.FC<BookCardProps> = ({
                                                       onLendingChange
                                                   }) => {
     const { id } = book;
-    const { user } = useContext(AuthContext);
+    const { user } = useAuth();
     const userId = user?.id;
     const [isLoanable, setIsLoanable] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(false);
@@ -168,7 +169,7 @@ export const BookCard: React.FC<BookCardProps> = ({
                     className="w-full h-48 flex items-center justify-center flex-shrink-0"
                     style={{
                         backgroundColor: getBookCoverColor(book.id),
-                        opacity: isBookBorrowed ? 0.6 : 1 // Réduit l'opacité si le livre a le statut BORROWED
+                        opacity: isBorrowed ? 0.6 : 1 // Réduit l'opacité si le livre est prêté
                     }}
                 >
                     <span className="text-white text-5xl font-bold">

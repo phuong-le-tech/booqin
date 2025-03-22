@@ -2,13 +2,10 @@ import type React from "react"
 import { User, Settings, LogOut } from "lucide-react"
 import { Link } from "react-router-dom"
 import { Dropdown } from "./Dropdown"
+import { User as UserApp } from "../model/User"
 
 interface UserMenuProps {
-    user: {
-        firstName: string
-        lastName: string
-        email: string
-    }
+    user: UserApp,
     onLogout: () => void
 }
 

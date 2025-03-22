@@ -1,7 +1,7 @@
-import React, { useContext, useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 import { Layout } from "../Layout";
 import axiosInstance from "../../services/AxiosInstance.ts";
-import { AuthContext } from "../../context/AuthContext.tsx";
+import { useAuth } from "../../context/AuthContext.tsx";
 import { useNavigate } from "react-router-dom";
 
 type Book = {
@@ -44,16 +44,16 @@ export const BookLending: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<"borrowed" | "lent" | "all">("borrowed");
     const navigate = useNavigate();
-    const auth = useContext(AuthContext);
+    const {user} = useAuth();
 
     // Récupérer les prêts de livres depuis l'API
     useEffect(() => {
-        if (!auth.user?.id) return;
+        if (!user?.id) return;
 
         const fetchLendings = async () => {
             try {
-                console.log("📚 Récupération des prêts pour userId:", auth.user.id);
-                const response = await axiosInstance.get(`/v1/loans/user/${auth.user.id}?type=${activeTab}`);
+                console.log("📚 Récupération des prêts pour userId:", user.id);
+                const response = await axiosInstance.get(`/v1/loans/user/${user.id}?type=${activeTab}`);
 
                 console.log("📚 Réponse des prêts:", response.data);
 
@@ -71,7 +71,7 @@ export const BookLending: React.FC = () => {
         };
 
         fetchLendings();
-    }, [auth.user?.id, activeTab]);
+    }, [user?.id, activeTab]);
 
     const handleChangeTab = (tab: "borrowed" | "lent" | "all") => {
         setActiveTab(tab);
@@ -120,13 +120,13 @@ export const BookLending: React.FC = () => {
     };
 
     const handleReturn = async (lendingId: number) => {
-        if (!auth.user) return;
+        if (!user) return;
 
         try {
             const response = await axiosInstance.get(`/v1/loans/return-book?lendingId=${lendingId}`);
             if (response.data?.success) {
                 // Rafraîchir les données
-                const updatedResponse = await axiosInstance.get(`/v1/loans/user/${auth.user.id}?type=${activeTab}`);
+                const updatedResponse = await axiosInstance.get(`/v1/loans/user/${user.id}?type=${activeTab}`);
                 setLendingData(updatedResponse.data.data);
                 alert("Le livre a été marqué comme retourné !");
             } else {
@@ -139,13 +139,13 @@ export const BookLending: React.FC = () => {
     };
 
     const handleConfirmLoan = async (lendingId: number) => {
-        if (!auth.user) return;
+        if (!user) return;
 
         try {
             const response = await axiosInstance.get(`/v1/loans/confirm-loan?lendingId=${lendingId}`);
             if (response.data?.success) {
                 // Rafraîchir les données
-                const updatedResponse = await axiosInstance.get(`/v1/loans/user/${auth.user.id}?type=${activeTab}`);
+                const updatedResponse = await axiosInstance.get(`/v1/loans/user/${user.id}?type=${activeTab}`);
                 setLendingData(updatedResponse.data.data);
                 alert("Le prêt a été confirmé !");
             } else {
@@ -159,14 +159,14 @@ export const BookLending: React.FC = () => {
 
 
     const removeFromLoanable = async (id: number) => {
-        if (!auth.user?.id) return;
+        if (!user?.id) return;
 
         setLoading(true);
         try {
             const response = await axiosInstance.delete("/v1/loans/remove-loanable", {
                 params: {
                     bookId: id,
-                    userId: auth.user?.id
+                    userId: user?.id
                 }
             });
 
@@ -194,13 +194,13 @@ export const BookLending: React.FC = () => {
 
 
     const handleShipBook = async (lendingId: number) => {
-        if (!auth.user) return;
+        if (!user) return;
 
         try {
             const response = await axiosInstance.get(`/v1/loans/ship-book?lendingId=${lendingId}`);
             if (response.data?.success) {
                 // Rafraîchir les données
-                const updatedResponse = await axiosInstance.get(`/v1/loans/user/${auth.user.id}?type=${activeTab}`);
+                const updatedResponse = await axiosInstance.get(`/v1/loans/user/${user.id}?type=${activeTab}`);
                 setLendingData(updatedResponse.data.data);
                 alert("Le livre a été marqué comme expédié !");
             } else {

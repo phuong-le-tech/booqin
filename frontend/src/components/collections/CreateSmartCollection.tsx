@@ -2,7 +2,7 @@ import React, { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Layout from "../../pages/Layout";
 import BookCollectionService from "../../services/BookCollectionService";
-import { AuthContext } from "../../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 
 const CRITERIA_TYPES = [
   { value: "AUTHOR", label: "Author Name" },
@@ -13,7 +13,7 @@ const CRITERIA_TYPES = [
 
 const CreateSmartCollection: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
