@@ -1,6 +1,7 @@
 package fr.uge.booqIn.controller.web;
 
 import fr.uge.booqIn.dto.book.BookShow;
+import fr.uge.booqIn.dto.bookCollection.BookCollectionIndex;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionUpdate;
 import fr.uge.booqIn.dto.lending.LendingResponseDTO;
@@ -55,7 +56,7 @@ public class BookCollectionWebController {
   public String showPublicCollections(Model model, Principal principal) {
     homeWebController.prepareModel(model, principal, "collections-public");
     // Récupérer les collections publiques
-    Page<BookCollectionShow> collections = bookCollectionService.getPublicCollections(null);
+    Page<BookCollectionIndex> collections = bookCollectionService.getPublicCollections(null);
     model.addAttribute("publicCollections", collections);
     model.addAttribute("title", "BooqIn - Public Collections");
     model.addAttribute("content", "pages/collections/public");

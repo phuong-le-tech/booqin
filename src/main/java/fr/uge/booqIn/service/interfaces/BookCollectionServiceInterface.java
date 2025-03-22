@@ -64,7 +64,7 @@ public interface BookCollectionServiceInterface {
    * @param pageable Les informations de pagination
    * @return Une page des collections publiques
    */
-  Page<BookCollectionShow> getPublicCollections(Pageable pageable);
+  Page<BookCollectionIndex> getPublicCollections(Pageable pageable);
 
   /**
    * Ajoute un livre à une collection.
