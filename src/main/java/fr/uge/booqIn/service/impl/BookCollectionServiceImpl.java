@@ -142,9 +142,9 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
 
   @Override
   @Transactional(readOnly = true)
-  public Page<BookCollectionShow> getPublicCollections(Pageable pageable) {
+  public Page<BookCollectionIndex> getPublicCollections(Pageable pageable) {
     Page<AbstractBookCollection> collectionsPage = bookCollectionRepository.findByIsPublicTrue(pageable);
-    return collectionsPage.map(bookCollectionMapper::toBookCollectionShow);
+    return collectionsPage.map(bookCollectionMapper::toBookCollectionIndex);
   }
 
   @Override
