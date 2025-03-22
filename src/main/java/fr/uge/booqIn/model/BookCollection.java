@@ -6,7 +6,7 @@ import fr.uge.booqIn.entity.User;
 import java.util.Date;
 import java.util.List;
 
-public interface BookCollection extends PolymorphicEntity, Commentable, Votable {
+public interface BookCollection extends PolymorphicEntity, Commentable, Votable, Followable {
 
   /**
    * Obtient l'identifiant unique de la collection.

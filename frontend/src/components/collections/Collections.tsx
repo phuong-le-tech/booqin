@@ -1,12 +1,14 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { BookCollection, BookCollectionShow } from "../../model/BookCollection";
+import {BookCollectionIndex, BookCollectionShow} from "../../model/BookCollection";
 import { AuthContext } from "../../context/AuthContext";
 import Layout from "../../pages/Layout";
 import BookCollectionService from "../../services/BookCollectionService";
 import CollectionEditModal from "../modal/CollectionEditModal.tsx";
 import DeleteConfirmModal from "../modal/DeleteConfirmModal.tsx";
-import { getBookCount } from "../../utils/BookCollectionUtils";
+import FollowButton from "../../components/follow/FollowButton.tsx";
+import { Pagination } from "../Pagination.tsx";
+import { PageInfo } from "../../model/Pagination";
 
 // Type pour les onglets disponibles
 type TabType = "ALL" | "PRIVATE" | "PUBLIC" | "SMART" | "GLOBAL";
@@ -21,30 +23,86 @@ const Collections: React.FC = () => {
     // State for managing modals
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-    const [selectedCollection, setSelectedCollection] = useState<BookCollectionShow | null>(null);
+    const [selectedCollection, setSelectedCollection] = useState<BookCollectionIndex | null>(null);
 
-    const fetchCollections = async () => {
+    // Active collection type for pagination
+
+
+    // Pagination and sorting state
+    const [pageInfo, setPageInfo] = useState<PageInfo>({
+        number: 0,
+        size: 10,
+        totalElements: 0,
+        totalPages: 0
+    });
+    const [sortField, setSortField] = useState<string>("id");
+    const [sortDirection, setSortDirection] = useState<string>("asc");
+
+    const fetchCollections = async (page = 0, size = 10, field = sortField, direction = sortDirection) => {
+        if (!user) return;
+
         try {
             setLoading(true);
             const userCollectionsData = await BookCollectionService.getUserCollections();
             console.log("USER COLLECTIONS\n", userCollectionsData);
             if (userCollectionsData && Array.isArray(userCollectionsData)) {
                 setCollections(userCollectionsData);
+
+            // Use the appropriate service method based on active tab
+            let response;
+            if (activeTab === 'private') {
+                response = await BookCollectionService.getUserPrivateCollections(page, size, field, direction);
+            } else {
+                response = await BookCollectionService.getUserPublicCollections(page, size, field, direction);
+            }
+            console.log(response);
+            if (response && response.content) {
+                setCollections(response.content);
+
+                // Update pagination info
+                setPageInfo({
+                    number: response.page.number,
+                    size: response.page.size,
+                    totalElements: response.page.totalElements,
+                    totalPages: response.page.totalPages
+                });
+
+                // Update sort state
+                setSortField(field);
+                setSortDirection(direction);
             } else {
                 console.error("Unexpected data format:", userCollectionsData);
                 setError("No collections found");
+                console.error("Unexpected data format:", response);
+                setError("No collections found");
             }
         } catch (error) {
-            console.error("Error fetching collection details:", error);
+            console.error("Error fetching collections:", error);
             setError("Error fetching collections");
         } finally {
             setLoading(false);
         }
     };
-
+  console.log(pageInfo);
     useEffect(() => {
-        user ? fetchCollections() : setLoading(false);
-    }, [user]);
+        if (user) {
+            fetchCollections(0, pageInfo.size, sortField, sortDirection);
+        } else {
+            setLoading(false);
+        }
+    }, [user, activeTab]);
+
+    // Handle page change from pagination component
+    const handlePageChange = (page: number) => {
+        fetchCollections(page, pageInfo.size, sortField, sortDirection);
+    };
+
+    // Handle changing the sort field/direction
+    const handleSortChange = (field: string) => {
+        // Toggle direction if clicking the same field, otherwise use ascending
+        const direction = field === sortField && sortDirection === "asc" ? "desc" : "asc";
+        fetchCollections(0, pageInfo.size, field, direction);
+    };
 
     // Déterminer le type de collection basé sur ses propriétés
     const getCollectionType = (collection: BookCollectionShow): string => {
@@ -108,13 +166,13 @@ const Collections: React.FC = () => {
     };
 
     // Handle opening the edit modal
-    const handleEditClick = (collection: BookCollectionShow) => {
+    const handleEditClick = (collection: BookCollectionIndex) => {
         setSelectedCollection(collection);
         setEditModalOpen(true);
     };
 
     // Handle opening the delete modal
-    const handleDeleteClick = (collection: BookCollectionShow) => {
+    const handleDeleteClick = (collection: BookCollectionIndex) => {
         setSelectedCollection(collection);
         setDeleteModalOpen(true);
     };
@@ -129,18 +187,12 @@ const Collections: React.FC = () => {
                 description: updatedData.description,
                 isPublic: updatedData.isPublic
             };
-            console.log("UPDATED Data:\n", updateData);
-            try {
-                await BookCollectionService.patchBookCollection(selectedCollection.id, updateData);
-                setEditModalOpen(false);
-                fetchCollections(); // Actualiser la liste après modification
-            } catch (apiError: any) {
-                console.error("API Error:", apiError);
-                if (apiError.response) {
-                    console.error("Response status:", apiError.response.status);
-                    console.error("Response data:", apiError.response.data);
-                }
-            }
+
+            await BookCollectionService.patchBookCollection(selectedCollection.id, updateData);
+            setEditModalOpen(false);
+
+            // Refresh with current pagination and sorting
+            fetchCollections(pageInfo.number, pageInfo.size, sortField, sortDirection);
         } catch (error) {
             console.error("Error updating collection:", error);
             setError("Failed to update collection");
@@ -154,7 +206,9 @@ const Collections: React.FC = () => {
         try {
             await BookCollectionService.deleteBookCollection(selectedCollection.id);
             setDeleteModalOpen(false);
-            fetchCollections(); // Refresh the collections list
+
+            // Refresh with current pagination and sorting
+            fetchCollections(pageInfo.number, pageInfo.size, sortField, sortDirection);
         } catch (error) {
             console.error("Error deleting collection:", error);
             setError("Failed to delete collection");
@@ -168,6 +222,14 @@ const Collections: React.FC = () => {
         return collection.user.id === user.id;
     };
 
+    // Toggle between public and private collections tab
+    // We no longer call fetchCollections here since the useEffect will handle it
+    const handleTabChange = (tab: 'public' | 'private') => {
+        setActiveTab(tab);
+        // No need to call fetchCollections here, the useEffect will do it
+    };
+
+    // Loading and error states
     if (loading) {
         return (
             <Layout>
@@ -312,6 +374,11 @@ const Collections: React.FC = () => {
                                     <Link to="/" className="inline-block px-4 py-2 mt-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
                                         Go back to home page
                                     </Link>
+                                <div>
+                                    <h1 className="text-center text-gray-500">Please login to view your collections!</h1>
+                                    <span className="block text-center text-gray-500">
+                                        <Link to="/" className="btn btn-secondary text-blue-900 border-blue-700 inline-block px-4 py-2 mt-4">Go back to home page</Link>
+                                    </span>
                                 </div>
                             )}
                         </div>
@@ -326,9 +393,7 @@ const Collections: React.FC = () => {
                         id: selectedCollection.id,
                         title: selectedCollection.title,
                         description: selectedCollection.description,
-                        category: "Uncategorized", // You may need to add this field to your data model
-                        createdBy: `${selectedCollection.user.firstName} ${selectedCollection.user.lastName}`,
-                        bookCount: getBookCount(selectedCollection),
+                        category: "Undefined",
                         isPublic: selectedCollection.isPublic
                     }}
                     onClose={() => setEditModalOpen(false)}

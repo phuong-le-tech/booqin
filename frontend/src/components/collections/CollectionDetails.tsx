@@ -1,12 +1,13 @@
-// Dans CollectionDetails.tsx, ajoutez ces imports et états
+// In CollectionDetails.tsx
 import React, {useContext, useEffect, useState} from "react";
 import {useParams, Link, useNavigate} from "react-router-dom";
-import {BookCollection, BookCollectionShow} from "../../model/BookCollection";
+import { BookCollectionShow} from "../../model/BookCollection";
 import Layout from "../../pages/Layout";
 import {AuthContext} from "../../context/AuthContext.tsx";
 import BookCollectionService from "../../services/BookCollectionService.ts";
 import BookService from "../../services/BookService.ts";
-import axiosInstance from "../../services/AxiosInstance.ts"; // Ajout de l'import pour axiosInstance
+import axiosInstance from "../../services/AxiosInstance.ts";
+import FollowButton from "../../components/follow/FollowButton.tsx"; // Added import
 
 const CollectionDetails: React.FC = () => {
     const navigate = useNavigate();
@@ -235,15 +236,54 @@ const CollectionDetails: React.FC = () => {
     const backButtonName = origin === 'public' ? "Back to Public Collections" : "Back to My Collections";
     const isOwner = user && collection.user.id === user.id;
 
-
     return (
         <Layout>
             <div className="flex h-screen">
                 <div className="flex-1 flex flex-col">
                     <div className="flex-1 bg-white p-8">
                         <div className="max-w-4xl mx-auto bg-gray-50 shadow rounded-lg p-6">
-                            <h1 className="text-4xl font-bold text-gray-800 mb-4">{collection?.title}</h1>
-                            <p className="text-gray-700 mb-6">{collection?.description}</p>
+                            {/* Collection Header - Added owner info card and follow button */}
+                            <div className="mb-6 border-b pb-4">
+                                <h1 className="text-4xl font-bold text-gray-800 mb-2">{collection?.title}</h1>
+
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                                    {/* Owner information with card style - now clickable */}
+                                    <Link to={`/users/${collection.user.id}`} className="flex items-center bg-white p-3 rounded-lg shadow-sm hover:bg-gray-50 transition-colors group">
+                                        <div>
+                                            <p className="text-sm text-gray-500">Created by</p>
+                                            <p className="font-medium text-gray-800 group-hover:text-blue-600 transition-colors">
+                                                {collection.user.firstName} {collection.user.lastName}
+                                            </p>
+                                        </div>
+                                    </Link>
+
+                                    {/* Follow buttons - for collection and owner */}
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                                        {/* Follow collection button - only show if not the owner */}
+                                        {!isOwner && (
+                                            <FollowButton
+                                                entityId={collection.id}
+                                                entityType="COLLECTION"
+                                                showFollowersCount={true}
+                                                size="md"
+                                            />
+                                        )}
+
+                                        {/* Follow user button - only show if not the current user */}
+                                        {user && collection.user.id !== user.id && (
+                                            <FollowButton
+                                                entityId={collection.user.id}
+                                                entityType="USER"
+                                                showFollowersCount={false}
+                                                showUserProfile={true}
+                                                size="md"
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+
+                                <p className="text-gray-700">{collection?.description}</p>
+                            </div>
 
                             <h2 className="text-2xl font-semibold mb-4">Books in this Collection:</h2>
                             {collection.books.length > 0 ? (
@@ -271,6 +311,13 @@ const CollectionDetails: React.FC = () => {
 
                                                 {/* Boutons placés en bas */}
                                                 <div className="flex space-x-2 mt-4">
+                                                    {/* View book details button */}
+                                                    <Link
+                                                        to={`/books/${book.id}`}
+                                                        className="px-3 py-1 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600 transition-colors"
+                                                    >
+                                                        View Details
+                                                    </Link>
                                                     {isOwner && (
                                                         <button
                                                             onClick={() => handleRemoveBook(book.id)}
@@ -298,6 +345,16 @@ const CollectionDetails: React.FC = () => {
                                                                 {lendingLoading === book.id ? "Processing..." : "Add to lending"}
                                                             </button>
                                                         )
+                                                    )}
+
+                                                    {/* Remove book button - only for collection owner */}
+                                                    {isOwner && (
+                                                        <button
+                                                            onClick={() => handleRemoveBook(book.id)}
+                                                            className="px-3 py-1 bg-red-500 text-white text-sm rounded-md hover:bg-red-600 transition-colors"
+                                                        >
+                                                            Remove
+                                                        </button>
                                                     )}
                                                 </div>
                                             </div>

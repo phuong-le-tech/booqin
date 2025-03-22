@@ -28,7 +28,9 @@ export interface BookCollectionIndex {
     id: number;
     title: string;
     description: string;
-    user: User; // Assuming owner is represented by a name or identifier string
+    userFullName: string;
+    userId: number;
+    bookCount: number;
     isPublic: boolean;
 }
 

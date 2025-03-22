@@ -79,4 +79,6 @@ public interface BookServiceInterface {
    * @throws fr.uge.booqIn.exception.ResourceNotFoundException if book not found
    */
   void deleteBook(@NotNull Long id);
+
+  Book findBookById(@NotNull Long id);
 }

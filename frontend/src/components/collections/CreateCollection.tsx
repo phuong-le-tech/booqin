@@ -54,7 +54,7 @@ const CreateCollection: React.FC = () => {
             console.log("Collection created successfully:", createdCollection);
 
             // Rediriger vers la liste des collections après succès
-            navigate(`/collections`);
+            navigate(`/collections/user`);
         } catch (err: any) {
             console.error("Error creating collection:", err);
             if (err.response) {
@@ -158,7 +158,7 @@ const CreateCollection: React.FC = () => {
                     </div>
 
                     <div className="mt-6 text-center">
-                        <Link to="/collections/public" className="inline-block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                        <Link to="/collections/user" className="inline-block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
                             Back to My Collections
                         </Link>
                     </div>

@@ -1,6 +1,7 @@
 import axiosInstance from "./AxiosInstance";
 import { User } from "../model/User";
 import { ApiResponse } from "../model/ApiResponse";
+import {BookCollectionIndex} from "../model/BookCollection.ts";
 
 const UserService = {
     /**
@@ -120,7 +121,31 @@ const UserService = {
                 throw new Error("Error setting up the request (removeCollectionFromUser).");
             }
         }
+    },
+
+    getUserPublicCollections: async (userId: string): Promise<BookCollectionIndex[]> => {
+        try {
+            const response = await axiosInstance.get<ApiResponse<BookCollectionIndex[]>>(
+                `/v1/users/${userId}/public-collections`
+            );
+            const apiResp = response.data;
+
+            if (!apiResp.success || !apiResp.data) {
+                throw new Error(apiResp.message || "Public Collections not found");
+            }
+
+            return apiResp.data;
+        } catch (error: any) {
+            if (error.response) {
+                throw new Error(error.response.data?.message || "Server error while removing collection");
+            } else if (error.request) {
+                throw new Error("No response from server. Please try again later.");
+            } else {
+                throw new Error("Error setting up the request (getUserPublicCollection).");
+            }
+        }
     }
+
 };
 
 export default UserService;

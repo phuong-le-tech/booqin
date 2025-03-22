@@ -11,6 +11,7 @@ import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
 import fr.uge.booqIn.specification.BookCollectionSpecification;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -44,7 +45,7 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
 
   @Override
   @Transactional(readOnly = true)
-  public Page<BookCollectionIndex> findBookCollections(String name, String description, Long userId, Pageable pageable) {
+  public Page<BookCollectionIndex> findBookCollections(String name, String description, boolean isPublic, Pageable pageable) {
     Specification<AbstractBookCollection> spec = Specification.where(null);
 
     if (name != null && !name.isEmpty()) {
@@ -55,8 +56,8 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
       spec = spec.and(BookCollectionSpecification.hasDescription(description));
     }
 
-    if (userId != null) {
-      spec = spec.and(BookCollectionSpecification.hasOwner(userId));
+    if (isPublic) {
+      spec = spec.and(BookCollectionSpecification.isPublic());
     }
 
     return bookCollectionRepository.findAll(spec, pageable)
@@ -65,7 +66,7 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
 
   @Override
   @Transactional(readOnly = true)
-  public BookCollectionShow findById(Long id) throws ResourceNotFoundException {
+  public BookCollectionShow findBookCollectionById(Long id) throws ResourceNotFoundException {
     return bookCollectionRepository.findById(id)
             .map(bookCollectionMapper::toBookCollectionShow)
             .orElseThrow(() -> new ResourceNotFoundException("Collection not found"));
@@ -121,7 +122,7 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
       existingCollection.setDescription(collection.description().get());
     }
     existingCollection.setPublic(collection.isPublic());
-
+    System.out.println("ICICI");
     AbstractBookCollection updatedCollection = bookCollectionRepository.save(existingCollection);
     return bookCollectionMapper.toBookCollectionShow(updatedCollection);
   }
@@ -141,20 +142,9 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
 
   @Override
   @Transactional(readOnly = true)
-  public List<BookCollectionShow> getUserCollections(User user) {
-    return bookCollectionRepository.findByOwner(user)
-            .stream()
-            .map(bookCollectionMapper::toBookCollectionShow)
-            .toList();
-  }
-
-  @Override
-  @Transactional(readOnly = true)
-  public List<BookCollectionShow> getPublicCollections() {
-    return bookCollectionRepository.findByIsPublicTrue()
-            .stream()
-            .map(bookCollectionMapper::toBookCollectionShow)
-            .toList();
+  public Page<BookCollectionShow> getPublicCollections(Pageable pageable) {
+    Page<AbstractBookCollection> collectionsPage = bookCollectionRepository.findByIsPublicTrue(pageable);
+    return collectionsPage.map(bookCollectionMapper::toBookCollectionShow);
   }
 
   @Override
@@ -165,7 +155,7 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
           backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
   )
   public void addBookToCollection(@NotNull Long collectionId, @NotNull Long bookId) {
-    BookCollection collection = findBookCollectionById(collectionId);
+    BookCollection collection = findById(collectionId);
 
     Optional<Book> book = bookRepo.findById(bookId);
     if (book.isEmpty()) {
@@ -182,7 +172,7 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
           backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
   )
   public void removeBookFromCollection(@NonNull Long collectionId, @NonNull Long bookId) {
-    BookCollection collection = findBookCollectionById(collectionId);
+    BookCollection collection = findById(collectionId);
     Optional<Book> book = bookRepo.findById(bookId);
     if (book.isEmpty()) {
       throw new ResourceNotFoundException("Book", "id", bookId);
@@ -193,16 +183,48 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
 
   @Override
   @Transactional(readOnly = true)
-  public List<BookCollectionShow> getUserCollectionsWithBooks(User user) {
-    return bookCollectionRepository.findByOwnerWithBooks(user)
-            .stream().map(bookCollectionMapper::toBookCollectionShow)
+  public Page<BookCollectionShow> getUserCollectionsWithBooks(User user, Pageable pageable) {
+    // Note: This implementation may need to be adjusted based on your repository method
+    // If getUserCollectionsWithBooks is a custom method, it may need pagination support
+    List<AbstractBookCollection> collections = bookCollectionRepository.findByOwnerWithBooks(user);
+
+    // Apply pagination manually if necessary
+    int start = (int) pageable.getOffset();
+    int end = Math.min((start + pageable.getPageSize()), collections.size());
+
+    List<AbstractBookCollection> pagedList = collections.subList(start, end);
+    List<BookCollectionShow> result = pagedList.stream()
+            .map(bookCollectionMapper::toBookCollectionShow)
             .toList();
+
+    return new PageImpl<>(result, pageable, collections.size());
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public BookCollection findCollectionById(Long id) {
+    return bookCollectionRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("BookCollection", "id", id));
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Page<BookCollectionIndex> getPublicUserCollection(User owner, Pageable pageable) {
+    Page<AbstractBookCollection> collectionsPage = bookCollectionRepository.findPublicCollectionsByOwner(owner, pageable);
+    return collectionsPage.map(bookCollectionMapper::toBookCollectionIndex);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Page<BookCollectionIndex> getPrivateUserCollection(User owner, Pageable pageable) {
+    Page<AbstractBookCollection> collectionsPage = bookCollectionRepository.findPrivateCollectionsByOwner(owner, pageable);
+    return collectionsPage.map(bookCollectionMapper::toBookCollectionIndex);
   }
 
   /**
    * Helper methods
    */
-  private BookCollection findBookCollectionById(Long id) {
+  private BookCollection findById(Long id) {
     return bookCollectionRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("BookCollection", "id", id));
   }

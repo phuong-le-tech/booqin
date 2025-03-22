@@ -17,6 +17,7 @@ import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
 import fr.uge.booqIn.service.interfaces.BookLendingInterface;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -53,7 +54,8 @@ public class BookCollectionWebController {
   @GetMapping("/public")
   public String showPublicCollections(Model model, Principal principal) {
     homeWebController.prepareModel(model, principal, "collections-public");
-    List<BookCollectionShow> collections = bookCollectionService.getPublicCollections();
+    // Récupérer les collections publiques
+    Page<BookCollectionShow> collections = bookCollectionService.getPublicCollections(null);
     model.addAttribute("publicCollections", collections);
     model.addAttribute("title", "BooqIn - Public Collections");
     model.addAttribute("content", "pages/collections/public");
@@ -63,7 +65,9 @@ public class BookCollectionWebController {
   @GetMapping()
   public String showUserCollections(Model model, @AuthenticationPrincipal User currentUser, Principal principal) {
     homeWebController.prepareModel(model, principal, "collections");
-    List<BookCollectionShow> collections = bookCollectionService.getUserCollectionsWithBooks(currentUser);
+   
+
+    Page<BookCollectionShow> collections = bookCollectionService.getUserCollectionsWithBooks(currentUser, null);
     List<BookCollectionShow> userPublicCollections = collections.stream().filter(BookCollectionShow::isPublic).toList();
     List<BookCollectionShow> userPrivateCollections = collections.stream().filter(collection -> !collection.isPublic()).toList();
     model.addAttribute("collections", collections);
@@ -82,7 +86,8 @@ public class BookCollectionWebController {
     try {
       homeWebController.prepareModel(model, principal, "collection-details");
       
-      BookCollectionShow collection = bookCollectionService.findById(id);
+
+      BookCollectionShow collection = bookCollectionService.findBookCollectionById(id);
       System.out.println("BookCollection was found !");
       model.addAttribute("collection", collection);
       model.addAttribute("currentUser", currentUser);
@@ -128,7 +133,7 @@ public class BookCollectionWebController {
       // Préparer le modèle commun
       homeWebController.prepareModel(model, principal, "collection-add-book");
 
-      BookCollectionShow bookCollection = bookCollectionService.findById(collectionId);
+      BookCollectionShow bookCollection = bookCollectionService.findBookCollectionById(collectionId);
       List<Book> books = bookService.findAll().stream().limit(10).toList();
       model.addAttribute("collectionId", collectionId);
       model.addAttribute("collection", bookCollection);
@@ -155,7 +160,7 @@ public class BookCollectionWebController {
   ) {
     logger.info("Adding book with ID " + bookId + " to collection with ID " + collectionId);
     try {
-      BookCollectionShow collectionOpt = bookCollectionService.findById(collectionId);
+      BookCollectionShow collectionOpt = bookCollectionService.findBookCollectionById(collectionId);
       logger.info("Collection found: " +  collectionOpt.title());
       BookShow bookShow = bookService.findById(bookId);
       Set<Author> authors = bookShow.authors().stream().map(bookMapper::toAuthor).collect(Collectors.toSet());
@@ -189,7 +194,7 @@ public class BookCollectionWebController {
     logger.info("Removing book with ID " + bookId + " from collection with ID " + collectionId);
     try {
       // Verify that the current user owns the collection
-      BookCollectionShow collection = bookCollectionService.findById(collectionId);
+      BookCollectionShow collection = bookCollectionService.findBookCollectionById(collectionId);
       if (!verifyIsSameUser(currentUser, collection)) {
         return "redirect:/collections?error=notOwner";
       }
@@ -246,7 +251,7 @@ public class BookCollectionWebController {
       // Préparer le modèle commun
       homeWebController.prepareModel(model, principal, "collection-edit");
 
-      BookCollectionShow collection = bookCollectionService.findById(id);
+      BookCollectionShow collection = bookCollectionService.findBookCollectionById(id);
       if (!verifyIsSameUser(currentUser, collection)) {
         return "redirect:/collections?error=notOwner";
       }
@@ -278,7 +283,7 @@ public class BookCollectionWebController {
       return "redirect:/collections?error=notFound";
     }
     try {
-      BookCollectionShow existingCollection = bookCollectionService.findById(id);
+      BookCollectionShow existingCollection = bookCollectionService.findBookCollectionById(id);
       if (!verifyIsSameUser(currentUser, existingCollection)) {
         return "redirect:/pages/collections?error=notOwner";
       }
@@ -312,7 +317,7 @@ public class BookCollectionWebController {
   public String deleteCollection(@PathVariable Long id, @AuthenticationPrincipal User currentUser) {
     try {
       // Verify that the current user owns the collection
-      BookCollectionShow collection = bookCollectionService.findById(id);
+      BookCollectionShow collection = bookCollectionService.findBookCollectionById(id);
       if (!verifyIsSameUser(currentUser, collection)) {
         return "redirect:/collections?error=notOwner";
       }

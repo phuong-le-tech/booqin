@@ -2,6 +2,8 @@ package fr.uge.booqIn.exception;
 
 import com.stripe.exception.*;
 import fr.uge.booqIn.factory.ApiResponse;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.ValidationException;
@@ -25,6 +27,43 @@ import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+
+  @ExceptionHandler(ExpiredJwtException.class)
+  public ResponseEntity<ApiResponse<ErrorResponse>> handleExpiredJwtException(
+          ExpiredJwtException ex,
+          HttpServletRequest request
+  ) {
+    HttpStatus status = HttpStatus.UNAUTHORIZED;
+    ErrorResponse errorResponse = new ErrorResponse(
+            status.value(),
+            "Authentication token has expired",
+            request.getRequestURI(),
+            Instant.now()
+    );
+
+    return ResponseEntity
+            .status(status)
+            .body(ApiResponse.error("Authentication token expired", errorResponse));
+  }
+
+  // Add generic handler for other JWT-related exceptions
+  @ExceptionHandler(JwtException.class)
+  public ResponseEntity<ApiResponse<ErrorResponse>> handleJwtException(
+          JwtException ex,
+          HttpServletRequest request
+  ) {
+    HttpStatus status = HttpStatus.UNAUTHORIZED;
+    ErrorResponse errorResponse = new ErrorResponse(
+            status.value(),
+            ex.getMessage(),
+            request.getRequestURI(),
+            Instant.now()
+    );
+
+    return ResponseEntity
+            .status(status)
+            .body(ApiResponse.error("JWT token error", errorResponse));
+  }
 
   @ExceptionHandler(IllegalArgumentException.class)
   public ResponseEntity<ApiResponse<ErrorResponse>> handleIllegalArgumentException(
