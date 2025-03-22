@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { VoteButton } from './VoteButton';
 import VoteService from '../../services/VoteService';
 import { VoteCount, VoteType } from '../../model/Vote';
-import { AuthContext } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 
 interface VoteSectionProps {
     entityId: number;
@@ -15,7 +15,7 @@ export const VoteSection: React.FC<VoteSectionProps> = ({ entityId, entityType }
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const { user } = useContext(AuthContext);
+    const { user } = useAuth();
 
     // Normalize entity type (ensure uppercase for backend compatibility)
     const normalizedEntityType = entityType.toUpperCase();

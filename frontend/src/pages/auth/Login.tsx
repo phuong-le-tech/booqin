@@ -1,8 +1,7 @@
-import { useState, type ChangeEvent, type FormEvent, useContext } from "react"
-import { useNavigate, Link } from "react-router-dom"
+import { useState, type ChangeEvent, type FormEvent, useEffect } from "react"
+import { useNavigate, Link, useLocation } from "react-router-dom"
 import { toast } from "react-toastify"
-import { AuthContext } from "../../context/AuthContext.tsx"
-import AuthService from "../../services/AuthService.ts"
+import { useAuth } from "../../context/AuthContext"
 import { Layout } from "../Layout.tsx"
 import { Eye, EyeOff } from "lucide-react"
 import type { LoginForm } from "../../model/AuthModel.ts"
@@ -12,7 +11,37 @@ export const Login = () => {
     const [showPassword, setShowPassword] = useState<boolean>(false)
     const [isLoading, setIsLoading] = useState<boolean>(false)
     const navigate = useNavigate()
-    const { setUser } = useContext(AuthContext)
+    const location = useLocation()
+
+    // Use our enhanced auth hook instead of context
+    const { login, isAuthenticated } = useAuth()
+
+    // Check for a redirectUrl in localStorage or use home page
+    const getRedirectUrl = () => {
+        const storedRedirect = localStorage.getItem('redirectAfterLogin')
+        if (storedRedirect) {
+            localStorage.removeItem('redirectAfterLogin')
+            return storedRedirect
+        }
+        return "/"
+    }
+
+    // Check for session expired or other query parameters
+    useEffect(() => {
+        const queryParams = new URLSearchParams(location.search)
+        const sessionStatus = queryParams.get('session')
+
+        if (sessionStatus === 'expired') {
+            toast.info("Your session expired. Please log in again.")
+        }
+    }, [location])
+
+    // If already authenticated, redirect
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate(getRedirectUrl())
+        }
+    }, [isAuthenticated, navigate])
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -21,15 +50,17 @@ export const Login = () => {
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
+
         try {
-            console.log("Submitting login form..." + JSON.stringify(formData))
-            const user = await AuthService.login(formData)
-            setUser(user)
+            console.log("Submitting login form...")
+
+            // Use the login function from our auth hook instead of service
+            await login(formData.login, formData.password)
+
             console.log("Login successful")
             toast.success("Login successful!")
-            setTimeout(() => {
-                navigate("/")
-            }, 100)
+
+            // Redirect is handled by the useEffect above
         } catch (error: any) {
             console.error("Login error in component:", error)
             toast.error(error.message || "Login failed. Please check your credentials.")
