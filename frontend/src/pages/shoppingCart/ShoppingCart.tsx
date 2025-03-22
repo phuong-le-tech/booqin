@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Layout } from "../Layout";
 import axiosInstance from "../../services/AxiosInstance.ts";
-import { AuthContext } from "../../context/AuthContext.tsx";
+import { useAuth } from "../../context/AuthContext.tsx";
 import { useNavigate } from "react-router-dom";
 
 type Book = {
@@ -22,7 +22,7 @@ export const ShoppingCart: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
-    const auth = useContext(AuthContext);
+    const {user} = useAuth();
 
     // Fonction pour traiter et nettoyer le panier
     const processCart = (cart: CartDto | null) => {
@@ -67,13 +67,13 @@ export const ShoppingCart: React.FC = () => {
 
     // Récupérer le panier depuis l'API
     useEffect(() => {
-        if (!auth.user?.id || cart) return;
+        if (!user?.id || cart) return;
 
 
         const fetchCart = async () => {
             try {
-                console.log("📦 Récupération du panier pour userId:", auth.user.id);
-                const response = await axiosInstance.get(`/v1/carts/user-cart/${auth.user.id}`);
+                console.log("📦 Récupération du panier pour userId:", user.id);
+                const response = await axiosInstance.get(`/v1/carts/user-cart/${user.id}`);
 
                 console.log("📦 Réponse brute de l’API:", response.data);
 
@@ -104,19 +104,19 @@ export const ShoppingCart: React.FC = () => {
             }
         };
         fetchCart();
-    }, [auth.user?.id]);
+    }, [user?.id]);
 
 
 
     const removeFromCart = async (bookId: string) => {
-        if (!cart || !auth.user) {
-            console.warn("⚠️ Impossible de supprimer: `cart` ou `auth.user` est `null`", { cart, user: auth.user });
+        if (!cart || !user) {
+            console.warn("⚠️ Impossible de supprimer: `cart` ou `user` est `null`", { cart, user: user });
             return;
         }
 
         try {
             const response = await axiosInstance.delete("/v1/carts/remove-book", {
-                params: { userId: auth.user.id, bookId: bookId },
+                params: { userId: user.id, bookId: bookId },
             });
 
             if (response.status === 200) {
@@ -141,13 +141,13 @@ export const ShoppingCart: React.FC = () => {
     };
 
     const clearCart = async () => {
-        if (!cart || !auth.user) {
-            console.warn("⚠️ Impossible de vider le panier: `cart` ou `auth.user` est `null`", { cart, user: auth.user });
+        if (!cart || !user) {
+            console.warn("⚠️ Impossible de vider le panier: `cart` ou `user` est `null`", { cart, user: user });
             return;
         }
 
         try {
-            const response = await axiosInstance.delete(`/v1/carts/clear-cart/${auth.user.id}`);
+            const response = await axiosInstance.delete(`/v1/carts/clear-cart/${user.id}`);
 
             if (response.status === 200) {
                 setCart(null);
@@ -168,7 +168,7 @@ export const ShoppingCart: React.FC = () => {
     };
 
     const handlePayment = async () => {
-        if (!cart || !auth.user) return;
+        if (!cart || !user) return;
 
         try {
             const response = await axiosInstance.post(`v1/payment/checkout?cartId=${cart.id}`);

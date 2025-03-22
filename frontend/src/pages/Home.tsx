@@ -1,11 +1,10 @@
 import type React from "react"
 import {Link} from "react-router-dom"
-import {useContext} from "react"
-import {AuthContext} from "../context/AuthContext"
+import { useAuth } from "../context/AuthContext"
 import {Layout} from "./Layout.tsx";
 
 export const Home: React.FC = () => {
-    const {user} = useContext(AuthContext)
+    const { user } = useAuth();
     //const [collections, setCollections] = useState<BookCollection[]>([]);
 
     return (
