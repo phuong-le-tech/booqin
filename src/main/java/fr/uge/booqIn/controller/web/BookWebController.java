@@ -1,6 +1,6 @@
-/*
-package fr.uge.booqIn.controller.web;
 
+package fr.uge.booqIn.controller.web;
+/*
 import fr.uge.booqIn.dto.book.BookCreate;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;

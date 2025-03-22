@@ -216,6 +216,28 @@ class BookCollectionService {
             throw error;
         }
     }
+    async getUserNormalPublicCollectionsNormal(
+        page = 0,
+        size = 10,
+        sortField = 'id',
+        sortDirection = 'asc'
+    ) {
+        try {
+            const response = await axiosInstance.get<ApiResponse<Page<BookCollectionIndex>>>(`${API_URL}/user/public`, {
+                params: {
+                    page,
+                    size,
+                    sortField,
+                    sortDirection
+                }
+            });
+
+            return response.data.data;
+        } catch (error) {
+            console.error('Error fetching user public collections:', error);
+            throw error;
+        }
+    }
 }
 
 export default new BookCollectionService();
