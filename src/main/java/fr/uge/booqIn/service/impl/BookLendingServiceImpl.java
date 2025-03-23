@@ -128,6 +128,7 @@ public class BookLendingServiceImpl implements BookLendingInterface {
       eventPublisher.publishEvent(new BookNotAvailableEvent(bookId, borrowerId));
       return false;
     }
+    List<BookLending> availableLendings = bookLendingRepository.findAvailableLendingsForBookOrderByLenderPoints(bookId);
     BookLending selectedLending = availableLendings.getFirst();
     selectedLending.setBorrower(borrower);
     selectedLending.setReservedAt(LocalDateTime.now());
