@@ -166,7 +166,9 @@ class BookControllerTest {
                 publicationDate,
                 createdAt,
                 updatedAt,
-                categories
+                categories,
+                "https://example.com/cover.jpg",
+                true
         );
         when(bookService.findById(eq(bookId))).thenReturn(bookShow);
 
@@ -361,7 +363,9 @@ class BookControllerTest {
                 publicationDate,
                 createdAt,
                 updatedAt,
-                categories
+                categories,
+                "https://example.com/updated-cover.jpg",
+                true
         );
         when(bookService.patchBook(eq(bookId), any(BookUpdate.class))).thenReturn(patchedBook);
 

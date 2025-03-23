@@ -7,6 +7,7 @@ import fr.uge.booqIn.entity.AbstractBookCollection;
 import fr.uge.booqIn.entity.GlobalBookCollection;
 import fr.uge.booqIn.entity.NormalBookCollection;
 import fr.uge.booqIn.entity.SmartBookCollection;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -15,8 +16,12 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class BookCollectionMapper {
-  private final BookMapper bookMapper = new BookMapper();
+  private final BookMapper bookMapper;
 
+  @Autowired
+  public BookCollectionMapper(BookMapper bookMapper) {
+    this.bookMapper = bookMapper;
+  }
 
   /**
    * Converts a book collection entity to an index DTO.

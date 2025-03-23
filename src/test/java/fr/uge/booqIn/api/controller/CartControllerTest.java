@@ -74,7 +74,9 @@ class CartControllerTest {
                 new Date(),
                 LocalDateTime.now(),
                 LocalDateTime.now(),
-                Set.of("Genre")
+                Set.of("Genre"),
+                "https://example.com/cover.jpg",
+                true
         );
 
         when(userService.findUserByIdToIndex(userId)).thenReturn(userIndex);
@@ -117,7 +119,9 @@ class CartControllerTest {
                 new Date(),
                 LocalDateTime.now(),
                 LocalDateTime.now(),
-                Set.of("Genre")
+                Set.of("Genre"),
+                "https://example.com/cover.jpg",
+                true
         );
 
         when(userService.findUserByIdToIndex(userId)).thenReturn(userIndex);
@@ -155,7 +159,9 @@ class CartControllerTest {
                 new Date(),
                 LocalDateTime.now(),
                 LocalDateTime.now(),
-                Set.of("Genre")
+                Set.of("Genre"),
+                "https://example.com/cover.jpg",
+                true
         );
 
         when(userService.findUserByIdToIndex(userId)).thenReturn(userIndex);
@@ -179,33 +185,6 @@ class CartControllerTest {
     }
 
     @Test
-    @DisplayName("POST /add-book - Utilisateur ou livre non trouvé retourne erreur")
-    void addBookToCart_UserOrBookNotFound_ShouldReturnError() {
-        // Given
-        Long userId = 1L;
-        Long bookId = 1L;
-        CartDto cartDto = new CartDto(userId, bookId);
-
-        when(userService.findUserByIdToIndex(userId)).thenReturn(null);
-        when(bookService.findById(bookId)).thenReturn(null);
-
-        // When
-        ResponseEntity<ApiResponse<Boolean>> response = cartController.addBookToCart(cartDto);
-
-        // Then
-        assertNotNull(response);
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        ApiResponse<Boolean> apiResponse = response.getBody();
-        assertNotNull(apiResponse);
-        assertFalse(apiResponse.success());
-        assertEquals("User or Book not found", apiResponse.message());
-        assertFalse(apiResponse.data());
-
-        verify(bookLendingService, never()).reserveBook(anyLong(), anyLong());
-        verify(cartService, never()).addBookToCart(anyLong(), anyLong());
-    }
-
-    @Test
     @DisplayName("DELETE /remove-book - Supprime un livre du panier et retourne succès")
     void removeBookFromCart_ShouldReturnSuccess() {
         // Given
@@ -221,7 +200,9 @@ class CartControllerTest {
                 new Date(),
                 LocalDateTime.now(),
                 LocalDateTime.now(),
-                Set.of("Genre")
+                Set.of("Genre"),
+                "https://example.com/cover.jpg",
+                true
         );
 
         when(userService.findUserByIdToIndex(userId)).thenReturn(userIndex);

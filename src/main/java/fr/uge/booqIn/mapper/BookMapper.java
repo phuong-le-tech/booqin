@@ -5,6 +5,7 @@ import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
+import fr.uge.booqIn.service.interfaces.ImageStorageServiceInterface;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
@@ -13,6 +14,12 @@ import java.util.stream.Collectors;
 
 @Component
 public class BookMapper {
+
+    private final ImageStorageServiceInterface imageStorageService;
+
+    public BookMapper(ImageStorageServiceInterface imageStorageService) {
+        this.imageStorageService = imageStorageService;
+    }
 
     /**
      * Maps Book entity to BookIndex DTO
@@ -41,6 +48,16 @@ public class BookMapper {
         if (book == null) {
             return null;
         }
+
+        String coverImageUrl = null;
+        if (book.getCoverImagePath() != null) {
+            if (Boolean.TRUE.equals(book.getIsExternalImage())) {
+                coverImageUrl = book.getCoverImagePath();
+            } else {
+                coverImageUrl = imageStorageService.buildCoverImageUrl(book.getCoverImagePath());
+            }
+        }
+
         return new BookShow(
                 book.getId(),
                 book.getIsbns(),
@@ -52,7 +69,9 @@ public class BookMapper {
                 book.getPublicationDate(),
                 book.getCreatedAt(),
                 book.getUpdatedAt(),
-                book.getCategories()
+                book.getCategories(),
+                coverImageUrl,
+                book.getIsExternalImage()
         );
     }
 

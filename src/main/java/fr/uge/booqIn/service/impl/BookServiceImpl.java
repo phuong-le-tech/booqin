@@ -31,310 +31,323 @@ import java.util.logging.Logger;
 
 @Service
 public class BookServiceImpl implements BookServiceInterface {
-  private static final Logger logger = Logger.getLogger(BookServiceImpl.class.getName());
-  private final BookRepository bookRepository;
-  private final AuthorRepository authorRepository;
-  private final BookMapper bookMapper;
-  private final EventPublisherService eventPublisher;
+    private static final Logger logger = Logger.getLogger(BookServiceImpl.class.getName());
+    private final BookRepository bookRepository;
+    private final AuthorRepository authorRepository;
+    private final BookMapper bookMapper;
+    private final EventPublisherService eventPublisher;
 
-  public BookServiceImpl(
-      BookRepository bookRepository,
-      AuthorRepository authorRepository,
-      BookMapper bookMapper,
-      EventPublisherService eventPublisher) {
-    this.bookRepository = bookRepository;
-    this.authorRepository = authorRepository;
-    this.bookMapper = bookMapper;
-    this.eventPublisher = eventPublisher;
-  }
-
-  @Override
-  @Transactional(readOnly = true)
-  public Page<BookIndex> findBooks(String title, String author, String isbn, Pageable pageable) {
-    // Build the specification for filtering
-    Specification<Book> spec = Specification.where(null);
-
-    if (title != null && !title.isEmpty()) {
-      spec = spec.and(BookSpecification.hasTitle(title));
+    public BookServiceImpl(
+            BookRepository bookRepository,
+            AuthorRepository authorRepository,
+            BookMapper bookMapper,
+            EventPublisherService eventPublisher) {
+        this.bookRepository = bookRepository;
+        this.authorRepository = authorRepository;
+        this.bookMapper = bookMapper;
+        this.eventPublisher = eventPublisher;
     }
 
-    if (author != null && !author.isEmpty()) {
-      spec = spec.and(BookSpecification.hasAuthor(author));
-    }
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BookIndex> findBooks(String title, String author, String isbn, Pageable pageable) {
+        // Build the specification for filtering
+        Specification<Book> spec = Specification.where(null);
 
-    if (isbn != null && !isbn.isEmpty()) {
-      spec = spec.and(BookSpecification.hasIsbn(isbn));
-    }
-
-    return bookRepository.findAll(spec, pageable)
-        .map(bookMapper::toBookIndex);
-  }
-
-  @Override
-  @Transactional(readOnly = true)
-  public BookShow findById(@NonNull Long id) {
-    Book book = findBookById(id);
-    return bookMapper.toBookShow(book);
-  }
-
-  @Override
-  @Transactional
-  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {
-      ObjectOptimisticLockingFailureException.class,
-      ConcurrentModificationException.class }, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
-  public Book createBook(@NonNull @Validated Book book) {
-    // Save authors first if they don't have IDs
-    if (book.getAuthors() != null) {
-      book.getAuthors().stream()
-          .filter(author -> author.getId() == null)
-          .forEach(authorRepository::save);
-    }
-
-    // Check for duplicate ISBNs
-    boolean isbnExists = book.getIsbns().stream()
-        .anyMatch(isbn -> findByIsbn(isbn).isPresent());
-    if (isbnExists) {
-      throw new DuplicateResourceException("Book", "ISBN", book.getIsbns().toString());
-    }
-
-    book.setCreatedAt(LocalDateTime.now());
-    book.setUpdatedAt(LocalDateTime.now());
-    Book savedBook = bookRepository.save(book);
-
-    // Publish event for newly created book
-    eventPublisher.publishBookCreatedEvent(this, savedBook);
-
-    return savedBook;
-  }
-
-  @Override
-  @Transactional
-  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {
-      ObjectOptimisticLockingFailureException.class,
-      ConcurrentModificationException.class }, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
-  public Book updateBook(@NonNull @Validated Book book) {
-    // Check if book exists
-    if (!bookRepository.existsById(book.getId())) {
-      throw new ResourceNotFoundException("Book", "id", book.getId());
-    }
-
-    // Save new authors first
-    if (book.getAuthors() != null) {
-      book.getAuthors().stream()
-          .filter(author -> author.getId() == null)
-          .forEach(authorRepository::save);
-    }
-
-    // Check for duplicate ISBNs in other books
-    for (String isbn : book.getIsbns()) {
-      Optional<Book> existingBook = findByIsbn(isbn);
-      if (existingBook.isPresent() && !existingBook.get().getId().equals(book.getId())) {
-        throw new DuplicateResourceException("Book", "ISBN", isbn);
-      }
-    }
-
-    book.setUpdatedAt(LocalDateTime.now());
-    return bookRepository.save(book);
-  }
-
-  @Override
-  @Transactional
-  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {
-      ObjectOptimisticLockingFailureException.class,
-      ConcurrentModificationException.class }, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
-  public BookShow patchBook(@NonNull Long id, @NonNull @Validated BookUpdate bookUpdate) {
-    Book book = findBookById(id);
-
-    // Apply updates if present
-    bookUpdate.title().ifPresent(book::setTitle);
-    bookUpdate.description().ifPresent(book::setDescription);
-    bookUpdate.publicationDate().ifPresent(book::setPublicationDate);
-
-    // Handle ISBNs update (check for duplicates)
-    bookUpdate.isbns().ifPresent(isbns -> {
-      // Check for duplicate ISBNs
-      for (String isbn : isbns) {
-        Optional<Book> existingBook = findByIsbn(isbn);
-        if (existingBook.isPresent() && !existingBook.get().getId().equals(id)) {
-          throw new DuplicateResourceException("Book", "ISBN", isbn);
+        if (title != null && !title.isEmpty()) {
+            spec = spec.and(BookSpecification.hasTitle(title));
         }
-      }
-      book.getIsbns().clear();
-      book.setIsbns(isbns);
-    });
 
-    book.setUpdatedAt(LocalDateTime.now());
-    Book savedBook = bookRepository.save(book);
-    return bookMapper.toBookShow(savedBook);
-  }
+        if (author != null && !author.isEmpty()) {
+            spec = spec.and(BookSpecification.hasAuthor(author));
+        }
 
-  @Override
-  @Transactional
-  public void deleteBook(@NonNull Long id) {
-    Book book = findBookById(id);
-    bookRepository.delete(book);
-  }
+        if (isbn != null && !isbn.isEmpty()) {
+            spec = spec.and(BookSpecification.hasIsbn(isbn));
+        }
 
-  @Transactional
-  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {
-      ObjectOptimisticLockingFailureException.class,
-      ConcurrentModificationException.class }, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
-  public void saveFromApi(Book toSave) {
-    Objects.requireNonNull(toSave, "Book to save cannot be null");
-
-    // Check if a book with one of the ISBNs already exists
-    Optional<Book> existingBookOpt = findExistingBookByIsbns(toSave.getIsbns());
-
-    existingBookOpt.map(book -> updateExistingBook(book, toSave))
-        .orElseGet(() -> createNewBook(toSave));
-  }
-
-  private Optional<Book> findExistingBookByIsbns(Set<String> isbns) {
-    if (isbns == null || isbns.isEmpty()) {
-      return Optional.empty();
+        return bookRepository.findAll(spec, pageable)
+                .map(bookMapper::toBookIndex);
     }
 
-    return isbns.stream()
-        .map(this::findByIsbn)
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        .findFirst();
-  }
-
-  private Book updateExistingBook(Book existingBook, Book newBook) {
-    logger.info("A book with one of the ISBNs already exists, updating information");
-
-    // Update description if needed
-    if (isEmptyOrNull(existingBook.getDescription()) && !isEmptyOrNull(newBook.getDescription())) {
-      existingBook.setDescription(newBook.getDescription());
+    @Override
+    @Transactional(readOnly = true)
+    public BookShow findById(@NonNull Long id) {
+        Book book = findBookById(id);
+        return bookMapper.toBookShow(book);
     }
 
-    // Add new ISBNs
-    addNewIsbns(existingBook, newBook.getIsbns());
+    @Override
+    @Transactional
+    @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {
+            ObjectOptimisticLockingFailureException.class,
+            ConcurrentModificationException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
+    public Book createBook(@NonNull @Validated Book book) {
+        // Save authors first if they don't have IDs
+        if (book.getAuthors() != null) {
+            book.getAuthors().stream()
+                    .filter(author -> author.getId() == null)
+                    .forEach(authorRepository::save);
+        }
 
-    // Add new categories
-    addNewCategories(existingBook, newBook.getCategories());
+        // Check for duplicate ISBNs
+        boolean isbnExists = book.getIsbns().stream()
+                .anyMatch(isbn -> findByIsbn(isbn).isPresent());
+        if (isbnExists) {
+            throw new DuplicateResourceException("Book", "ISBN", book.getIsbns().toString());
+        }
 
-    // Add new authors
-    addNewAuthors(existingBook, newBook.getAuthors());
+        book.setCreatedAt(LocalDateTime.now());
+        book.setUpdatedAt(LocalDateTime.now());
+        Book savedBook = bookRepository.save(book);
 
-    // Update modification date
-    existingBook.setUpdatedAt(LocalDateTime.now());
+        // Publish event for newly created book
+        eventPublisher.publishBookCreatedEvent(this, savedBook);
 
-    return bookRepository.save(existingBook);
-  }
-
-  private void addNewIsbns(Book existingBook, Set<String> newIsbns) {
-    if (newIsbns == null)
-      return;
-
-    Set<String> existingIsbns = new HashSet<>(existingBook.getIsbns());
-    for (String isbn : newIsbns) {
-      if (!existingIsbns.contains(isbn) && findByIsbn(isbn).isEmpty()) {
-        existingBook.addIsbn(isbn);
-      }
-    }
-  }
-
-  private void addNewCategories(Book existingBook, Set<String> newCategories) {
-    if (newCategories == null)
-      return;
-
-    newCategories.forEach(existingBook::addCategory);
-  }
-
-  private void addNewAuthors(Book existingBook, Set<Author> newAuthors) {
-    if (newAuthors == null)
-      return;
-
-    // Save new authors that don't have an ID
-    newAuthors.stream()
-        .filter(author -> author.getId() == null)
-        .forEach(authorRepository::save);
-
-    // Add authors to the existing book
-    if (existingBook.getAuthors() == null) {
-      existingBook.setAuthors(new HashSet<>());
-    }
-    existingBook.getAuthors().addAll(newAuthors);
-  }
-
-  private Book createNewBook(Book toSave) {
-    // Check that none of the ISBNs exists in any book
-    for (String isbn : toSave.getIsbns()) {
-      if (findByIsbn(isbn).isPresent()) {
-        throw new DuplicateResourceException("Book", "ISBN", isbn);
-      }
+        return savedBook;
     }
 
-    if (toSave.getAuthors() == null) {
-      toSave.setAuthors(new HashSet<>());
+    @Override
+    @Transactional
+    @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {
+            ObjectOptimisticLockingFailureException.class,
+            ConcurrentModificationException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
+    public Book updateBook(@NonNull @Validated Book book) {
+        // Check if book exists
+        if (!bookRepository.existsById(book.getId())) {
+            throw new ResourceNotFoundException("Book", "id", book.getId());
+        }
+
+        // Save new authors first
+        if (book.getAuthors() != null) {
+            book.getAuthors().stream()
+                    .filter(author -> author.getId() == null)
+                    .forEach(authorRepository::save);
+        }
+
+        // Check for duplicate ISBNs in other books
+        for (String isbn : book.getIsbns()) {
+            Optional<Book> existingBook = findByIsbn(isbn);
+            if (existingBook.isPresent() && !existingBook.get().getId().equals(book.getId())) {
+                throw new DuplicateResourceException("Book", "ISBN", isbn);
+            }
+        }
+
+        book.setUpdatedAt(LocalDateTime.now());
+        return bookRepository.save(book);
     }
 
-    toSave.getAuthors().stream()
-        .filter(author -> author.getId() == null)
-        .forEach(authorRepository::save);
+    @Override
+    @Transactional
+    @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {
+            ObjectOptimisticLockingFailureException.class,
+            ConcurrentModificationException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
+    public BookShow patchBook(@NonNull Long id, @NonNull @Validated BookUpdate bookUpdate) {
+        Book book = findBookById(id);
 
-    toSave.setCreatedAt(LocalDateTime.now());
-    toSave.setUpdatedAt(LocalDateTime.now());
+        // Apply updates if present
+        bookUpdate.title().ifPresent(book::setTitle);
+        bookUpdate.description().ifPresent(book::setDescription);
+        bookUpdate.publicationDate().ifPresent(book::setPublicationDate);
 
-    return bookRepository.save(toSave);
-  }
+        // Handle ISBNs update (check for duplicates)
+        bookUpdate.isbns().ifPresent(isbns -> {
+            // Check for duplicate ISBNs
+            for (String isbn : isbns) {
+                Optional<Book> existingBook = findByIsbn(isbn);
+                if (existingBook.isPresent() && !existingBook.get().getId().equals(id)) {
+                    throw new DuplicateResourceException("Book", "ISBN", isbn);
+                }
+            }
+            book.getIsbns().clear();
+            book.setIsbns(isbns);
+        });
 
-  private boolean isEmptyOrNull(String str) {
-    return str == null || str.isEmpty();
-  }
+        book.setUpdatedAt(LocalDateTime.now());
+        Book savedBook = bookRepository.save(book);
+        return bookMapper.toBookShow(savedBook);
+    }
 
-  @Override
-  @Transactional(readOnly = true)
-  public Book findBookById(Long id) {
-    Book bookWithAuthors = bookRepository.findByIdWithAuthors(id)
-        .orElseThrow(() -> new ResourceNotFoundException("Book", "id", id));
+    @Override
+    @Transactional
+    public void deleteBook(@NonNull Long id) {
+        Book book = findBookById(id);
+        bookRepository.delete(book);
+    }
 
-    Book bookWithIsbns = bookRepository.findByIdWithIsbns(id)
-        .orElseThrow(() -> new ResourceNotFoundException("Book", "id", id));
+    @Transactional
+    @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {
+            ObjectOptimisticLockingFailureException.class,
+            ConcurrentModificationException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
+    public void saveFromApi(Book toSave) {
+        Objects.requireNonNull(toSave, "Book to save cannot be null");
 
-    Book bookWithCategories = bookRepository.findByIdWithCategories(id)
-        .orElseThrow(() -> new ResourceNotFoundException("Book", "id", id));
+        // Check if a book with one of the ISBNs already exists
+        Optional<Book> existingBookOpt = findExistingBookByIsbns(toSave.getIsbns());
 
-    bookWithAuthors.setIsbns(bookWithIsbns.getIsbns());
-    bookWithAuthors.setCategories(bookWithCategories.getCategories());
+        existingBookOpt.map(book -> updateExistingBook(book, toSave))
+                .orElseGet(() -> createNewBook(toSave));
+    }
 
-    return bookWithAuthors;
-  }
+    private Optional<Book> findExistingBookByIsbns(Set<String> isbns) {
+        if (isbns == null || isbns.isEmpty()) {
+            return Optional.empty();
+        }
 
-  private Optional<Book> findByIsbn(String isbn) {
-    return bookRepository.findBookByIsbnInSet(isbn);
-  }
+        return isbns.stream()
+                .map(this::findByIsbn)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .findFirst();
+    }
 
-  @Transactional(readOnly = true)
-  public List<Book> findAll() {
-    return bookRepository.findAll();
-  }
+    private Book updateExistingBook(Book existingBook, Book newBook) {
+        logger.info("A book with one of the ISBNs already exists, updating information");
 
-  // Recovery methods for retryable operations
+        // Update description if needed
+        if (isEmptyOrNull(existingBook.getDescription()) && !isEmptyOrNull(newBook.getDescription())) {
+            existingBook.setDescription(newBook.getDescription());
+        }
 
-  @Recover
-  public Book recoverFromOptimisticLockingFailureCreate(
-      ObjectOptimisticLockingFailureException ex, @NonNull @Validated Book book) {
-    throw new ConcurrentModificationException("The book has been modified by someone else. Please try again.", ex);
-  }
+        // Add new ISBNs
+        addNewIsbns(existingBook, newBook.getIsbns());
 
-  @Recover
-  public Book recoverFromOptimisticLockingFailureUpdate(
-      ObjectOptimisticLockingFailureException ex, @NonNull @Validated Book book) {
-    throw new ConcurrentModificationException("The book has been modified by someone else. Please try again.", ex);
-  }
+        // Add new categories
+        addNewCategories(existingBook, newBook.getCategories());
 
-  @Recover
-  public BookShow recoverFromOptimisticLockingFailurePatch(
-      ObjectOptimisticLockingFailureException ex, @NonNull Long id, @NonNull @Validated BookUpdate bookUpdate) {
-    throw new ConcurrentModificationException("The book has been modified by someone else. Please try again.", ex);
-  }
+        // Add new authors
+        addNewAuthors(existingBook, newBook.getAuthors());
 
-  @Recover
-  public void recoverFromOptimisticLockingFailureSaveFromApi(
-      ObjectOptimisticLockingFailureException ex, Book toSave) {
-    throw new ConcurrentModificationException("The book has been modified by someone else. Please try again.", ex);
-  }
+        // Add cover image
+        addCoverImage(existingBook, newBook.getCoverImagePath());
+
+        // Update modification date
+        existingBook.setUpdatedAt(LocalDateTime.now());
+
+        return bookRepository.save(existingBook);
+    }
+
+    private void addNewIsbns(Book existingBook, Set<String> newIsbns) {
+        if (newIsbns == null)
+            return;
+
+        Set<String> existingIsbns = new HashSet<>(existingBook.getIsbns());
+        for (String isbn : newIsbns) {
+            if (!existingIsbns.contains(isbn) && findByIsbn(isbn).isEmpty()) {
+                existingBook.addIsbn(isbn);
+            }
+        }
+    }
+
+    private void addNewCategories(Book existingBook, Set<String> newCategories) {
+        if (newCategories == null)
+            return;
+
+        newCategories.forEach(existingBook::addCategory);
+    }
+
+    private void addNewAuthors(Book existingBook, Set<Author> newAuthors) {
+        if (newAuthors == null)
+            return;
+
+        // Save new authors that don't have an ID
+        newAuthors.stream()
+                .filter(author -> author.getId() == null)
+                .forEach(authorRepository::save);
+
+        // Add authors to the existing book
+        if (existingBook.getAuthors() == null) {
+            existingBook.setAuthors(new HashSet<>());
+        }
+        existingBook.getAuthors().addAll(newAuthors);
+    }
+
+    private void addCoverImage(Book existingBook, String coverImagePath) {
+        if (coverImagePath == null) {
+            return;
+        }
+        if (existingBook.getCoverImagePath() == null) {
+            existingBook.setCoverImagePath(coverImagePath);
+            existingBook.setIsExternalImage(true);
+        }
+    }
+
+    private Book createNewBook(Book toSave) {
+        // Check that none of the ISBNs exists in any book
+        for (String isbn : toSave.getIsbns()) {
+            if (findByIsbn(isbn).isPresent()) {
+                throw new DuplicateResourceException("Book", "ISBN", isbn);
+            }
+        }
+
+        if (toSave.getAuthors() == null) {
+            toSave.setAuthors(new HashSet<>());
+        }
+
+        toSave.getAuthors().stream()
+                .filter(author -> author.getId() == null)
+                .forEach(authorRepository::save);
+
+        toSave.setCreatedAt(LocalDateTime.now());
+        toSave.setUpdatedAt(LocalDateTime.now());
+
+        return bookRepository.save(toSave);
+    }
+
+    private boolean isEmptyOrNull(String str) {
+        return str == null || str.isEmpty();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Book findBookById(Long id) {
+        Book bookWithAuthors = bookRepository.findByIdWithAuthors(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Book", "id", id));
+
+        Book bookWithIsbns = bookRepository.findByIdWithIsbns(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Book", "id", id));
+
+        Book bookWithCategories = bookRepository.findByIdWithCategories(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Book", "id", id));
+
+        bookWithAuthors.setIsbns(bookWithIsbns.getIsbns());
+        bookWithAuthors.setCategories(bookWithCategories.getCategories());
+
+        return bookWithAuthors;
+    }
+
+    private Optional<Book> findByIsbn(String isbn) {
+        return bookRepository.findBookByIsbnInSet(isbn);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Book> findAll() {
+        return bookRepository.findAll();
+    }
+
+    // Recovery methods for retryable operations
+
+    @Recover
+    public Book recoverFromOptimisticLockingFailureCreate(
+            ObjectOptimisticLockingFailureException ex, @NonNull @Validated Book book) {
+        throw new ConcurrentModificationException("The book has been modified by someone else. Please try again.", ex);
+    }
+
+    @Recover
+    public Book recoverFromOptimisticLockingFailureUpdate(
+            ObjectOptimisticLockingFailureException ex, @NonNull @Validated Book book) {
+        throw new ConcurrentModificationException("The book has been modified by someone else. Please try again.", ex);
+    }
+
+    @Recover
+    public BookShow recoverFromOptimisticLockingFailurePatch(
+            ObjectOptimisticLockingFailureException ex, @NonNull Long id, @NonNull @Validated BookUpdate bookUpdate) {
+        throw new ConcurrentModificationException("The book has been modified by someone else. Please try again.", ex);
+    }
+
+    @Recover
+    public void recoverFromOptimisticLockingFailureSaveFromApi(
+            ObjectOptimisticLockingFailureException ex, Book toSave) {
+        throw new ConcurrentModificationException("The book has been modified by someone else. Please try again.", ex);
+    }
 }

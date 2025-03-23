@@ -1,5 +1,5 @@
 // src/pages/BookDetail.tsx
-import React, {useState, useEffect, useContext} from "react";
+import React, {useState, useEffect} from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "../Layout";
 import { Book } from "../../model/Book";
@@ -17,6 +17,7 @@ export const BookDetail: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [isbnExpanded, setIsbnExpanded] = useState<boolean>(false);
     const [authorsExpanded, setAuthorsExpanded] = useState<boolean>(false);
+    const [imageError, setImageError] = useState<boolean>(false);
     const { user } = useAuth();
 
     useEffect(() => {
@@ -43,6 +44,32 @@ export const BookDetail: React.FC = () => {
 
         fetchBookDetails();
     }, [id]);
+
+    // Fonction pour vérifier et corriger l'URL si nécessaire
+    const getValidImageUrl = (url: string | undefined, isExternal: boolean | undefined): string | undefined => {
+        if (!url) return undefined;
+
+        // Si c'est une image externe ou de Google Books, utiliser notre proxy
+        if (isExternal || url.includes('books.google.com')) {
+            // Utiliser le proxy de notre serveur backend
+            return `${window.location.origin}/api/v1/proxy/image?url=${encodeURIComponent(url)}`;
+        }
+
+        // Si l'URL est relative (ne commence pas par http ou https)
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            // Construire l'URL complète en fonction de l'environnement
+            const baseUrl = process.env.REACT_APP_API_BASE_URL || window.location.origin;
+
+            // Si l'URL commence déjà par un slash, on ne l'ajoute pas
+            if (url.startsWith('/')) {
+                return `${baseUrl}${url}`;
+            } else {
+                return `${baseUrl}/${url}`;
+            }
+        }
+
+        return url;
+    };
 
     // Fonction pour générer une couleur à partir de l'id du livre
     const getBookCoverColor = (bookId: number) => {
@@ -176,6 +203,11 @@ export const BookDetail: React.FC = () => {
         );
     };
 
+    const handleImageError = () => {
+        console.error(`Failed to load image for book ${book?.id}`);
+        setImageError(true);
+    };
+
     if (isLoading) {
         return (
             <Layout>
@@ -225,6 +257,11 @@ export const BookDetail: React.FC = () => {
         );
     }
 
+    // Obtenir l'URL valide de l'image
+    const validCoverUrl = book && book.coverImageUrl ?
+        getValidImageUrl(book.coverImageUrl, book.isExternalImage) :
+        undefined;
+
     return (
         <Layout>
             <div className="container mx-auto px-4 py-8">
@@ -244,12 +281,24 @@ export const BookDetail: React.FC = () => {
                     <div className="flex flex-col md:flex-row">
                         {/* Book Cover */}
                         <div className="md:w-1/3 lg:w-1/4">
-                            <div
-                                className="w-full h-64 md:h-full flex items-center justify-center text-white font-bold text-6xl"
-                                style={{ backgroundColor: getBookCoverColor(book.id) }}
-                            >
-                                {book.title.substring(0, 1).toUpperCase()}
-                            </div>
+                            {validCoverUrl && !imageError ? (
+                                <div className="relative h-64 md:h-full">
+                                    <img
+                                        src={validCoverUrl}
+                                        alt={`Cover of ${book.title}`}
+                                        className="absolute inset-0 w-full h-full object-contain bg-gray-100"
+                                        onError={handleImageError}
+                                        crossOrigin="anonymous"
+                                    />
+                                </div>
+                            ) : (
+                                <div
+                                    className="w-full h-64 md:h-full flex items-center justify-center text-white font-bold text-6xl"
+                                    style={{ backgroundColor: getBookCoverColor(book.id) }}
+                                >
+                                    {book.title.substring(0, 1).toUpperCase()}
+                                </div>
+                            )}
                         </div>
 
                         {/* Book Details */}

@@ -8,6 +8,7 @@ public record VolumeInfo(
         String description,
         String publishedDate,
         List<IndustryIdentifier> industryIdentifiers,
-        List<String> categories
+        List<String> categories,
+        ImageLinks imageLinks
 ) {
 }

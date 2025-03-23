@@ -65,6 +65,12 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
   @Column(name = "publication_date")
   private Date publicationDate;
 
+  @Column(name = "cover_image_path", length = 1000)
+  private String coverImagePath;
+
+  @Column(name = "is_external_image")
+  private Boolean isExternalImage;
+
   @NotNull(message = "Creation date is required")
   @PastOrPresent(message = "Creation date cannot be in the future")
   @Temporal(TemporalType.TIMESTAMP)
@@ -98,6 +104,8 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
     this.description = builder.description;
     this.categories = builder.categories;
     this.publicationDate = builder.publicationDate;
+    this.coverImagePath = builder.coverImagePath;
+    this.isExternalImage = builder.isExternalImage;
     this.createdAt = builder.createdAt;
     this.updatedAt = builder.updatedAt;
   }
@@ -133,6 +141,14 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
 
   public Date getPublicationDate() {
     return publicationDate;
+  }
+
+  public String getCoverImagePath() {
+    return coverImagePath;
+  }
+
+  public Boolean getIsExternalImage() {
+    return isExternalImage;
   }
 
   public LocalDateTime getCreatedAt() {
@@ -185,6 +201,14 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
     this.isbns.addAll(isbns);
   }
 
+  public void setCoverImagePath(String coverImagePath) {
+    this.coverImagePath = coverImagePath;
+  }
+
+  public void setIsExternalImage(Boolean isExternalImage) {
+    this.isExternalImage = isExternalImage;
+  }
+
   public void addIsbn(String isbn) {
     if (isbn != null) this.isbns.add(isbn);
   }
@@ -192,6 +216,7 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
   public void addCategory(String category) {
     if (category != null) this.categories.add(category);
   }
+
 
   @Override
   public String toString() {
@@ -202,6 +227,8 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
             ", authors=" + authors +
             ", categories=" + categories +
             ", publicationDate=" + publicationDate +
+            ", coverImagePath='" + coverImagePath + '\'' +
+            ", isExternalImage=" + isExternalImage +
             '}';
   }
 
@@ -213,6 +240,8 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
     private String description;
     private Set<String> categories = new HashSet<>();
     private Date publicationDate;
+    private String coverImagePath;
+    private Boolean isExternalImage;
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
 
@@ -253,6 +282,16 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
 
     public Builder publicationDate(Date publicationDate) {
       this.publicationDate = publicationDate;
+      return this;
+    }
+
+    public Builder coverImagePath(String coverImagePath) {
+      this.coverImagePath = coverImagePath;
+      return this;
+    }
+
+    public Builder isExternalImage(Boolean isExternalImage) {
+      this.isExternalImage = isExternalImage;
       return this;
     }
 

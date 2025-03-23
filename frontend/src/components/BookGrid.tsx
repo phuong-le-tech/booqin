@@ -1,7 +1,7 @@
 // src/components/BookGrid.tsx
 import React, {useState, useEffect } from 'react';
 import { BookCard } from './BookCard';
-import { BookIndex } from '../model/Book';
+import { BookIndex, BookShow } from '../model/Book';
 import axiosInstance from "../services/AxiosInstance.ts";
 import {useAuth} from "../context/AuthContext.tsx";
 
@@ -11,9 +11,11 @@ interface BookGridProps {
     userId?: number;
 }
 
-export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading, userId }) => {
+export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading}) => {
     const [lentBooks, setLentBooks] = useState<number[]>([]);
     const [borrowedBooks, setBorrowedBooks] = useState<number[]>([]);
+    const [detailedBooks, setDetailedBooks] = useState<BookShow[]>([]);
+    const [loadingDetails, setLoadingDetails] = useState<boolean>(true);
     const { user } = useAuth();
     const userIds = user?.id;
 
@@ -45,15 +47,65 @@ export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading, userId }) 
         }
     };
 
+    const fetchDetailedBooks = async () => {
+        if (books.length === 0) return;
+
+        setLoadingDetails(true);
+        try {
+            const detailedBooksPromises = books.map(book =>
+                axiosInstance.get(`/v1/books/${book.id}`)
+                    .then(response => {
+                        if (response.data?.success && response.data?.data) {
+                            return response.data.data;
+                        }
+                        throw new Error(`Failed to get details for book ${book.id}`);
+                    })
+                    .catch(error => {
+                        console.error(`Error fetching details for book ${book.id}:`, error);
+                        return {
+                            id: book.id,
+                            title: book.title,
+                            publicationDate: book.publicationDate,
+                            authors: book.authorNames.map(name => {
+                                const nameParts = name.split(' ');
+                                return {
+                                    id: 0,
+                                    firstName: nameParts[0] || '',
+                                    lastName: nameParts.slice(1).join(' ') || ''
+                                };
+                            }),
+                            isbns: [],
+                            description: '',
+                            createdAt: '',
+                            updatedAt: '',
+                            categories: [],
+                            // pas de coverImageUrl ni isExternalImage
+                        };
+                    })
+            );
+
+            const results = await Promise.all(detailedBooksPromises);
+            setDetailedBooks(results);
+        } catch (error) {
+            console.error("Error fetching book details:", error);
+        } finally {
+            setLoadingDetails(false);
+        }
+    };
+
     useEffect(() => {
         fetchUserBooks();
     }, [userIds]);
+
+    useEffect(() => {
+        fetchDetailedBooks();
+    }, [books]);
 
     const handleLendingChange = () => {
         fetchUserBooks();
     };
 
-    if (isLoading) {
+    if (isLoading || loadingDetails) {
         // Skeleton loading state
         return (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
@@ -73,7 +125,7 @@ export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading, userId }) 
 
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {books.map(book => (
+            {detailedBooks.map(book => (
                 <BookCard
                     key={book.id}
                     book={book}

@@ -97,14 +97,20 @@ public class GoogleBooksAPI implements BookFetcher {
             categories.addAll(volumeInfo.categories());
         }
 
-        return new Book.Builder()
+        Book.Builder bookBuilder = new Book.Builder()
                 .title(volumeInfo.title())
                 .authors(authors)
                 .description(description)
                 .publicationDate(publicationDate)
                 .isbns(isbns)
-                .categories(categories)
-                .build();
+                .categories(categories);
+
+        if (volumeInfo.imageLinks() != null && volumeInfo.imageLinks().thumbnail() != null) {
+            bookBuilder.coverImagePath(volumeInfo.imageLinks().thumbnail());
+            bookBuilder.isExternalImage(true);
+        }
+
+        return bookBuilder.build();
     }
 
     private String getIdentifier(List<IndustryIdentifier> industryIdentifiers, String type){

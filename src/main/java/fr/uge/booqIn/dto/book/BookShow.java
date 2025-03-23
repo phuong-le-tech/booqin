@@ -16,6 +16,8 @@ public record BookShow(
         Date publicationDate,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
-        Set<String> categories
+        Set<String> categories,
+        String coverImageUrl,
+        Boolean isExternalImage
 ) {
 }

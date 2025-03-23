@@ -1,7 +1,6 @@
 import {PageInfo} from "./Pagination.ts";
 import {Author} from "./Author.ts";
 
-// Modèle Book pour les affichages liste (BookIndex)
 export interface BookIndex {
     id: number;
     title: string;
@@ -9,15 +8,24 @@ export interface BookIndex {
     publicationDate: Date;
 }
 
-export interface BookDetails {
+export interface BookShow {
     id: number;
+    isbns: string[];
     title: string;
+    authors: {
+        id: number;
+        firstName: string;
+        lastName: string;
+    }[];
     description: string;
-    authorNames: string[];
     publicationDate: Date;
+    createdAt: string;
+    updatedAt: string;
+    categories?: string[];
+    coverImageUrl?: string;
+    isExternalImage?: boolean;
 }
 
-// Modèle Book détaillé (BookShow)
 export interface Book {
     id: number;
     isbns: string[];
@@ -28,18 +36,21 @@ export interface Book {
     createdAt: string;
     updatedAt: string;
     categories?: string[];
+    coverImageUrl?: string;
+    isExternalImage?: boolean;
 }
 
-// Modèle pour la mise à jour partielle de Book
 export interface BookUpdate {
     title?: string;
     description?: string;
     publicationDate?: string;
     isbns?: string[];
+    coverImagePath?: string;
+    isExternalImage?: boolean;
 }
 
 export interface BookPagedResponse {
-    content: BookIndex[];
+    content: BookShow[];
     page: PageInfo;
 }
 

@@ -27,22 +27,28 @@ import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+
 @Controller
 @RequestMapping("/collections")
 public class BookCollectionWebController {
   private final BookCollectionServiceInterface bookCollectionService;
   private final BookServiceImpl bookService;
-  private final BookMapper bookMapper = new BookMapper();
-  private final BookCollectionMapper bookCollectionMapper = new BookCollectionMapper();
+  private final BookMapper bookMapper;
+  private final BookCollectionMapper bookCollectionMapper;
   private final Logger logger = Logger.getLogger(BookCollectionWebController.class.getName());
   private final HomeWebController homeWebController;
 
   @Autowired
-  public BookCollectionWebController(BookCollectionServiceInterface bookCollectionService,
-                                     BookServiceImpl bookService,
-                                     HomeWebController homeWebController) {
+  public BookCollectionWebController(
+          BookCollectionServiceInterface bookCollectionService,
+          BookServiceImpl bookService,
+          BookMapper bookMapper,
+          BookCollectionMapper bookCollectionMapper,
+          HomeWebController homeWebController) {
     this.bookCollectionService = bookCollectionService;
     this.bookService = bookService;
+    this.bookMapper = bookMapper;
+    this.bookCollectionMapper = bookCollectionMapper;
     this.homeWebController = homeWebController;
   }
 
