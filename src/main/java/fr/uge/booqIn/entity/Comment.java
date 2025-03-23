@@ -3,6 +3,10 @@ package fr.uge.booqIn.entity;
 import fr.uge.booqIn.model.PolymorphicAssociation;
 import fr.uge.booqIn.model.PolymorphicEntity;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import org.hibernate.validator.constraints.Length;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -14,9 +18,12 @@ public class Comment extends PolymorphicAssociation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "Comment content cannot be empty")
+    @Length(min = 1, max = 1000, message = "Comment must be between 1 and 1000 characters")
     @Column(nullable = false, length = 1000)
     private String content;
 
+    @NotNull(message = "User is required")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -28,8 +35,9 @@ public class Comment extends PolymorphicAssociation {
     @OneToMany(mappedBy = "parentComment", cascade = CascadeType.ALL)
     private List<Comment> replies = new ArrayList<>();
 
+    @NotNull(message = "Creation date is required")
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;

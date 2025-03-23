@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import {JSX, useEffect, useState} from "react";
 import { Layout } from "../Layout";
 import axiosInstance from "../../services/AxiosInstance.ts";
 import { useAuth } from "../../context/AuthContext.tsx";
@@ -18,18 +18,18 @@ type CartDto = {
     books: Book[];
 };
 
-export const ShoppingCart: React.FC = () => {
+export const ShoppingCart: () => JSX.Element = () => {
     const [cart, setCart] = useState<CartDto | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
     const {user} = useAuth();
 
-    // Fonction pour traiter et nettoyer le panier
+    // Function to process and clean the cart
     const processCart = (cart: CartDto | null) => {
         if (!cart || !cart.books) return cart;
 
-        // Éliminer les doublons tout en préservant l'ordre
+        // Remove duplicates while preserving order
         const uniqueBooks = cart.books.filter(
             (book, index, self) =>
                 index === self.findIndex((t) => t.id === book.id)
@@ -41,7 +41,7 @@ export const ShoppingCart: React.FC = () => {
         };
     };
 
-    // Charger le panier depuis localStorage
+    // Load cart from localStorage
     useEffect(() => {
         const savedCart = localStorage.getItem("cart");
         if (savedCart) {
@@ -62,26 +62,25 @@ export const ShoppingCart: React.FC = () => {
                 setCart(processedCart);
                 localStorage.setItem("cart", JSON.stringify(processedCart));
             } catch (error) {
-                console.error("Erreur de parsing du localStorage", error);
+                console.error("Error parsing localStorage", error);
                 localStorage.removeItem("cart");
             }
         }
     }, []);
 
-    // Récupérer le panier depuis l'API
+    // Fetch cart from API
     useEffect(() => {
         if (!user?.id || cart) return;
 
-
         const fetchCart = async () => {
             try {
-                console.log("📦 Récupération du panier pour userId:", user.id);
+                console.log("📦 Fetching cart for userId:", user.id);
                 const response = await axiosInstance.get(`/v1/carts/user-cart/${user.id}`);
 
-                console.log("📦 Réponse brute de l'API:", response.data);
+                console.log("📦 Raw API response:", response.data);
 
                 if (response.data?.success && response.data?.data) {
-                    console.log("📚 Livres avant traitement :", response.data.data.books);
+                    console.log("📚 Books before processing:", response.data.data.books);
 
                     const booksArray = Array.isArray(response.data.data.books)
                         ? response.data.data.books
@@ -92,16 +91,16 @@ export const ShoppingCart: React.FC = () => {
                         books: booksArray
                     });
 
-                    console.log("📚 Livres après nettoyage :", newCart.books);
+                    console.log("📚 Books after cleaning:", newCart.books);
 
                     setCart(newCart);
                     localStorage.setItem("cart", JSON.stringify(newCart));
                 } else {
-                    throw new Error("Format de réponse inattendu");
+                    throw new Error("Unexpected response format");
                 }
             } catch (err: any) {
-                console.error("❌ Erreur Axios détaillée:", err);
-                setError(err.response?.data?.message || "Erreur lors du chargement du panier.");
+                console.error("❌ Detailed Axios error:", err);
+                setError(err.response?.data?.message || "Error loading cart.");
             } finally {
                 setLoading(false);
             }
@@ -113,7 +112,7 @@ export const ShoppingCart: React.FC = () => {
 
     const removeFromCart = async (bookId: string) => {
         if (!cart || !user) {
-            console.warn("⚠️ Impossible de supprimer: `cart` ou `user` est `null`", { cart, user: user });
+            console.warn("⚠️ Cannot remove: `cart` or `user` is `null`", { cart, user: user });
             return;
         }
 
@@ -148,7 +147,7 @@ export const ShoppingCart: React.FC = () => {
 
     const clearCart = async () => {
         if (!cart || !user) {
-            console.warn("⚠️ Impossible de vider le panier: `cart` ou `user` est `null`", { cart, user: user });
+            console.warn("⚠️ Cannot clear cart: `cart` or `user` is `null`", { cart, user: user });
             return;
         }
 
@@ -198,9 +197,9 @@ export const ShoppingCart: React.FC = () => {
 
     return (
         <Layout>
-            <div className="container mx-auto px-4 py-12 flex flex-col items-center  min-h-screen">
+            <div className="container mx-auto px-4 py-12 flex flex-col items-center min-h-screen">
                 <h2 className="text-4xl font-bold mb-8 text-light-blue">
-                    Votre Panier
+                    Your Cart
                 </h2>
 
                 {loading ? (
@@ -216,13 +215,13 @@ export const ShoppingCart: React.FC = () => {
                         <svg className="w-24 h-24 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
                         </svg>
-                        <p className="text-gray-700 text-xl font-medium">Votre panier est vide</p>
-                        <p className="text-gray-500 mt-2 mb-6">Ajoutez des livres à votre panier pour commencer vos achats</p>
+                        <p className="text-gray-700 text-xl font-medium">Your cart is empty</p>
+                        <p className="text-gray-500 mt-2 mb-6">Add books to your cart to start shopping</p>
                         <button
                             onClick={() => navigate("/books")}
                             className="bg-light-blue hover:bg-blue-500 text-white font-semibold px-6 py-3 rounded-lg transition duration-300 transform hover:scale-105"
                         >
-                            Parcourir la boutique
+                            Browse Store
                         </button>
                     </div>
                 ) : (
@@ -230,7 +229,7 @@ export const ShoppingCart: React.FC = () => {
                         <div className="flex-1">
                             <div className="bg-navbar rounded-xl overflow-hidden shadow-xl">
                                 <div className="p-6 border-b border-gray-700">
-                                    <h3 className="text-xl font-semibold text-white">Articles ({cart.books.length})</h3>
+                                    <h3 className="text-xl font-semibold text-white">Items ({cart.books.length})</h3>
                                 </div>
                                 <div className="divide-y divide-gray-700">
                                     {cart.books.map((book) => (
@@ -255,7 +254,7 @@ export const ShoppingCart: React.FC = () => {
                                                         <svg className="w-5 h-5 mr-1 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                                         </svg>
-                                                        Supprimer
+                                                        Remove
                                                     </button>
                                                 </div>
                                             </div>
@@ -268,15 +267,15 @@ export const ShoppingCart: React.FC = () => {
                         <div className="lg:w-80 w-full">
                             <div className="bg-navbar rounded-xl overflow-hidden shadow-xl sticky top-24">
                                 <div className="p-6 border-b border-gray-700">
-                                    <h3 className="text-xl font-semibold text-white">Récapitulatif</h3>
+                                    <h3 className="text-xl font-semibold text-white">Summary</h3>
                                 </div>
                                 <div className="p-6 space-y-4">
                                     <div className="flex justify-between text-gray-300">
-                                        <span>Sous-total</span>
+                                        <span>Subtotal</span>
                                         <span className="font-medium">{subtotal.toFixed(2)} €</span>
                                     </div>
                                     <div className="flex justify-between text-gray-300">
-                                        <span>Livraison</span>
+                                        <span>Shipping</span>
                                         <span className="font-medium">{deliveryFee.toFixed(2)} €</span>
                                     </div>
                                     <div className="pt-4 border-t border-gray-700">
@@ -289,17 +288,17 @@ export const ShoppingCart: React.FC = () => {
                                         onClick={handlePayment}
                                         className="mt-6 w-full bg-light-blue text-white py-4 rounded-lg font-semibold text-lg shadow-lg hover:bg-blue-500 transition-all duration-300 transform hover:scale-105"
                                     >
-                                        Payer maintenant
+                                        Pay now
                                     </button>
                                     <button
                                         onClick={clearCart}
                                         className="mt-4 w-full bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition text-lg font-semibold"
                                     >
-                                        🗑️ Vider le panier
+                                        🗑️ Clear cart
                                     </button>
 
                                     <p className="text-center text-gray-400 text-sm mt-4">
-                                        Paiement 100% sécurisé
+                                        100% secure payment
                                     </p>
                                 </div>
                             </div>

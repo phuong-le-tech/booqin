@@ -3,6 +3,7 @@ package fr.uge.booqIn.model;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.User;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -62,14 +63,14 @@ public interface BookCollection extends PolymorphicEntity, Commentable, Votable,
    *
    * @return La date de création
    */
-  Date getCreatedAt();
+  LocalDateTime getCreatedAt();
 
   /**
    * Obtient la date de dernière mise à jour de la collection.
    *
    * @return La date de dernière mise à jour
    */
-  Date getUpdatedAt();
+  LocalDateTime getUpdatedAt();
 
   /**
    * Obtient le type de la collection.
@@ -133,14 +134,14 @@ public interface BookCollection extends PolymorphicEntity, Commentable, Votable,
    *
    * @param createdAt La date de création à définir
    */
-  void setCreatedAt(Date createdAt);
+  void setCreatedAt(LocalDateTime createdAt);
 
   /**
    * Définit la date de dernière mise à jour de la collection.
    *
    * @param updatedAt La date de dernière mise à jour à définir
    */
-  void setUpdatedAt(Date updatedAt);
+  void setUpdatedAt(LocalDateTime updatedAt);
 
   /**
    * Ajoute un livre à la collection.

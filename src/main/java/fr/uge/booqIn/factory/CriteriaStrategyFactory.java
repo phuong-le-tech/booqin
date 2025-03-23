@@ -4,6 +4,7 @@ import fr.uge.booqIn.entity.CriteriaEntry;
 import fr.uge.booqIn.strategy.collection.*;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -61,9 +62,9 @@ public class CriteriaStrategyFactory {
           return false;
         }
         Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DAY_OF_YEAR, -daysThreshold);
-        Date thresholdDate = calendar.getTime();
-        return book.getCreatedAt().after(thresholdDate);
+        calendar.add(Calendar.DAY_OF_YEAR, - daysThreshold);
+        LocalDateTime thresholdDate = LocalDateTime.now().minusDays(daysThreshold);
+        return book.getCreatedAt().isAfter(thresholdDate);
       });
     }
 

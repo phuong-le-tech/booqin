@@ -5,21 +5,20 @@ import fr.uge.booqIn.model.Followable;
 import fr.uge.booqIn.model.PolymorphicEntity;
 import fr.uge.booqIn.model.Votable;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
+import org.hibernate.validator.constraints.ISBN;
+import org.hibernate.validator.constraints.Length;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-
-/**
- * Entity representing a book.
- */
 @Entity
 public class Book implements PolymorphicEntity, Votable, Commentable, Followable {
   private static final String ENTITY_TYPE = "BOOK";
-
-  // -------------------- FIELDS --------------------
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,8 +35,10 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
           indexes = @Index(name = "idx_isbn", columnList = "isbn")
   )
   @Column(name = "isbn", unique = true)
-  private Set<String> isbns = new HashSet<>();
+  private Set</*@ISBN(message = "Invalid ISBN format")*/ String> isbns = new HashSet<>();
 
+  @NotBlank(message = "Book title cannot be empty")
+  @Length(min = 1, max = 5000, message = "Title must be between 1 and 5000 characters")
   @Column(nullable = false, length = 5000)
   private String title;
 
@@ -49,6 +50,7 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
   )
   private Set<Author> authors = new HashSet<>();
 
+  @Length(max = 5000, message = "Description must be between 0 and 5000 characters")
   @Column(nullable = false, length = 5000)
   private String description;
 
@@ -60,34 +62,23 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
   @Column(name = "category")
   private Set<String> categories = new HashSet<>();
 
-  @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "publication_date")
   private Date publicationDate;
 
+  @NotNull(message = "Creation date is required")
+  @PastOrPresent(message = "Creation date cannot be in the future")
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "created_at", nullable = false, updatable = false)
-  private Date createdAt = new Date();
+  private LocalDateTime createdAt = LocalDateTime.now();
 
+  @PastOrPresent(message = "Update date cannot be in the future")
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "updated_at")
-  private Date updatedAt = new Date();
+  private LocalDateTime updatedAt = LocalDateTime.now();
 
-  // -------------------- CONSTRUCTORS --------------------
-
-  /**
-   * Default constructor required by JPA.
-   */
   public Book() {
   }
 
-  /**
-   * Standard constructor for creating a book with essential information.
-   *
-   * @param title The book title
-   * @param authors The book authors
-   * @param description Book description
-   * @param publicationDate Publication date
-   */
   public Book(String title, Set<Author> authors, String description, Date publicationDate) {
     Objects.requireNonNull(title);
     Objects.requireNonNull(authors);
@@ -99,9 +90,6 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
     this.publicationDate = publicationDate;
   }
 
-  /**
-   * Private constructor used by the Builder.
-   */
   private Book(Builder builder) {
     this.id = builder.id;
     this.isbns = builder.isbns;
@@ -113,8 +101,6 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
     this.createdAt = builder.createdAt;
     this.updatedAt = builder.updatedAt;
   }
-
-  // -------------------- GETTERS --------------------
 
   @Override
   public String getEntityType() {
@@ -149,11 +135,11 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
     return publicationDate;
   }
 
-  public Date getCreatedAt() {
+  public LocalDateTime getCreatedAt() {
     return createdAt;
   }
 
-  public Date getUpdatedAt() {
+  public LocalDateTime getUpdatedAt() {
     return updatedAt;
   }
 
@@ -187,11 +173,11 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
     this.publicationDate = publicationDate;
   }
 
-  public void setCreatedAt(Date createdAt) {
+  public void setCreatedAt(LocalDateTime createdAt) {
     this.createdAt = createdAt;
   }
 
-  public void setUpdatedAt(Date updatedAt) {
+  public void setUpdatedAt(LocalDateTime updatedAt) {
     this.updatedAt = updatedAt;
   }
 
@@ -199,22 +185,10 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
     this.isbns.addAll(isbns);
   }
 
-  // -------------------- UTILITY METHODS --------------------
-
-  /**
-   * Adds a single ISBN to the book.
-   *
-   * @param isbn The ISBN to add
-   */
   public void addIsbn(String isbn) {
     if (isbn != null) this.isbns.add(isbn);
   }
 
-  /**
-   * Adds a single category to the book.
-   *
-   * @param category The category to add
-   */
   public void addCategory(String category) {
     if (category != null) this.categories.add(category);
   }
@@ -231,11 +205,6 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
             '}';
   }
 
-  // -------------------- BUILDER CLASS --------------------
-
-  /**
-   * Builder class for creating Book instances.
-   */
   public static class Builder {
     private Long id;
     private Set<String> isbns = new HashSet<>();
@@ -244,8 +213,8 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
     private String description;
     private Set<String> categories = new HashSet<>();
     private Date publicationDate;
-    private Date createdAt = new Date();
-    private Date updatedAt = new Date();
+    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime updatedAt = LocalDateTime.now();
 
     public Builder id(Long id) {
       this.id = id;
@@ -287,13 +256,13 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
       return this;
     }
 
-    public Builder createdAt(Date createdAt) {
+    public Builder createdAt(LocalDateTime createdAt) {
       Objects.requireNonNull(createdAt);
       this.createdAt = createdAt;
       return this;
     }
 
-    public Builder updatedAt(Date updatedAt) {
+    public Builder updatedAt(LocalDateTime updatedAt) {
       Objects.requireNonNull(updatedAt);
       this.updatedAt = updatedAt;
       return this;

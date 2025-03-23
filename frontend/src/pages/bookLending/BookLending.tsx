@@ -46,25 +46,25 @@ export const BookLending: () => JSX.Element = () => {
     const navigate = useNavigate();
     const {user} = useAuth();
 
-    // Récupérer les prêts de livres depuis l'API
+    // Fetch book loans from the API
     useEffect(() => {
         if (!user?.id) return;
 
         const fetchLendings = async () => {
             try {
-                console.log("📚 Récupération des prêts pour userId:", user.id);
+                console.log("📚 Fetching loans for userId:", user.id);
                 const response = await axiosInstance.get(`/v1/loans/user/${user.id}?type=${activeTab}`);
 
-                console.log("📚 Réponse des prêts:", response.data);
+                console.log("📚 Loans response:", response.data);
 
                 if (response.data?.success && response.data?.data) {
                     setLendingData(response.data.data);
                 } else {
-                    throw new Error("Format de réponse inattendu");
+                    throw new Error("Unexpected response format");
                 }
             } catch (err: any) {
-                console.error("❌ Erreur Axios détaillée:", err);
-                setError(err.response?.data?.message || "Erreur lors du chargement des prêts.");
+                console.error("❌ Detailed Axios error:", err);
+                setError(err.response?.data?.message || "Error loading loans.");
             } finally {
                 setLoading(false);
             }
@@ -79,9 +79,9 @@ export const BookLending: () => JSX.Element = () => {
     };
 
     const formatDate = (dateString: string | null) => {
-        if (!dateString) return "Non définie";
+        if (!dateString) return "Not defined";
         const date = new Date(dateString);
-        return date.toLocaleDateString('fr-FR', {
+        return date.toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
             day: 'numeric'
@@ -109,12 +109,12 @@ export const BookLending: () => JSX.Element = () => {
 
     const getStatusLabel = (status: string) => {
         switch(status) {
-            case "RESERVED": return "Réservé";
-            case "BORROWED": return "Emprunté";
-            case "RETURNED": return "Retourné";
-            case "SHIPPED": return "Expédié";
-            case "AVAILABLE": return "Disponible";
-            case "PENDING_SHIPMENT": return "En attente d'expédition";
+            case "RESERVED": return "Reserved";
+            case "BORROWED": return "Borrowed";
+            case "RETURNED": return "Returned";
+            case "SHIPPED": return "Shipped";
+            case "AVAILABLE": return "Available";
+            case "PENDING_SHIPMENT": return "Pending Shipment";
             default: return status;
         }
     };
@@ -125,16 +125,16 @@ export const BookLending: () => JSX.Element = () => {
         try {
             const response = await axiosInstance.get(`/v1/loans/return-book?lendingId=${lendingId}`);
             if (response.data?.success) {
-                // Rafraîchir les données
+                // Refresh data
                 const updatedResponse = await axiosInstance.get(`/v1/loans/user/${user.id}?type=${activeTab}`);
                 setLendingData(updatedResponse.data.data);
-                alert("Le livre a été marqué comme retourné !");
+                alert("The book has been marked as returned!");
             } else {
-                alert("Impossible de mettre à jour le statut du prêt.");
+                alert("Unable to update the loan status.");
             }
         } catch (error) {
-            console.error("Erreur lors de la mise à jour du prêt :", error);
-            alert("Une erreur est survenue.");
+            console.error("Error while updating the loan:", error);
+            alert("An error occurred.");
         }
     };
 
@@ -144,16 +144,16 @@ export const BookLending: () => JSX.Element = () => {
         try {
             const response = await axiosInstance.get(`/v1/loans/confirm-loan?lendingId=${lendingId}`);
             if (response.data?.success) {
-                // Rafraîchir les données
+                // Refresh data
                 const updatedResponse = await axiosInstance.get(`/v1/loans/user/${user.id}?type=${activeTab}`);
                 setLendingData(updatedResponse.data.data);
-                alert("Le prêt a été confirmé !");
+                alert("The loan has been confirmed!");
             } else {
-                alert("Impossible de confirmer le prêt.");
+                alert("Unable to confirm the loan.");
             }
         } catch (error) {
-            console.error("Erreur lors de la confirmation du prêt :", error);
-            alert("Une erreur est survenue.");
+            console.error("Error while confirming the loan:", error);
+            alert("An error occurred.");
         }
     };
 
@@ -197,16 +197,16 @@ export const BookLending: () => JSX.Element = () => {
         try {
             const response = await axiosInstance.get(`/v1/loans/ship-book?lendingId=${lendingId}`);
             if (response.data?.success) {
-                // Rafraîchir les données
+                // Refresh data
                 const updatedResponse = await axiosInstance.get(`/v1/loans/user/${user.id}?type=${activeTab}`);
                 setLendingData(updatedResponse.data.data);
-                alert("Le livre a été marqué comme expédié !");
+                alert("The book has been marked as shipped!");
             } else {
-                alert("Impossible de mettre à jour le statut d'expédition.");
+                alert("Unable to update shipping status.");
             }
         } catch (error) {
-            console.error("Erreur lors de la mise à jour du statut d'expédition :", error);
-            alert("Une erreur est survenue.");
+            console.error("Error while updating shipping status:", error);
+            alert("An error occurred.");
         }
     };
     const handleDownloadTicket = async (lendingId: number) => {
@@ -254,7 +254,7 @@ export const BookLending: () => JSX.Element = () => {
     };
 
     const getAuthorNames = (book: Book) => {
-        if (!book.authors || book.authors.length === 0) return "Auteur inconnu";
+        if (!book.authors || book.authors.length === 0) return "Unknown author";
         return book.authors.map(author => `${author.firstName} ${author.lastName}`).join(", ");
     };
 
@@ -262,7 +262,7 @@ export const BookLending: () => JSX.Element = () => {
         <Layout>
             <div className="container mx-auto px-4 py-12 flex flex-col items-center min-h-screen">
                 <h2 className="text-4xl font-bold mb-8 text-light-blue">
-                    Vos Prêts de Livres
+                    Your Book Loans
                 </h2>
 
                 {/* Tabs */}
@@ -276,7 +276,7 @@ export const BookLending: () => JSX.Element = () => {
                                     : "text-gray-500 hover:text-gray-700"
                             }`}
                         >
-                            Livres Empruntés
+                            Borrowed Books
                         </button>
                         <button
                             onClick={() => handleChangeTab("lent")}
@@ -286,7 +286,7 @@ export const BookLending: () => JSX.Element = () => {
                                     : "text-gray-500 hover:text-gray-700"
                             }`}
                         >
-                            Livres Prêtés
+                            Lent Books
                         </button>
                         <button
                             onClick={() => handleChangeTab("all")}
@@ -296,7 +296,7 @@ export const BookLending: () => JSX.Element = () => {
                                     : "text-gray-500 hover:text-gray-700"
                             }`}
                         >
-                            Tous les Prêts
+                            All Loans
                         </button>
                     </div>
                 </div>
@@ -311,11 +311,11 @@ export const BookLending: () => JSX.Element = () => {
                     </div>
                 ) : (
                     <div className="w-full max-w-6xl">
-                        {/* Livres empruntés */}
+                        {/* Borrowed books */}
                         {(activeTab === "borrowed" || activeTab === "all") && (
                             <div className="mb-8">
                                 {activeTab === "all" && (
-                                    <h3 className="text-2xl font-semibold mb-4">Livres que vous avez empruntés</h3>
+                                    <h3 className="text-2xl font-semibold mb-4">Books you have borrowed</h3>
                                 )}
 
                                 {lendingData?.borrowedBooks && lendingData.borrowedBooks.length > 0 ? (
@@ -337,12 +337,12 @@ export const BookLending: () => JSX.Element = () => {
                                                                     <p className="text-gray-600 mb-2">{getAuthorNames(lending.book)}</p>
 
                                                                     <div className="flex items-center gap-2 mb-1">
-                                                                        <span className="text-gray-600 font-medium">Prêté par:</span>
+                                                                        <span className="text-gray-600 font-medium">Lent by:</span>
                                                                         <span>{lending.lender.firstName} {lending.lender.lastName}</span>
                                                                     </div>
 
                                                                     <div className="flex items-center gap-2 mb-1">
-                                                                        <span className="text-gray-600 font-medium">Statut:</span>
+                                                                        <span className="text-gray-600 font-medium">Status:</span>
                                                                         <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusBadgeClass(lending.status)}`}>
                                                                             {getStatusLabel(lending.status)}
                                                                         </span>
@@ -351,14 +351,14 @@ export const BookLending: () => JSX.Element = () => {
 
                                                                 <div className="mt-4 md:mt-0 md:text-right">
                                                                     <div className="text-sm text-gray-600 mb-1">
-                                                                        <span className="font-medium">Date d'emprunt:</span> {formatDate(lending.startDate)}
+                                                                        <span className="font-medium">Borrow date:</span> {formatDate(lending.startDate)}
                                                                     </div>
                                                                     <div className="text-sm text-gray-600 mb-1">
-                                                                        <span className="font-medium">Date de retour prévue:</span> {formatDate(lending.dueDate)}
+                                                                        <span className="font-medium">Expected return date:</span> {formatDate(lending.dueDate)}
                                                                     </div>
                                                                     {lending.returnDate && (
                                                                         <div className="text-sm text-gray-600">
-                                                                            <span className="font-medium">Retourné le:</span> {formatDate(lending.returnDate)}
+                                                                            <span className="font-medium">Returned on:</span> {formatDate(lending.returnDate)}
                                                                         </div>
                                                                     )}
                                                                 </div>
@@ -370,7 +370,7 @@ export const BookLending: () => JSX.Element = () => {
                                                                         onClick={() => handleReturn(lending.id)}
                                                                         className="bg-light-blue hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
                                                                     >
-                                                                        Marquer comme retourné
+                                                                        Mark as returned
                                                                     </button>
                                                                 </div>
                                                             )}
@@ -381,7 +381,7 @@ export const BookLending: () => JSX.Element = () => {
                                                                         onClick={() => handleConfirmLoan(lending.id)}
                                                                         className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
                                                                     >
-                                                                        Confirmer la réception
+                                                                        Confirm receipt
                                                                     </button>
                                                                 </div>
                                                             )}
@@ -407,27 +407,27 @@ export const BookLending: () => JSX.Element = () => {
                                         <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                                         </svg>
-                                        <p className="text-gray-700 text-xl font-medium">Vous n'avez aucun livre emprunté</p>
-                                        <p className="text-gray-500 mt-2 mb-6">Parcourez notre catalogue pour trouver des livres à emprunter</p>
+                                        <p className="text-gray-700 text-xl font-medium">You have no borrowed books</p>
+                                        <p className="text-gray-500 mt-2 mb-6">Browse our catalog to find books to borrow</p>
                                         <button
                                             onClick={() => navigate("/books")}
                                             className="bg-light-blue hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg transition duration-300"
                                         >
-                                            Parcourir les livres
+                                            Browse books
                                         </button>
                                     </div>
                                 )}
                             </div>
                         )}
 
-                        {/* Livres prêtés */}
+                        {/* Lent books */}
                         {(activeTab === "lent" || activeTab === "all") && (
                             <div>
-                                {/* Livres prêtés avec emprunteur */}
+                                {/* Lent books with borrower */}
                                 {lendingData?.lentBooks && lendingData.lentBooks.filter(lending => lending.borrower).length > 0 && (
                                     <div className="mb-8">
                                         {activeTab === "all" && (
-                                            <h3 className="text-2xl font-semibold mb-4">Livres actuellement prêtés</h3>
+                                            <h3 className="text-2xl font-semibold mb-4">Books currently lent</h3>
                                         )}
 
                                         <div className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-200">
@@ -450,12 +450,12 @@ export const BookLending: () => JSX.Element = () => {
                                                                             <p className="text-gray-600 mb-2">{getAuthorNames(lending.book)}</p>
 
                                                                             <div className="flex items-center gap-2 mb-1">
-                                                                                <span className="text-gray-600 font-medium">Emprunté par:</span>
+                                                                                <span className="text-gray-600 font-medium">Borrowed by:</span>
                                                                                 <span>{lending.borrower.firstName} {lending.borrower.lastName}</span>
                                                                             </div>
 
                                                                             <div className="flex items-center gap-2 mb-1">
-                                                                                <span className="text-gray-600 font-medium">Statut:</span>
+                                                                                <span className="text-gray-600 font-medium">Status:</span>
                                                                                 <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusBadgeClass(lending.status)}`}>
                                                                                     {getStatusLabel(lending.status)}
                                                                                 </span>
@@ -464,10 +464,10 @@ export const BookLending: () => JSX.Element = () => {
 
                                                                         <div className="mt-4 md:mt-0 md:text-right">
                                                                             <div className="text-sm text-gray-600 mb-1">
-                                                                                <span className="font-medium">Date d'emprunt:</span> {formatDate(lending.startDate)}
+                                                                                <span className="font-medium">Borrow date:</span> {formatDate(lending.startDate)}
                                                                             </div>
                                                                             <div className="text-sm text-gray-600 mb-1">
-                                                                                <span className="font-medium">Date de retour prévue:</span> {formatDate(lending.dueDate)}
+                                                                                <span className="font-medium">Expected return date:</span> {formatDate(lending.dueDate)}
                                                                             </div>
                                                                         </div>
                                                                     </div>
@@ -500,11 +500,11 @@ export const BookLending: () => JSX.Element = () => {
                                     </div>
                                 )}
 
-                                {/* Livres disponibles pour prêt */}
+                                {/* Books available for lending */}
                                 {lendingData?.lentBooks && lendingData.lentBooks.filter(lending => !lending.borrower).length > 0 && (
                                     <div>
                                         {activeTab === "all" && (
-                                            <h3 className="text-2xl font-semibold mb-4">Livres disponibles pour prêt</h3>
+                                            <h3 className="text-2xl font-semibold mb-4">Books available for lending</h3>
                                         )}
 
                                         <div className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-200">
@@ -527,22 +527,22 @@ export const BookLending: () => JSX.Element = () => {
                                                                             <p className="text-gray-600 mb-2">{getAuthorNames(lending.book)}</p>
 
                                                                             <div className="flex items-center gap-2 mb-1">
-                                                                                <span className="text-gray-600 font-medium">Statut:</span>
+                                                                                <span className="text-gray-600 font-medium">Status:</span>
                                                                                 <span className="px-3 py-1 rounded-full text-sm font-medium border bg-yellow-100 text-yellow-800 border-yellow-300">
-                                                                                    Disponible pour prêt
+                                                                                    Available for lending
                                                                                 </span>
                                                                             </div>
                                                                             <button
                                                                                 onClick={() => removeFromLoanable(lending.book.id)}
                                                                                 className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors mt-4"
                                                                             >
-                                                                                Retirer de la liste de prêt
+                                                                                Remove from lending list
                                                                             </button>
                                                                         </div>
 
                                                                         <div className="mt-4 md:mt-0 md:text-right">
                                                                             <div className="text-sm text-gray-600 mb-1">
-                                                                                <span className="font-medium">Mis à disposition le:</span> {formatDate(lending.reservedAt)}
+                                                                                <span className="font-medium">Made available on:</span> {formatDate(lending.reservedAt)}
                                                                             </div>
                                                                         </div>
                                                                     </div>
@@ -555,19 +555,19 @@ export const BookLending: () => JSX.Element = () => {
                                     </div>
                                 )}
 
-                                {/* Message si aucun livre n'est disponible */}
+                                {/* Message if no book is available */}
                                 {lendingData?.lentBooks && lendingData.lentBooks.length === 0 && (
                                     <div className="bg-gray-50 rounded-xl p-12 text-center border border-gray-200 shadow-md">
                                         <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                         </svg>
-                                        <p className="text-gray-700 text-xl font-medium">Vous n'avez aucun livre dans votre collection</p>
-                                        <p className="text-gray-500 mt-2 mb-6">Ajoutez des livres à votre collection pour pouvoir les prêter</p>
+                                        <p className="text-gray-700 text-xl font-medium">You have no books in your collection</p>
+                                        <p className="text-gray-500 mt-2 mb-6">Add books to your collection to be able to lend them</p>
                                         <button
                                             onClick={() => navigate("/profile")}
                                             className="bg-light-blue hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg transition duration-300"
                                         >
-                                            Gérer ma collection
+                                            Manage my collection
                                         </button>
                                     </div>
                                 )}
