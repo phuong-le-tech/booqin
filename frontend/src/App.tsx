@@ -18,6 +18,7 @@ import AdminPage from "./pages/admin/AdminPage.tsx";
 import CreateCollection from "./components/collections/CreateCollection.tsx";
 import { BookLending } from "./pages/bookLending/BookLending.tsx";
 import Following from "./pages/follow/Following.tsx";
+import UserProfile from "./pages/user/UserProfile.tsx";
 
 const App: React.FC = () => {
     return (
@@ -40,6 +41,7 @@ const App: React.FC = () => {
                             </BooksProvider>
                         } />
                         <Route path={"/profile"} element={<Profile />} />
+                        <Route path="/users/:id" element={<UserProfile />} />
                         <Route path="/cart" element={<ShoppingCart />} />
                         <Route path="/dashboard" element={<BookLending />} /> {/* Ajoutez cette nouvelle route */}
                         {/*<Route path="/books/:id" element={<BookDetails />} />*/}
