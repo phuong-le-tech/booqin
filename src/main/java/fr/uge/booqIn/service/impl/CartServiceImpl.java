@@ -129,14 +129,14 @@ public class CartServiceImpl implements CartServiceInterface {
     cartRepository.save(cart);
     return true;
   }
-  
+  @Transactional
   @Override
-  public boolean clearCartAfterPayment(Long cartId) {
+  public void clearCartAfterPayment(Long cartId) {
     Cart cart = getCart(cartId);
+    System.out.println("Clearing cart after payment: " + cart);
     cart.setStatut(StatusPayment.PENDING);
     cart.getBooks().clear();
     cartRepository.save(cart);
-    return true;
   }
   
   @Recover

@@ -105,7 +105,8 @@ public class StripeService {
             String sessionId = rootNode.path("id").asText();
             String paymentIntentId = rootNode.path("payment_intent").asText();
             if(paymentIntentId != null){
-                var cart = cartRepository.findByPaymentIntentId(paymentIntentId);
+                var cart = cartRepository.findByPaymentIntentId(sessionId);
+                System.out.println("Cart vider mtn " + sessionId);
               cart.ifPresent(value -> cartService.clearCartAfterPayment(value.getId()));
             }
             if (paymentIntentId != null && !paymentIntentId.isEmpty()) {
