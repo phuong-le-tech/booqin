@@ -1,6 +1,5 @@
 
 package fr.uge.booqIn.controller.web;
-/*
 import fr.uge.booqIn.dto.book.BookCreate;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
@@ -90,7 +89,7 @@ public class BookWebController {
         
         if(currentUser != null) {
             model.addAttribute("userId", currentUser.getId());
-            var b = bookCollectionService.getUserCollections(currentUser, true, null);
+            var b = bookCollectionService.getUserCollectionsWithBooks(currentUser, pageable);
             var bcc = b.stream().map(bc -> new LiteCollection(bc.id(),bc.title())).toList();
             model.addAttribute("bookCollections", bcc);
 
@@ -218,4 +217,3 @@ public class BookWebController {
         return "redirect:/books/" + bookId;
     }
 }
-*/
