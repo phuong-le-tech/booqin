@@ -37,15 +37,6 @@ public interface AuthServiceInterface {
    */
   UserMeDto getCurrentUser(Authentication authentication);
 
-  /**
-   * Refreshes user tokens using a valid refresh token
-   * Handles token reuse attempts and concurrency issues
-   *
-   * @param refreshToken the JWT refresh token
-   * @return AuthResponse containing new access and refresh tokens
-   * @throws IllegalStateException if token is invalid, expired, or reused
-   */
-  AuthResponse refreshToken(String refreshToken);
 
   /**
    * Invalidates all sessions for a user by forcing version increment

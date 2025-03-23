@@ -267,7 +267,7 @@ public class User implements UserDetails, Followable {
    */
   public SmartBookCollection getLikedBooksCollection() {
     return collections.stream()
-            .filter(c -> c instanceof SmartBookCollection && "Livres que j'ai aimés".equals(c.getTitle()))
+            .filter(c -> c instanceof SmartBookCollection && "Liked Books".equals(c.getTitle()))
             .map(c -> (SmartBookCollection) c)
             .findFirst()
             .orElse(null);
@@ -279,7 +279,7 @@ public class User implements UserDetails, Followable {
    */
   public SmartBookCollection getFollowedUsersCollection() {
     return collections.stream()
-            .filter(c -> c instanceof SmartBookCollection && "Livres des utilisateurs que je suis".equals(c.getTitle()))
+            .filter(c -> "Followed Users' Books".equals(c.getTitle()))
             .map(c -> (SmartBookCollection) c)
             .findFirst()
             .orElse(null);
@@ -316,6 +316,11 @@ public class User implements UserDetails, Followable {
   @Override
   public int hashCode() {
     return Objects.hash(email);
+  }
+
+  @Override
+  public String toString() {
+    return this.getFullName();
   }
 
   public void addLentBook(BookLending bookLending) {
