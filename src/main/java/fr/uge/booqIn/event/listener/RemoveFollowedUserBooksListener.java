@@ -41,8 +41,8 @@ public class RemoveFollowedUserBooksListener implements BooqInEventListener<Remo
     for (AbstractBookCollection collection : followedPublicCollections) {
       for (Book book : collection.getBooks()) {
         followerFollowedCollection.removeBook(book);
-          removedBooks++;
-          logger.fine("Removed book: " + book.getTitle() + " from followed users collection");
+        removedBooks++;
+        logger.fine("Removed book: " + book.getTitle() + " from followed users collection");
       }
     }
 
