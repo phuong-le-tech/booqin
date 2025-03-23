@@ -1,6 +1,7 @@
 package fr.uge.booqIn.controller.web;
 
 import fr.uge.booqIn.dto.book.BookShow;
+import fr.uge.booqIn.dto.bookCollection.BookCollectionIndex;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionUpdate;
 import fr.uge.booqIn.dto.vote.VoteCreate;
@@ -59,7 +60,7 @@ public class BookCollectionWebController {
     homeWebController.prepareModel(model, principal, "collections-public");
 
     // Récupérer les collections publiques
-    Page<BookCollectionShow> collections = bookCollectionService.getPublicCollections(null);
+    Page<BookCollectionIndex> collections = bookCollectionService.getPublicCollections(null);
     model.addAttribute("publicCollections", collections);
 
     // Définir le titre et le contenu

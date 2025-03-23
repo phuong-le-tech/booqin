@@ -2,6 +2,8 @@ package fr.uge.booqIn.dto.book;
 
 import fr.uge.booqIn.dto.author.AuthorDto;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Set;
 
@@ -12,8 +14,8 @@ public record BookShow(
         Set<AuthorDto> authors,
         String description,
         Date publicationDate,
-        Date createdAt,
-        Date updatedAt,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt,
         Set<String> categories
 ) {
 }

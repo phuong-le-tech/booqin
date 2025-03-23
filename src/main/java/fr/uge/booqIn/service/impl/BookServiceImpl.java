@@ -5,12 +5,12 @@ import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.dto.book.BookUpdate;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
+import fr.uge.booqIn.event.BooqInEventPublisher;
 import fr.uge.booqIn.exception.DuplicateResourceException;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.mapper.BookMapper;
 import fr.uge.booqIn.repository.AuthorRepository;
 import fr.uge.booqIn.repository.BookRepository;
-import fr.uge.booqIn.service.EventPublisherService;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
 import fr.uge.booqIn.specification.BookSpecification;
 import org.springframework.data.domain.Page;
@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -34,13 +35,13 @@ public class BookServiceImpl implements BookServiceInterface {
   private final BookRepository bookRepository;
   private final AuthorRepository authorRepository;
   private final BookMapper bookMapper;
-  private final EventPublisherService eventPublisher;
+  private final BooqInEventPublisher eventPublisher;
 
   public BookServiceImpl(
       BookRepository bookRepository,
       AuthorRepository authorRepository,
       BookMapper bookMapper,
-      EventPublisherService eventPublisher) {
+      BooqInEventPublisher eventPublisher) {
     this.bookRepository = bookRepository;
     this.authorRepository = authorRepository;
     this.bookMapper = bookMapper;
@@ -96,12 +97,9 @@ public class BookServiceImpl implements BookServiceInterface {
       throw new DuplicateResourceException("Book", "ISBN", book.getIsbns().toString());
     }
 
-    book.setCreatedAt(new Date());
-    book.setUpdatedAt(new Date());
+    book.setCreatedAt(LocalDateTime.now());
+    book.setUpdatedAt(LocalDateTime.now());
     Book savedBook = bookRepository.save(book);
-
-    // Publish event for newly created book
-    eventPublisher.publishBookCreatedEvent(this, savedBook);
 
     return savedBook;
   }
@@ -132,7 +130,7 @@ public class BookServiceImpl implements BookServiceInterface {
       }
     }
 
-    book.setUpdatedAt(new Date());
+    book.setUpdatedAt(LocalDateTime.now());
     return bookRepository.save(book);
   }
 
@@ -162,7 +160,7 @@ public class BookServiceImpl implements BookServiceInterface {
       book.setIsbns(isbns);
     });
 
-    book.setUpdatedAt(new Date());
+    book.setUpdatedAt(LocalDateTime.now());
     Book savedBook = bookRepository.save(book);
     return bookMapper.toBookShow(savedBook);
   }
@@ -218,7 +216,7 @@ public class BookServiceImpl implements BookServiceInterface {
     addNewAuthors(existingBook, newBook.getAuthors());
 
     // Update modification date
-    existingBook.setUpdatedAt(new Date());
+    existingBook.setUpdatedAt(LocalDateTime.now());
 
     return bookRepository.save(existingBook);
   }
@@ -274,8 +272,8 @@ public class BookServiceImpl implements BookServiceInterface {
         .filter(author -> author.getId() == null)
         .forEach(authorRepository::save);
 
-    toSave.setCreatedAt(new Date());
-    toSave.setUpdatedAt(new Date());
+    toSave.setCreatedAt(LocalDateTime.now());
+    toSave.setUpdatedAt(LocalDateTime.now());
 
     return bookRepository.save(toSave);
   }

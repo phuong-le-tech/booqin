@@ -27,6 +27,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -152,7 +153,9 @@ class BookControllerTest {
         Set<String> categories = new HashSet<>(Collections.singleton("Fiction"));
         Set<String> isbns = new HashSet<>(Collections.singleton("1234567890"));
         Set<AuthorDto> authorDtos = new HashSet<>(Collections.singleton(new AuthorDto(1L, "John", "Doe")));
-        Date publicationDate = new Date(), createdAt = new Date(), updatedAt = new Date();
+        Date publicationDate = new Date();
+        var createdAt = LocalDateTime.now();
+        var updatedAt = LocalDateTime.now();
 
         BookShow bookShow = new BookShow(
                 bookId,
@@ -345,7 +348,10 @@ class BookControllerTest {
                 Optional.of(new Date()),
                 Optional.of(collections)
         );
-        Date publicationDate = new Date(), createdAt = new Date(), updatedAt = new Date();
+        Date publicationDate = new Date();
+        var createdAt = LocalDateTime.now();
+        var updatedAt = LocalDateTime.now();
+
         BookShow patchedBook = new BookShow(
                 bookId,
                 isbns,

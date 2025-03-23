@@ -1,11 +1,11 @@
-import {useState, useEffect, useContext, type ChangeEvent, type FormEvent} from "react"
-import {useNavigate} from "react-router-dom"
-import {toast} from "react-toastify"
-import {AuthContext} from "../../context/AuthContext.tsx"
+import { useState, useEffect, type ChangeEvent, type FormEvent } from "react"
+import { useNavigate } from "react-router-dom"
+import { toast } from "react-toastify"
+import { useAuth } from "../../context/AuthContext"
 import UserService from "../../services/UserService.ts"
-import {Layout} from "../Layout.tsx"
-import {User, Mail, MapPin, Edit, Save, X} from "lucide-react"
-import type {Address} from "../../model/Address.ts"
+import { Layout } from "../Layout.tsx"
+import { User as UserIcon, Mail, MapPin, Edit, Save, X } from "lucide-react"
+import type { Address } from "../../model/Address.ts"
 
 interface ProfileForm {
     firstName: string
@@ -15,7 +15,7 @@ interface ProfileForm {
 }
 
 export const Profile = () => {
-    const {user, setUser} = useContext(AuthContext)
+    const { user, isAuthenticated } = useAuth()
     const [formData, setFormData] = useState<ProfileForm>({
         firstName: user?.firstName || "",
         lastName: user?.lastName || "",
@@ -31,30 +31,36 @@ export const Profile = () => {
     const [isLoading, setIsLoading] = useState<boolean>(false)
     const navigate = useNavigate()
 
+    // Redirect if not authenticated
     useEffect(() => {
-        if (!user) {
-            navigate("/login")
-            return
+        if (!isAuthenticated) {
+            // Save the current URL to return to after login
+            localStorage.setItem('redirectAfterLogin', window.location.pathname);
+            navigate("/login");
         }
+    }, [isAuthenticated, navigate]);
 
-        // Set form data from user context
-        setFormData({
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
-            address: user.address || {
-                streetNumber: "",
-                streetName: "",
-                city: "",
-                postalCode: "",
-            },
-        })
-    }, [user, navigate])
+    // Update form data when user data changes
+    useEffect(() => {
+        if (user) {
+            setFormData({
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                address: user.address || {
+                    streetNumber: "",
+                    streetName: "",
+                    city: "",
+                    postalCode: "",
+                },
+            })
+        }
+    }, [user])
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-        const {name, value} = e.target
+        const { name, value } = e.target
 
-        // Gestion des champs d'adresse
+        // Handle address fields
         if (name.startsWith("address.")) {
             const addressField = name.split(".")[1]
             setFormData((prev) => ({
@@ -65,7 +71,7 @@ export const Profile = () => {
                 },
             }))
         } else {
-            setFormData((prev) => ({...prev, [name]: value}))
+            setFormData((prev) => ({ ...prev, [name]: value }))
         }
     }
 
@@ -85,7 +91,9 @@ export const Profile = () => {
             }
 
             const updatedUser = await UserService.updateUser(user.id, userData)
-            setUser({...user, ...updatedUser})
+
+            // After updating user in backend, refresh the session to update auth context
+
             toast.success("Profile updated successfully!")
             setIsEditing(false)
         } catch (error: any) {
@@ -113,8 +121,9 @@ export const Profile = () => {
         setIsEditing(!isEditing)
     }
 
+    // Redirect handled in useEffect
     if (!user) {
-        return null // Will redirect in useEffect
+        return null;
     }
 
     return (
@@ -301,7 +310,7 @@ export const Profile = () => {
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="bg-primary p-4 rounded-lg shadow">
                                         <div className="flex items-center mb-2">
-                                            <User className="h-5 w-5 text-blue-500 mr-2"/>
+                                            <UserIcon className="h-5 w-5 text-blue-500 mr-2"/>
                                             <h3 className="text-lg font-medium text-secondary">Personal Information</h3>
                                         </div>
                                         <div className="space-y-2 mt-4">

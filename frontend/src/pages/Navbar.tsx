@@ -1,25 +1,24 @@
 import type React from "react"
-import {useState, useContext} from "react"
-import {Link, useLocation} from "react-router-dom"
-import {ShoppingCart} from "lucide-react"
-import {AuthContext} from "../context/AuthContext.tsx"
-import type {Notification} from "../model/Notification.ts"
-import {NotificationsMenu} from "../components/NotificationsMenu.tsx"
-import AuthService from "../services/AuthService.ts";
-import {UserMenu} from "../components/UserMenu.tsx"
+import { useState } from "react"
+import { Link, useLocation } from "react-router-dom"
+import { ShoppingCart } from "lucide-react"
+import { useAuth } from "../context/AuthContext"
+import type { Notification } from "../model/Notification.ts"
+import { NotificationsMenu } from "../components/NotificationsMenu.tsx"
+import { UserMenu } from "../components/UserMenu.tsx"
 
 export const Navbar: React.FC = () => {
-    const {user, setUser} = useContext(AuthContext)
+    const { user, isAuthenticated, logout } = useAuth()
     const [notifications, setNotifications] = useState<Notification[]>([
         {
             id: 1,
-            message: "Nouveau livre ajouté à la collection",
+            message: "New book added to collection",
             read: false,
             date: new Date(),
         },
         {
             id: 2,
-            message: "Votre commande a été expédiée",
+            message: "Your order has been shipped",
             read: false,
             date: new Date(),
         },
@@ -37,14 +36,14 @@ export const Navbar: React.FC = () => {
                 return ""
         }
     }
+
     const markAsRead = (id: number) => {
         setNotifications(notifications.map((n) => (n.id === id ? {...n, read: true} : n)))
     }
 
     const handleLogout = async () => {
         try {
-            await AuthService.logout()
-            setUser(null)
+            await logout()
         } catch (error) {
             console.error("Logout failed:", error)
         }
@@ -59,10 +58,10 @@ export const Navbar: React.FC = () => {
                     </span>
                 </div>
                 <div className="flex items-center gap-2 sm:gap-4 md:gap-8 pr-4 sm:pr-6 md:pr-8 lg:pr-16">
-                    {user ? (
+                    {isAuthenticated && user != null ? (
                         <div className="flex items-center gap-2 sm:gap-4">
-                            <UserMenu user={user} onLogout={handleLogout}/>
-                            <NotificationsMenu notifications={notifications} markAsRead={markAsRead}/>
+                            <UserMenu user={user} onLogout={handleLogout} />
+                            <NotificationsMenu notifications={notifications} markAsRead={markAsRead} />
                         </div>
                     ) : (
                         <>

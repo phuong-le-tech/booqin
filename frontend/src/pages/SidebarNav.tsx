@@ -1,9 +1,6 @@
-import {Link, useLocation} from "react-router-dom"
-import {LayoutDashboard, Book, LogOut, LibraryBigIcon, Library, Settings, Users} from "lucide-react"
-import {useContext} from "react"
-import {AuthContext} from "../context/AuthContext.tsx"
-import AuthService from "../services/AuthService.ts"
-
+import { Link, useLocation } from "react-router-dom"
+import { LayoutDashboard, Book, LogOut, LibraryBigIcon, Library, Settings, Users, Loader } from "lucide-react"
+import { useAuth } from "../context/AuthContext"
 
 interface SidebarNavProps {
     onCloseSidebar?: () => void
@@ -23,57 +20,45 @@ const authenticatedNavItems = [
 ]
 
 export function SidebarNav({ onCloseSidebar = () => {} }: SidebarNavProps) {
-    const {user, setUser} = useContext(AuthContext)
-    const location = useLocation()
+    const { user, isAuthenticated, isRefreshing, logout } = useAuth();
+    const location = useLocation();
 
     const handleLogout = async () => {
         try {
-            await AuthService.logout()
-            setUser(null)
+            await logout();
             if (onCloseSidebar) {
-                onCloseSidebar()
+                onCloseSidebar();
             }
         } catch (error) {
-            console.error("Logout failed:", error)
+            console.error("Logout failed:", error);
         }
     }
 
     const handleNavClick = () => {
         if (onCloseSidebar) {
-            onCloseSidebar()
+            onCloseSidebar();
         }
     }
 
-    const isAdmin = user && user.role === "ADMIN"
+    // Determine which navigation items to show
+    const navItems = isAuthenticated ? authenticatedNavItems : unauthenticatedNavItems;
+    const isAdmin = user?.role === "ADMIN";
+
     return (
         <div className="bg-navbar w-64 p-4 border-r flex flex-col h-full">
             <nav className="space-y-2 flex-1">
                 <div className="mt-auto">
-                    {user ? (
-                        authenticatedNavItems.map((item, index) => (
-                            <Link
-                                key={index}
-                                to={item.path}
-                                className={`sidebar-nav-item ${item.color} ${location.pathname === item.path ? 'bg-opacity-20 bg-white' : ''}`}
-                                onClick={handleNavClick}
-                            >
-                                <item.icon className="mr-2 h-4 w-4"/>
-                                {item.label}
-                            </Link>
-                        ))
-                    ) : (
-                        unauthenticatedNavItems.map((item, index) => (
-                            <Link
-                                key={index}
-                                to={item.path}
-                                className={`sidebar-nav-item ${item.color} ${location.pathname === item.path ? 'bg-opacity-20 bg-white' : ''}`}
-                                onClick={handleNavClick}
-                            >
-                                <item.icon className="mr-2 h-4 w-4"/>
-                                {item.label}
-                            </Link>
-                        ))
-                    )}
+                    {navItems.map((item, index) => (
+                        <Link
+                            key={index}
+                            to={item.path}
+                            className={`sidebar-nav-item ${item.color} ${location.pathname === item.path ? 'bg-opacity-20 bg-white' : ''}`}
+                            onClick={handleNavClick}
+                        >
+                            <item.icon className="mr-2 h-4 w-4"/>
+                            {item.label}
+                        </Link>
+                    ))}
 
                     {/* Admin section */}
                     {isAdmin && (
@@ -87,7 +72,8 @@ export function SidebarNav({ onCloseSidebar = () => {} }: SidebarNavProps) {
                         </Link>
                     )}
 
-                    {user && (
+                    {/* Logout button only for authenticated users */}
+                    {isAuthenticated && (
                         <button
                             onClick={handleLogout}
                             className="sidebar-nav-item text-red-400"

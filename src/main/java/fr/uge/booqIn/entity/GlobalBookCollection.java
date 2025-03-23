@@ -7,6 +7,7 @@ import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Transient;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -59,7 +60,7 @@ public final class GlobalBookCollection extends AbstractBookCollection {
 
             // Add all matching books
             matchingBooks.forEach(this::addBook);
-            this.setUpdatedAt(new Date());
+            this.setUpdatedAt(LocalDateTime.now());
         }
     }
 

@@ -1,9 +1,9 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { UserPlus, UserMinus, Users, ExternalLink } from "lucide-react"; // Added ExternalLink
 import { toast } from "react-toastify";
 import FollowService from "../../services/FollowService.ts"
-import { AuthContext } from "../../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 
 interface FollowButtonProps {
     entityId: number;
@@ -25,7 +25,7 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
     const [isFollowing, setIsFollowing] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [followersCount, setFollowersCount] = useState<number>(0);
-    const { user } = useContext(AuthContext);
+    const { user } = useAuth();
 
     // Size mappings for button classes
     const sizeClasses = {

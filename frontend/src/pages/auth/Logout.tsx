@@ -1,6 +1,5 @@
-import React, { useContext, useState } from "react";
-import { AuthContext } from "../../context/AuthContext.tsx";
-import AuthService from "../../services/AuthService.ts";
+import React, { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
 import { LogOut } from "lucide-react";
 
 interface LogoutProps {
@@ -9,14 +8,14 @@ interface LogoutProps {
 }
 
 const Logout: React.FC<LogoutProps> = ({ variant = "button", className = "" }) => {
-    const { setUser } = useContext(AuthContext);
+    const { logout } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
 
     const handleLogout = async () => {
         setIsLoading(true);
         try {
-            await AuthService.logout();
-            setUser(null);
+            await logout();
+            // No need to set user manually - the auth context handles this
         } catch (error) {
             console.error("Logout failed:", error);
         } finally {

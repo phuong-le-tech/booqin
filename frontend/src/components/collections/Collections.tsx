@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {BookCollectionIndex} from "../../model/BookCollection";
-import { AuthContext } from "../../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 import Layout from "../../pages/Layout";
 import BookCollectionService from "../../services/BookCollectionService";
 import CollectionEditModal from "../modal/CollectionEditModal.tsx";
@@ -11,7 +11,7 @@ import { Pagination } from "../Pagination.tsx";
 import { PageInfo } from "../../model/Pagination";
 
 const Collections: React.FC = () => {
-    const { user } = useContext(AuthContext);
+    const { user } = useAuth();
     const [collections, setCollections] = useState<BookCollectionIndex[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);

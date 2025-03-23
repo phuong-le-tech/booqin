@@ -1,9 +1,9 @@
 // src/components/BookGrid.tsx
-import React, {useState, useEffect, useContext} from 'react';
+import React, {useState, useEffect } from 'react';
 import { BookCard } from './BookCard';
 import { BookIndex } from '../model/Book';
 import axiosInstance from "../services/AxiosInstance.ts";
-import {AuthContext} from "../context/AuthContext.tsx";
+import {useAuth} from "../context/AuthContext.tsx";
 
 interface BookGridProps {
     books: BookIndex[];
@@ -14,7 +14,7 @@ interface BookGridProps {
 export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading, userId }) => {
     const [lentBooks, setLentBooks] = useState<number[]>([]);
     const [borrowedBooks, setBorrowedBooks] = useState<number[]>([]);
-    const { user } = useContext(AuthContext);
+    const { user } = useAuth();
     const userIds = user?.id;
 
     const fetchUserBooks = async () => {

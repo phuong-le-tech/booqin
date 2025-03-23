@@ -51,7 +51,7 @@ class BookCollectionService {
         sortDirection = 'asc'
     ): Promise<Page<BookCollectionIndex>> {
         try {
-            const response = await axiosInstance.get<ApiResponse<Page<BookCollectionIndex>>>(`${API_URL}?isPublic=true`, {
+            const response = await axiosInstance.get<ApiResponse<Page<BookCollectionIndex>>>(`${API_URL}/public`, {
                 params: {
                     page,
                     size,

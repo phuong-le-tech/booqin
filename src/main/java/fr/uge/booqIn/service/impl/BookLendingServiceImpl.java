@@ -6,11 +6,13 @@ import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.BookLending;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.BookStatus;
+import fr.uge.booqIn.event.BooqInEventPublisher;
+import fr.uge.booqIn.event.publishable.BookNotAvailableEvent;
+import fr.uge.booqIn.event.publishable.BookReturnedEvent;
 import fr.uge.booqIn.mapper.BookLendingMapper;
 import fr.uge.booqIn.repository.BookLendingRepository;
 import fr.uge.booqIn.repository.BookRepository;
 import fr.uge.booqIn.repository.UserRepository;
-import fr.uge.booqIn.service.EventPublisherService;
 import fr.uge.booqIn.service.interfaces.BookLendingInterface;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -36,17 +38,17 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   private final BookRepository bookRepository;
   private final BookLendingMapper bookLendingMapper;
   private final BookServiceImpl bookService;
-  private final EventPublisherService eventPublisher;
+  private final BooqInEventPublisher eventPublisher;
   private final UserRepository userRepository;
 
   public BookLendingServiceImpl(
-      BookLendingRepository bookLendingRepository,
-      UserServiceImpl userService,
-      BookRepository bookRepository,
-      BookLendingMapper bookLendingMapper,
-      BookServiceImpl bookService,
-      EventPublisherService eventPublisher,
-      UserRepository userRepository) {
+          BookLendingRepository bookLendingRepository,
+          UserServiceImpl userService,
+          BookRepository bookRepository,
+          BookLendingMapper bookLendingMapper,
+          BookServiceImpl bookService,
+          BooqInEventPublisher eventPublisher,
+          UserRepository userRepository) {
     this.bookLendingRepository = bookLendingRepository;
     this.userService = userService;
     this.bookRepository = bookRepository;
@@ -57,8 +59,8 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   }
 
   @Transactional
-  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = { ConcurrentModificationException.class,
-      ObjectOptimisticLockingFailureException.class }, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
+  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {ConcurrentModificationException.class,
+          ObjectOptimisticLockingFailureException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
   public boolean confirmLoan(Long lendingId) {
     Optional<BookLending> optionalLending = bookLendingRepository.findById(lendingId);
 
@@ -82,8 +84,8 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   }
 
   @Transactional
-  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = { ConcurrentModificationException.class,
-      ObjectOptimisticLockingFailureException.class }, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
+  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {ConcurrentModificationException.class,
+          ObjectOptimisticLockingFailureException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
   public boolean returnBook(Long lendingId) {
     Optional<BookLending> optionalLending = bookLendingRepository.findById(lendingId);
 
@@ -101,13 +103,13 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     lending.setReturnDate(null);
 
     bookLendingRepository.save(lending);
-    eventPublisher.publishBookReturnedEvent(this, lending.getBook().getId());
+    eventPublisher.publishEvent(new BookReturnedEvent(lending.getBook().getId()));
     return true;
   }
 
   @Transactional
-  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = { ConcurrentModificationException.class,
-      ObjectOptimisticLockingFailureException.class }, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
+  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {ConcurrentModificationException.class,
+          ObjectOptimisticLockingFailureException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
   public boolean reserveBook(Long bookId, Long borrowerId) {
     Optional<Book> optionalBook = bookRepository.findById(bookId);
     Optional<User> optionalUser = Optional.ofNullable(userService.findUserById(borrowerId));
@@ -122,7 +124,7 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     var bookLending = findBookLendingByBookId(bookId);
     if (bookLending.isEmpty()) {
       System.out.println("Book already reserved");
-      eventPublisher.publishBookNotAvailableEvent(this, bookId, borrowerId);
+      eventPublisher.publishEvent(new BookNotAvailableEvent(bookId, borrowerId));
       return false;
     }
     var bl = bookLending.get();
@@ -135,8 +137,8 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   }
 
   @Transactional
-  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = { ConcurrentModificationException.class,
-      ObjectOptimisticLockingFailureException.class }, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
+  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {ConcurrentModificationException.class,
+          ObjectOptimisticLockingFailureException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
   public boolean cancelBook(Long bookId, Long userId) {
     User user = userService.findUserById(userId);
     Optional<Book> optBook = bookRepository.findById(bookId);
@@ -153,8 +155,8 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   }
 
   @Transactional
-  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = { ConcurrentModificationException.class,
-      ObjectOptimisticLockingFailureException.class }, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
+  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {ConcurrentModificationException.class,
+          ObjectOptimisticLockingFailureException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
   public boolean markAsShipped(Long lendingId) {
     Optional<BookLending> optionalLending = bookLendingRepository.findById(lendingId);
 
@@ -175,8 +177,8 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   }
 
   @Transactional
-  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = { ConcurrentModificationException.class,
-      ObjectOptimisticLockingFailureException.class }, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
+  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {ConcurrentModificationException.class,
+          ObjectOptimisticLockingFailureException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
   public void markAsPending(Long bookId, Long userId) {
     Optional<Book> optBook = bookRepository.findById(bookId);
     User user = userService.findUserById(userId);
@@ -192,8 +194,8 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   }
 
   @Transactional
-  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = { ConcurrentModificationException.class,
-      ObjectOptimisticLockingFailureException.class }, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
+  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {ConcurrentModificationException.class,
+          ObjectOptimisticLockingFailureException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
   public boolean markAsReturn(Long bookId, Long userId) {
     Optional<Book> optBook = bookRepository.findById(bookId);
     User user = userService.findUserById(userId);
@@ -220,8 +222,8 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   }
 
   @Transactional
-  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = { ConcurrentModificationException.class,
-      ObjectOptimisticLockingFailureException.class }, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
+  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {ConcurrentModificationException.class,
+          ObjectOptimisticLockingFailureException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
   public void ListClearBookstoLend(List<BookLending> bookLendings) {
     bookLendingRepository.deleteAll(bookLendings);
   }
@@ -235,8 +237,8 @@ public class BookLendingServiceImpl implements BookLendingInterface {
       initializeBookLendingLazyRelations(borrow);
     }
     return borrows.stream()
-        .map(bookLendingMapper::toBookLendingShow)
-        .collect(Collectors.toList());
+            .map(bookLendingMapper::toBookLendingShow)
+            .collect(Collectors.toList());
   }
 
   @Transactional
@@ -251,8 +253,8 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     }
 
     return lendings.stream()
-        .map(bookLendingMapper::toBookLendingShow)
-        .collect(Collectors.toList());
+            .map(bookLendingMapper::toBookLendingShow)
+            .collect(Collectors.toList());
   }
 
   @Transactional
@@ -260,12 +262,12 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     boolean containsAll = "all".equalsIgnoreCase(type);
 
     List<BookLendingShow> borrowedBooks = containsAll || "borrowed".equalsIgnoreCase(type)
-        ? findBorrowedLendingsAsDTO(userId)
-        : List.of();
+            ? findBorrowedLendingsAsDTO(userId)
+            : List.of();
 
     List<BookLendingShow> lentBooks = containsAll || "lent".equalsIgnoreCase(type)
-        ? findLentBooksAsDTO(userId)
-        : List.of();
+            ? findLentBooksAsDTO(userId)
+            : List.of();
 
     return new LendingResponseDTO(borrowedBooks, lentBooks, containsAll);
   }
@@ -304,51 +306,51 @@ public class BookLendingServiceImpl implements BookLendingInterface {
 
   @Recover
   public boolean recoverFromOptimisticLockingFailureOnConfirmLoan(ObjectOptimisticLockingFailureException ex,
-      Long lendingId) {
+                                                                  Long lendingId) {
     throw new ConcurrentModificationException("The book lending has been modified by someone else. Please try again.",
-        ex);
+            ex);
   }
 
   @Recover
   public boolean recoverFromOptimisticLockingFailureOnReturnBook(ObjectOptimisticLockingFailureException ex,
-      Long lendingId) {
+                                                                 Long lendingId) {
     throw new ConcurrentModificationException("The book lending has been modified by someone else. Please try again.",
-        ex);
+            ex);
   }
 
   @Recover
   public boolean recoverFromOptimisticLockingFailureOnReserveBook(ObjectOptimisticLockingFailureException ex,
-      Long bookId, Long borrowerId) {
+                                                                  Long bookId, Long borrowerId) {
     throw new ConcurrentModificationException("The book lending has been modified by someone else. Please try again.",
-        ex);
+            ex);
   }
 
   @Recover
   public boolean recoverFromOptimisticLockingFailureOnCancelBook(ObjectOptimisticLockingFailureException ex,
-      Long bookId, Long userId) {
+                                                                 Long bookId, Long userId) {
     throw new ConcurrentModificationException("The book lending has been modified by someone else. Please try again.",
-        ex);
+            ex);
   }
 
   @Recover
   public boolean recoverFromOptimisticLockingFailureOnMarkAsShipped(ObjectOptimisticLockingFailureException ex,
-      Long lendingId) {
+                                                                    Long lendingId) {
     throw new ConcurrentModificationException("The book lending has been modified by someone else. Please try again.",
-        ex);
+            ex);
   }
 
   @Recover
   public void recoverFromOptimisticLockingFailureOnMarkAsPending(ObjectOptimisticLockingFailureException ex,
-      Long bookId, Long userId) {
+                                                                 Long bookId, Long userId) {
     throw new ConcurrentModificationException("The book lending has been modified by someone else. Please try again.",
-        ex);
+            ex);
   }
 
   @Override
   @Transactional
   public Optional<BookLending> findBookLendingByBookId(Long bookId) {
     return Optional
-        .ofNullable(bookLendingRepository.findByBookIdAndBorrowerIsNullAndStatus(bookId, BookStatus.AVAILABLE));
+            .ofNullable(bookLendingRepository.findByBookIdAndBorrowerIsNullAndStatus(bookId, BookStatus.AVAILABLE));
   }
 
   @Override
@@ -367,7 +369,7 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     }
 
     boolean alreadyLoanable = user.getLentBooks().stream()
-        .anyMatch(toL -> toL.getBook().getId().equals(bookId));
+            .anyMatch(toL -> toL.getBook().getId().equals(bookId));
 
     if (alreadyLoanable) {
       return false;
@@ -396,8 +398,8 @@ public class BookLendingServiceImpl implements BookLendingInterface {
       return false;
     }
     Optional<BookLending> bookLending = userRepository.findById(userId).get().getLentBooks().stream()
-        .filter(toL -> toL.getBook().getId().equals(bookId))
-        .findFirst();
+            .filter(toL -> toL.getBook().getId().equals(bookId))
+            .findFirst();
 
     if (bookLending.isEmpty()) {
       return false;
@@ -411,16 +413,16 @@ public class BookLendingServiceImpl implements BookLendingInterface {
 
   @Recover
   public boolean recoverFromOptimisticLockingFailureOnMarkAsReturn(ObjectOptimisticLockingFailureException ex,
-      Long bookId, Long userId) {
+                                                                   Long bookId, Long userId) {
     throw new ConcurrentModificationException("The book lending has been modified by someone else. Please try again.",
-        ex);
+            ex);
   }
 
   @Recover
   public void recoverFromOptimisticLockingFailureOnListClear(ObjectOptimisticLockingFailureException ex,
-      List<BookLending> bookLendings) {
+                                                             List<BookLending> bookLendings) {
     throw new ConcurrentModificationException(
-        "The book lending list has been modified by someone else. Please try again.", ex);
+            "The book lending list has been modified by someone else. Please try again.", ex);
   }
 
 }

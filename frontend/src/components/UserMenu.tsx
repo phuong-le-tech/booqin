@@ -2,13 +2,10 @@ import type React from "react"
 import { User, Settings, LogOut } from "lucide-react"
 import { Link } from "react-router-dom"
 import { Dropdown } from "./Dropdown"
+import { User as UserApp } from "../model/User"
 
 interface UserMenuProps {
-    user: {
-        firstName: string
-        lastName: string
-        email: string
-    }
+    user: UserApp,
     onLogout: () => void
 }
 
@@ -29,15 +26,15 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, onLogout }) => {
                 </div>
                 <Link to="/profile" className="block px-4 py-2 text-sm text-secondary hover:bg-gray-500">
                     <User className="inline-block w-4 h-4 mr-2" />
-                    Profil
+                    Profile
                 </Link>
                 <Link to="/settings" className="block px-4 py-2 text-sm text-secondary hover:bg-gray-500">
                     <Settings className="inline-block w-4 h-4 mr-2" />
-                    Paramètres
+                    Settings
                 </Link>
                 <button onClick={onLogout} className="block w-full text-left px-4 py-2 text-sm text-secondary hover:bg-gray-500">
                     <LogOut className="inline-block w-4 h-4 mr-2" />
-                    Déconnexion
+                    Logout
                 </button>
             </div>
         </Dropdown>

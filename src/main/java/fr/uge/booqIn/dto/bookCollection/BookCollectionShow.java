@@ -3,6 +3,7 @@ package fr.uge.booqIn.dto.bookCollection;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.user.UserIndex;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -15,6 +16,6 @@ public record BookCollectionShow(
         List<BookIndex> books,
         UserIndex user,
         String collectionType,
-        Date createdAt,
-        Date updatedAt
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt
 ) {}

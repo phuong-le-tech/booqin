@@ -103,7 +103,7 @@ public class BookCollectionController {
   }
 
   @GetMapping("/public")
-  public ResponseEntity<ApiResponse<Page<BookCollectionShow>>> getPublicCollections(
+  public ResponseEntity<ApiResponse<Page<BookCollectionIndex>>> getPublicCollections(
           @RequestParam(defaultValue = "0") int page,
           @RequestParam(defaultValue = "10") int size,
           @RequestParam(defaultValue = "id") String sortField,
@@ -115,7 +115,7 @@ public class BookCollectionController {
 
     Pageable pageable = PageRequest.of(page, size, sort);
 
-    Page<BookCollectionShow> collections = bookCollectionService.getPublicCollections(pageable);
+    Page<BookCollectionIndex> collections = bookCollectionService.getPublicCollections(pageable);
     return ResponseEntity.ok(ApiResponse.success("Public collections fetched", collections));
   }
 

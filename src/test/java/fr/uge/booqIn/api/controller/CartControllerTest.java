@@ -26,6 +26,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -71,8 +72,8 @@ class CartControllerTest {
                 Set.of(new AuthorDto(1L, "Author","Name")),
                 "1234567890",
                 new Date(),
-                new Date(),
-                new Date(),
+                LocalDateTime.now(),
+                LocalDateTime.now(),
                 Set.of("Genre")
         );
 
@@ -114,8 +115,8 @@ class CartControllerTest {
                 Set.of(new AuthorDto(1L, "Author","Name")),
                 "1234567890",
                 new Date(),
-                new Date(),
-                new Date(),
+                LocalDateTime.now(),
+                LocalDateTime.now(),
                 Set.of("Genre")
         );
 
@@ -152,8 +153,8 @@ class CartControllerTest {
                 Set.of(new AuthorDto(1L, "Author","Name")),
                 "1234567890",
                 new Date(),
-                new Date(),
-                new Date(),
+                LocalDateTime.now(),
+                LocalDateTime.now(),
                 Set.of("Genre")
         );
 
@@ -218,8 +219,8 @@ class CartControllerTest {
                 Set.of(new AuthorDto(1L, "Author","Name")),
                 "1234567890",
                 new Date(),
-                new Date(),
-                new Date(),
+                LocalDateTime.now(),
+                LocalDateTime.now(),
                 Set.of("Genre")
         );
 

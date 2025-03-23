@@ -1,19 +1,13 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Layout } from "../Layout";
-import { AuthContext } from "../../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 import FollowService from "../../services/FollowService";
 import UserService from "../../services/UserService";
 import BookService from "../../services/BookService";
 import { Link } from "react-router-dom";
 import { BookOpen, Users, Library, User as UserIcon, Loader } from "lucide-react";
 import BookCollectionService from "../../services/BookCollectionService.ts";
-
-type User = {
-    id: number;
-    firstName: string;
-    lastName: string;
-    email: string;
-};
+import { User } from "../../model/User";
 
 type Book = {
     id: number;
@@ -32,7 +26,7 @@ type Collection = {
 };
 
 export const Following: React.FC = () => {
-    const { user } = useContext(AuthContext);
+    const { user } = useAuth();
     const [activeTab, setActiveTab] = useState<"users" | "books" | "collections">("users");
     const [followedUsers, setFollowedUsers] = useState<User[]>([]);
     const [followedBooks, setFollowedBooks] = useState<Book[]>([]);

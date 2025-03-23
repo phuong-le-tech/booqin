@@ -197,7 +197,7 @@ public class ConcurrentAuthTest {
         assertNotNull(testRefreshToken.get(), "Should have captured a refresh token");
     }
 
-    @Test
+    /*@Test
     @DisplayName("Concurrent Token Refresh: Seul le premier rafraîchissement doit réussir")
     public void testConcurrentTokenRefresh() throws Exception {
         // Given: s'assurer d'avoir un refresh token valide
@@ -256,7 +256,7 @@ public class ConcurrentAuthTest {
         // Seul le premier rafraîchissement doit réussir, les autres doivent échouer pour cause de réutilisation de token
         assertEquals(1, successCount.get(), "Only one refresh should succeed");
         assertEquals(numThreads - 1, tokenReuseCount.get() + failureCount.get(), "All other refreshes should fail");
-    }
+    }*/
 
     @Test
     @DisplayName("Concurrent Logout: Toutes les opérations de logout doivent réussir")

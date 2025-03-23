@@ -2,8 +2,14 @@ package fr.uge.booqIn.entity;
 
 import fr.uge.booqIn.model.BookCollection;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Size;
+import org.hibernate.validator.constraints.Length;
+
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -21,12 +27,17 @@ public abstract class AbstractBookCollection implements BookCollection {
   @Column(nullable = false)
   private Long version;
 
+  @NotBlank(message = "Collection title cannot be empty")
+  @Length(min = 3, max = 255, message = "Title must be between 3 and 255 characters")
   @Column(nullable = false)
   private String title;
 
+  @NotBlank(message = "Collection description cannot be empty")
+  @Size(min = 10, max = 5000, message = "Description must be between 10 and 5000 characters")
   @Column(nullable = false, columnDefinition = "TEXT")
   private String description;
 
+  @NotNull(message = "Collection must have an owner")
   @ManyToOne(fetch = FetchType.LAZY)
   private User owner;
 
@@ -36,13 +47,16 @@ public abstract class AbstractBookCollection implements BookCollection {
   @Column(nullable = false)
   private boolean isPublic = false;
 
+  @NotNull(message = "Creation date is required")
+  @PastOrPresent(message = "Creation date cannot be in the future")
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "created_at", nullable = false, updatable = false)
-  private Date createdAt = new Date();
+  private LocalDateTime createdAt = LocalDateTime.now();
 
+  @PastOrPresent(message = "Update date cannot be in the future")
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "updated_at")
-  private Date updatedAt = new Date();
+  private LocalDateTime updatedAt = LocalDateTime.now();
 
   @Transient
   @Override
@@ -99,12 +113,12 @@ public abstract class AbstractBookCollection implements BookCollection {
   }
 
   @Override
-  public Date getCreatedAt() {
+  public LocalDateTime getCreatedAt() {
     return createdAt;
   }
 
   @Override
-  public Date getUpdatedAt() {
+  public LocalDateTime getUpdatedAt() {
     return updatedAt;
   }
 
@@ -145,31 +159,31 @@ public abstract class AbstractBookCollection implements BookCollection {
   }
 
   @Override
-  public void setCreatedAt(Date createdAt) {
+  public void setCreatedAt(LocalDateTime createdAt) {
     this.createdAt = createdAt;
   }
 
   @Override
-  public void setUpdatedAt(Date updatedAt) {
+  public void setUpdatedAt(LocalDateTime updatedAt) {
     this.updatedAt = updatedAt;
   }
 
-  // Opérations sur les collections
+  // Collection operations
   @Override
   public void addBook(Book book) {
     if (books.contains(book)) {
       throw new IllegalArgumentException("Book already in collection");
     }
     books.add(book);
-    this.setUpdatedAt(new Date());
+    this.setUpdatedAt(LocalDateTime.now());
   }
 
   @Override
   public void removeBook(Book book) {
     if (!books.remove(book)) {
-      throw new IllegalArgumentException("Book not found in collection");
+      return;
     }
-    this.setUpdatedAt(new Date());
+    this.setUpdatedAt(LocalDateTime.now());
   }
 
   @Override
