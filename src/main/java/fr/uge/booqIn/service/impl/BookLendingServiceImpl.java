@@ -6,11 +6,13 @@ import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.BookLending;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.BookStatus;
+import fr.uge.booqIn.event.BooqInEventPublisher;
+import fr.uge.booqIn.event.publishable.BookNotAvailableEvent;
+import fr.uge.booqIn.event.publishable.BookReturnedEvent;
 import fr.uge.booqIn.mapper.BookLendingMapper;
 import fr.uge.booqIn.repository.BookLendingRepository;
 import fr.uge.booqIn.repository.BookRepository;
 import fr.uge.booqIn.repository.UserRepository;
-import fr.uge.booqIn.service.EventPublisherService;
 import fr.uge.booqIn.service.interfaces.BookLendingInterface;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -36,7 +38,7 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   private final BookRepository bookRepository;
   private final BookLendingMapper bookLendingMapper;
   private final BookServiceImpl bookService;
-  private final EventPublisherService eventPublisher;
+  private final BooqInEventPublisher eventPublisher;
   private final UserRepository userRepository;
 
   public BookLendingServiceImpl(
@@ -45,7 +47,7 @@ public class BookLendingServiceImpl implements BookLendingInterface {
           BookRepository bookRepository,
           BookLendingMapper bookLendingMapper,
           BookServiceImpl bookService,
-          EventPublisherService eventPublisher,
+          BooqInEventPublisher eventPublisher,
           UserRepository userRepository) {
     this.bookLendingRepository = bookLendingRepository;
     this.userService = userService;
@@ -101,7 +103,7 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     lending.setReturnDate(null);
 
     bookLendingRepository.save(lending);
-    eventPublisher.publishBookReturnedEvent(this, lending.getBook().getId());
+    eventPublisher.publishEvent(new BookReturnedEvent(lending.getBook().getId()));
     return true;
   }
 
@@ -122,7 +124,7 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     var bookLending = findBookLendingByBookId(bookId);
     if (bookLending.isEmpty()) {
       System.out.println("Book already reserved");
-      eventPublisher.publishBookNotAvailableEvent(this, bookId, borrowerId);
+      eventPublisher.publishEvent(new BookNotAvailableEvent(bookId, borrowerId));
       return false;
     }
     var bl = bookLending.get();
