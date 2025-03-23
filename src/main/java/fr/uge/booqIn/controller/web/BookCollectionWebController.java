@@ -1,6 +1,7 @@
 package fr.uge.booqIn.controller.web;
 
 import fr.uge.booqIn.dto.book.BookShow;
+import fr.uge.booqIn.dto.bookCollection.BookCollectionCreate;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionIndex;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionUpdate;
@@ -19,6 +20,9 @@ import fr.uge.booqIn.service.interfaces.BookLendingInterface;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -64,11 +68,21 @@ public class BookCollectionWebController {
   }
 
   @GetMapping()
-  public String showUserCollections(Model model, @AuthenticationPrincipal User currentUser, Principal principal) {
+  public String showUserCollections(
+          Model model, @AuthenticationPrincipal User currentUser, Principal principal,
+          @RequestParam(value = "page", defaultValue = "0") int page,
+          @RequestParam(value = "size", defaultValue = "20") int size,
+          @RequestParam(value = "sort", defaultValue = "title") String sort,
+          @RequestParam(value = "direction", defaultValue = "asc") String direction
+  ) {
     homeWebController.prepareModel(model, principal, "collections");
-   
 
-    Page<BookCollectionShow> collections = bookCollectionService.getUserCollectionsWithBooks(currentUser, null);
+    Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction) ?
+            Sort.Direction.DESC : Sort.Direction.ASC;
+    Sort sortObj = Sort.by(sortDirection, sort);
+    Pageable pageable = PageRequest.of(page, size, sortObj);
+
+    Page<BookCollectionShow> collections = bookCollectionService.getUserCollectionsWithBooks(currentUser, pageable);
     List<BookCollectionShow> userPublicCollections = collections.stream().filter(BookCollectionShow::isPublic).toList();
     List<BookCollectionShow> userPrivateCollections = collections.stream().filter(collection -> !collection.isPublic()).toList();
     model.addAttribute("collections", collections);
@@ -214,7 +228,7 @@ public class BookCollectionWebController {
     // Préparer le modèle commun
     homeWebController.prepareModel(model, principal, "collection-create");
 
-    model.addAttribute("bookCollection", null);
+    model.addAttribute("bookCollection", new BookCollectionCreate("", "", false, Optional.empty()));
 
     // Définir le titre et le contenu
     model.addAttribute("title", "BooqIn - Create Collection");
@@ -223,15 +237,17 @@ public class BookCollectionWebController {
     return "layout";
   }
 
-  /*@PostMapping("/new")
+  @PostMapping("/new")
   public String createCollection(
           @Valid @ModelAttribute("bookCollection") BookCollectionCreate bookCollection,
           Model model,
-          Principal principal) {
+          Principal principal,
+          @AuthenticationPrincipal User currentUser
+  ) {
     try {
-      bookCollection.setOwner(currentUser);
-      bookCollection.setPublic(isPublic != null && isPublic);
-      BookCollection createdCollection = bookCollectionService.createBookCollection(bookCollection);
+//      bookCollection.setOwner(currentUser);
+//      bookCollection.setPublic(isPublic != null && isPublic);
+      BookCollectionShow createdCollection = bookCollectionService.createBookCollection(bookCollection, currentUser);
       System.out.println("Collection created: " + createdCollection);
       return "redirect:/collections";
     } catch (ResourceNotFoundException e) {
@@ -244,7 +260,7 @@ public class BookCollectionWebController {
 
       return "layout";
     }
-  }*/
+  }
 
   @GetMapping("/{id}/edit")
   public String showEditCollectionForm(@PathVariable Long id, Model model, @AuthenticationPrincipal User currentUser, Principal principal) {

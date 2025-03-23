@@ -15,7 +15,7 @@
             <tr th:each="collection : ${publicCollections}" class="hover:bg-gray-50">
                 <td class="px-6 py-4 text-base text-gray-700" th:text="${collection.title}">Collection Title</td>
                 <td class="px-6 py-4 text-base text-gray-700" th:text="${collection.description}">Collection Description</td>
-                <td class="px-6 py-4 text-base text-gray-700" th:text="${collection.user.firstName} + ' ' + ${collection.user.lastName}">Owner</td>
+                <td class="px-6 py-4 text-base text-gray-700" th:text="${collection.userFullName}">Owner</td>
                 <td class="px-6 py-4 text-base font-medium">
                     <div class="flex space-x-2">
                         <a th:href="@{/collections/{id}(id=${collection.id})}" class="bg-blue-600 px-2 py-1 text-white text-base rounded hover:opacity-90">
@@ -23,7 +23,7 @@
                         </a>
                     </div>
                 </td>
-                <td class="px-6 py-4 text-base text-gray-600" th:text="${collection.books.size()}">Nb Books</td>
+                <td class="px-6 py-4 text-base text-gray-600" th:text="${collection.bookCount}">Nb Books</td>
             </tr>
             </tbody>
         </table>

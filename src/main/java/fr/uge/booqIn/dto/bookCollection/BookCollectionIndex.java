@@ -11,7 +11,4 @@ public record BookCollectionIndex<type>(
         int bookCount,
         boolean isPublic,
         BookCollection.CollectionType type
-) {
-        
-
-}
+) { }
