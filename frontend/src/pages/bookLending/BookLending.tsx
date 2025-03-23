@@ -1,4 +1,4 @@
-import  { useEffect, useState } from "react";
+import {JSX, useEffect, useState} from "react";
 import { Layout } from "../Layout";
 import axiosInstance from "../../services/AxiosInstance.ts";
 import { useAuth } from "../../context/AuthContext.tsx";
@@ -38,7 +38,7 @@ type LendingResponseDTO = {
     containsAll: boolean;
 };
 
-export const BookLending: React.FC = () => {
+export const BookLending: () => JSX.Element = () => {
     const [lendingData, setLendingData] = useState<LendingResponseDTO | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -157,7 +157,6 @@ export const BookLending: React.FC = () => {
         }
     };
 
-
     const removeFromLoanable = async (id: number) => {
         if (!user?.id) return;
 
@@ -192,7 +191,6 @@ export const BookLending: React.FC = () => {
         }
     };
 
-
     const handleShipBook = async (lendingId: number) => {
         if (!user) return;
 
@@ -209,6 +207,49 @@ export const BookLending: React.FC = () => {
         } catch (error) {
             console.error("Erreur lors de la mise à jour du statut d'expédition :", error);
             alert("Une erreur est survenue.");
+        }
+    };
+    const handleDownloadTicket = async (lendingId: number) => {
+        try {
+            console.log(`Téléchargement du ticket pour le prêt ${lendingId}`);
+            const token = localStorage.getItem('token');
+            const url = `${axiosInstance.defaults.baseURL}/v1/loans/ticket-download/${lendingId}`;
+            console.log(`URL de téléchargement: ${url}`);
+
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            console.log(`Statut de la réponse: ${response.status} ${response.statusText}`);
+            console.log(`Type de contenu: ${response.headers.get('Content-Type')}`);
+
+            if (!response.ok) {
+                 throw new Error(`Erreur HTTP: ${response.status}`);
+            }
+
+            const blob = await response.blob();
+            console.log(`Taille du blob: ${blob.size} octets, type: ${blob.type}`);
+
+            const blobUrl = window.URL.createObjectURL(blob);
+
+
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = `ticket_expedition_${lendingId}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            setTimeout(() => {
+                window.URL.revokeObjectURL(blobUrl);
+            }, 100);
+
+        } catch (error) {
+            console.error("Erreur lors du téléchargement du ticket:", error);
+            alert("Impossible de télécharger le ticket d'expédition.");
         }
     };
 
@@ -345,6 +386,16 @@ export const BookLending: React.FC = () => {
                                                                 </div>
                                                             )}
 
+                                                            {(lending.status === "PENDING_SHIPMENT" || lending.status === "SHIPPED") && (
+                                                                <div className="mt-4">
+                                                                    <button
+                                                                        onClick={() => handleDownloadTicket(lending.id)}
+                                                                        className="bg-light-blue hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+                                                                    >
+                                                                        Télécharger l'étiquette d'expédition
+                                                                    </button>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -406,8 +457,8 @@ export const BookLending: React.FC = () => {
                                                                             <div className="flex items-center gap-2 mb-1">
                                                                                 <span className="text-gray-600 font-medium">Statut:</span>
                                                                                 <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusBadgeClass(lending.status)}`}>
-                                                        {getStatusLabel(lending.status)}
-                                                    </span>
+                                                                                    {getStatusLabel(lending.status)}
+                                                                                </span>
                                                                             </div>
                                                                         </div>
 
@@ -420,6 +471,26 @@ export const BookLending: React.FC = () => {
                                                                             </div>
                                                                         </div>
                                                                     </div>
+
+                                                                    {(lending.status === "PENDING_SHIPMENT" || lending.status === "SHIPPED") && (
+                                                                        <div className="mt-4">
+                                                                            <button
+                                                                                onClick={() => handleDownloadTicket(lending.id)}
+                                                                                className="bg-light-blue hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors mr-2"
+                                                                            >
+                                                                                Télécharger l'étiquette d'expédition
+                                                                            </button>
+
+                                                                            {lending.status === "PENDING_SHIPMENT" && (
+                                                                                <button
+                                                                                    onClick={() => handleShipBook(lending.id)}
+                                                                                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+                                                                                >
+                                                                                    Marquer comme expédié
+                                                                                </button>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         </div>

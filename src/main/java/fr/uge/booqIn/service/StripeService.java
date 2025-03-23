@@ -13,6 +13,7 @@ import fr.uge.booqIn.enums.StatusPayment;
 import fr.uge.booqIn.repository.CartRepository;
 import fr.uge.booqIn.repository.UserRepository;
 import fr.uge.booqIn.service.interfaces.BookLendingInterface;
+import fr.uge.booqIn.service.interfaces.CartServiceInterface;
 import jakarta.annotation.PostConstruct;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,14 +39,16 @@ public class StripeService {
     private final CartRepository cartRepository;
     private final UserRepository userRepository;
     private final BookLendingInterface bookLendingService;
+    private final CartServiceInterface cartService;
     
     
     public StripeService(CartRepository cartRepository, BookLendingInterface bookLendingService,
-                         UserRepository userRepository) {
+                         UserRepository userRepository, CartServiceInterface cartService) {
         this.cartRepository = cartRepository;
         this.bookLendingService = bookLendingService;
         this.userRepository = userRepository;
-
+      
+      this.cartService = cartService;
     }
     
     @PostConstruct
@@ -101,15 +104,19 @@ public class StripeService {
             
             String sessionId = rootNode.path("id").asText();
             String paymentIntentId = rootNode.path("payment_intent").asText();
-            
+            if(paymentIntentId != null){
+                var cart = cartRepository.findByPaymentIntentId(paymentIntentId);
+              cart.ifPresent(value -> cartService.clearCartAfterPayment(value.getId()));
+            }
             if (paymentIntentId != null && !paymentIntentId.isEmpty()) {
                 System.out.println("ℹ️ Paiement Stripe réussi pour la session ID: " + sessionId);
                 System.out.println("ℹ️ Payment Intent ID: " + paymentIntentId);
-                
                 updateCartPaymentStatus(sessionId);
+                
             } else {
                 System.out.println("⚠️ Payment Intent ID introuvable dans la session");
             }
+            
         } catch (Exception e) {
             handleProcessingError("session", e);
         }
