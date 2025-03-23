@@ -1,7 +1,5 @@
 package fr.uge.booqIn.service;
 
-import fr.uge.booqIn.dto.auth.AuthResponse;
-import fr.uge.booqIn.service.interfaces.AuthServiceInterface;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -13,10 +11,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Key;
 import java.util.*;
@@ -24,6 +22,7 @@ import java.util.function.Function;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
+@Transactional(readOnly = true)
 public class JwtService {
 
   private static final Logger logger = LoggerFactory.getLogger(JwtService.class);
@@ -43,9 +42,6 @@ public class JwtService {
   private final ConcurrentHashMap<String, Boolean> usedRefreshTokens = new ConcurrentHashMap<>();
 
   private final Object tokenReuseLock = new Object();
-
-  @Autowired
-  private AuthServiceInterface authService;
 
   /**
    * Generates an access token for the specified username
@@ -159,6 +155,7 @@ public class JwtService {
   /**
    * Revokes a token by adding it to the blacklist
    */
+  @Transactional
   public synchronized void revokeToken(String token) {
     if (token != null && !token.isEmpty()) {
       try {
@@ -184,6 +181,7 @@ public class JwtService {
    * Records that a refresh token has been used
    * This prevents refresh token reuse attacks
    */
+  @Transactional
   public boolean recordRefreshTokenUsage(String token) {
     synchronized (tokenReuseLock) {
       if (usedRefreshTokens.containsKey(token)) {
@@ -198,10 +196,12 @@ public class JwtService {
 
   /**
    * Attempts to refresh a token
+   *
    * @param refreshToken The refresh token to use
-   * @param response The HTTP response to add cookies to
+   * @param response     The HTTP response to add cookies to
    * @return true if token refresh was successful, false otherwise
    */
+  @Transactional
   public boolean attemptTokenRefresh(String refreshToken, HttpServletResponse response) {
     logger.debug("Attempting token refresh");
 
@@ -216,11 +216,17 @@ public class JwtService {
         revokeToken(refreshToken);
         return false;
       }*/
-
-      AuthResponse tokens = authService.refreshToken(refreshToken);
-
-      addCookie(response, ACCESS_TOKEN_COOKIE_NAME, tokens.accessToken(), ACCESS_TOKEN_EXPIRATION / 1000);
-      addCookie(response, REFRESH_TOKEN_COOKIE_NAME, tokens.refreshToken(), REFRESH_TOKEN_EXPIRATION / 1000);
+      var username = extractUsername(refreshToken);
+      addCookie(response,
+              ACCESS_TOKEN_COOKIE_NAME,
+              createToken(new HashMap<>(), username, ACCESS_TOKEN_EXPIRATION),
+              ACCESS_TOKEN_EXPIRATION / 1000
+      );
+      addCookie(response,
+              REFRESH_TOKEN_COOKIE_NAME,
+              createToken(new HashMap<>(), username, REFRESH_TOKEN_EXPIRATION),
+              REFRESH_TOKEN_EXPIRATION / 1000
+      );
 
       logger.debug("Token refresh successful");
       return true;
@@ -274,6 +280,7 @@ public class JwtService {
    * Cleans up expired tokens from the blacklist and used token cache
    * Should be called periodically (e.g., via a scheduled task)
    */
+  @Transactional
   public synchronized void cleanupExpiredTokens() {
     Date now = new Date();
     int revokedBefore = revokedTokens.size();

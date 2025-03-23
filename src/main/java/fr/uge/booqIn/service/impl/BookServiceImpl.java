@@ -10,7 +10,6 @@ import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.mapper.BookMapper;
 import fr.uge.booqIn.repository.AuthorRepository;
 import fr.uge.booqIn.repository.BookRepository;
-import fr.uge.booqIn.service.EventPublisherService;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
 import fr.uge.booqIn.specification.BookSpecification;
 import org.springframework.data.domain.Page;
@@ -31,22 +30,22 @@ import java.util.logging.Logger;
 
 @Service
 public class BookServiceImpl implements BookServiceInterface {
-    private static final Logger logger = Logger.getLogger(BookServiceImpl.class.getName());
-    private final BookRepository bookRepository;
-    private final AuthorRepository authorRepository;
-    private final BookMapper bookMapper;
-    private final EventPublisherService eventPublisher;
+  private static final Logger logger = Logger.getLogger(BookServiceImpl.class.getName());
+  private final BookRepository bookRepository;
+  private final AuthorRepository authorRepository;
+  private final BookMapper bookMapper;
+  private final BooqInEventPublisher eventPublisher;
 
-    public BookServiceImpl(
-            BookRepository bookRepository,
-            AuthorRepository authorRepository,
-            BookMapper bookMapper,
-            EventPublisherService eventPublisher) {
-        this.bookRepository = bookRepository;
-        this.authorRepository = authorRepository;
-        this.bookMapper = bookMapper;
-        this.eventPublisher = eventPublisher;
-    }
+  public BookServiceImpl(
+      BookRepository bookRepository,
+      AuthorRepository authorRepository,
+      BookMapper bookMapper,
+      BooqInEventPublisher eventPublisher) {
+    this.bookRepository = bookRepository;
+    this.authorRepository = authorRepository;
+    this.bookMapper = bookMapper;
+    this.eventPublisher = eventPublisher;
+  }
 
     @Override
     @Transactional(readOnly = true)
@@ -101,11 +100,8 @@ public class BookServiceImpl implements BookServiceInterface {
         book.setUpdatedAt(LocalDateTime.now());
         Book savedBook = bookRepository.save(book);
 
-        // Publish event for newly created book
-        eventPublisher.publishBookCreatedEvent(this, savedBook);
-
-        return savedBook;
-    }
+    return savedBook;
+  }
 
     @Override
     @Transactional

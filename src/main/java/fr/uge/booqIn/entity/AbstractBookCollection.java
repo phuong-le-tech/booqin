@@ -181,7 +181,7 @@ public abstract class AbstractBookCollection implements BookCollection {
   @Override
   public void removeBook(Book book) {
     if (!books.remove(book)) {
-      throw new IllegalArgumentException("Book not found in collection");
+      return;
     }
     this.setUpdatedAt(LocalDateTime.now());
   }

@@ -38,11 +38,9 @@ public class UserMapper {
   public UserShow toUserShow(User user) {
     System.out.println("UserMapper.toUserShow");
     System.out.println("USER: " + user);
-    //System.out.println("USER COLLECTIONS: " + user.getCollections());
     List<BookCollectionIndex> collectionShowList = user.getCollections().stream()
             .map(bookCollectionMapper::toBookCollectionIndex)
             .toList();
-    System.out.println("nb cl index: " + collectionShowList.size());
     return new UserShow(
             user.getId(),
             user.getFirstName(),
