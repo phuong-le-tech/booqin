@@ -5,12 +5,12 @@ import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.dto.book.BookUpdate;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
+import fr.uge.booqIn.event.BooqInEventPublisher;
 import fr.uge.booqIn.exception.DuplicateResourceException;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.mapper.BookMapper;
 import fr.uge.booqIn.repository.AuthorRepository;
 import fr.uge.booqIn.repository.BookRepository;
-import fr.uge.booqIn.service.EventPublisherService;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
 import fr.uge.booqIn.specification.BookSpecification;
 import org.springframework.data.domain.Page;
@@ -35,13 +35,13 @@ public class BookServiceImpl implements BookServiceInterface {
   private final BookRepository bookRepository;
   private final AuthorRepository authorRepository;
   private final BookMapper bookMapper;
-  private final EventPublisherService eventPublisher;
+  private final BooqInEventPublisher eventPublisher;
 
   public BookServiceImpl(
       BookRepository bookRepository,
       AuthorRepository authorRepository,
       BookMapper bookMapper,
-      EventPublisherService eventPublisher) {
+      BooqInEventPublisher eventPublisher) {
     this.bookRepository = bookRepository;
     this.authorRepository = authorRepository;
     this.bookMapper = bookMapper;
@@ -100,9 +100,6 @@ public class BookServiceImpl implements BookServiceInterface {
     book.setCreatedAt(LocalDateTime.now());
     book.setUpdatedAt(LocalDateTime.now());
     Book savedBook = bookRepository.save(book);
-
-    // Publish event for newly created book
-    eventPublisher.publishBookCreatedEvent(this, savedBook);
 
     return savedBook;
   }
