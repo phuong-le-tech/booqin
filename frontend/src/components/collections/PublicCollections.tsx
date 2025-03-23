@@ -113,25 +113,25 @@ const PublicCollections: React.FC = () => {
                                 <>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                         {collections.map((collection) => (
-                                            <div key={collection.id} className="bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow">
-                                                <div className="p-6">
-                                                    <h2 className="text-xl font-bold text-gray-800 mb-2">{collection.title}</h2>
+                                            <div key={collection.id} className="bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow h-64 flex flex-col">
+                                                <div className="p-6 flex flex-col flex-grow">
+                                                    <h2 className="text-xl font-bold text-gray-800 mb-2 line-clamp-1">{collection.title}</h2>
 
                                                     {/* Owner information */}
                                                     <Link to={`/users/${collection.userId}`} className="flex items-center mb-3 group hover:text-blue-600 transition-colors">
                                                         <div className="h-8 w-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm mr-2 group-hover:bg-blue-600 transition-colors">
-                                                            {collection.userFullName.charAt(0)}{collection.userFullName.charAt(0)}
+                                                            {collection.userFullName.split(" ").map(name => name.charAt(0)).join("").substring(0, 2)}
                                                         </div>
-                                                        <span className="text-sm text-gray-600 group-hover:text-blue-600">
+                                                        <span className="text-sm text-gray-600 group-hover:text-blue-600 line-clamp-1">
                                                             Created by <span className="font-medium">{collection.userFullName}</span>
                                                         </span>
                                                     </Link>
 
-                                                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                                                    <p className="text-gray-600 text-sm mb-4 line-clamp-2 flex-grow">
                                                         {collection.description}
                                                     </p>
 
-                                                    <div className="flex items-center justify-between mb-4">
+                                                    <div className="flex items-center justify-between mb-4 mt-auto">
                                                         <span className="text-sm text-gray-500">
                                                             {collection.bookCount} book{collection.bookCount !== 1 ? 's' : ''}
                                                         </span>
@@ -157,10 +157,12 @@ const PublicCollections: React.FC = () => {
 
                                     {/* Pagination - display if more than one page */}
                                     {pageInfo && pageInfo.totalPages > 1 && (
-                                        <Pagination
-                                            pageInfo={pageInfo}
-                                            onPageChange={handlePageChange}
-                                        />
+                                        <div className="mt-8">
+                                            <Pagination
+                                                pageInfo={pageInfo}
+                                                onPageChange={handlePageChange}
+                                            />
+                                        </div>
                                     )}
                                 </>
                             )}

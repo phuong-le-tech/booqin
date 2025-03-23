@@ -9,12 +9,14 @@ import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.BookLending;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.BookStatus;
+import fr.uge.booqIn.event.BooqInEventPublisher;
+import fr.uge.booqIn.event.publishable.BookNotAvailableEvent;
+import fr.uge.booqIn.event.publishable.BookReturnedEvent;
 import fr.uge.booqIn.mapper.BookLendingMapper;
 import fr.uge.booqIn.pdf.PdfCreator;
 import fr.uge.booqIn.repository.BookLendingRepository;
 import fr.uge.booqIn.repository.BookRepository;
 import fr.uge.booqIn.repository.UserRepository;
-import fr.uge.booqIn.service.EventPublisherService;
 import fr.uge.booqIn.service.interfaces.BookLendingInterface;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -38,7 +40,7 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   private final BookRepository bookRepository;
   private final BookLendingMapper bookLendingMapper;
   private final BookServiceImpl bookService;
-  private final EventPublisherService eventPublisher;
+  private final BooqInEventPublisher eventPublisher;
   private final UserRepository userRepository;
   private PdfCreator pdfCreator = new PdfCreator();
 
@@ -48,7 +50,7 @@ public class BookLendingServiceImpl implements BookLendingInterface {
           BookRepository bookRepository,
           BookLendingMapper bookLendingMapper,
           BookServiceImpl bookService,
-          EventPublisherService eventPublisher,
+          BooqInEventPublisher eventPublisher,
           UserRepository userRepository) {
     this.bookLendingRepository = bookLendingRepository;
     this.userService = userService;
@@ -104,10 +106,10 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     lending.setReturnDate(null);
 
     bookLendingRepository.save(lending);
-    eventPublisher.publishBookReturnedEvent(this, lending.getBook().getId());
+    eventPublisher.publishEvent(new BookReturnedEvent(lending.getBook().getId()));
     return true;
   }
-  
+
   @Transactional
   @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {ConcurrentModificationException.class,
           ObjectOptimisticLockingFailureException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
@@ -119,10 +121,11 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     }
     Book book = optionalBook.get();
     User borrower = optionalUser.get();
-    List<BookLending> availableLendings = bookLendingRepository.findAvailableLendingsForBookOrderByLenderPoints(bookId);
-    if (availableLendings.isEmpty()) {
-      System.out.println("Book not available for lending");
-      eventPublisher.publishBookNotAvailableEvent(this, bookId, borrowerId);
+
+    var bookLending = findBookLendingByBookId(bookId);
+    if (bookLending.isEmpty()) {
+      System.out.println("Book already reserved");
+      eventPublisher.publishEvent(new BookNotAvailableEvent(bookId, borrowerId));
       return false;
     }
     BookLending selectedLending = availableLendings.getFirst();
@@ -421,7 +424,7 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     userRepository.save(user);
     return true;
   }
-  
+
   @Override
   @Transactional
   public byte[] getShippingTicketBytes(Long lendingId) {
@@ -430,7 +433,7 @@ public class BookLendingServiceImpl implements BookLendingInterface {
       System.out.println("Prêt non trouvé: " + lendingId);
       return null;
     }
-    
+
     BookLending lending = lendingOpt.get();
     byte[] pdfBytes = lending.getShippingTicketPDF();
     if (pdfBytes == null) {
@@ -440,9 +443,9 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     System.out.println("Taille du PDF pour le prêt " + lendingId + ": " + pdfBytes.length + " octets");
     return pdfBytes;
   }
-  
-  
-  
+
+
+
   @Recover
   public boolean recoverFromOptimisticLockingFailureOnMarkAsReturn(ObjectOptimisticLockingFailureException ex,
                                                                    Long bookId, Long userId) {

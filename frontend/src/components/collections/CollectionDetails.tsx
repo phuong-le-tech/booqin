@@ -268,17 +268,6 @@ const CollectionDetails: React.FC = () => {
                                                 size="md"
                                             />
                                         )}
-
-                                        {/* Follow user button - only show if not the current user */}
-                                        {user && collection.user.id !== user.id && (
-                                            <FollowButton
-                                                entityId={collection.user.id}
-                                                entityType="USER"
-                                                showFollowersCount={false}
-                                                showUserProfile={true}
-                                                size="md"
-                                            />
-                                        )}
                                     </div>
                                 </div>
 
