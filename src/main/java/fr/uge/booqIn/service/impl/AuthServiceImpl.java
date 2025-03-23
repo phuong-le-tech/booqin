@@ -134,10 +134,10 @@ public class AuthServiceImpl implements AuthServiceInterface {
       throw new IllegalStateException("Refresh token has expired");
     }
 
-    boolean isFirstUse = jwtService.recordRefreshTokenUsage(refreshToken);
+   /* boolean isFirstUse = jwtService.recordRefreshTokenUsage(refreshToken);
     if (!isFirstUse) {
       throw new IllegalStateException("Token reuse detected");
-    }
+    }*/
 
     String username = jwtService.extractUsername(refreshToken);
 

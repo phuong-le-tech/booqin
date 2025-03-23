@@ -4,6 +4,7 @@ import fr.uge.booqIn.factory.CriteriaStrategyFactory;
 import fr.uge.booqIn.strategy.collection.CollectionCriteriaStrategy;
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -50,7 +51,7 @@ public final class SmartBookCollection extends AbstractBookCollection {
 
       logger.info("Found " + matchingBooks.size() + " books matching the criteria");
       matchingBooks.forEach(this::addBook);
-      this.setUpdatedAt(new Date());
+      this.setUpdatedAt(LocalDateTime.now());
     }
   }
 

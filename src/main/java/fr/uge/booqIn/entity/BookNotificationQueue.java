@@ -23,7 +23,7 @@ public class BookNotificationQueue {
   private User user;
   
   @Column(nullable = false)
-  private LocalDateTime createdAt;
+  private LocalDateTime createdAt = LocalDateTime.now();
   
   private LocalDateTime notifiedAt;
   

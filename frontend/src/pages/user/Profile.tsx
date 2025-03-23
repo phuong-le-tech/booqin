@@ -4,7 +4,7 @@ import { toast } from "react-toastify"
 import { useAuth } from "../../context/AuthContext"
 import UserService from "../../services/UserService.ts"
 import { Layout } from "../Layout.tsx"
-import { User as UserIcon, Mail, MapPin, Edit, Save, X, Loader } from "lucide-react"
+import { User as UserIcon, Mail, MapPin, Edit, Save, X } from "lucide-react"
 import type { Address } from "../../model/Address.ts"
 
 interface ProfileForm {
@@ -15,7 +15,7 @@ interface ProfileForm {
 }
 
 export const Profile = () => {
-    const { user, isAuthenticated, isRefreshing, checkSession } = useAuth()
+    const { user, isAuthenticated } = useAuth()
     const [formData, setFormData] = useState<ProfileForm>({
         firstName: user?.firstName || "",
         lastName: user?.lastName || "",
@@ -33,12 +33,12 @@ export const Profile = () => {
 
     // Redirect if not authenticated
     useEffect(() => {
-        if (!isAuthenticated && !isRefreshing) {
+        if (!isAuthenticated) {
             // Save the current URL to return to after login
             localStorage.setItem('redirectAfterLogin', window.location.pathname);
             navigate("/login");
         }
-    }, [isAuthenticated, isRefreshing, navigate]);
+    }, [isAuthenticated, navigate]);
 
     // Update form data when user data changes
     useEffect(() => {
@@ -93,7 +93,6 @@ export const Profile = () => {
             const updatedUser = await UserService.updateUser(user.id, userData)
 
             // After updating user in backend, refresh the session to update auth context
-            await checkSession();
 
             toast.success("Profile updated successfully!")
             setIsEditing(false)
@@ -120,20 +119,6 @@ export const Profile = () => {
             })
         }
         setIsEditing(!isEditing)
-    }
-
-    // Loading state during authentication check
-    if (isRefreshing) {
-        return (
-            <Layout>
-                <div className="flex items-center justify-center min-h-screen">
-                    <div className="flex items-center space-x-2 text-blue-500">
-                        <Loader className="h-8 w-8 animate-spin" />
-                        <span className="text-lg">Loading your profile...</span>
-                    </div>
-                </div>
-            </Layout>
-        );
     }
 
     // Redirect handled in useEffect

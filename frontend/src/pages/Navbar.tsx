@@ -1,24 +1,24 @@
 import type React from "react"
 import { useState } from "react"
 import { Link, useLocation } from "react-router-dom"
-import { Loader, ShoppingCart } from "lucide-react"
+import { ShoppingCart } from "lucide-react"
 import { useAuth } from "../context/AuthContext"
 import type { Notification } from "../model/Notification.ts"
 import { NotificationsMenu } from "../components/NotificationsMenu.tsx"
 import { UserMenu } from "../components/UserMenu.tsx"
 
 export const Navbar: React.FC = () => {
-    const { user, isAuthenticated, isRefreshing, logout } = useAuth()
+    const { user, isAuthenticated, logout } = useAuth()
     const [notifications, setNotifications] = useState<Notification[]>([
         {
             id: 1,
-            message: "Nouveau livre ajouté à la collection",
+            message: "New book added to collection",
             read: false,
             date: new Date(),
         },
         {
             id: 2,
-            message: "Votre commande a été expédiée",
+            message: "Your order has been shipped",
             read: false,
             date: new Date(),
         },

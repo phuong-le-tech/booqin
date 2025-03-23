@@ -2,6 +2,8 @@ package fr.uge.booqIn.dto.book;
 
 import fr.uge.booqIn.entity.AbstractBookCollection;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
