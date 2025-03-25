@@ -9,7 +9,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 @EnableScheduling // pour tout ce qui est scheduler et co
 @PropertySource("file:${user.dir}/src/.env")
-@EnableRetry(proxyTargetClass = true)
+@EnableRetry
 public class BooqInApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(BooqInApplication.class, args);

@@ -15,6 +15,7 @@
             <tr th:each="collection : ${publicCollections.content}" class="hover:bg-gray-50">
                 <td class="px-6 py-4 text-base text-gray-700" th:text="${collection.title}">Collection Title</td>
                 <td class="px-6 py-4 text-base text-gray-700" th:text="${collection.description}">Collection Description</td>
+                <td class="px-6 py-4 text-base text-gray-700" th:text="${collection.userFullName}">Collection username</td>
                 <td class="px-6 py-4 text-base font-medium">
                     <div class="flex space-x-2">
                         <a th:href="@{/collections/{id}(id=${collection.id})}" class="bg-blue-600 px-2 py-1 text-white text-base rounded hover:opacity-90">
@@ -28,36 +29,51 @@
         </table>
     </div>
 
-    <!-- Pagination controls -->
-    <div class="mt-6 flex justify-center" th:if="${publicCollections.totalPages > 1}">
-        <nav class="flex items-center">
-            <ul class="flex">
-                <!-- Previous button -->
-                <li th:class="${publicCollections.first} ? 'opacity-50 cursor-not-allowed' : ''">
-                    <a th:unless="${publicCollections.first}"
-                       th:href="@{/collections/public(page=${publicCollections.number - 1})}"
-                       class="px-3 py-1 mx-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">&laquo;</a>
-                    <span th:if="${publicCollections.first}"
-                          class="px-3 py-1 mx-1 bg-gray-200 text-gray-400 rounded">&laquo;</span>
-                </li>
+    <!-- Pagination avec paramètres de recherche et de tri -->
+    <div class="flex items-center justify-center gap-2 my-6" th:if="${publicCollections.totalPages > 1}"
+         th:with="visiblePages=5,
+              startPage=${(publicCollections.number - 2 < 0) ? 0 : ((publicCollections.number + 2 >= publicCollections.totalPages) ? (publicCollections.totalPages - visiblePages < 0 ? 0 : publicCollections.totalPages - visiblePages) : publicCollections.number - 2)},
+              endPage=${(startPage + visiblePages - 1 >= publicCollections.totalPages) ? (publicCollections.totalPages - 1) : (startPage + visiblePages - 1)}">
 
-                <!-- Page numbers -->
-                <li th:each="pageNumber : ${#numbers.sequence(0, publicCollections.totalPages - 1)}">
-                    <a th:href="@{/collections/public(page=${pageNumber})}"
-                       th:text="${pageNumber + 1}"
-                       th:class="${pageNumber == publicCollections.number} ? 'px-3 py-1 mx-1 bg-blue-600 text-white rounded' : 'px-3 py-1 mx-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300'"></a>
-                </li>
+        <button class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-blue-600 transition hover:bg-blue-600 hover:text-white"
+                th:if="${publicCollections.number > 0}"
+                th:onclick="'window.location.href=\'' + @{/collections/public(page=${publicCollections.number - 1})} + '\''">
+            <span class="nav-icon">&#8592;</span>
+        </button>
 
-                <!-- Next button -->
-                <li th:class="${publicCollections.last} ? 'opacity-50 cursor-not-allowed' : ''">
-                    <a th:unless="${publicCollections.last}"
-                       th:href="@{/collections/public(page=${publicCollections.number + 1})}"
-                       class="px-3 py-1 mx-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">&raquo;</a>
-                    <span th:if="${publicCollections.last}"
-                          class="px-3 py-1 mx-1 bg-gray-200 text-gray-400 rounded">&raquo;</span>
-                </li>
-            </ul>
-        </nav>
+        <!-- Premier numéro de page avec ellipsis si nécessaire -->
+        <div class="min-w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer transition text-sm text-gray-800 hover:bg-gray-200"
+             th:if="${startPage > 0}"
+             th:onclick="'window.location.href=\'' + @{/collections/public(page=0)} + '\''">
+            <span>1</span>
+        </div>
+
+        <div class="flex items-center justify-center text-sm text-gray-500 tracking-wider" th:if="${startPage > 1}">...</div>
+
+        <!-- Pages visibles dans la fenêtre coulissante -->
+        <div class="flex items-center gap-1">
+            <div class="min-w-9 h-9 rounded-full flex items-center justify-center cursor-pointer transition text-sm"
+                 th:each="i : ${#numbers.sequence(startPage, endPage)}"
+                 th:classappend="${publicCollections.number == i} ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'"
+                 th:onclick="'window.location.href=\'' + @{/collections/public(page=${i})} + '\''">
+                <span th:text="${i + 1}"></span>
+            </div>
+        </div>
+
+        <!-- Dernier numéro de page avec ellipsis si nécessaire -->
+        <div class="flex items-center justify-center text-sm text-gray-500 tracking-wider" th:if="${endPage < publicCollections.totalPages - 2}">...</div>
+
+        <div class="min-w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer transition text-sm text-gray-800 hover:bg-gray-200"
+             th:if="${endPage < publicCollections.totalPages - 1}"
+             th:onclick="'window.location.href=\'' + @{/collections/public(page=${publicCollections.totalPages - 1})} + '\''">
+            <span th:text="${publicCollections.totalPages}"></span>
+        </div>
+
+        <button class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-blue-600 transition hover:bg-blue-600 hover:text-white"
+                th:if="${publicCollections.number < publicCollections.totalPages - 1}"
+                th:onclick="'window.location.href=\'' + @{/collections/public(page=${publicCollections.number + 1})} + '\''">
+            <span class="nav-icon">&#8594;</span>
+        </button>
     </div>
 
     <div class="mt-6 text-center">
