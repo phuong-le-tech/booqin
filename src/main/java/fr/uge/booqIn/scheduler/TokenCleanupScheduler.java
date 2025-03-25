@@ -18,7 +18,7 @@ public class TokenCleanupScheduler {
         this.jwtService = jwtService;
     }
 
-    @Scheduled(fixedRate = 3600000) // Every hour
+    @Scheduled(cron = "0 0 2 * * ?") // Every hour
     public void cleanupExpiredTokens() {
         logger.info("Running scheduled token cleanup task");
         jwtService.cleanupExpiredTokens();
