@@ -20,6 +20,9 @@ import fr.uge.booqIn.service.interfaces.VoteServiceInterface;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -55,12 +58,13 @@ public class BookCollectionWebController {
   }
 
   @GetMapping("/public")
-  public String showPublicCollections(Model model, Principal principal) {
+  public String showPublicCollections(Model model, Principal principal,
+                                      @RequestParam(defaultValue = "0") int page,
+                                      @RequestParam(defaultValue = "10") int size) {
     // Préparer le modèle commun
     homeWebController.prepareModel(model, principal, "collections-public");
 
-    // Récupérer les collections publiques
-    Page<BookCollectionIndex> collections = bookCollectionService.getPublicCollections(null);
+    Page<BookCollectionIndex> collections = bookCollectionService.getPublicCollections(PageRequest.of(page, size));
     model.addAttribute("publicCollections", collections);
 
     // Définir le titre et le contenu
