@@ -11,6 +11,7 @@ import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.BookStatus;
+import fr.uge.booqIn.enums.LendStatus;
 import fr.uge.booqIn.enums.VoteType;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.mapper.BookCollectionMapper;
@@ -121,7 +122,7 @@ public class BookCollectionWebController {
       model.addAttribute("isOwner", isOwner);
       if (currentUser != null) {
         try {
-          LendingResponseDTO lendingData = bookLendingInterface.findAllUserLendingsAsDTO(currentUser.getId(), "all");
+          LendingResponseDTO lendingData = bookLendingInterface.findAllUserLendingsAsDTO(currentUser.getId(), LendStatus.ALL);
           StringBuilder logMsg = new StringBuilder();
           System.out.println("Lending data fetched: " + lendingData.lentBooks().size() + " lent books");
           List<Long> lentBooks = lendingData.lentBooks().stream()

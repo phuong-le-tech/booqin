@@ -2,6 +2,7 @@ import React, {useState, useEffect } from 'react';
 import { BookCard } from './BookCard';
 import { BookIndex } from '../model/Book';
 import axiosInstance from "../services/AxiosInstance.ts";
+import { LendStatus } from "../model/LendStatus";
 import {useAuth} from "../context/AuthContext.tsx";
 import { toast } from "react-toastify";
 
@@ -29,15 +30,12 @@ export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading, userId }) 
         }
 
         try {
-            const response = await axiosInstance.get(`/v1/loans/user/${userIds}?type=all`);
-
+            const response = await axiosInstance.get(`/v1/loans/user/${userIds}?type=${LendStatus.ALL}`);
             if (response.data?.success && response.data?.data) {
-                // Adapter l'extraction des données en fonction de la structure réelle
-                // Vérifier d'abord si lentBooks existe et est un tableau
+
                 if (Array.isArray(response.data.data.lentBooks)) {
-                    // Extraire les IDs des livres prêtés en s'adaptant à la structure
+
                     const lentBookIds = response.data.data.lentBooks.map((loan: any) => {
-                        // Vérifier la structure pour accéder à l'ID du livre correctement
                         if (loan.book && typeof loan.book.id === 'number') {
                             return loan.book.id;
                         } else if (loan.bookId) {

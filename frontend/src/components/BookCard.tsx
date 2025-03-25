@@ -2,6 +2,7 @@ import React, { useState, useEffect} from 'react';
 import { Link } from 'react-router-dom';
 import { BookIndex } from '../model/Book';
 import axiosInstance from "../services/AxiosInstance";
+import { LendStatus } from "../model/LendStatus";
 
 import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
@@ -40,11 +41,8 @@ export const BookCard: React.FC<BookCardProps> = ({
         const bookIdMatches = loan.bookId === id;
         // Vérifier plusieurs variantes possibles de l'état "BORROWED"
         const stateIsBorrowed =
-            loan.state === "BORROWED" ||
-            loan.state === "borrowed" ||
-            loan.state === "BORROWING" ||
-            loan.state === "1" || // Parfois les états sont stockés comme des nombres/strings
-            loan.state === 1;     // ou des nombres
+            loan.state === LendStatus.BORROWED;
+
 
         return bookIdMatches && stateIsBorrowed;
     });
