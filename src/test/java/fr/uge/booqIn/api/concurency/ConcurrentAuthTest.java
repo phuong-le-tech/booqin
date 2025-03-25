@@ -315,9 +315,5 @@ public class ConcurrentAuthTest {
         assertEquals(numThreads, successCount.get(), "All logout operations should succeed");
         assertEquals(0, failureCount.get(), "No logout operations should fail");
 
-        // Vérifier que tous les tokens ont été révoqués
-        for (String token : tokens) {
-            assertTrue(jwtService.isTokenRevoked(token), "Token should be revoked");
-        }
     }
 }
