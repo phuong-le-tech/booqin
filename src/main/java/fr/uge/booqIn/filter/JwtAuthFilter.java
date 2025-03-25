@@ -39,42 +39,77 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                   HttpServletResponse response,
                                   FilterChain filterChain
   ) throws ServletException, IOException {
-    // Try to authenticate using access token first
-    Optional<String> accessTokenOpt = jwtService.getTokenFromCookies(request, ACCESS_TOKEN_COOKIE_NAME);
-    boolean authenticated = processAccessToken(accessTokenOpt, request);
-
-    // If access token authentication failed, try refresh token
-    if (!authenticated) {
-      Optional<String> refreshTokenOpt = jwtService.getTokenFromCookies(request, REFRESH_TOKEN_COOKIE_NAME);
-
-      if (refreshTokenOpt.isPresent()) {
-        String refreshToken = refreshTokenOpt.get();
-        boolean refreshed = processRefreshToken(refreshToken, response);
-
-        if (refreshed) {
-          // we know it's valid, so authenticate the user
-          String username = jwtService.extractUsername(refreshToken);
-          if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            authenticateUser(username, request);
-            authenticated = true;
-            logger.info("User authenticated via token refresh: {}", username);
-          }
-        } else {
-          // If refresh failed (expired, invalid, or reused), clear cookies
-          clearAuthCookies(response);
-        }
-      }
+    if (SecurityContextHolder.getContext().getAuthentication() != null) {
+      filterChain.doFilter(request, response);
+      return;
     }
+
+    boolean authenticated = authenticateWithAccessToken(request);
+
+    if (!authenticated) {
+      authenticated = authenticateWithRefreshToken(request, response);
+    }
+
+    logger.debug("Request authenticated: {}", authenticated);
     filterChain.doFilter(request, response);
   }
 
-  private boolean processAccessToken(Optional<String> accessTokenOpt, HttpServletRequest request) {
-    if (accessTokenOpt.isEmpty() || !jwtService.isAccessTokenValid(accessTokenOpt.get())) {
+  private boolean authenticateWithAccessToken(HttpServletRequest request) {
+    Optional<String> accessTokenOpt = jwtService.getTokenFromCookies(request, ACCESS_TOKEN_COOKIE_NAME);
+
+    if (accessTokenOpt.isEmpty() || accessTokenOpt.get().isEmpty()) {
       return false;
     }
 
-    String accessToken = accessTokenOpt.get();
+    return processAccessToken(accessTokenOpt.get(), request);
+  }
+
+  private boolean authenticateWithRefreshToken(HttpServletRequest request, HttpServletResponse response) {
+    Optional<String> refreshTokenOpt = jwtService.getTokenFromCookies(request, REFRESH_TOKEN_COOKIE_NAME);
+
+    if (refreshTokenOpt.isEmpty() || refreshTokenOpt.get().isEmpty()) {
+      return false;
+    }
+
+    String refreshToken = refreshTokenOpt.get();
+
+    if (jwtService.isTokenExpired(refreshToken)) {
+      logger.info("Refresh token expired - clearing auth cookies");
+      clearAuthCookies(response);
+      return false;
+    }
+
     try {
+      boolean refreshed = jwtService.attemptTokenRefresh(refreshToken, response);
+
+      if (!refreshed) {
+        logger.warn("Failed to refresh token - clearing auth cookies");
+        clearAuthCookies(response);
+        return false;
+      }
+
+      String username = jwtService.extractUsername(refreshToken);
+      if (username == null) {
+        return false;
+      }
+
+      authenticateUser(username, request);
+      logger.info("User authenticated via token refresh: {}", username);
+      return true;
+
+    } catch (Exception e) {
+      logger.warn("Error during token refresh - clearing cookies", e);
+      clearAuthCookies(response);
+      return false;
+    }
+  }
+
+  private boolean processAccessToken(String accessToken, HttpServletRequest request) {
+    try {
+      if (!jwtService.isAccessTokenValid(accessToken)) {
+        return false;
+      }
+
       String username = jwtService.extractUsername(accessToken);
       if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
         authenticateUser(username, request);
@@ -87,35 +122,22 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     return false;
   }
 
-  private boolean processRefreshToken(String refreshToken, HttpServletResponse response) {
-    try {
-      // This will handle token rotation and reuse detection
-      boolean refreshed = jwtService.attemptTokenRefresh(refreshToken, response);
-
-      if (refreshed) {
-        String username = jwtService.extractUsername(refreshToken);
-        logger.info("Successfully refreshed tokens for user: {}", username);
-      }
-
-      return refreshed;
-    } catch (Exception e) {
-      logger.warn("Error during token refresh", e);
-      return false;
-    }
-  }
-
   private void authenticateUser(String username, HttpServletRequest request) {
-    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+    try {
+      UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-            userDetails,
-            null,
-            userDetails.getAuthorities()
-    );
+      UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+              userDetails,
+              null,
+              userDetails.getAuthorities()
+      );
 
-    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-    SecurityContextHolder.getContext().setAuthentication(authToken);
-    logger.debug("User authenticated: {}", username);
+      authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+      SecurityContextHolder.getContext().setAuthentication(authToken);
+      logger.debug("User authenticated: {}", username);
+    } catch (Exception e) {
+      logger.error("Failed to authenticate user: {}", username, e);
+    }
   }
 
   private void clearAuthCookies(HttpServletResponse response) {
