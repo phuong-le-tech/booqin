@@ -4,6 +4,7 @@ import fr.uge.booqIn.dto.cart.ShopCartDto;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.service.impl.CartServiceImpl;
 import fr.uge.booqIn.service.impl.UserServiceImpl;
+import fr.uge.booqIn.service.interfaces.BookLendingInterface;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -21,12 +22,14 @@ public class CartWebController {
   private final CartServiceImpl cartService;
   private final UserServiceImpl userService;
   private final HomeWebController homeWebController;
+  private final BookLendingInterface bookLendingInterface;
 
   @Autowired
-  public CartWebController(CartServiceImpl cartService, UserServiceImpl userService, HomeWebController homeWebController) {
+  public CartWebController(CartServiceImpl cartService, UserServiceImpl userService, HomeWebController homeWebController, BookLendingInterface bookLendingInterface) {
     this.cartService = cartService;
     this.userService = userService;
     this.homeWebController = homeWebController;
+    this.bookLendingInterface = bookLendingInterface;
   }
 
   @GetMapping()
@@ -67,17 +70,20 @@ public class CartWebController {
 
   @PostMapping("/remove-book")
   public String removeBookFromCart(@RequestParam Long userId, @RequestParam Long bookId, RedirectAttributes redirectAttributes) {
+    var canceled = bookLendingInterface.cancelBook(bookId, userId);
     boolean updated = cartService.removeBookFromCart(userId, bookId);
 
     if (!updated) {
       redirectAttributes.addFlashAttribute("error", "Impossible de supprimer le livre du panier.");
     }
 
-    return "redirect:/cart/?userId=" + userId;
+    return "redirect:/cart?userId=" + userId;
   }
 
   @PostMapping("/clear-cart")
   public String clearCart(@RequestParam Long userId, RedirectAttributes redirectAttributes) {
+    var listBookLending = bookLendingInterface.findUserLendings(userId);
+    bookLendingInterface.ListClearBookstoLend(listBookLending);
     boolean cleared = cartService.clearCart(userId);
 
     if (!cleared) {
@@ -91,8 +97,15 @@ public class CartWebController {
 
   @PostMapping("/add-book")
   public String addBookToCart(@RequestParam Long userId, @RequestParam Long bookId, RedirectAttributes redirectAttributes) {
+    
+    boolean addedToLending = bookLendingInterface.reserveBook(bookId, userId);
+    
+    if (!addedToLending) {
+      redirectAttributes.addFlashAttribute("error", "Impossible de réserver le livre. vous êtes sur liste d'attente.");
+      return "redirect:/cart?userId=" + userId;
+    }
+    
     boolean added = cartService.addBookToCart(userId, bookId);
-
     if (!added) {
       redirectAttributes.addFlashAttribute("error", "Le livre est déjà dans le panier.");
     } else {
