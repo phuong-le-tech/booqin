@@ -3,8 +3,11 @@ package fr.uge.booqIn.controller.web;
 import fr.uge.booqIn.dto.comment.CommentCreateDTO;
 import fr.uge.booqIn.dto.comment.CommentDTO;
 import fr.uge.booqIn.dto.comment.CommentUpdateDTO;
+import fr.uge.booqIn.dto.vote.VoteCreate;
 import fr.uge.booqIn.entity.User;
+import fr.uge.booqIn.enums.VoteType;
 import fr.uge.booqIn.service.interfaces.CommentServiceInterface;
+import fr.uge.booqIn.service.interfaces.VoteServiceInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -19,9 +22,11 @@ public class CommentWebController {
     private static final Logger logger = LoggerFactory.getLogger(CommentWebController.class);
 
     private final CommentServiceInterface commentService;
+    private final VoteServiceInterface voteService;
 
-  public CommentWebController(CommentServiceInterface commentService) {
+  public CommentWebController(CommentServiceInterface commentService, VoteServiceInterface voteService) {
     this.commentService = commentService;
+    this.voteService = voteService;
   }
 
   @PostMapping
@@ -44,19 +49,13 @@ public class CommentWebController {
 
             CommentDTO savedComment = commentService.create(commentDTO);
             redirectAttributes.addFlashAttribute("success", "Votre commentaire a été ajouté avec succès");
-
-            
             String redirectUrl = getEntityRedirectUrl(entityType, entityId);
-
             if (redirectParams != null && !redirectParams.isEmpty()) {
-                
                 redirectParams = redirectParams.replace("{newCommentId}", savedComment.id().toString());
                 redirectUrl += "?" + redirectParams;
             } else {
-                
                 redirectUrl += "?highlight=" + savedComment.id();
             }
-
             return "redirect:" + redirectUrl;
         } catch (Exception e) {
             logger.error("Error creating comment", e);
@@ -176,14 +175,30 @@ public class CommentWebController {
         return "redirect:" + getEntityRedirectUrl(entityType, entityId);
     }
 
-    
-    private String getEntityRedirectUrl(String entityType, Long entityId) {
-      return switch (entityType.toUpperCase()) {
-        case "BOOK" -> "/books/" + entityId;
-        case "COLLECTION" -> "/collections/" + entityId;
-        case "AUTHOR" -> "/authors/" + entityId;
-        case "USER" -> "/users/" + entityId;
-        default -> "/";
-      };
-    }
+  @PostMapping("/vote")
+  public String vote(
+      @RequestParam("entityId") Long commentId,
+      @RequestParam("redirectEntity") String redirectEntity,
+      @RequestParam("redirectId") Long redirectId,
+      @RequestParam("voteType") VoteType voteType,
+      @AuthenticationPrincipal User currentUser) {
+
+    voteService.castVote(new VoteCreate(currentUser.getId(), commentId, "COMMENT", voteType));
+
+    // Redirection vers la page d'origine
+    return "redirect:" + getEntityRedirectUrl(redirectEntity, redirectId);
+  }
+
+
+  private String getEntityRedirectUrl(String entityType, Long entityId) {
+    return switch (entityType.toUpperCase()) {
+      case "BOOK" -> "/books/" + entityId;
+      case "COLLECTION" -> "/collections/" + entityId;
+      case "AUTHOR" -> "/authors/" + entityId;
+      case "USER" -> "/users/" + entityId;
+      default -> "/";
+    };
+  }
+
+
 }

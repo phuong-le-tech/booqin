@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<body>
+<!-- Fragment pour la section complète des commentaires -->
+<div th:fragment="commentSection(entityId, entityType, comments, commentCount)">
+    <div class="mt-8 bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 p-6">
+        <div class="mt-8 pt-6 border-t border-gray-200">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+                <h2 class="text-2xl font-semibold text-gray-800 flex items-center">
+                    Discussion
+                    <span th:if="${commentCount > 0}" class="ml-3 px-2 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full"
+                          th:text="${commentCount}">0</span>
+                </h2>
+
+                <div class="mt-3 sm:mt-0 flex flex-wrap gap-2">
+                    <button th:if="${commentCount > 1}"
+                            onclick="toggleSortOrder()"
+                            class="flex items-center text-sm text-blue-600 hover:text-blue-800 font-medium bg-blue-50 px-3 py-1 rounded-md transition-colors duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M5 12a1 1 0 102 0V6.414l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L5 6.414V12zM15 8a1 1 0 10-2 0v5.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L15 13.586V8z" />
+                        </svg>
+                        <span id="sortOrderText">Newest first</span>
+                    </button>
+
+                    <button th:if="${user != null}"
+                            onclick="toggleCommentForm()"
+                            class="flex items-center text-sm bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition-colors duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        <span id="addCommentText">Add Comment</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Message for non-logged in user -->
+            <div th:if="${user == null}" class="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 mb-6 rounded">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm">
+                            Please <a href="/login" class="font-medium text-blue-600 underline hover:text-blue-800">log in</a> to join the conversation.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Success/Error messages -->
+            <div th:if="${success}" class="mb-4 p-3 bg-green-100 text-green-700 rounded-md">
+                <p th:text="${success}"></p>
+            </div>
+            <div th:if="${error}" class="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+                <p th:text="${error}"></p>
+            </div>
+
+            <!-- Comment Form (hidden by default) -->
+            <div id="commentForm" class="mb-8 hidden" th:if="${user != null}">
+                <form th:action="@{/comments}" method="post" class="mb-6">
+                    <div class="flex flex-col transition-all duration-200 border border-gray-300 rounded-lg p-3 bg-white">
+                        <div class="flex items-start">
+                            <div class="h-10 w-10 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-medium mr-3 mt-2 flex-shrink-0">
+                                <span th:text="${user.username.substring(0,1).toUpperCase()}">Y</span>
+                            </div>
+                            <textarea
+                                    name="content"
+                                    placeholder="Write your comment..."
+                                    rows="4"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all duration-200"
+                                    required
+                                    maxlength="1000"
+                                    onkeyup="updateCharCount(this)"></textarea>
+                        </div>
+
+                        <div class="mt-2 flex justify-between items-center">
+                            <div class="flex items-center ml-auto">
+                                <div id="charCount" class="mr-3 text-xs text-gray-500">
+                                    0/1000
+                                </div>
+
+                                <button
+                                        type="button"
+                                        onclick="toggleCommentForm()"
+                                        class="px-3 py-1 mr-2 text-sm text-gray-600 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 rounded-md"
+                                >
+                                    Cancel
+                                </button>
+
+                                <button
+                                        type="submit"
+                                        id="submitButton"
+                                        disabled
+                                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-200 opacity-50 cursor-not-allowed"
+                                >
+                                    Post Comment
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="userId" th:value="${user != null ? user.id : ''}" />
+                    <input type="hidden" name="entityId" th:value="${entityId}" />
+                    <input type="hidden" name="entityType" th:value="${entityType}" />
+                    <input type="hidden" name="redirectParams" value="highlight={newCommentId}" />
+                </form>
+            </div>
+
+            <!-- Comment List -->
+            <div th:if="${comments != null && !comments.isEmpty()}" class="space-y-6">
+                <!-- Recursive rendering of comments -->
+                <div th:each="comment : ${comments}">
+                    <div th:replace="~{fragments/comment :: commentItem(comment=${comment}, depth=0)}"></div>
+                </div>
+            </div>
+
+            <!-- No Comments Message -->
+            <div th:if="${comments == null || comments.isEmpty()}" class="mt-6 py-8 bg-gray-50 rounded-lg text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                <p class="mt-4 text-gray-500 text-lg">
+                    No comments yet
+                </p>
+                <p class="mt-2 text-gray-400">
+                    <button th:if="${user != null}"
+                            onclick="toggleCommentForm()"
+                            class="text-blue-600 hover:text-blue-800 hover:underline focus:outline-none">
+                        Be the first to start the discussion!
+                    </button>
+                    <span th:if="${user == null}">Log in to start the discussion!</span>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<div th:fragment="commentScripts">
+<script>
+    document.addEventListener('DOMContentLoaded', hideWhenChildMoreThanTwo);
+    // Function to hide replies if direct children are more than two recursively
+    function hideWhenChildMoreThanTwo() {
+        const comments = document.querySelectorAll('[th\\:each="comment : ${comments}"]');
+        comments.forEach(comment => {
+            const replies = comment.querySelectorAll('[th\\:each="reply : ${comment.replies}"]');
+            if (replies.length > 2) {
+                for (let i = 2; i < replies.length; i++) {
+                    replies[i].style.display = 'none';
+                }
+            }
+        });
+    }
+    // Function to toggle the main comment form
+    function toggleCommentForm() {
+        const form = document.getElementById('commentForm');
+        if (form.classList.contains('hidden')) {
+            form.classList.remove('hidden');
+            form.querySelector('textarea').focus();
+            document.getElementById('addCommentText').textContent = 'Cancel';
+        } else {
+            form.classList.add('hidden');
+            document.getElementById('addCommentText').textContent = 'Add Comment';
+        }
+    }
+
+    // Function to update character count
+    function updateCharCount(textarea) {
+        const maxLength = textarea.getAttribute('maxlength');
+        const currentLength = textarea.value.length;
+        const charCountElement = document.getElementById('charCount');
+        const submitButton = document.getElementById('submitButton');
+
+        if (charCountElement) {
+            charCountElement.textContent = currentLength + '/' + maxLength;
+        }
+
+        if (submitButton) {
+            if (currentLength > 0) {
+                submitButton.disabled = false;
+                submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                submitButton.disabled = true;
+                submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+    }
+
+    // Fonction pour afficher le formulaire de réponse
+    function toggleReplyForm(commentId) {
+        const formId = 'replyForm-' + commentId;
+        const formElement = document.getElementById(formId);
+
+        if (!formElement) return;
+
+        // Hide all other reply forms and edit forms first
+        document.querySelectorAll('[id^="replyForm-"], [id^="editForm-"]').forEach(form => {
+            if (form.id !== formId) {
+                form.classList.add('hidden');
+            }
+        });
+
+        // Toggle this form
+        if (formElement.classList.contains('hidden')) {
+            formElement.classList.remove('hidden');
+            formElement.querySelector('textarea').focus();
+
+            // Set up redirect params to ensure proper display after submission
+            const parentIdInput = formElement.querySelector('input[name="parentId"]');
+            const redirectInput = formElement.querySelector('input[name="redirectParams"]');
+
+            if (parentIdInput && redirectInput) {
+                // For deeper replies, handle special parent tracking
+                const replyContainer = formElement.closest('[id^="deep-replies-"]');
+                if (replyContainer) {
+                    // Extract the parent ID from the container ID (format: "deep-replies-{id}")
+                    const deepParentId = replyContainer.id.replace('deep-replies-', '');
+                    redirectInput.value = `highlight={newCommentId}&parent=${deepParentId}`;
+                } else {
+                    redirectInput.value = `highlight={newCommentId}&parent=${parentIdInput.value}`;
+                }
+            }
+        } else {
+            formElement.classList.add('hidden');
+        }
+    }
+
+    // Function for editing comments
+    function toggleEditForm(commentId) {
+        const formId = 'editForm-' + commentId;
+        const formElement = document.getElementById(formId);
+
+        if (!formElement) return;
+
+        // Hide all other forms first
+        document.querySelectorAll('[id^="replyForm-"], [id^="editForm-"]').forEach(form => {
+            if (form.id !== formId) {
+                form.classList.add('hidden');
+            }
+        });
+
+        // Toggle this form
+        if (formElement.classList.contains('hidden')) {
+            formElement.classList.remove('hidden');
+            formElement.querySelector('textarea').focus();
+        } else {
+            formElement.classList.add('hidden');
+        }
+    }
+
+    // Function to toggle sort order of comments
+    function toggleSortOrder() {
+        const commentsList = document.querySelector('.space-y-6');
+        if (!commentsList) return;
+
+        const comments = Array.from(commentsList.children);
+        const textElement = document.getElementById('sortOrderText');
+
+        if (textElement.textContent === 'Newest first') {
+            // Change to oldest first
+            comments.reverse().forEach(comment => commentsList.appendChild(comment));
+            textElement.textContent = 'Oldest first';
+        } else {
+            // Change to newest first
+            comments.reverse().forEach(comment => commentsList.appendChild(comment));
+            textElement.textContent = 'Newest first';
+        }
+    }
+
+    // Function to show/hide deep replies
+    function showDeepReplies(replyId) {
+        const deepRepliesId = 'deep-replies-' + replyId;
+        const deepRepliesContainer = document.getElementById(deepRepliesId);
+
+        if (deepRepliesContainer) {
+            if (deepRepliesContainer.style.display === 'none' || deepRepliesContainer.style.display === '') {
+                deepRepliesContainer.style.display = 'block';
+            } else {
+                deepRepliesContainer.style.display = 'none';
+            }
+        }
+    }
+</script>
+</div>
+</html>

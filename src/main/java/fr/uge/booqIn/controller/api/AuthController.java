@@ -87,38 +87,6 @@ public class AuthController {
 
   }
 
-  @PostMapping("/refresh")
-  public ResponseEntity<ApiResponse<String>> refreshToken(
-          HttpServletRequest request,
-          HttpServletResponse response) {
-
-    var refreshToken = getCookieValue(request, REFRESH_TOKEN_COOKIE_NAME);
-
-    if (refreshToken.isEmpty()) {
-      return ResponseEntity
-              .status(HttpStatus.UNAUTHORIZED)
-              .body(ApiResponse.error("Refresh token is missing"));
-    }
-
-/*    if (jwtService.isTokenExpired(refreshToken)) {
-      return ResponseEntity
-              .status(HttpStatus.UNAUTHORIZED)
-              .body(ApiResponse.error("Refresh token has expired"));
-    }
-
-    if (jwtService.isTokenRevoked(refreshToken)) {
-      return ResponseEntity
-              .status(HttpStatus.UNAUTHORIZED)
-              .body(ApiResponse.error("Refresh token has been revoked"));
-    }*/
-    AuthResponse tokens = authService.refreshToken(refreshToken.get());
-    addCookie(response, ACCESS_TOKEN_COOKIE_NAME, tokens.accessToken(), ACCESS_TOKEN_EXPIRATION);
-    addCookie(response, REFRESH_TOKEN_COOKIE_NAME, tokens.refreshToken(), REFRESH_TOKEN_EXPIRATION);
-
-    return ResponseEntity.ok(
-            ApiResponse.success("Access Token refreshed successfully", tokens.accessToken()));
-  }
-
   @GetMapping("/me")
   public ResponseEntity<ApiResponse<UserMeDto>> me(Authentication authentication) {
       UserMeDto userMeDto = authService.getCurrentUser(authentication);
@@ -138,7 +106,6 @@ public class AuthController {
     cookie.setSecure(false); // Set to true in production (HTTPS)
     cookie.setPath("/");
     cookie.setMaxAge((int)(maxAgeMillis / 1000));
-    System.out.println("Cookie added: " + cookie.getName() + "=" + cookie.getValue());
     response.addCookie(cookie);
   }
 

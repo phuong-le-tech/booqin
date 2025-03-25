@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div class="flex flex-col min-h-screen px-4 py-6 sm:py-12">
+    <div class="w-full max-w-7xl mx-auto">
+        <div class="bg-white py-6 px-4 sm:py-8 sm:px-6 md:px-10 shadow rounded-lg mb-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-800">Admin Panel</h2>
+            </div>
+
+            <!-- Success or error message -->
+            <div th:if="${success}" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4" role="alert">
+                <span th:text="${success}">Success message</span>
+            </div>
+            <div th:if="${error}" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">
+                <span th:text="${error}">Error message</span>
+            </div>
+
+            <!-- Tabs -->
+            <div class="border-b border-gray-200 mb-6">
+                <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                    <a th:href="@{/admin(tab='users')}"
+                       th:class="${activeTab == 'users' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} + ' whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'">
+                        Users
+                    </a>
+                    <a th:href="@{/admin(tab='books')}"
+                       th:class="${activeTab == 'books' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} + ' whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'">
+                        Books
+                    </a>
+                    <a th:href="@{/admin(tab='collections')}"
+                       th:class="${activeTab == 'collections' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} + ' whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'">
+                        Collections
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Users Tab Content -->
+            <div th:if="${activeTab == 'users'}">
+                <div class="flex justify-between items-center mb-4">
+                    <form th:action="@{/admin}" method="get" class="flex space-x-2">
+                        <input type="hidden" name="tab" value="users" />
+                        <input type="text" name="search" th:value="${param.search}" placeholder="Search users..."
+                               class="border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/>
+                        <button type="submit"
+                                class="bg-blue-600 text-white rounded-md py-2 px-4 text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Search
+                        </button>
+                    </form>
+                    <a th:href="@{/admin/users/new}"
+                       class="bg-green-600 text-white rounded-md py-2 px-4 text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add User
+                    </a>
+                </div>
+
+                <!-- Users Table -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                ID
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Name
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Email
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Role
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                        <!-- Users will be loaded here -->
+                        <tr th:each="user : ${users.content}">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" th:text="${user.id}">1</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <span th:text="${user.firstName}">John</span> <span th:text="${user.lastName}">Doe</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" th:text="${user.email}">john@example.com</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <span th:each="role : ${user.roles}" th:text="${role.name}" class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">ADMIN</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <a th:href="@{/admin/users/{id}/edit(id=${user.id})}" class="text-indigo-600 hover:text-indigo-900 mr-2">Edit</a>
+                                <form th:action="@{/admin/users/{id}/delete(id=${user.id})}" method="post" class="inline">
+                                    <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Are you sure you want to delete this user?')">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-4">
+                    <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                        <div>
+                            <p class="text-sm text-gray-700">
+                                Showing
+                                <span class="font-medium" th:text="${users.number * users.size + 1}">1</span>
+                                to
+                                <span class="font-medium" th:text="${users.numberOfElements + (users.number * users.size)}">10</span>
+                                of
+                                <span class="font-medium" th:text="${users.totalElements}">97</span>
+                                results
+                            </p>
+                        </div>
+                        <div>
+                            <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                                <a th:if="${users.hasPrevious()}" th:href="@{/admin(tab='users', page=${users.number - 1})}"
+                                   class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                                    <span class="sr-only">Previous</span>
+                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                                <span th:unless="${users.hasPrevious()}"
+                                      class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-300 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">
+                                    <span class="sr-only">Previous</span>
+                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+                                    </svg>
+                                </span>
+
+                                <!-- Page numbers -->
+                                <th:block th:each="i: ${#numbers.sequence(0, users.totalPages - 1)}">
+                                    <a th:if="${i == users.number}"
+                                       class="relative z-10 inline-flex items-center bg-blue-600 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
+                                        <span th:text="${i + 1}">1</span>
+                                    </a>
+                                    <a th:unless="${i == users.number}"
+                                       th:href="@{/admin(tab='users', page=${i})}"
+                                       class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                                        <span th:text="${i + 1}">2</span>
+                                    </a>
+                                </th:block>
+
+                                <a th:if="${users.hasNext()}" th:href="@{/admin(tab='users', page=${users.number + 1})}"
+                                   class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                                    <span class="sr-only">Next</span>
+                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                                <span th:unless="${users.hasNext()}"
+                                      class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-300 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">
+                                    <span class="sr-only">Next</span>
+                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                                    </svg>
+                                </span>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Books Tab Content -->
+            <div th:if="${activeTab == 'books'}">
+                <div class="flex justify-between items-center mb-4">
+                    <form th:action="@{/admin}" method="get" class="flex space-x-2">
+                        <input type="hidden" name="tab" value="books" />
+                        <input type="text" name="search" th:value="${param.search}" placeholder="Search books..."
+                               class="border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/>
+                        <button type="submit"
+                                class="bg-blue-600 text-white rounded-md py-2 px-4 text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Search
+                        </button>
+                    </form>
+                    <a th:href="@{/admin/books/new}"
+                       class="bg-green-600 text-white rounded-md py-2 px-4 text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add Book
+                    </a>
+                </div>
+
+                <!-- Books Table -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                ID
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Title
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Author
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                ISBN
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Publication Date
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Collection
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                        <!-- Livres avec boucle Thymeleaf -->
+                        <tr th:each="book : ${books.content}">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" th:text="${book.id}">1</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" th:text="${book.title}">Book Title</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" th:text="${book.authorNames != null ? #strings.listJoin(book.authorNames, ', ') : ''}">Author Names</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" th:text="${book.isbns != null && !book.isbns.isEmpty() ? book.isbns[0] : '-'}">ISBN</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" th:text="${book.publicationDate}">2023-01-01</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <span th:if="${book.collection != null}" th:text="${book.collection.title}" class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Fiction</span>
+                                <span th:unless="${book.collection != null}" class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">Uncategorized</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <a th:href="@{/admin/books/{id}/edit(id=${book.id})}" class="text-indigo-600 hover:text-indigo-900 mr-2">Edit</a>
+                                <form th:action="@{/admin/books/{id}/delete(id=${book.id})}" method="post" class="inline">
+                                    <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Are you sure you want to delete this book?')">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr th:if="${books.empty()}">
+                            <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                                No books found
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div th:if="${books.totalPages > 1}" class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-4">
+                    <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                        <div>
+                            <p class="text-sm text-gray-700">
+                                Showing
+                                <span class="font-medium" th:text="${books.number * books.size + 1}">1</span>
+                                to
+                                <span class="font-medium" th:text="${books.numberOfElements + (books.number * books.size)}">10</span>
+                                of
+                                <span class="font-medium" th:text="${books.totalElements}">97</span>
+                                results
+                            </p>
+                        </div>
+                        <div>
+                            <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                                <a th:if="${books.hasPrevious()}" th:href="@{/admin(tab='books', page=${books.number - 1})}"
+                                   class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                                    <span class="sr-only">Previous</span>
+                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                                <span th:unless="${books.hasPrevious()}"
+                                      class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-300 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">
+                                    <span class="sr-only">Previous</span>
+                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+                                    </svg>
+                                </span>
+
+                                <!-- Page numbers -->
+                                <th:block th:each="i: ${#numbers.sequence(0, books.totalPages - 1)}">
+                                    <a th:if="${i == books.number}"
+                                       class="relative z-10 inline-flex items-center bg-blue-600 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
+                                        <span th:text="${i + 1}">1</span>
+                                    </a>
+                                    <a th:unless="${i == books.number}"
+                                       th:href="@{/admin(tab='books', page=${i})}"
+                                       class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                                        <span th:text="${i + 1}">2</span>
+                                    </a>
+                                </th:block>
+
+                                <a th:if="${books.hasNext()}" th:href="@{/admin(tab='books', page=${books.number + 1})}"
+                                   class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                                    <span class="sr-only">Next</span>
+                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                                <span th:unless="${books.hasNext()}"
+                                      class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-300 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">
+                                    <span class="sr-only">Next</span>
+                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                                    </svg>
+                                </span>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Collections Tab Content -->
+            <div th:if="${activeTab == 'collections'}">
+                <div class="flex justify-between items-center mb-4">
+                    <form th:action="@{/admin}" method="get" class="flex space-x-2">
+                        <input type="hidden" name="tab" value="collections" />
+                        <input type="text" name="search" th:value="${param.search}" placeholder="Search collections..."
+                               class="border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"/>
+                        <button type="submit"
+                                class="bg-blue-600 text-white rounded-md py-2 px-4 text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Search
+                        </button>
+                    </form>
+                    <a th:href="@{/admin/collections/new}"
+                       class="bg-green-600 text-white rounded-md py-2 px-4 text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add Collection
+                    </a>
+                </div>
+
+                <!-- Collections Table -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                ID
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Title
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Description
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Category
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Created By
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Books
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Status
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                        <!-- Collections avec boucle Thymeleaf -->
+                        <tr th:each="collection : ${collections.content}">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" th:text="${collection.id}">1</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" th:text="${collection.title}">Collection Title</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" th:text="${#strings.length(collection.description) > 50 ? #strings.substring(collection.description, 0, 50) + '...' : collection.description}">Description...</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <span th:text="${collection.category}" class="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs">Fiction</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" th:text="${collection.user != null ? collection.user.firstName + ' ' + collection.user.lastName : ''}">John Doe</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <div class="flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                    </svg>
+                                    <span th:text="${collection.books != null ? collection.books.size() : 0}">5</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <span th:class="${collection.isPublic ? 'px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs' : 'px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs'}" th:text="${collection.isPublic ? 'Public' : 'Private'}">Public</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <a th:href="@{/admin/collections/{id}/edit(id=${collection.id})}" class="text-indigo-600 hover:text-indigo-900 mr-2">Edit</a>
+                                <form th:action="@{/admin/collections/{id}/delete(id=${collection.id})}" method="post" class="inline">
+                                    <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Are you sure you want to delete this collection?')">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr th:if="${collections.empty()}">
+                            <td colspan="8" class="px-6 py-4 text-center text-gray-500">
+                                No collections found
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div th:if="${collections.totalPages > 1}" class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-4">
+                    <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                        <div>
+                            <p class="text-sm text-gray-700">
+                                Showing
+                                <span class="font-medium" th:text="${collections.number * collections.size + 1}">1</span>
+                                to
+                                <span class="font-medium" th:text="${collections.numberOfElements + (collections.number * collections.size)}">10</span>
+                                of
+                                <span class="font-medium" th:text="${collections.totalElements}">97</span>
+                                results
+                            </p>
+                        </div>
+                        <div>
+                            <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                                <a th:if="${collections.hasPrevious()}" th:href="@{/admin(tab='collections', page=${collections.number - 1})}"
+                                   class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                                    <span class="sr-only">Previous</span>
+                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                                <span th:unless="${collections.hasPrevious()}"
+                                      class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-300 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">
+                                    <span class="sr-only">Previous</span>
+                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+                                    </svg>
+                                </span>
+
+                                <!-- Page numbers -->
+                                <th:block th:each="i: ${#numbers.sequence(0, collections.totalPages - 1)}">
+                                    <a th:if="${i == collections.number}"
+                                       class="relative z-10 inline-flex items-center bg-blue-600 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
+                                        <span th:text="${i + 1}">1</span>
+                                    </a>
+                                    <a th:unless="${i == collections.number}"
+                                       th:href="@{/admin(tab='collections', page=${i})}"
+                                       class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                                        <span th:text="${i + 1}">2</span>
+                                    </a>
+                                </th:block>
+
+                                <a th:if="${collections.hasNext()}" th:href="@{/admin(tab='collections', page=${collections.number + 1})}"
+                                   class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                                    <span class="sr-only">Next</span>
+                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                                <span th:unless="${collections.hasNext()}"
+                                      class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-300 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">
+                                    <span class="sr-only">Next</span>
+                                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                                    </svg>
+                                </span>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

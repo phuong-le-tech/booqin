@@ -6,10 +6,12 @@ import fr.uge.booqIn.dto.bookCollection.BookCollectionIndex;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionUpdate;
 import fr.uge.booqIn.dto.lending.LendingResponseDTO;
+import fr.uge.booqIn.dto.vote.VoteCreate;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.BookStatus;
+import fr.uge.booqIn.enums.VoteType;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.mapper.BookCollectionMapper;
 import fr.uge.booqIn.mapper.BookMapper;
@@ -17,12 +19,15 @@ import fr.uge.booqIn.model.BookCollection;
 import fr.uge.booqIn.service.impl.BookServiceImpl;
 import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
 import fr.uge.booqIn.service.interfaces.BookLendingInterface;
+import fr.uge.booqIn.service.interfaces.CommentServiceInterface;
+import fr.uge.booqIn.service.interfaces.VoteServiceInterface;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -38,6 +43,8 @@ import java.util.stream.Collectors;
 @RequestMapping("/collections")
 public class BookCollectionWebController {
   private final BookCollectionServiceInterface bookCollectionService;
+  private final VoteServiceInterface voteService;
+  private final CommentServiceInterface commentServiceInterface;
   private final BookServiceImpl bookService;
   private final BookMapper bookMapper = new BookMapper();
   private final BookCollectionMapper bookCollectionMapper = new BookCollectionMapper();
@@ -46,21 +53,26 @@ public class BookCollectionWebController {
   private final BookLendingInterface bookLendingInterface;
 
   @Autowired
-  public BookCollectionWebController(BookCollectionServiceInterface bookCollectionService,
+  public BookCollectionWebController(BookCollectionServiceInterface bookCollectionService, VoteServiceInterface voteService, CommentServiceInterface commentServiceInterface,
                                      BookServiceImpl bookService,
                                      HomeWebController homeWebController,
                                      BookLendingInterface bookLendingInterface) {
     this.bookCollectionService = bookCollectionService;
+    this.voteService = voteService;
+    this.commentServiceInterface = commentServiceInterface;
     this.bookService = bookService;
     this.homeWebController = homeWebController;
     this.bookLendingInterface = bookLendingInterface;
   }
 
   @GetMapping("/public")
-  public String showPublicCollections(Model model, Principal principal) {
+  public String showPublicCollections(Model model, Principal principal,
+                                      @RequestParam(defaultValue = "0") int page,
+                                      @RequestParam(defaultValue = "10") int size) {
+    // Préparer le modèle commun
     homeWebController.prepareModel(model, principal, "collections-public");
-    // Récupérer les collections publiques
-    Page<BookCollectionIndex> collections = bookCollectionService.getPublicCollections(null);
+
+    Page<BookCollectionIndex> collections = bookCollectionService.getPublicCollections(PageRequest.of(page, size));
     model.addAttribute("publicCollections", collections);
     model.addAttribute("title", "BooqIn - Public Collections");
     model.addAttribute("content", "pages/collections/public");
@@ -100,7 +112,6 @@ public class BookCollectionWebController {
   public String showCollectionDetails(@PathVariable Long id, Model model, Principal principal, @AuthenticationPrincipal User currentUser) {
     try {
       homeWebController.prepareModel(model, principal, "collection-details");
-      
 
       BookCollectionShow collection = bookCollectionService.findBookCollectionById(id);
       System.out.println("BookCollection was found !");
@@ -129,18 +140,24 @@ public class BookCollectionWebController {
           model.addAttribute("borrowedBooks", Collections.emptyList());
         }
       }
-      
+
 
       model.addAttribute("title", "BooqIn - " + collection.title());
       model.addAttribute("content", "pages/collections/details");
-      
+      model.addAttribute("votes",voteService.getVoteCounts(id,"COLLECTION"));
+      var totalComments = commentServiceInterface.countByEntity(id,"COLLECTION");
+      var comments = commentServiceInterface.getCommentTreeByEntity(id,"COLLECTION");
+      if(currentUser!=null) {
+        model.addAttribute("user", currentUser);
+      }
+      model.addAttribute("comments", comments);
+      model.addAttribute("commentCount", totalComments);
       return "layout";
     } catch (ResourceNotFoundException e) {
       System.out.println("Collection not found: " + e.getMessage());
       return "redirect:/collections";
     }
   }
-
 
   @GetMapping("/{collectionId}/books/add")
   public String showAddBookForm(@PathVariable Long collectionId, Model model, Principal principal) {
@@ -345,6 +362,16 @@ public class BookCollectionWebController {
     } catch (ResourceNotFoundException e) {
       return "redirect:/collections?error=notFound";
     }
+  }
+
+  @PostMapping("/vote")
+  public String vote(@RequestParam("id") Long collectionId, @RequestParam("voteType") VoteType voteType, @AuthenticationPrincipal User currentUser, Model model) {
+    if(currentUser == null) {
+      return "redirect:/";
+    }
+    voteService.castVote(new VoteCreate(currentUser.getId(),collectionId,"COLLECTION",voteType));
+    // return to the same collection
+    return "redirect:/collections/" + collectionId;
   }
 
   private boolean verifyIsSameUser(User currentUser, BookCollectionShow collection) {

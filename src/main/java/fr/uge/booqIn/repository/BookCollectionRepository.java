@@ -47,4 +47,12 @@ public interface BookCollectionRepository extends JpaRepository<AbstractBookColl
 
   @Query("SELECT c FROM SmartBookCollection c")
   List<SmartBookCollection> findAllSmartCollections();
+
+  /**
+   * Find all public collections by owner without pagination
+   * Used for selecting a random collection when a user follows another user
+   */
+  @Query("SELECT c FROM AbstractBookCollection c WHERE c.owner = :owner AND c.isPublic = true")
+  List<AbstractBookCollection> findPublicCollectionsByOwner(@Param("owner") User owner);
+
 }

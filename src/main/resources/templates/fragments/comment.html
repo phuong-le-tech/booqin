@@ -21,9 +21,36 @@
               (edited)
             </span>
                 </div>
+
+                <div class="flex items-center mr-4">
+                    <form th:if="${user != null}" th:action="@{/comments/vote}" method="post" class="inline-flex items-center">
+                        <!-- Comment info (what we're voting on) -->
+                        <input type="hidden" name="entityId" th:value="${comment.id}" />
+                        <input type="hidden" name="entityType" value="COMMENT" />
+
+                        <!-- Parent entity info (where to redirect) -->
+                        <input type="hidden" name="redirectEntity" th:value="${comment.entityType}" />
+                        <input type="hidden" name="redirectId" th:value="${comment.entityId}" />
+
+                        <!-- Upvote button -->
+                        <button type="submit" name="voteType" value="UPVOTE" class="text-gray-400 hover:text-green-500 focus:outline-none mr-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
+                            </svg>
+                        </button>
+
+                        <!-- Downvote button -->
+                        <button type="submit" name="voteType" value="DOWNVOTE" class="text-gray-400 hover:text-red-500 focus:outline-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M18 9.5a1.5 1.5 0 11-3 0v-6a1.5 1.5 0 013 0v6zM14 9.667v-5.43a2 2 0 00-1.105-1.79l-.05-.025A4 4 0 0011.055 2H5.64a2 2 0 00-1.962 1.608l-1.2 6A2 2 0 004.44 12H8v4a2 2 0 002 2 1 1 0 001-1v-.667a4 4 0 01.8-2.4l1.4-1.866a4 4 0 00.8-2.4z" />
+                            </svg>
+                        </button>
+
+                        <!-- Optional: Show vote count -->
+                    </form>
+                </div>
             </div>
         </div>
-
         <!-- Comment Content -->
         <div class="mt-3 pl-12">
             <p class="text-gray-800 whitespace-pre-line text-base" th:text="${comment.content}">Comment content goes here.</p>
@@ -109,9 +136,41 @@
     <!-- Nested Replies (recursively display child comments) -->
     <div th:if="${!comment.replies.isEmpty()}" class="ml-12">
         <div th:each="reply : ${comment.replies}">
-            <div th:replace="fragments/comment :: commentItem(comment=${reply}, depth=${depth + 1})"></div>
+            <div th:replace="~{fragments/comment :: commentItem(comment=${reply}, depth=${depth + 1})}"></div>
         </div>
     </div>
 </div>
 </body>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Trouver tous les formulaires de vote
+        const voteForms = document.querySelectorAll('.vote-form');
+
+        voteForms.forEach(function(form) {
+            // Récupérer les valeurs
+            const entityId = form.querySelector('.debug-entityId').value;
+            const redirectEntity = form.querySelector('.debug-redirectEntity').value;
+            const redirectId = form.querySelector('.debug-redirectId').value;
+
+            // Afficher les valeurs
+            const debugInfo = form.querySelector('.debug-info');
+            debugInfo.innerHTML = `
+            <strong>Debug:</strong><br>
+            entityId: ${entityId}<br>
+            redirectEntity: ${redirectEntity}<br>
+            redirectId: ${redirectId}
+        `;
+
+            // Ajouter des événements pour voir les valeurs lors de la soumission
+            form.addEventListener('submit', function(e) {
+                console.log('Form submitting with values:', {
+                    entityId: entityId,
+                    redirectEntity: redirectEntity,
+                    redirectId: redirectId
+                });
+            });
+        });
+    });
+
+</script>
 </html>
