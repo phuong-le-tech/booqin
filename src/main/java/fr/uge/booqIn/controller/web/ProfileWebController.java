@@ -40,7 +40,6 @@ public class ProfileWebController {
       UserShow userShow = userService.findById(authenticatedUser.getId());
 
       model.addAttribute("user", userShow);
-      model.addAttribute("isEditing", false);
     }
 
     model.addAttribute("title", "BooqIn - My Profile");
@@ -66,11 +65,13 @@ public class ProfileWebController {
 
       model.addAttribute("user", userShow);
       model.addAttribute("userUpdate", userUpdate);
-      model.addAttribute("isEditing", true);
+      model.addAttribute("firstName", userUpdate.firstName().orElse(""));
+      model.addAttribute("lastName", userUpdate.lastName().orElse(""));
+      model.addAttribute("email", userUpdate.email().orElse(""));
     }
 
     model.addAttribute("title", "BooqIn - Edit my profile");
-    model.addAttribute("content", "pages/user/profile");
+    model.addAttribute("content", "pages/user/edit-profile");
     return "layout";
   }
 
@@ -98,7 +99,7 @@ public class ProfileWebController {
       model.addAttribute("isEditing", true);
 
       model.addAttribute("title", "BooqIn - Edit my profile");
-      model.addAttribute("content", "pages/user/profile");
+      model.addAttribute("content", "pages/user/edit-profile");
       return "layout";
     }
   }

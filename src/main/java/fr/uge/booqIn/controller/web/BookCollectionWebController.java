@@ -95,8 +95,9 @@ public class BookCollectionWebController {
     Pageable pageable = PageRequest.of(page, size, sortObj);
 
     Page<BookCollectionShow> collections = bookCollectionService.getUserCollectionsWithBooks(currentUser, pageable);
-    List<BookCollectionShow> userPublicCollections = collections.stream().filter(BookCollectionShow::isPublic).toList();
-    List<BookCollectionShow> userPrivateCollections = collections.stream().filter(collection -> !collection.isPublic()).toList();
+    Page<BookCollectionIndex> userPublicCollections = bookCollectionService.getPublicUserCollection(currentUser, pageable);
+    Page<BookCollectionIndex> userPrivateCollections = bookCollectionService.getPrivateUserCollection(currentUser, pageable);
+
     model.addAttribute("collections", collections);
     model.addAttribute("userPublicCollections", userPublicCollections);
     model.addAttribute("userPrivateCollections", userPrivateCollections);

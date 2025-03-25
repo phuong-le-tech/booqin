@@ -58,13 +58,13 @@
                     <tr th:each="collection : ${userPrivateCollections}" class="hover:bg-gray-100">
                         <td class="px-6 py-4 text-sm">
                             <!-- Badge différent selon l'ID de l'utilisateur -->
-                            <span th:if="${collection.user.id == 1}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <span th:if="${collection.userId == 1}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                     <svg class="mr-1.5 h-2 w-2 text-green-800" fill="currentColor" viewBox="0 0 8 8">
                                         <circle cx="4" cy="4" r="3" />
                                     </svg>
                                     Created Automatically
                                 </span>
-                            <span th:unless="${collection.user.id == 1}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <span th:unless="${collection.userId == 1}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                     <svg class="mr-1.5 h-2 w-2 text-blue-800" fill="currentColor" viewBox="0 0 8 8">
                                         <circle cx="4" cy="4" r="3" />
                                     </svg>
@@ -73,7 +73,7 @@
                         </td>
                         <td class="px-6 py-4 text-sm font-medium text-gray-800" th:text="${collection.title}">Collection Title</td>
                         <td class="px-6 py-4 text-sm text-gray-600 max-w-xs truncate" th:text="${collection.description}">Collection Description</td>
-                        <td class="px-6 py-4 text-sm text-gray-600" th:text="${collection.user.firstName} + ' ' + ${collection.user.lastName}">Owner</td>
+                        <td class="px-6 py-4 text-sm text-gray-600" th:text="${collection.userFullName}">Owner</td>
                         <td class="px-6 py-4 text-sm font-medium">
                             <div class="flex space-x-2">
                                 <a th:href="@{/collections/{id}(id=${collection.id})}" class="text-indigo-600 hover:text-indigo-900 px-2 py-1 bg-indigo-100 rounded">
@@ -87,7 +87,7 @@
                                 </a>
                             </div>
                         </td>
-                        <td class="px-6 py-4 text-sm text-gray-500" th:text="${collection.books.size()}">0</td>
+                        <td class="px-6 py-4 text-sm text-gray-500" th:text="${collection.bookCount}">0</td>
                     </tr>
                     </tbody>
                 </table>
@@ -115,13 +115,13 @@
                     <tr th:each="collection : ${userPublicCollections}" class="hover:bg-gray-100">
                         <td class="px-6 py-4 text-sm">
                             <!-- Badge différent selon l'ID de l'utilisateur -->
-                            <span th:if="${collection.user.id == 1}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <span th:if="${collection.userId == 1}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                     <svg class="mr-1.5 h-2 w-2 text-green-800" fill="currentColor" viewBox="0 0 8 8">
                                         <circle cx="4" cy="4" r="3" />
                                     </svg>
                                     Created Automatically
                                 </span>
-                            <span th:unless="${collection.user.id == 1}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <span th:unless="${collection.userId == 1}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                     <svg class="mr-1.5 h-2 w-2 text-blue-800" fill="currentColor" viewBox="0 0 8 8">
                                         <circle cx="4" cy="4" r="3" />
                                     </svg>
@@ -130,7 +130,7 @@
                         </td>
                         <td class="px-6 py-4 text-sm font-medium text-gray-800" th:text="${collection.title}">Collection Title</td>
                         <td class="px-6 py-4 text-sm text-gray-600 max-w-xs truncate" th:text="${collection.description}">Collection Description</td>
-                        <td class="px-6 py-4 text-sm text-gray-600" th:text="${collection.user.firstName} + ' ' + ${collection.user.lastName}">Owner</td>
+                        <td class="px-6 py-4 text-sm text-gray-600" th:text="${collection.userFullName}">Owner</td>
                         <td class="px-6 py-4 text-sm font-medium">
                             <div class="flex space-x-2">
                                 <a th:href="@{/collections/{id}(id=${collection.id})}" class="text-indigo-600 hover:text-indigo-900 px-2 py-1 bg-indigo-100 rounded">
@@ -144,7 +144,7 @@
                                 </a>
                             </div>
                         </td>
-                        <td class="px-6 py-4 text-sm text-gray-500" th:text="${collection.books.size()}">0</td>
+                        <td class="px-6 py-4 text-sm text-gray-500" th:text="${collection.bookCount}">0</td>
                     </tr>
                     </tbody>
                 </table>
@@ -180,7 +180,7 @@
                         </td>
                         <td class="px-6 py-4 text-sm font-medium text-gray-800" th:text="${collection.title}">Smart Collection Title</td>
                         <td class="px-6 py-4 text-sm text-gray-600 max-w-xs truncate" th:text="${collection.description}">Smart Collection Description</td>
-                        <td class="px-6 py-4 text-sm text-gray-600" th:text="${collection.user.firstName} + ' ' + ${collection.user.lastName}">Owner</td>
+                        <td class="px-6 py-4 text-sm text-gray-600" th:text="${collection.userFullName}">Owner</td>
                         <td class="px-6 py-4 text-sm font-medium">
                             <div class="flex space-x-2">
                                 <a th:href="@{/collections/{id}(id=${collection.id})}" class="text-indigo-600 hover:text-indigo-900 px-2 py-1 bg-indigo-100 rounded">
@@ -194,7 +194,7 @@
                                 </a>
                             </div>
                         </td>
-                        <td class="px-6 py-4 text-sm text-gray-500" th:text="${collection.books.size()}">0</td>
+                        <td class="px-6 py-4 text-sm text-gray-500" th:text="${collection.bookCount}">0</td>
                     </tr>
                     </tbody>
                 </table>
@@ -230,7 +230,7 @@
                         </td>
                         <td class="px-6 py-4 text-sm font-medium text-gray-800" th:text="${collection.title}">Global Collection Title</td>
                         <td class="px-6 py-4 text-sm text-gray-600 max-w-xs truncate" th:text="${collection.description}">Global Collection Description</td>
-                        <td class="px-6 py-4 text-sm text-gray-600" th:text="${collection.user.firstName} + ' ' + ${collection.user.lastName}">Owner</td>
+                        <td class="px-6 py-4 text-sm text-gray-600" th:text="${collection.userFullName}">Owner</td>
                         <td class="px-6 py-4 text-sm font-medium">
                             <div class="flex space-x-2">
                                 <a th:href="@{/collections/{id}(id=${collection.id})}" class="text-indigo-600 hover:text-indigo-900 px-2 py-1 bg-indigo-100 rounded">
@@ -238,7 +238,7 @@
                                 </a>
                             </div>
                         </td>
-                        <td class="px-6 py-4 text-sm text-gray-500" th:text="${collection.books.size()}">0</td>
+                        <td class="px-6 py-4 text-sm text-gray-500" th:text="${collection.bookCount}">0</td>
                     </tr>
                     </tbody>
                 </table>

@@ -1,9 +1,14 @@
 package fr.uge.booqIn.controller.web;
 
+import fr.uge.booqIn.dto.book.BookIndex;
+import fr.uge.booqIn.dto.bookCollection.BookCollectionIndex;
 import fr.uge.booqIn.dto.user.UserIndex;
 import fr.uge.booqIn.dto.user.UserShow;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.UserRole;
+import fr.uge.booqIn.service.impl.BookServiceImpl;
+import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
+import fr.uge.booqIn.service.interfaces.BookServiceInterface;
 import fr.uge.booqIn.service.interfaces.UserServiceInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,11 +36,14 @@ public class AdminWebController {
   private static final Logger logger = LoggerFactory.getLogger(AdminWebController.class);
 
   private final UserServiceInterface userService;
+  private final BookServiceInterface bookService;
+  private final BookCollectionServiceInterface bookCollectionService;
   private final HomeWebController homeWebController;
 
-  @Autowired
-  public AdminWebController(UserServiceInterface userService, HomeWebController homeWebController) {
+  public AdminWebController(UserServiceInterface userService, BookServiceInterface bookService, BookCollectionServiceInterface bookCollectionService, HomeWebController homeWebController) {
     this.userService = userService;
+    this.bookService = bookService;
+    this.bookCollectionService = bookCollectionService;
     this.homeWebController = homeWebController;
   }
 
@@ -51,23 +59,53 @@ public class AdminWebController {
           @RequestParam(required = false) String firstName,
           @RequestParam(required = false) String lastName,
           @RequestParam(required = false) String email,
+          @RequestParam(required = false) String title,
+          @RequestParam(required = false) String author,
+          @RequestParam(required = false) String isbn,
+          @RequestParam(required = false) String description,
+          @RequestParam(required = false, defaultValue = "false") boolean isPublic,
           @RequestParam(required = false) String search
   ) {
     homeWebController.prepareModel(model, principal, "admin");
     model.addAttribute("activeTab", activeTab);
 
-    if (search != null && !search.isEmpty()) {
-      firstName = search;
-      lastName = search;
-      email = search;
-    }
     Sort sort = sortDirection.equalsIgnoreCase("desc") ?
             Sort.by(sortField).descending() :
             Sort.by(sortField).ascending();
 
     Pageable pageable = PageRequest.of(page, size, sort);
-    Page<UserIndex> users = userService.findUsers(firstName, lastName, email, pageable);
-    model.addAttribute("users", users);
+
+    switch (activeTab) {
+      case "users":
+        if (search != null && !search.isEmpty()) {
+          firstName = search;
+          lastName = search;
+          email = search;
+        }
+        Page<UserIndex> users = userService.findUsers(firstName, lastName, email, pageable);
+        model.addAttribute("users", users);
+        break;
+
+      case "books":
+        if (search != null && !search.isEmpty()) {
+          title = search;
+          author = search;
+          isbn = search;
+        }
+        Page<BookIndex> books = bookService.findBooks(title, author, isbn, pageable);
+        model.addAttribute("books", books);
+        break;
+
+      case "collections":
+        if (search != null && !search.isEmpty()) {
+          title = search;
+          description = search;
+        }
+        Page<BookCollectionIndex> collections = bookCollectionService.findBookCollections(title, description, isPublic, pageable);
+        model.addAttribute("collections", collections);
+        break;
+    }
+
     model.addAttribute("title", "BooqIn - Administration");
     model.addAttribute("content", "pages/admin/admin-panel");
     return "layout";
