@@ -3,6 +3,7 @@ package fr.uge.booqIn.filter;
 import fr.uge.booqIn.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -22,6 +23,8 @@ import java.util.Optional;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
   private static final Logger logger = LoggerFactory.getLogger(JwtAuthFilter.class);
+  private static final String ACCESS_TOKEN_COOKIE_NAME = "jwt";
+  private static final String REFRESH_TOKEN_COOKIE_NAME = "jwt-refresh";
 
   private final JwtService jwtService;
   private final UserDetailsService userDetailsService;
@@ -36,68 +39,98 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                   HttpServletResponse response,
                                   FilterChain filterChain
   ) throws ServletException, IOException {
-    // Skip token refresh for refresh endpoint to avoid infinite loop
-    if (request.getRequestURI().equals("/api/v1/auth/refresh")) {
-      filterChain.doFilter(request, response);
-      return;
-    }
+    // Try to authenticate using access token first
+    Optional<String> accessTokenOpt = jwtService.getTokenFromCookies(request, ACCESS_TOKEN_COOKIE_NAME);
+    boolean authenticated = processAccessToken(accessTokenOpt, request);
 
-    // Try getting the access token first
-    Optional<String> accessTokenOpt = jwtService.getTokenFromCookies(request, "jwt");
+    // If access token authentication failed, try refresh token
+    if (!authenticated) {
+      Optional<String> refreshTokenOpt = jwtService.getTokenFromCookies(request, REFRESH_TOKEN_COOKIE_NAME);
 
-    String username = null;
-    if (accessTokenOpt.isPresent() && jwtService.isAccessTokenValid(accessTokenOpt.get())) {
-      logger.debug("Valid access token found");
-      try {
-        username = jwtService.extractUsername(accessTokenOpt.get());
-      } catch (Exception e) {
-        logger.warn("Error extracting username from access token", e);
-        // Token might be malformed or signed incorrectly
+      if (refreshTokenOpt.isPresent()) {
+        String refreshToken = refreshTokenOpt.get();
+        boolean refreshed = processRefreshToken(refreshToken, response);
+
+        if (refreshed) {
+          // we know it's valid, so authenticate the user
+          String username = jwtService.extractUsername(refreshToken);
+          if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            authenticateUser(username, request);
+            authenticated = true;
+            logger.info("User authenticated via token refresh: {}", username);
+          }
+        } else {
+          // If refresh failed (expired, invalid, or reused), clear cookies
+          clearAuthCookies(response);
+        }
       }
     }
-
-    // If access token is invalid or expired, try refresh token
-    if (username == null) {
-      Optional<String> refreshTokenOpt = jwtService.getTokenFromCookies(request, "jwt-refresh");
-
-      if (refreshTokenOpt.isEmpty()) {
-        logger.info("No refresh token found");
-        filterChain.doFilter(request, response);
-        return;
-      }
-
-      String refreshToken = refreshTokenOpt.get();
-      if (!jwtService.attemptTokenRefresh(refreshToken, response)) {
-        logger.info("Token refresh attempt failed");
-        filterChain.doFilter(request, response);
-        return;
-      }
-
-      try {
-        username = jwtService.extractUsername(refreshToken);
-        logger.info("Successfully refreshed token for user: {}", username);
-      } catch (Exception e) {
-        logger.warn("Error extracting username from refresh token", e);
-        filterChain.doFilter(request, response);
-        return;
-      }
-    }
-
-    // If we have a valid username, authenticate the user
-    if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-      UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-      UsernamePasswordAuthenticationToken authToken =
-              new UsernamePasswordAuthenticationToken(
-                      userDetails,
-                      null,
-                      userDetails.getAuthorities()
-              );
-      authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-      SecurityContextHolder.getContext().setAuthentication(authToken);
-      logger.debug("User authenticated: {}", username);
-    }
-
     filterChain.doFilter(request, response);
+  }
+
+  private boolean processAccessToken(Optional<String> accessTokenOpt, HttpServletRequest request) {
+    if (accessTokenOpt.isEmpty() || !jwtService.isAccessTokenValid(accessTokenOpt.get())) {
+      return false;
+    }
+
+    String accessToken = accessTokenOpt.get();
+    try {
+      String username = jwtService.extractUsername(accessToken);
+      if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        authenticateUser(username, request);
+        return true;
+      }
+    } catch (Exception e) {
+      logger.warn("Error processing access token", e);
+    }
+
+    return false;
+  }
+
+  private boolean processRefreshToken(String refreshToken, HttpServletResponse response) {
+    try {
+      // This will handle token rotation and reuse detection
+      boolean refreshed = jwtService.attemptTokenRefresh(refreshToken, response);
+
+      if (refreshed) {
+        String username = jwtService.extractUsername(refreshToken);
+        logger.info("Successfully refreshed tokens for user: {}", username);
+      }
+
+      return refreshed;
+    } catch (Exception e) {
+      logger.warn("Error during token refresh", e);
+      return false;
+    }
+  }
+
+  private void authenticateUser(String username, HttpServletRequest request) {
+    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+            userDetails,
+            null,
+            userDetails.getAuthorities()
+    );
+
+    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+    SecurityContextHolder.getContext().setAuthentication(authToken);
+    logger.debug("User authenticated: {}", username);
+  }
+
+  private void clearAuthCookies(HttpServletResponse response) {
+    Cookie accessCookie = new Cookie(ACCESS_TOKEN_COOKIE_NAME, "");
+    accessCookie.setMaxAge(0);
+    accessCookie.setPath("/");
+    accessCookie.setHttpOnly(true);
+    response.addCookie(accessCookie);
+
+    Cookie refreshCookie = new Cookie(REFRESH_TOKEN_COOKIE_NAME, "");
+    refreshCookie.setMaxAge(0);
+    refreshCookie.setPath("/");
+    refreshCookie.setHttpOnly(true);
+    response.addCookie(refreshCookie);
+
+    logger.debug("Cleared authentication cookies");
   }
 }

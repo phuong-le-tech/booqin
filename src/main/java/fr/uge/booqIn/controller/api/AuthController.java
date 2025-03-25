@@ -68,30 +68,62 @@ public class AuthController {
           HttpServletRequest request,
           HttpServletResponse response,
           Authentication authentication) {
-    var accessToken = getCookieValue(request, ACCESS_TOKEN_COOKIE_NAME);
+
+    // Get tokens from cookies
     var refreshToken = getCookieValue(request, REFRESH_TOKEN_COOKIE_NAME);
 
-    accessToken.ifPresent(jwtService::revokeToken);
+    // Revoke refresh token if present (which invalidates its entire family)
     refreshToken.ifPresent(jwtService::revokeToken);
 
+    // Invalidate user sessions if authenticated
     if (authentication != null && authentication.isAuthenticated()) {
       User user = (User) authentication.getPrincipal();
       authService.invalidateUserSessions(user.getId());
     }
 
-    addCookie(response, ACCESS_TOKEN_COOKIE_NAME, null, 0);
-    addCookie(response, REFRESH_TOKEN_COOKIE_NAME, null, 0);
+    // Clear cookies
+    clearCookies(response);
 
     return ResponseEntity.ok(
             ApiResponse.success("Logged out successfully", null));
-
   }
 
   @GetMapping("/me")
   public ResponseEntity<ApiResponse<UserMeDto>> me(Authentication authentication) {
-      UserMeDto userMeDto = authService.getCurrentUser(authentication);
-      return ResponseEntity.ok(
-              ApiResponse.success("Current user data", userMeDto));
+    UserMeDto userMeDto = authService.getCurrentUser(authentication);
+    return ResponseEntity.ok(
+            ApiResponse.success("Current user data", userMeDto));
+  }
+
+  /**
+   * Endpoint to manually refresh tokens
+   */
+  @PostMapping("/refresh")
+  public ResponseEntity<ApiResponse<Void>> refreshToken(
+          HttpServletRequest request,
+          HttpServletResponse response) {
+
+    Optional<String> refreshToken = getCookieValue(request, REFRESH_TOKEN_COOKIE_NAME);
+
+    if (refreshToken.isEmpty()) {
+      return ResponseEntity
+              .status(HttpStatus.UNAUTHORIZED)
+              .body(ApiResponse.error("No refresh token provided"));
+    }
+
+    boolean refreshed = jwtService.attemptTokenRefresh(refreshToken.get(), response);
+
+    if (!refreshed) {
+      // Clear cookies on failure
+      clearCookies(response);
+
+      return ResponseEntity
+              .status(HttpStatus.UNAUTHORIZED)
+              .body(ApiResponse.error("Token refresh failed, please login again"));
+    }
+
+    return ResponseEntity.ok(
+            ApiResponse.success("Tokens refreshed successfully", null));
   }
 
   /*
@@ -119,5 +151,19 @@ public class AuthController {
       }
     }
     return Optional.empty();
+  }
+
+  private void clearCookies(HttpServletResponse response) {
+    Cookie accessCookie = new Cookie(ACCESS_TOKEN_COOKIE_NAME, null);
+    accessCookie.setHttpOnly(true);
+    accessCookie.setPath("/");
+    accessCookie.setMaxAge(0);
+    response.addCookie(accessCookie);
+
+    Cookie refreshCookie = new Cookie(REFRESH_TOKEN_COOKIE_NAME, null);
+    refreshCookie.setHttpOnly(true);
+    refreshCookie.setPath("/");
+    refreshCookie.setMaxAge(0);
+    response.addCookie(refreshCookie);
   }
 }
