@@ -1,9 +1,10 @@
-/*
+
 package fr.uge.booqIn.controller.web;
 
 import fr.uge.booqIn.dto.book.BookCreate;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
+import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
 import fr.uge.booqIn.dto.bookCollection.LiteCollection;
 import fr.uge.booqIn.dto.vote.VoteCount;
 import fr.uge.booqIn.dto.vote.VoteCreate;
@@ -11,10 +12,10 @@ import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.VoteType;
-import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
-import fr.uge.booqIn.service.interfaces.BookServiceInterface;
-import fr.uge.booqIn.service.interfaces.CommentServiceInterface;
-import fr.uge.booqIn.service.interfaces.VoteServiceInterface;
+import fr.uge.booqIn.mapper.BookCollectionMapper;
+import fr.uge.booqIn.model.BookCollection;
+import fr.uge.booqIn.service.interfaces.*;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -35,23 +36,22 @@ import java.util.stream.Collectors;
 public class BookWebController {
     private final BookServiceInterface bookService;
     private final VoteServiceInterface voteServiceInterface;
-    private final BookCollectionServiceInterface bookCollectionService;
+    private final UserServiceInterface userService;
     private final CommentServiceInterface commentService;
     private final HomeWebController homeWebController;
 
     @Autowired
     public BookWebController(BookServiceInterface bookService,
                              VoteServiceInterface voteServiceInterface,
-                             BookCollectionServiceInterface bookCollectionService,
+                             BookCollectionServiceInterface bookCollectionService, UserServiceInterface userService,
                              CommentServiceInterface commentService,
                              HomeWebController homeWebController) {
         this.bookService = bookService;
         this.voteServiceInterface = voteServiceInterface;
-        this.bookCollectionService = bookCollectionService;
+      this.userService = userService;
         this.commentService = commentService;
         this.homeWebController = homeWebController;
     }
-
     @GetMapping
     public String getAllBooks(Model model,
                               @RequestParam(value = "page", defaultValue = "0") int page,
@@ -87,10 +87,11 @@ public class BookWebController {
         model.addAttribute("direction", direction);
 
         if(currentUser != null) {
-            model.addAttribute("userId", currentUser.getId());
-            var b = bookCollectionService.getUserCollections(currentUser, true, null);
-            var bcc = b.stream().map(bc -> new LiteCollection(bc.id(),bc.title())).toList();
-            model.addAttribute("bookCollections", bcc);
+          model.addAttribute("userId", currentUser.getId());
+          var user = userService.findUserById(currentUser.getId());
+          List<LiteCollection> collectionShows = user.getCollections().stream().filter(collection -> collection.getCollectionType() != BookCollection.CollectionType.GLOBAL).map(c  -> new LiteCollection(c.getId(),c.getTitle())).toList();
+            System.out.println(collectionShows.size());
+          model.addAttribute("bookCollections", collectionShows);
         }
 
         // Définir le titre et le template de contenu
@@ -198,4 +199,4 @@ public class BookWebController {
         return "redirect:/books/" + bookId;
     }
 }
-*/
+

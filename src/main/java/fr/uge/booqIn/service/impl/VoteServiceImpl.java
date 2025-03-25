@@ -50,25 +50,31 @@ public class VoteServiceImpl implements VoteServiceInterface {
     )
     public VoteResponse castVote(@NotNull @Valid VoteCreate voteCreate) {
         var user = userRepository.findById(voteCreate.userId())
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", voteCreate.userId()));
+            .orElseThrow(() -> new ResourceNotFoundException("User", "id", voteCreate.userId()));
 
         var targetEntity = strategyContext.findByTypeAndId(
-                voteCreate.entityType(),
-                voteCreate.entityId());
+            voteCreate.entityType(),
+            voteCreate.entityId());
 
         if (!(targetEntity instanceof Votable votable)) {
             throw new IllegalArgumentException("Entity of type " + voteCreate.entityType() + " is not votable");
         }
 
-      var existingVote = voteRepository.findByUserAndEntityIdAndEntityType(
-                user, votable.getId(), votable.getEntityType());
+        // Récupérer explicitement le type d'entité avant de sauvegarder
+        String entityType = voteCreate.entityType();
+        Long entityId = voteCreate.entityId();
+
+        var existingVote = voteRepository.findByUserAndEntityIdAndEntityType(
+            user, entityId, entityType);
 
         Vote vote;
         if (existingVote.isPresent()) {
             vote = existingVote.get();
             vote.setVoteType(voteCreate.voteType());
         } else {
-            vote = Vote.create(user, votable, voteCreate.voteType());
+            vote = new Vote(user, voteCreate.voteType());
+            vote.setEntityId(entityId);
+            vote.setEntityType(entityType);
         }
 
         vote = voteRepository.save(vote);
