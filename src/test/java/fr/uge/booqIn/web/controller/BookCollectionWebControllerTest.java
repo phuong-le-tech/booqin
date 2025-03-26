@@ -83,7 +83,6 @@ class BookCollectionWebControllerTest {
   @InjectMocks
   private BookCollectionWebController bookCollectionWebController;
 
-  @BeforeEach
   void setUp() {
     MockitoAnnotations.openMocks(this);
     mockMvc = MockMvcBuilders.standaloneSetup(bookCollectionWebController).build();
@@ -112,6 +111,7 @@ class BookCollectionWebControllerTest {
     verify(bookCollectionService).getPublicCollections(any(PageRequest.class));
     verify(homeWebController).prepareModel(any(Model.class), any(Principal.class), eq("collections-public"));
   }
+  @BeforeEach
 
   @Test
   void testShowUserCollections() throws Exception {
