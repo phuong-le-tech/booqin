@@ -1,18 +1,12 @@
-/*
 package fr.uge.booqIn.api.controller;
 
 import fr.uge.booqIn.controller.api.BookCollectionController;
-import fr.uge.booqIn.dto.bookCollection.BookCollectionCreate;
-import fr.uge.booqIn.dto.bookCollection.BookCollectionIndex;
-import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
-import fr.uge.booqIn.dto.bookCollection.BookCollectionUpdate;
 import fr.uge.booqIn.dto.book.BookIndex;
+import fr.uge.booqIn.dto.bookCollection.*;
 import fr.uge.booqIn.dto.user.UserIndex;
-import fr.uge.booqIn.dto.user.UserShow;
-import fr.uge.booqIn.entity.*;
+import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.UserRole;
 import fr.uge.booqIn.factory.ApiResponse;
-import fr.uge.booqIn.mapper.BookCollectionMapper;
 import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,7 +23,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.util.*;
+import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -41,366 +38,388 @@ import static org.mockito.Mockito.*;
 @DisplayName("BookCollectionController Tests")
 class BookCollectionControllerTest {
 
-    private BookCollectionServiceInterface bookCollectionService;
-    private BookCollectionController bookCollectionController;
-    private BookCollectionMapper bookCollectionMapper;
+  private BookCollectionServiceInterface bookCollectionService;
+  private BookCollectionController bookCollectionController;
+  private User testUser;
 
-    @BeforeEach
-    void setUp() {
-        bookCollectionService = Mockito.mock(BookCollectionServiceInterface.class);
-        bookCollectionController = new BookCollectionController(bookCollectionService);
-        bookCollectionMapper = new BookCollectionMapper();
-    }
+  @BeforeEach
+  void setUp() {
+    bookCollectionService = Mockito.mock(BookCollectionServiceInterface.class);
+    bookCollectionController = new BookCollectionController(bookCollectionService);
+    testUser = createTestUser();
+  }
 
-    private Address createTestAddress() {
-        return new Address("123", "Main St", "New York", "10001");
-    }
+  private User createTestUser() {
+    User user = new User("John", "Doe", "john.doe@example.com", "password", null, UserRole.USER);
+    user.setId(1L);
+    return user;
+  }
 
-    private User createTestUser() {
-        Address address = createTestAddress();
-        return new User("John", "Doe", "john.doe@example.com", "Password123", address, UserRole.USER);
-    }
+  @Test
+  @DisplayName("GET /collections - Should return paged collections with ascending sort")
+  void getAllBookCollections_ShouldReturnPageOfCollections() {
+    // Given
+    int page = 0, size = 10;
+    String sortField = "id", sortDirection = "asc";
+    String title = "Test Collection", description = "Test Description";
+    boolean isPublic = true;
 
-    private UserIndex createTestUserIndex() {
-        User user = createTestUser();
-        return new UserIndex(1L, user.getFirstName(), user.getLastName(), user.getUsername(), user.getAddress(), user.getRole());
-    }
+    List<BookCollectionIndex> collectionList = List.of(
+            new BookCollectionIndex(1L, "Collection 1", "Description 1", "John Doe", 1L, 2, true, null),
+            new BookCollectionIndex(2L, "Collection 2", "Description 2", "John Doe", 1L, 3, true, null)
+    );
+    Page<BookCollectionIndex> collectionPage = new PageImpl<>(collectionList);
 
-    private BookCollectionShow createTestBookCollectionShow() {
-        return new BookCollectionShow(
-                1L,
-                "Test Collection",
-                "Test Description",
-                false,
-                new HashSet<>(),
-                createTestUserIndex(),
-                new Date(),
-                new Date()
-        );
-    }
+    when(bookCollectionService.findBookCollections(eq(title), eq(description), eq(isPublic), any(PageRequest.class)))
+            .thenReturn(collectionPage);
 
-    @Test
-    @DisplayName("GET /collections - Returns a paged list of collections")
-    void getAllBookCollections_ShouldReturnPageOfCollections() {
-        // Given
-        int page = 0;
-        int size = 10;
-        String sortField = "id";
-        String sortDirection = "asc";
-        String title = "Test";
-        String description = "Desc";
-        Long userId = 1L;
+    // When
+    ResponseEntity<ApiResponse<Page<BookCollectionIndex>>> response = bookCollectionController.getAllBookCollections(
+            page, size, sortField, sortDirection, title, description, isPublic);
 
-        // Create a dummy BookCollectionIndex object
-        BookCollectionIndex dummyIndex = new BookCollectionIndex(1L, "Test Collection", "Test Description", "john.doe", false);
-        Page<BookCollectionIndex> pageCollections = new PageImpl<>(List.of(dummyIndex));
+    // Then
+    assertNotNull(response);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    ApiResponse<Page<BookCollectionIndex>> apiResponse = response.getBody();
+    assertNotNull(apiResponse);
+    assertTrue(apiResponse.success());
+    assertEquals("Collections found", apiResponse.message());
+    assertEquals(collectionPage, apiResponse.data());
 
-        when(bookCollectionService.findBookCollections(eq(title), eq(description), eq(userId), any(PageRequest.class)))
-                .thenReturn(pageCollections);
+    ArgumentCaptor<PageRequest> pageRequestCaptor = ArgumentCaptor.forClass(PageRequest.class);
+    verify(bookCollectionService).findBookCollections(eq(title), eq(description), eq(isPublic), pageRequestCaptor.capture());
+    PageRequest capturedPageRequest = pageRequestCaptor.getValue();
+    assertEquals(page, capturedPageRequest.getPageNumber());
+    assertEquals(size, capturedPageRequest.getPageSize());
+    assertEquals(Sort.by(sortField).ascending(), capturedPageRequest.getSort());
+  }
 
-        // When
-        ResponseEntity<ApiResponse<Page<BookCollectionIndex>>> response =
-                bookCollectionController.getAllBookCollections(page, size, sortField, sortDirection, title, description, userId);
+  @Test
+  @DisplayName("POST /collections - Should create and return a new collection")
+  void createCollection_ShouldReturnCreatedCollection() {
+    // Given
+    BookCollectionCreate collectionCreateDto = new BookCollectionCreate("New Collection", "A new collection description", true, Optional.empty());
 
-        // Then
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        ApiResponse<Page<BookCollectionIndex>> apiResponse = response.getBody();
-        assertNotNull(apiResponse);
-        assertTrue(apiResponse.success());
-        assertEquals("Collections found", apiResponse.message());
-        assertEquals(pageCollections, apiResponse.data());
+    UserIndex userIndex = new UserIndex(1L, "John", "Doe", "john.doe@example.com", null, UserRole.USER);
 
-        // Verify that the pageable was built correctly
-        ArgumentCaptor<PageRequest> pageRequestCaptor = ArgumentCaptor.forClass(PageRequest.class);
-        verify(bookCollectionService).findBookCollections(eq(title), eq(description), eq(userId), pageRequestCaptor.capture());
-        PageRequest capturedPageRequest = pageRequestCaptor.getValue();
-        assertEquals(page, capturedPageRequest.getPageNumber());
-        assertEquals(size, capturedPageRequest.getPageSize());
-        assertEquals(Sort.by(sortField).ascending(), capturedPageRequest.getSort());
-    }
+    BookCollectionShow createdCollection = new BookCollectionShow(
+            1L,
+            "New Collection",
+            "A new collection description",
+            true,
+            List.of(),
+            userIndex,
+            "CUSTOM",
+            LocalDateTime.now(),
+            LocalDateTime.now()
+    );
 
-*/
-/*    @Test
-    @DisplayName("POST /collections - Creates a new collection")
-    void createCollection_ShouldReturnCreatedCollection() {
-        // Given
-        User dummyUser = createTestUser();
-        BookCollectionCreate inputCollection = new BookCollectionCreate("Test Collection", "Test Description", false);
-        BookCollection createdCollection = new BookCollection("Test Collection", "Test Description", dummyUser);
-        createdCollection.setId(1L);
+    when(bookCollectionService.createBookCollection(any(BookCollectionCreate.class), any(User.class)))
+            .thenReturn(createdCollection);
 
-        when(bookCollectionService.createBookCollection(any(BookCollection.class))).thenReturn(createdCollection);
+    // When
+    ResponseEntity<ApiResponse<BookCollectionShow>> response = bookCollectionController.createCollection(collectionCreateDto, testUser);
 
-        // When
-        ResponseEntity<ApiResponse<BookCollectionShow>> response =
-                bookCollectionController.createCollection(inputCollection, dummyUser);
+    // Then
+    assertNotNull(response);
+    assertEquals(HttpStatus.CREATED, response.getStatusCode());
+    ApiResponse<BookCollectionShow> apiResponse = response.getBody();
+    assertNotNull(apiResponse);
+    assertTrue(apiResponse.success());
+    assertEquals("Collection created successfully", apiResponse.message());
+    assertEquals(createdCollection, apiResponse.data());
+    verify(bookCollectionService).createBookCollection(eq(collectionCreateDto), eq(testUser));
+  }
 
-        // Then
-        assertNotNull(response);
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        ApiResponse<BookCollectionShow> apiResponse = response.getBody();
-        assertNotNull(apiResponse);
-        assertTrue(apiResponse.success());
-        assertEquals("Collection created successfully", apiResponse.message());
-        assertEquals(bookCollectionMapper.toBookCollectionShow(createdCollection), apiResponse.data());
-        verify(bookCollectionService).createBookCollection(any(BookCollection.class));
-    }*//*
+  @Test
+  @DisplayName("GET /collections/{id} - Should return collection when found")
+  void getCollection_ShouldReturnCollection() {
+    // Given
+    Long collectionId = 1L;
+    UserIndex userIndex = new UserIndex(1L, "John", "Doe", "john.doe@example.com", null, UserRole.USER);
 
+    BookCollectionShow collection = new BookCollectionShow(
+            collectionId,
+            "Test Collection",
+            "Test Description",
+            true,
+            List.of(),
+            userIndex,
+            "CUSTOM",
+            LocalDateTime.now(),
+            LocalDateTime.now()
+    );
 
-    @Test
-    @DisplayName("GET /collections/{id} - Returns a collection")
-    void getCollection_ShouldReturnCollection() {
-        // Given
-        Long collectionId = 1L;
-        BookCollectionShow collectionShow = createTestBookCollectionShow();
+    when(bookCollectionService.findBookCollectionById(eq(collectionId))).thenReturn(collection);
 
-        when(bookCollectionService.findById(collectionId)).thenReturn(collectionShow);
+    // When
+    ResponseEntity<ApiResponse<BookCollectionShow>> response = bookCollectionController.getCollection(collectionId);
 
-        // When
-        ResponseEntity<ApiResponse<BookCollectionShow>> response =
-                bookCollectionController.getCollection(collectionId);
+    // Then
+    assertNotNull(response);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    ApiResponse<BookCollectionShow> apiResponse = response.getBody();
+    assertNotNull(apiResponse);
+    assertTrue(apiResponse.success());
+    assertEquals("Collection found", apiResponse.message());
+    assertEquals(collection, apiResponse.data());
+    verify(bookCollectionService).findBookCollectionById(eq(collectionId));
+  }
 
-        // Then
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        ApiResponse<BookCollectionShow> apiResponse = response.getBody();
-        assertNotNull(apiResponse);
-        assertTrue(apiResponse.success());
-        assertEquals("Collection found", apiResponse.message());
-        assertEquals(collectionShow, apiResponse.data());
-        verify(bookCollectionService).findById(collectionId);
-    }
+  @Test
+  @DisplayName("DELETE /collections/{id} - Should delete collection and return success")
+  void deleteCollection_ShouldReturnSuccess() {
+    // Given
+    Long collectionId = 1L;
+    doNothing().when(bookCollectionService).deleteBookCollection(eq(collectionId));
 
-    @Test
-    @DisplayName("DELETE /collections/{id} - Deletes a collection")
-    void deleteCollection_ShouldReturnSuccessResponse() {
-        // Given
-        Long collectionId = 1L;
-        doNothing().when(bookCollectionService).deleteBookCollection(collectionId);
-        User dummyUser = createTestUser();
+    // When
+    ResponseEntity<ApiResponse<Void>> response = bookCollectionController.deleteCollection(collectionId);
 
-        // When
-        ResponseEntity<ApiResponse<Void>> response =
-                bookCollectionController.deleteCollection(collectionId, dummyUser);
+    // Then
+    assertNotNull(response);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    ApiResponse<Void> apiResponse = response.getBody();
+    assertNotNull(apiResponse);
+    assertTrue(apiResponse.success());
+    assertEquals("Collection deleted successfully", apiResponse.message());
+    verify(bookCollectionService).deleteBookCollection(eq(collectionId));
+  }
 
-        // Then
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        ApiResponse<Void> apiResponse = response.getBody();
-        assertNotNull(apiResponse);
-        assertTrue(apiResponse.success());
-        assertEquals("Collection deleted successfully", apiResponse.message());
-        assertNull(apiResponse.data());
-        verify(bookCollectionService).deleteBookCollection(collectionId);
-    }
+  @Test
+  @DisplayName("PATCH /collections/{id} - Should update and return updated collection")
+  void updateBookCollection_ShouldReturnUpdatedCollection() {
+    // Given
+    Long collectionId = 1L;
+    BookCollectionUpdate updateDto = new BookCollectionUpdate(Optional.of("Updated Collection"), Optional.of("Updated Description"), false);
 
-    @Test
-    @DisplayName("PUT /collections - Updates a collection")
-    void updateCollection_ShouldReturnUpdatedCollection() {
-        // Given
-        User dummyUser = createTestUser();
-        BookCollection inputCollection = new BookCollection("Test Collection", "Test Description", dummyUser);
-        inputCollection.setId(1L);
-        BookCollection updatedCollection = new BookCollection("Updated Collection", "Updated Description", dummyUser);
-        updatedCollection.setId(1L);
+    UserIndex userIndex = new UserIndex(1L, "John", "Doe", "john.doe@example.com", null, UserRole.USER);
 
-        when(bookCollectionService.updateBookCollection(inputCollection)).thenReturn(updatedCollection);
+    BookCollectionShow updatedCollection = new BookCollectionShow(
+            collectionId,
+            "Updated Collection",
+            "Updated Description",
+            false,
+            List.of(),
+            userIndex,
+            "CUSTOM",
+            LocalDateTime.now(),
+            LocalDateTime.now()
+    );
 
-        // When
-        ResponseEntity<ApiResponse<BookCollection>> response =
-                bookCollectionController.updateCollection(inputCollection);
+    when(bookCollectionService.updateBookCollection(eq(collectionId), any(BookCollectionUpdate.class)))
+            .thenReturn(updatedCollection);
 
-        // Then
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        ApiResponse<BookCollection> apiResponse = response.getBody();
-        assertNotNull(apiResponse);
-        assertTrue(apiResponse.success());
-        assertEquals("BookCollection updated successfully", apiResponse.message());
-        assertEquals(updatedCollection, apiResponse.data());
-        verify(bookCollectionService).updateBookCollection(inputCollection);
-    }
+    // When
+    ResponseEntity<ApiResponse<BookCollectionShow>> response = bookCollectionController.updateBookCollection(collectionId, updateDto);
 
-    @Test
-    @DisplayName("PATCH /collections/{id} - Partially updates a collection")
-    void patchCollection_ShouldReturnUpdatedCollectionShow() {
-        // Given
-        Long collectionId = 1L;
-        BookCollectionUpdate update = new BookCollectionUpdate(
-                Optional.of("Updated Title"),
-                Optional.of("Updated Description"),
-                false,
-                Optional.empty()
-        );
+    // Then
+    assertNotNull(response);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    ApiResponse<BookCollectionShow> apiResponse = response.getBody();
+    assertNotNull(apiResponse);
+    assertTrue(apiResponse.success());
+    assertEquals("Collection updated successfully", apiResponse.message());
+    assertEquals(updatedCollection, apiResponse.data());
+    verify(bookCollectionService).updateBookCollection(eq(collectionId), eq(updateDto));
+  }
 
-        BookCollectionShow updatedShow = createTestBookCollectionShow();
-        when(bookCollectionService.patchBookCollection(collectionId, update)).thenReturn(updatedShow);
-        User dummyUser = createTestUser();
+  @Test
+  @DisplayName("POST /collections/{collectionId}/books/{bookId} - Should add book to collection and return success")
+  void addBookToCollection_ShouldReturnSuccess() {
+    // Given
+    Long collectionId = 1L;
+    Long bookId = 2L;
+    doNothing().when(bookCollectionService).addBookToCollection(eq(collectionId), eq(bookId));
 
-        // When
-        ResponseEntity<ApiResponse<BookCollectionShow>> response =
-                bookCollectionController.patchCollection(collectionId, dummyUser, update);
+    // When
+    ResponseEntity<ApiResponse<BookCollectionShow>> response = bookCollectionController.addBookToCollection(collectionId, bookId);
 
-        // Then
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        ApiResponse<BookCollectionShow> apiResponse = response.getBody();
-        assertNotNull(apiResponse);
-        assertTrue(apiResponse.success());
-        assertEquals("Collection updated successfully", apiResponse.message());
-        assertEquals(updatedShow, apiResponse.data());
-        verify(bookCollectionService).patchBookCollection(collectionId, update);
-    }
+    // Then
+    assertNotNull(response);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    ApiResponse<BookCollectionShow> apiResponse = response.getBody();
+    assertNotNull(apiResponse);
+    assertTrue(apiResponse.success());
+    assertEquals("Book added to collection successfully", apiResponse.message());
+    verify(bookCollectionService).addBookToCollection(eq(collectionId), eq(bookId));
+  }
 
-    @Test
-    @DisplayName("POST /collections/{collectionId}/books/{bookId} - Adds a book to a collection")
-    void addBookToCollection_ShouldReturnUpdatedCollection() {
-        // Given
-        Long collectionId = 1L;
-        Long bookId = 1L;
-        BookCollection updatedCollection = new BookCollection("Test Collection", "Test Description", createTestUser());
-        updatedCollection.setId(collectionId);
-        when(bookCollectionService.addBookToCollection(collectionId, bookId)).thenReturn(updatedCollection);
+  @Test
+  @DisplayName("DELETE /collections/{collectionId}/books/{bookId} - Should remove book from collection and return success")
+  void removeBookFromCollection_ShouldReturnSuccess() {
+    // Given
+    Long collectionId = 1L;
+    Long bookId = 2L;
+    doNothing().when(bookCollectionService).removeBookFromCollection(eq(collectionId), eq(bookId));
 
-        // When
-        ResponseEntity<ApiResponse<BookCollectionShow>> response =
-                bookCollectionController.addBookToCollection(collectionId, bookId);
+    // When
+    ResponseEntity<ApiResponse<BookCollectionShow>> response = bookCollectionController.removeBookFromCollection(collectionId, bookId);
 
-        // Then
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        ApiResponse<BookCollectionShow> apiResponse = response.getBody();
-        assertNotNull(apiResponse);
-        assertTrue(apiResponse.success());
-        assertEquals("Book added to collection successfully", apiResponse.message());
-        assertEquals(bookCollectionMapper.toBookCollectionShow(updatedCollection), apiResponse.data());
-        verify(bookCollectionService).addBookToCollection(collectionId, bookId);
-    }
+    // Then
+    assertNotNull(response);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    ApiResponse<BookCollectionShow> apiResponse = response.getBody();
+    assertNotNull(apiResponse);
+    assertTrue(apiResponse.success());
+    assertEquals("Book removed from collection successfully", apiResponse.message());
+    verify(bookCollectionService).removeBookFromCollection(eq(collectionId), eq(bookId));
+  }
 
-    @Test
-    @DisplayName("DELETE /collections/{collectionId}/books/{bookId} - Removes a book from a collection")
-    void removeBookFromCollection_ShouldReturnUpdatedCollection() {
-        // Given
-        Long collectionId = 1L;
-        Long bookId = 1L;
-        BookCollection updatedCollection = new BookCollection("Test Collection", "Test Description", createTestUser());
-        updatedCollection.setId(collectionId);
-        when(bookCollectionService.removeBookFromCollection(eq(collectionId), eq(bookId), any(User.class)))
-                .thenReturn(updatedCollection);
-        User dummyUser = createTestUser();
+  @Test
+  @DisplayName("GET /collections/public - Should return paged public collections")
+  void getPublicCollections_ShouldReturnPageOfPublicCollections() {
+    // Given
+    int page = 0, size = 10;
+    String sortField = "id", sortDirection = "asc";
 
-        // When
-        ResponseEntity<ApiResponse<BookCollectionShow>> response =
-                bookCollectionController.removeBookFromCollection(collectionId, bookId, dummyUser);
+    List<BookCollectionIndex> collectionList = List.of(
+            new BookCollectionIndex(1L, "Public Collection 1", "Description 1", "John Doe", 1L, 2, true, null),
+            new BookCollectionIndex(2L, "Public Collection 2", "Description 2", "Jane Smith", 2L, 1, true, null)
+    );
+    Page<BookCollectionIndex> collectionPage = new PageImpl<>(collectionList);
 
-        // Then
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        ApiResponse<BookCollectionShow> apiResponse = response.getBody();
-        assertNotNull(apiResponse);
-        assertTrue(apiResponse.success());
-        assertEquals("Book removed from collection successfully", apiResponse.message());
-        assertEquals(bookCollectionMapper.toBookCollectionShow(updatedCollection), apiResponse.data());
-        verify(bookCollectionService).removeBookFromCollection(collectionId, bookId, dummyUser);
-    }
+    when(bookCollectionService.getPublicCollections(any(PageRequest.class))).thenReturn(collectionPage);
 
-    @Test
-    @DisplayName("GET /collections/public - Returns public collections")
-    void getPublicCollections_ShouldReturnPublicCollections() {
-        // Given
-        BookCollectionShow publicCollection = createTestBookCollectionShow();
-        List<BookCollectionShow> publicCollections = List.of(publicCollection);
+    // When
+    ResponseEntity<ApiResponse<Page<BookCollectionIndex>>> response = bookCollectionController.getPublicCollections(
+            page, size, sortField, sortDirection);
 
-        when(bookCollectionService.getPublicCollections()).thenReturn(publicCollections);
+    // Then
+    assertNotNull(response);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    ApiResponse<Page<BookCollectionIndex>> apiResponse = response.getBody();
+    assertNotNull(apiResponse);
+    assertTrue(apiResponse.success());
+    assertEquals("Public collections fetched", apiResponse.message());
+    assertEquals(collectionPage, apiResponse.data());
 
-        // When
-        ResponseEntity<ApiResponse<List<BookCollectionShow>>> response =
-                bookCollectionController.getPublicCollections();
+    ArgumentCaptor<PageRequest> pageRequestCaptor = ArgumentCaptor.forClass(PageRequest.class);
+    verify(bookCollectionService).getPublicCollections(pageRequestCaptor.capture());
+    PageRequest capturedPageRequest = pageRequestCaptor.getValue();
+    assertEquals(page, capturedPageRequest.getPageNumber());
+    assertEquals(size, capturedPageRequest.getPageSize());
+    assertEquals(Sort.by(sortField).ascending(), capturedPageRequest.getSort());
+  }
 
-        // Then
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        ApiResponse<List<BookCollectionShow>> apiResponse = response.getBody();
-        assertNotNull(apiResponse);
-        assertTrue(apiResponse.success());
-        assertEquals("Public collections fetched", apiResponse.message());
-        assertEquals(publicCollections, apiResponse.data());
-        verify(bookCollectionService).getPublicCollections();
-    }
+  @Test
+  @DisplayName("GET /collections/user/public - Should return paged public collections for current user")
+  void getPublicUserCollection_ShouldReturnPageOfUserPublicCollections() {
+    // Given
+    int page = 0, size = 10;
+    String sortField = "id", sortDirection = "asc";
 
-    @Test
-    @DisplayName("GET /collections/user - Returns user collections")
-    void getUserCollections_ShouldReturnUserCollections() {
-        // Given
-        User dummyUser = createTestUser();
-        BookCollection userCollection = new BookCollection("User Collection", "Description", dummyUser);
-        List<BookCollection> userCollections = List.of(userCollection);
+    List<BookCollectionIndex> collectionList = List.of(
+            new BookCollectionIndex(1L, "User Public Collection 1", "Description 1", "John Doe", 1L, 3, true, null),
+            new BookCollectionIndex(2L, "User Public Collection 2", "Description 2", "John Doe", 1L, 2, true, null)
+    );
+    Page<BookCollectionIndex> collectionPage = new PageImpl<>(collectionList);
 
-        when(bookCollectionService.getUserCollections(any(User.class))).thenReturn(userCollections);
+    when(bookCollectionService.getPublicUserCollection(eq(testUser), any(PageRequest.class))).thenReturn(collectionPage);
 
-        // When
-        ResponseEntity<ApiResponse<List<BookCollectionShow>>> response =
-                bookCollectionController.getUserCollections(dummyUser);
+    // When
+    ResponseEntity<ApiResponse<Page<BookCollectionIndex>>> response = bookCollectionController.getPublicUserCollection(
+            page, size, sortField, sortDirection, testUser);
 
-        // Then
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        ApiResponse<List<BookCollectionShow>> apiResponse = response.getBody();
-        assertNotNull(apiResponse);
-        assertTrue(apiResponse.success());
-        assertEquals("User collections fetched", apiResponse.message());
-        assertEquals(userCollections, apiResponse.data());
-        verify(bookCollectionService).getUserCollections(dummyUser);
-    }
+    // Then
+    assertNotNull(response);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    ApiResponse<Page<BookCollectionIndex>> apiResponse = response.getBody();
+    assertNotNull(apiResponse);
+    assertTrue(apiResponse.success());
+    assertEquals("Public user collection", apiResponse.message());
+    assertEquals(collectionPage, apiResponse.data());
 
-    @Test
-    @DisplayName("GET /collections/user/with-books - Returns user collections with books")
-    void getUserCollectionsWithBooks_ShouldReturnUserCollectionsWithBooks() {
-        // Given
-        User dummyUser = createTestUser();
-        BookCollectionShow collectionShow = createTestBookCollectionShow();
-        List<BookCollectionShow> collectionShows = List.of(collectionShow);
+    ArgumentCaptor<PageRequest> pageRequestCaptor = ArgumentCaptor.forClass(PageRequest.class);
+    verify(bookCollectionService).getPublicUserCollection(eq(testUser), pageRequestCaptor.capture());
+    PageRequest capturedPageRequest = pageRequestCaptor.getValue();
+    assertEquals(page, capturedPageRequest.getPageNumber());
+    assertEquals(size, capturedPageRequest.getPageSize());
+    assertEquals(Sort.by(sortField).ascending(), capturedPageRequest.getSort());
+  }
 
-        when(bookCollectionService.getUserCollectionsWithBooks(any(User.class))).thenReturn(collectionShows);
+  @Test
+  @DisplayName("GET /collections/user/private - Should return paged private collections for current user")
+  void getPrivateUserCollection_ShouldReturnPageOfUserPrivateCollections() {
+    // Given
+    int page = 0, size = 10;
+    String sortField = "id", sortDirection = "asc";
 
-        // When
-        ResponseEntity<ApiResponse<List<BookCollectionShow>>> response =
-                bookCollectionController.getUserCollections(dummyUser);
+    List<BookCollectionIndex> collectionList = List.of(
+            new BookCollectionIndex(3L, "User Private Collection 1", "Description 1", "John Doe", 1L, 2, false, null),
+            new BookCollectionIndex(4L, "User Private Collection 2", "Description 2", "John Doe", 1L, 3, false, null)
+    );
+    Page<BookCollectionIndex> collectionPage = new PageImpl<>(collectionList);
 
-        // Then
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        ApiResponse<List<BookCollectionShow>> apiResponse = response.getBody();
-        assertNotNull(apiResponse);
-        assertTrue(apiResponse.success());
-        assertEquals("User collections with books fetched", apiResponse.message());
-        assertEquals(collectionShows, apiResponse.data());
-        verify(bookCollectionService).getUserCollectionsWithBooks(dummyUser);
-    }
+    when(bookCollectionService.getPrivateUserCollection(eq(testUser), any(PageRequest.class))).thenReturn(collectionPage);
 
-    @Test
-    @DisplayName("GET /collections/{collectionId}/books/{bookId} - Returns a book from a collection")
-    void getBookFromCollection_ShouldReturnBook() {
-        // Given
-        Long collectionId = 1L;
-        Long bookId = 1L;
-        Book book = new Book.Builder().id(bookId).title("Test Book").build();
+    // When
+    ResponseEntity<ApiResponse<Page<BookCollectionIndex>>> response = bookCollectionController.getPrivateUserCollection(
+            page, size, sortField, sortDirection, testUser);
 
-        when(bookCollectionService.getBookFromCollection(collectionId, bookId)).thenReturn(book);
+    // Then
+    assertNotNull(response);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    ApiResponse<Page<BookCollectionIndex>> apiResponse = response.getBody();
+    assertNotNull(apiResponse);
+    assertTrue(apiResponse.success());
+    assertEquals("Private user collection", apiResponse.message());
+    assertEquals(collectionPage, apiResponse.data());
 
-        // When
-        ResponseEntity<ApiResponse<Book>> response =
-                bookCollectionController.getBookFromCollection(collectionId, bookId);
+    ArgumentCaptor<PageRequest> pageRequestCaptor = ArgumentCaptor.forClass(PageRequest.class);
+    verify(bookCollectionService).getPrivateUserCollection(eq(testUser), pageRequestCaptor.capture());
+    PageRequest capturedPageRequest = pageRequestCaptor.getValue();
+    assertEquals(page, capturedPageRequest.getPageNumber());
+    assertEquals(size, capturedPageRequest.getPageSize());
+    assertEquals(Sort.by(sortField).ascending(), capturedPageRequest.getSort());
+  }
 
-        // Then
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        ApiResponse<Book> apiResponse = response.getBody();
-        assertNotNull(apiResponse);
-        assertTrue(apiResponse.success());
-        assertEquals("Book fetched", apiResponse.message());
-        assertEquals(book, apiResponse.data());
-        verify(bookCollectionService).getBookFromCollection(collectionId, bookId);
-    }
-}*/
+  @Test
+  @DisplayName("GET /collections/user/books - Should return user collections with books")
+  void getUserCollectionsWithBooks_ShouldReturnUserCollectionsWithBooks() {
+    // Given
+    int page = 0, size = 10;
+    String sortField = "id", sortDirection = "asc";
+
+    UserIndex userIndex = new UserIndex(1L, "John", "Doe", "john.doe@example.com", null, UserRole.USER);
+
+    List<BookIndex> booksCollection1 = List.of(
+            new BookIndex(1L, "Book 1", null, new Date()),
+            new BookIndex(2L, "Book 2", null, new Date())
+    );
+
+    List<BookIndex> booksCollection2 = List.of(
+            new BookIndex(3L, "Book 3", null, new Date())
+    );
+
+    List<BookCollectionShow> collectionList = List.of(
+            new BookCollectionShow(1L, "Collection With Books 1", "Description 1", true,
+                    booksCollection1, userIndex, "CUSTOM", LocalDateTime.now(), LocalDateTime.now()),
+            new BookCollectionShow(2L, "Collection With Books 2", "Description 2", false,
+                    booksCollection2, userIndex, "CUSTOM", LocalDateTime.now(), LocalDateTime.now())
+    );
+    Page<BookCollectionShow> collectionPage = new PageImpl<>(collectionList);
+
+    when(bookCollectionService.getUserCollectionsWithBooks(eq(testUser), any(PageRequest.class))).thenReturn(collectionPage);
+
+    // When
+    ResponseEntity<ApiResponse<Page<BookCollectionShow>>> response = bookCollectionController.getUserCollectionsWithBooks(
+            page, size, sortField, sortDirection, testUser);
+
+    // Then
+    assertNotNull(response);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    ApiResponse<Page<BookCollectionShow>> apiResponse = response.getBody();
+    assertNotNull(apiResponse);
+    assertTrue(apiResponse.success());
+    assertEquals("User collections with books fetched", apiResponse.message());
+    assertEquals(collectionPage, apiResponse.data());
+
+    ArgumentCaptor<PageRequest> pageRequestCaptor = ArgumentCaptor.forClass(PageRequest.class);
+    verify(bookCollectionService).getUserCollectionsWithBooks(eq(testUser), pageRequestCaptor.capture());
+    PageRequest capturedPageRequest = pageRequestCaptor.getValue();
+    assertEquals(page, capturedPageRequest.getPageNumber());
+    assertEquals(size, capturedPageRequest.getPageSize());
+    assertEquals(Sort.by(sortField).ascending(), capturedPageRequest.getSort());
+  }
+}
