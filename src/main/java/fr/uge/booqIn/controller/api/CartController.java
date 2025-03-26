@@ -3,6 +3,7 @@ package fr.uge.booqIn.controller.api;
 import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.dto.cart.ShopCartDto;
 import fr.uge.booqIn.dto.user.UserIndex;
+import fr.uge.booqIn.entity.BookLending;
 import fr.uge.booqIn.factory.ApiResponse;
 import fr.uge.booqIn.dto.cart.CartDto;
 import fr.uge.booqIn.service.interfaces.BookLendingInterface;
@@ -28,6 +29,23 @@ public class CartController {
         this.userService = userService;
         this.bookService = bookService;
       this.bookLendingInterface = bookLendingInterface;
+    }
+    @GetMapping("/check-book-availability/{bookId}")
+    public ResponseEntity<ApiResponse<Boolean>> checkBookAvailability(@PathVariable Long bookId) {
+        Optional<BookShow> bookOptional = Optional.ofNullable(bookService.findById(bookId));
+        
+        if (bookOptional.isEmpty()) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Book not found", false));
+        }
+        
+
+        Optional<BookLending> availableBook = bookLendingInterface.findBookLendingByBookId(bookId);
+        boolean isAvailable = availableBook.isPresent();
+        
+        return ResponseEntity.ok(ApiResponse.success(
+                isAvailable ? "Book is available" : "Book is not available",
+                isAvailable
+        ));
     }
     
     @PostMapping("/add-book")

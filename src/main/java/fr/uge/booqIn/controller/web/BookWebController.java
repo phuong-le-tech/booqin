@@ -10,6 +10,7 @@ import fr.uge.booqIn.dto.vote.VoteCount;
 import fr.uge.booqIn.dto.vote.VoteCreate;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
+import fr.uge.booqIn.entity.BookLending;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.BookStatus;
 import fr.uge.booqIn.enums.LendStatus;
@@ -103,6 +104,14 @@ public class BookWebController {
           model.addAttribute("bookCollections", collectionShows);
 
           try {
+              List<Long> availableBooks = new ArrayList<>();
+              for (BookIndex book :booksPage.getContent()) {
+                  Optional<BookLending> availableBook = bookLendingInterface.findByBookIdAndBorrowerIsNullAndStatus(book.id());
+                  if (availableBook.isPresent()) {
+                      availableBooks.add(book.id());
+                  }
+              }
+              model.addAttribute("availableBooks", availableBooks);
             LendingResponseDTO lendingData = bookLendingInterface.findAllUserLendingsAsDTO(currentUser.getId(), LendStatus.ALL);
             List<Long> lentBooks = lendingData.lentBooks().stream()
                     .filter(lending -> lending.status() == BookStatus.AVAILABLE)
