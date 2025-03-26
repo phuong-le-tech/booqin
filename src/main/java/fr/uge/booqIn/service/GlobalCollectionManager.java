@@ -137,8 +137,19 @@ public class GlobalCollectionManager {
         }
     }
 
+    /**
+     * Updates author collections when a new book is added.
+     * This method is called by the event listener when a book is added or updated.
+     */
     @Transactional
     public void updateAuthorCollectionsForNewBook(Book book) {
+        logger.info("Updating author collections for book: " + book.getTitle());
+
+        if (book.getAuthors() == null || book.getAuthors().isEmpty()) {
+            logger.info("Book has no authors, skipping collection update");
+            return;
+        }
+
         for (Author author : book.getAuthors()) {
             String collectionTitle = "Books by " + author.getFullName();
 
@@ -154,20 +165,12 @@ public class GlobalCollectionManager {
                     }
 
                     // Just add the book if it matches criteria
-                    List<Book> books = List.of(book);
                     if (globalCollection.getCriteriaStrategy().satisfy(book)) {
                         if (!authorCollection.getBooks().contains(book)) {
                             authorCollection.addBook(book);
                             collectionRepository.save(authorCollection);
                             logger.info("Added new book to author collection: " + collectionTitle);
                         }
-                    }
-                } else {
-                    // For backward compatibility, add book manually if it's not a GlobalBookCollection
-                    if (!authorCollection.getBooks().contains(book)) {
-                        authorCollection.addBook(book);
-                        collectionRepository.save(authorCollection);
-                        logger.info("Added new book to author collection: " + collectionTitle);
                     }
                 }
             }
@@ -190,7 +193,6 @@ public class GlobalCollectionManager {
         }
     }
 
-    @Scheduled(cron = "0 0 0 * * ?")
     @Transactional
     public void refreshRecentBooksCollection() {
         logger.info("Scheduled refresh of recent books collection...");

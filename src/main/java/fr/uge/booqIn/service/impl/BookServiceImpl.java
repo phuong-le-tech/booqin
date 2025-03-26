@@ -6,6 +6,7 @@ import fr.uge.booqIn.dto.book.BookUpdate;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.event.BooqInEventPublisher;
+import fr.uge.booqIn.event.publishable.BookAddedEvent;
 import fr.uge.booqIn.exception.DuplicateResourceException;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.mapper.BookMapper;
@@ -194,6 +195,7 @@ public class BookServiceImpl implements BookServiceInterface {
               .orElseGet(() -> createNewBook(toSave));
 
       downloadAndSaveCoverImage(savedBook);
+    eventPublisher.publishEvent(new BookAddedEvent(savedBook.getId(), existingBookOpt.isEmpty()));
   }
 
   private Optional<Book> findExistingBookByIsbns(Set<String> isbns) {

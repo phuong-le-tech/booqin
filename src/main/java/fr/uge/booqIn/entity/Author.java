@@ -6,6 +6,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
+@Table(name = "author",
+    indexes = {
+        @Index(name = "idx_author_first_name", columnList = "first_name"),
+        @Index(name = "idx_author_last_name", columnList = "last_name")
+    }
+)
 public class Author {
 
     @Id
