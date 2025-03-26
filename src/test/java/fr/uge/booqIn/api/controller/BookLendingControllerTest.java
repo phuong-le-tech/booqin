@@ -7,6 +7,7 @@ import fr.uge.booqIn.dto.lending.LendingResponseDTO;
 import fr.uge.booqIn.dto.user.UserIndex;
 import fr.uge.booqIn.entity.BookLending;
 import fr.uge.booqIn.enums.BookStatus;
+import fr.uge.booqIn.enums.LendStatus;
 import fr.uge.booqIn.enums.UserRole;
 import fr.uge.booqIn.factory.ApiResponse;
 import fr.uge.booqIn.service.interfaces.BookLendingInterface;
@@ -187,7 +188,7 @@ class BookLendingControllerTest {
   void getUserLendings_ShouldReturnUserBorrowedLendings() {
     // Given
     Long userId = 1L;
-    String type = "borrowed";
+    LendStatus type = LendStatus.BORROWED;
 
     LocalDateTime now = LocalDateTime.now();
     UserIndex borrower = new UserIndex(userId, "John", "Doe", "john.doe@example.com", null, UserRole.USER);
@@ -203,7 +204,9 @@ class BookLendingControllerTest {
             null,
             now,
             now,
-            Set.of("Fiction")
+            Set.of("Fiction"),
+            "",
+            ""
     );
 
     BookLendingShow lending1 = new BookLendingShow(
@@ -234,7 +237,7 @@ class BookLendingControllerTest {
     List<BookLendingShow> lentBooks = new ArrayList<>();
     LendingResponseDTO responseDTO = new LendingResponseDTO(borrowedBooks, lentBooks, false);
 
-    when(bookLendingService.findAllUserLendingsAsDTO(eq(userId), eq(type))).thenReturn(responseDTO);
+    when(bookLendingService.findAllUserLendingsAsDTO(eq(userId), (eq(type)))).thenReturn(responseDTO);
 
     // When
     ResponseEntity<ApiResponse<LendingResponseDTO>> response = bookLendingController.getUserLendings(userId, type);
@@ -247,7 +250,7 @@ class BookLendingControllerTest {
     assertTrue(apiResponse.success());
     assertEquals("Borrowed books retrieved successfully", apiResponse.message());
     assertEquals(responseDTO, apiResponse.data());
-    verify(bookLendingService).findAllUserLendingsAsDTO(eq(userId), eq(type));
+    verify(bookLendingService).findAllUserLendingsAsDTO(eq(userId), (eq(type)));
   }
 
   @Test
@@ -255,7 +258,7 @@ class BookLendingControllerTest {
   void getUserLendings_ShouldReturnUserLentLendings() {
     // Given
     Long userId = 1L;
-    String type = "lent";
+    LendStatus type = LendStatus.LENT;
 
     LocalDateTime now = LocalDateTime.now();
     UserIndex borrower = new UserIndex(2L, "Jane", "Smith", "jane.smith@example.com", null, UserRole.USER);
@@ -271,7 +274,9 @@ class BookLendingControllerTest {
             null,
             now,
             now,
-            Set.of("Fiction")
+            Set.of("Fiction"),
+            "",
+            ""
     );
 
     BookLendingShow lending1 = new BookLendingShow(
@@ -302,7 +307,7 @@ class BookLendingControllerTest {
     List<BookLendingShow> lentBooks = List.of(lending1, lending2);
     LendingResponseDTO responseDTO = new LendingResponseDTO(borrowedBooks, lentBooks, false);
 
-    when(bookLendingService.findAllUserLendingsAsDTO(eq(userId), eq(type))).thenReturn(responseDTO);
+    when(bookLendingService.findAllUserLendingsAsDTO(eq(userId), (eq(type)))).thenReturn(responseDTO);
 
     // When
     ResponseEntity<ApiResponse<LendingResponseDTO>> response = bookLendingController.getUserLendings(userId, type);
@@ -323,7 +328,7 @@ class BookLendingControllerTest {
   void getUserLendings_ShouldReturnAllUserLendings() {
     // Given
     Long userId = 1L;
-    String type = "all";
+    LendStatus type = LendStatus.ALL;
 
     LocalDateTime now = LocalDateTime.now();
     UserIndex user = new UserIndex(userId, "John", "Doe", "john.doe@example.com", null, UserRole.USER);
@@ -339,7 +344,9 @@ class BookLendingControllerTest {
             null,
             now,
             now,
-            Set.of("Fiction")
+            Set.of("Fiction"),
+            "",
+            ""
     );
 
     BookLendingShow borrowedLending = new BookLendingShow(
@@ -384,27 +391,6 @@ class BookLendingControllerTest {
     assertEquals("All user book lendings retrieved", apiResponse.message());
     assertEquals(responseDTO, apiResponse.data());
     verify(bookLendingService).findAllUserLendingsAsDTO(eq(userId), eq(type));
-  }
-
-  @Test
-  @DisplayName("GET /user/{userId} - Should return error for invalid type")
-  void getUserLendings_ShouldReturnError_ForInvalidType() {
-    // Given
-    Long userId = 1L;
-    String invalidType = "invalid";
-
-    // When
-    ResponseEntity<ApiResponse<LendingResponseDTO>> response = bookLendingController.getUserLendings(userId, invalidType);
-
-    // Then
-    assertNotNull(response);
-    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-    ApiResponse<LendingResponseDTO> apiResponse = response.getBody();
-    assertNotNull(apiResponse);
-    assertFalse(apiResponse.success());
-    assertEquals("Invalid type parameter. Valid values are: borrowed, lent, all", apiResponse.message());
-    assertNull(apiResponse.data());
-    verify(bookLendingService, never()).findAllUserLendingsAsDTO(anyLong(), anyString());
   }
 
   @Test
@@ -515,7 +501,9 @@ class BookLendingControllerTest {
             null,
             now,
             now,
-            Set.of("Fiction")
+            Set.of("Fiction"),
+            "",
+            ""
     );
 
     BookLendingShow lending1 = new BookLendingShow(
@@ -534,7 +522,7 @@ class BookLendingControllerTest {
     List<BookLendingShow> lentBooks = List.of(lending1);
     LendingResponseDTO responseDTO = new LendingResponseDTO(borrowedBooks, lentBooks, false);
 
-    when(bookLendingService.findAllUserLendingsAsDTO(eq(userId), eq("lent"))).thenReturn(responseDTO);
+    when(bookLendingService.findAllUserLendingsAsDTO(eq(userId), eq(LendStatus.LENT))).thenReturn(responseDTO);
 
     // When
     ResponseEntity<ApiResponse<LendingResponseDTO>> response = bookLendingController.getCurrentUserLendings(userId);
@@ -547,7 +535,7 @@ class BookLendingControllerTest {
     assertTrue(apiResponse.success());
     assertEquals("User lent books retrieved", apiResponse.message());
     assertEquals(responseDTO, apiResponse.data());
-    verify(bookLendingService).findAllUserLendingsAsDTO(eq(userId), eq("lent"));
+    verify(bookLendingService).findAllUserLendingsAsDTO(eq(userId), eq(LendStatus.LENT));
   }
 
   @Test
@@ -560,7 +548,7 @@ class BookLendingControllerTest {
     List<BookLendingShow> lentBooks = new ArrayList<>();
     LendingResponseDTO responseDTO = new LendingResponseDTO(borrowedBooks, lentBooks, false);
 
-    when(bookLendingService.findAllUserLendingsAsDTO(eq(userId), eq("lent"))).thenReturn(responseDTO);
+    when(bookLendingService.findAllUserLendingsAsDTO(eq(userId), eq(LendStatus.LENT))).thenReturn(responseDTO);
 
     // When
     ResponseEntity<ApiResponse<LendingResponseDTO>> response = bookLendingController.getCurrentUserLendings(userId);
@@ -573,7 +561,7 @@ class BookLendingControllerTest {
     assertTrue(apiResponse.success());
     assertEquals("No lent books found", apiResponse.message());
     assertEquals(responseDTO, apiResponse.data());
-    verify(bookLendingService).findAllUserLendingsAsDTO(eq(userId), eq("lent"));
+    verify(bookLendingService).findAllUserLendingsAsDTO(eq(userId), eq(LendStatus.LENT));
   }
 
   @Test
