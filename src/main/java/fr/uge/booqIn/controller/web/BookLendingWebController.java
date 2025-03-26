@@ -69,7 +69,7 @@ public class BookLendingWebController {
   @GetMapping("/confirm-loan")
   public String confirmLoan(
           @RequestParam Long lendingId,
-          @RequestParam Long userId,
+
           RedirectAttributes redirectAttributes) {
     
     boolean confirmed = bookLendingInterface.confirmLoan(lendingId);
@@ -80,7 +80,7 @@ public class BookLendingWebController {
       redirectAttributes.addFlashAttribute("errorMessage", "Échec de la confirmation du prêt");
     }
     
-    return "redirect:/loans?userId=" + userId;
+    return "redirect:/loans?userId=" + LendStatus.ALL;
   }
   
   @GetMapping("/ship-book")
