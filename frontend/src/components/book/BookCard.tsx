@@ -5,7 +5,8 @@ import axiosInstance from "../../services/AxiosInstance.ts";
 import { LendStatus } from "../../model/LendStatus";
 import { toast } from "react-toastify";
 import { useAuth } from "../../context/AuthContext";
-// Type pour les informations de prêt
+
+// Type for loan information
 interface LoanInfo {
     bookId: number;
     state: string;
@@ -15,7 +16,7 @@ interface BookCardProps {
     book: BookIndex;
     borrowedBooks?: number[];
     lentBooks?: number[];
-    loanStates?: LoanInfo[]; // État de prêt
+    loanStates?: LoanInfo[];
     onLendingChange?: () => void;
 }
 
@@ -27,21 +28,34 @@ export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], le
     const [loading, setLoading] = useState<boolean>(false);
     const [isBorrowed, setIsBorrowed] = useState<boolean>(false);
     const [imageError, setImageError] = useState<boolean>(false);
+    const [isBookAvailable, setIsBookAvailable] = useState<boolean>(true);
 
     const isBookBorrowed = loanStates.some(loan => {
         const bookIdMatches = loan.bookId === id;
-        const stateIsBorrowed =
-            loan.state === LendStatus.BORROWED;
-
-
+        const stateIsBorrowed = loan.state === LendStatus.BORROWED;
         return bookIdMatches && stateIsBorrowed;
     });
 
     useEffect(() => {
         setIsBorrowed(borrowedBooks.includes(id));
         setIsLoanable(lentBooks.includes(id));
+
+        // Check book availability when component loads
+        checkBookAvailability();
     }, [borrowedBooks, lentBooks, id]);
 
+    // Check book availability using the existing endpoint
+    const checkBookAvailability = async () => {
+        try {
+            const response = await axiosInstance.get(`/v1/carts/check-book-availability/${id}`);
+            if (response.data?.data !== undefined) {
+                setIsBookAvailable(response.data.data);
+            }
+        } catch (error) {
+            console.error("Error checking book availability:", error);
+            setIsBookAvailable(false);
+        }
+    };
 
     const getBookCoverColor = (bookId: number) => {
         const colors = [
@@ -69,17 +83,16 @@ export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], le
             const response = await axiosInstance.post("/v1/loans/make-loanable", params);
 
             if (response.data?.success) {
-                toast.success("Livre ajouté à votre liste de prêt");
+                toast.success("Book added to your lending list");
                 setIsLoanable(true);
-                // Notifier le parent pour rafraîchir la liste des livres prêtés
                 if (onLendingChange) {
                     onLendingChange();
                 }
             } else {
-                toast.error("Impossible d'ajouter le livre à la liste de prêt");
+                toast.error("Unable to add book to lending list");
             }
         } catch (error: any) {
-            toast.error(error.response?.data?.message || "Échec lors de l'ajout du livre à la liste de prêt");
+            toast.error(error.response?.data?.message || "Failed to add book to lending list");
         } finally {
             setLoading(false);
         }
@@ -98,34 +111,69 @@ export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], le
             });
 
             if (response.data?.success) {
-                toast.success("Livre retiré de votre liste de prêt");
+                toast.success("Book removed from your lending list");
                 setIsLoanable(false);
-                // Notifier le parent pour rafraîchir la liste des livres prêtés
                 if (onLendingChange) {
                     onLendingChange();
                 }
             } else {
-                toast.error("Impossible de retirer le livre de la liste de prêt");
+                toast.error("Unable to remove book from lending list");
             }
         } catch (error: any) {
-            toast.error(error.response?.data?.message || "Échec lors du retrait du livre de la liste de prêt");
+            toast.error(error.response?.data?.message || "Failed to remove book from lending list");
         } finally {
             setLoading(false);
         }
     };
 
     const addToCart = async () => {
+        if (!userId) return;
+
+        setLoading(true);
         try {
             const response = await axiosInstance.post("/v1/carts/add-book", {
+                params: {
                 userId,
                 bookId: id,
-            });
+            }});
 
-            if (response.status === 200) {
-                toast.success("Le livre a été ajouté au panier");
+            if (response.status === 200 && response.data?.success) {
+                toast.success("Book has been added to cart");
+                // Update availability after adding to cart
+                checkBookAvailability();
+            } else {
+                toast.error(response.data?.message || "Failed to add to cart");
             }
         } catch (error: any) {
-            toast.error("Erreur lors de l'ajout du livre au panier");
+            toast.error(error.response?.data?.message || "Error adding book to cart");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const notifyBookAvailability = async () => {
+        if (!userId) return;
+
+        setLoading(true);
+        try {
+            const params = new URLSearchParams();
+            params.append('bookId', id.toString());
+            params.append('userId', userId.toString());
+
+            const response = await axiosInstance.post(
+                "/v1/notifications/subscribe",
+                params
+            );
+
+            if (response.status === 200 && response.data?.success) {
+                toast.success("You will be notified when the book is available");
+            } else {
+                toast.error(response.data?.message || "You are already subscribed to notifications");
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Error subscribing to notifications");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -140,6 +188,7 @@ export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], le
             return dateString;
         }
     };
+
     const getThumbnailUrl = () => {
         if (!book.thumbnailPath || imageError) return null;
         return `/api/v1/books/images/${book.thumbnailPath}`;
@@ -150,13 +199,11 @@ export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], le
         setImageError(true);
     };
 
-
     return (
         <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col h-full relative">
-            {/* Badge "Prêté" uniquement si le livre a le statut BORROWED */}
             {isBookBorrowed && (
                 <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full z-10">
-                    Prêté
+                    Lent
                 </div>
             )}
 
@@ -165,7 +212,7 @@ export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], le
                     className="w-full h-48 flex items-center justify-center flex-shrink-0"
                     style={{
                         backgroundColor: getThumbnailUrl() ? 'transparent' : getBookCoverColor(book.id),
-                        opacity: isBorrowed ? 0.6 : 1 // Réduit l'opacité si le livre est prêté
+                        opacity: isBorrowed ? 0.6 : 1
                     }}
                 >
                     {getThumbnailUrl() ? (
@@ -205,16 +252,26 @@ export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], le
 
             {/* Action buttons */}
             <div className="p-3 space-y-2">
-                {/* Add to Cart button - désactivé si le livre a le statut BORROWED */}
-                <button
-                    onClick={addToCart}
-                    className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
-                    disabled={isBookBorrowed}
-                >
-                    Add to cart
-                </button>
+                {/* Conditionally display Borrow or Notify button */}
+                {isBookAvailable ? (
+                    <button
+                        onClick={addToCart}
+                        className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
+                        disabled={loading || isBookBorrowed}
+                    >
+                        {loading ? "Processing..." : "Borrow"}
+                    </button>
+                ) : (
+                    <button
+                        onClick={notifyBookAvailability}
+                        className="w-full bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
+                        disabled={loading}
+                    >
+                        {loading ? "Processing..." : "Notify"}
+                    </button>
+                )}
 
-                {/* Bouton de prêt - caché si le livre a le statut BORROWED */}
+                {/* Lending button - hidden if book has BORROWED status */}
                 {!isBookBorrowed && user && (
                     <button
                         onClick={isLoanable ? removeFromLoanable : addToLoanable}

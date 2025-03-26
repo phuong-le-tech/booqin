@@ -80,12 +80,14 @@ public class BookLendingServiceImpl implements BookLendingInterface {
 
     lending.setStatus(BookStatus.BORROWED);
     lending.setStartDate(LocalDateTime.now());
-    lending.setDueDate(lending.getStartDate().plusWeeks(2));
+    lending.setDueDate(lending.getStartDate().plusWeeks(4));
 
     bookLendingRepository.save(lending);
 
     return true;
   }
+  
+
 
   @Transactional
   @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {ConcurrentModificationException.class,
@@ -104,6 +106,8 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     }
 
     lending.setStatus(BookStatus.AVAILABLE);
+    lending.setShippingTicketPDF(null);
+    lending.setBorrower(null);
     lending.setReturnDate(null);
 
     bookLendingRepository.save(lending);
@@ -227,7 +231,7 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     }
     return false;
   }
-
+  
   public List<BookLending> findUserLendings(Long userId) {
     User user = userService.findUserById(userId);
     return bookLendingRepository.findByBorrower(user);
@@ -445,9 +449,15 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     System.out.println("Taille du PDF pour le prêt " + lendingId + ": " + pdfBytes.length + " octets");
     return pdfBytes;
   }
-
-
-
+  
+  public List<BookLending> findAllLateLendings() {
+    return bookLendingRepository.findByStatusAndDueDateBefore(BookStatus.BORROWED, LocalDateTime.now());
+  }
+  
+  public Optional<BookLending> findByBookIdAndBorrowerIsNullAndStatus(Long bookId) {
+    return Optional.ofNullable(bookLendingRepository.findByBookIdAndBorrowerIsNullAndStatus(bookId, BookStatus.AVAILABLE));
+  }
+  
   @Recover
   public boolean recoverFromOptimisticLockingFailureOnMarkAsReturn(ObjectOptimisticLockingFailureException ex,
                                                                    Long bookId, Long userId) {

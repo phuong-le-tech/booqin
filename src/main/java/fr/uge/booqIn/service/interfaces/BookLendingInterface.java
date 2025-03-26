@@ -41,6 +41,10 @@ public interface BookLendingInterface {
   boolean loanable (Long bookId, Long userId);
   
   boolean isNoMoreLoanable(Long bookId , Long userId);
+  
+
+   Optional<BookLending> findByBookIdAndBorrowerIsNullAndStatus(Long bookId);
+  
 
   byte[] getShippingTicketBytes(Long lendingId);
 }

@@ -4,6 +4,7 @@ import { LendStatus } from "../../model/LendStatus";
 import axiosInstance from "../../services/AxiosInstance.ts";
 import { useAuth } from "../../context/AuthContext.tsx";
 import { useNavigate } from "react-router-dom";
+import {toast} from "react-toastify";
 
 type Book = {
     id: number;
@@ -130,13 +131,13 @@ export const BookLending: () => JSX.Element = () => {
                 // Refresh data
                 const updatedResponse = await axiosInstance.get(`/v1/loans/user/${user.id}?type=${activeTab}`);
                 setLendingData(updatedResponse.data.data);
-                alert("The book has been marked as returned!");
+                toast.success("The book has been marked as returned!");
             } else {
-                alert("Unable to update the loan status.");
+                toast.error("Unable to update the loan status.");
             }
         } catch (error) {
             console.error("Error while updating the loan:", error);
-            alert("An error occurred.");
+            toast.error("An error occurred.");
         }
     };
 
@@ -149,13 +150,13 @@ export const BookLending: () => JSX.Element = () => {
                 // Refresh data
                 const updatedResponse = await axiosInstance.get(`/v1/loans/user/${user.id}?type=${activeTab}`);
                 setLendingData(updatedResponse.data.data);
-                alert("The loan has been confirmed!");
+                toast.success("The loan has been confirmed!");
             } else {
-                alert("Unable to confirm the loan.");
+                toast.error("Unable to confirm the loan.");
             }
         } catch (error) {
             console.error("Error while confirming the loan:", error);
-            alert("An error occurred.");
+            toast.error("An error occurred.");
         }
     };
 
@@ -202,13 +203,13 @@ export const BookLending: () => JSX.Element = () => {
                 // Refresh data
                 const updatedResponse = await axiosInstance.get(`/v1/loans/user/${user.id}?type=${activeTab}`);
                 setLendingData(updatedResponse.data.data);
-                alert("The book has been marked as shipped!");
+                toast.success("The book has been marked as shipped!");
             } else {
-                alert("Unable to update shipping status.");
+                toast.error("Unable to update shipping status.");
             }
         } catch (error) {
             console.error("Error while updating shipping status:", error);
-            alert("An error occurred.");
+            toast.error("An error occurred.");
         }
     };
     const handleDownloadTicket = async (lendingId: number) => {
@@ -251,7 +252,7 @@ export const BookLending: () => JSX.Element = () => {
 
         } catch (error) {
             console.error("Erreur lors du téléchargement du ticket:", error);
-            alert("Impossible de télécharger le ticket d'expédition.");
+            toast.error("Unable to download shipping ticket.");
         }
     };
 
@@ -394,7 +395,7 @@ export const BookLending: () => JSX.Element = () => {
                                                                         onClick={() => handleDownloadTicket(lending.id)}
                                                                         className="bg-light-blue hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
                                                                     >
-                                                                        Télécharger l'étiquette d'expédition
+                                                                        Download Label
                                                                     </button>
                                                                 </div>
                                                             )}
