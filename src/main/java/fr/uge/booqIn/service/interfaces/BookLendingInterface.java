@@ -20,6 +20,8 @@ public interface BookLendingInterface {
   boolean markAsShipped(Long lendingId);
   
   void markAsPending(Long bookId, Long userId);
+
+  boolean markAsReturn(Long bookId, Long userId);
   
   boolean cancelBook(Long bookId, Long userId);
   
@@ -39,10 +41,6 @@ public interface BookLendingInterface {
   boolean loanable (Long bookId, Long userId);
   
   boolean isNoMoreLoanable(Long bookId , Long userId);
-  
-
-
-  
 
   byte[] getShippingTicketBytes(Long lendingId);
 }
