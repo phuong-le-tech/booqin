@@ -30,7 +30,8 @@ public class BookMapper {
                 book.getId(),
                 book.getTitle(),
                 authorNames,
-                book.getPublicationDate()
+                book.getPublicationDate(),
+                book.getThumbnailPath()
         );
     }
 
@@ -52,7 +53,9 @@ public class BookMapper {
                 book.getPublicationDate(),
                 book.getCreatedAt(),
                 book.getUpdatedAt(),
-                book.getCategories()
+                book.getCategories(),
+                book.getCoverImagePath(),
+                book.getThumbnailPath()
         );
     }
 
