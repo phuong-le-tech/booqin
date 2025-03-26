@@ -85,6 +85,14 @@ public class BookLending {
   public BookStatus getStatus() {
     return status;
   }
+
+  public void setId(Long id) {
+    this.id = id;
+  }
+
+  public void setBook(Book book) {
+    this.book = book;
+  }
   
   public void setBorrower(User borrower) {
     this.borrower = borrower;
