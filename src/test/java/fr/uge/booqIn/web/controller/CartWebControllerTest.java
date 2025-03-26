@@ -68,8 +68,8 @@ class CartWebControllerTest {
 
     // Setup test data
     testBooks = new ArrayList<>();
-    testBooks.add(new BookIndex(1L, "Test Book 1", Collections.singleton("Author 1"), new Date()));
-    testBooks.add(new BookIndex(2L, "Test Book 2", Collections.singleton("Author 2"), new Date()));
+    testBooks.add(new BookIndex(1L, "Test Book 1", Collections.singleton("Author 1"), new Date(), ""));
+    testBooks.add(new BookIndex(2L, "Test Book 2", Collections.singleton("Author 2"), new Date(), ""));
 
     testShopCartDto = new ShopCartDto(1L, 1L, testBooks);
 

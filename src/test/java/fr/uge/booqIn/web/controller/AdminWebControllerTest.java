@@ -106,7 +106,8 @@ class AdminWebControllerTest {
             1L,
             "Test Book",
             Collections.singleton("Test Author"),
-            new Date()
+            new Date(),
+            ""
     );
 
     testCollectionIndex = new BookCollectionIndex(

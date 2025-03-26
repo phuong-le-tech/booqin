@@ -27,6 +27,7 @@ import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -384,12 +385,12 @@ class BookCollectionControllerTest {
     UserIndex userIndex = new UserIndex(1L, "John", "Doe", "john.doe@example.com", null, UserRole.USER);
 
     List<BookIndex> booksCollection1 = List.of(
-            new BookIndex(1L, "Book 1", null, new Date()),
-            new BookIndex(2L, "Book 2", null, new Date())
+            new BookIndex(1L, "Book 1", Set.of(), new Date(), ""),
+            new BookIndex(2L, "Book 2", Set.of(), new Date(), "")
     );
 
     List<BookIndex> booksCollection2 = List.of(
-            new BookIndex(3L, "Book 3", null, new Date())
+            new BookIndex(3L, "Book 3", Set.of(), new Date(), "")
     );
 
     List<BookCollectionShow> collectionList = List.of(

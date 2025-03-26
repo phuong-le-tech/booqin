@@ -40,6 +40,7 @@ class BookServiceTest {
   private BookMapper bookMapper;
   private BooqInEventPublisher eventPublisher;
   private BookServiceInterface bookService;
+  private ImageService imageService;
   private Book testBook;
 
   @BeforeEach
@@ -48,8 +49,9 @@ class BookServiceTest {
     authorRepository = Mockito.mock(AuthorRepository.class);
     bookMapper = Mockito.mock(BookMapper.class);
     eventPublisher = Mockito.mock(BooqInEventPublisher.class);
+    imageService = Mockito.mock(ImageService.class);
 
-    bookService = new BookServiceImpl(bookRepository, authorRepository, bookMapper, eventPublisher);
+    bookService = new BookServiceImpl(bookRepository, authorRepository, bookMapper, eventPublisher, imageService);
     testBook = createTestBook();
   }
 
@@ -90,7 +92,8 @@ class BookServiceTest {
             testBook.getId(),
             testBook.getTitle(),
             Set.of("Victor Hugo"),
-            testBook.getPublicationDate()
+            testBook.getPublicationDate(),
+            ""
     );
 
     when(bookRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(bookPage);
@@ -122,7 +125,9 @@ class BookServiceTest {
             testBook.getPublicationDate(),
             testBook.getCreatedAt(),
             testBook.getUpdatedAt(),
-            testBook.getCategories()
+            testBook.getCategories(),
+            "",
+            ""
     );
 
     when(bookRepository.findByIdWithAuthors(eq(bookId))).thenReturn(Optional.of(testBook));
@@ -351,7 +356,9 @@ class BookServiceTest {
             updatedDate,
             testBook.getCreatedAt(),
             LocalDateTime.now(),
-            testBook.getCategories()
+            testBook.getCategories(),
+            "",
+            ""
     );
 
     when(bookRepository.findByIdWithAuthors(eq(bookId))).thenReturn(Optional.of(testBook));

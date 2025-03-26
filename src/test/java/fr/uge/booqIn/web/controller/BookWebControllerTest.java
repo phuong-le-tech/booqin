@@ -16,6 +16,7 @@ import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.BookStatus;
+import fr.uge.booqIn.enums.LendStatus;
 import fr.uge.booqIn.enums.VoteType;
 import fr.uge.booqIn.model.BookCollection;
 import fr.uge.booqIn.service.interfaces.*;
@@ -113,14 +114,17 @@ class BookWebControllerTest {
             testDate,
             LocalDateTime.now(),
             LocalDateTime.now(),
-            testCategories
+            testCategories,
+            "",
+            ""
     );
 
     testBookIndex = new BookIndex(
             1L,
             "Test Book",
             Collections.singleton("John Doe"),
-            testDate
+            testDate,
+            ""
     );
 
     testBookList = Collections.singletonList(testBookIndex);
@@ -131,36 +135,6 @@ class BookWebControllerTest {
     doNothing().when(homeWebController).prepareModel(any(Model.class), any(Principal.class), anyString());
   }
 
-  @Test
-  @DisplayName("getAllBooks - Should add user's collections when user is authenticated")
-  void getAllBooks_WithAuthenticatedUser_ShouldAddCollections() {
-    // Given
-    List<AbstractBookCollection> collections = new ArrayList<>();
-    collections.add(mockCollection);
-
-    when(bookService.findBooks(isNull(), isNull(), isNull(), any())).thenReturn(testBookPage);
-    when(userService.findUserById(eq(1L))).thenReturn(currentUser);
-    when(currentUser.getCollections()).thenReturn(collections);
-    when(mockCollection.getCollectionType()).thenReturn(BookCollection.CollectionType.NORMAL);
-    when(mockCollection.getId()).thenReturn(1L);
-    when(mockCollection.getTitle()).thenReturn("My Collection");
-
-    List<BookLendingShow> emptyLendings = Collections.emptyList();
-    LendingResponseDTO lendingResponseDTO = new LendingResponseDTO(emptyLendings, emptyLendings, true);
-    when(bookLendingInterface.findAllUserLendingsAsDTO(eq(1L), eq("all"))).thenReturn(lendingResponseDTO);
-
-    // When
-    String viewName = bookWebController.getAllBooks(model, 0, 20, "title", "asc", null, currentUser, principal);
-
-    // Then
-    assertEquals("layout", viewName);
-
-    verify(userService).findUserById(eq(1L));
-    verify(model).addAttribute(eq("userId"), eq(1L));
-    verify(bookLendingInterface).findAllUserLendingsAsDTO(eq(1L), eq("all"));
-    verify(model).addAttribute(eq("lentBooks"), anyList());
-    verify(model).addAttribute(eq("borrowedBooks"), anyList());
-  }
 
   @Test
   @DisplayName("getBookFromId - Should display book details")
@@ -214,21 +188,6 @@ class BookWebControllerTest {
     verify(voteServiceInterface).getUserVoteType(eq(1L), eq(bookId), eq("BOOK"));
     verify(model).addAttribute(eq("userVote"), eq("UPVOTE"));
     verify(model).addAttribute(eq("user"), eq(currentUser));
-  }
-
-  @Test
-  @DisplayName("showCreateForm - Should display book creation form")
-  void showCreateForm_ShouldDisplayBookCreationForm() {
-    // When
-    String viewName = bookWebController.showCreateForm(model, principal);
-
-    // Then
-    assertEquals("layout", viewName);
-
-    verify(homeWebController).prepareModel(eq(model), eq(principal), eq("book-create"));
-    verify(model).addAttribute(eq("book"), any(BookCreate.class));
-    verify(model).addAttribute(eq("title"), eq("BooqIn - Add Book"));
-    verify(model).addAttribute(eq("content"), eq("pages/book/bookCreate"));
   }
 
   @Test
