@@ -1,16 +1,15 @@
 import React, { useState, useEffect} from 'react';
 import { Link } from 'react-router-dom';
-import { BookIndex } from '../model/Book';
-import axiosInstance from "../services/AxiosInstance";
-
+import { BookIndex } from '../../model/Book.ts';
+import axiosInstance from "../../services/AxiosInstance.ts";
+import { LendStatus } from "../../model/LendStatus";
 import { toast } from "react-toastify";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 // Type pour les informations de prêt
 interface LoanInfo {
     bookId: number;
     state: string;
 }
-
 
 interface BookCardProps {
     book: BookIndex;
@@ -20,42 +19,29 @@ interface BookCardProps {
     onLendingChange?: () => void;
 }
 
-export const BookCard: React.FC<BookCardProps> = ({
-                                                      book,
-                                                      borrowedBooks = [],
-                                                      lentBooks = [],
-                                                      loanStates = [],
-                                                      onLendingChange
-                                                  }) => {
+export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], lentBooks = [], loanStates = [], onLendingChange }) => {
     const { id } = book;
     const { user } = useAuth();
     const userId = user?.id;
     const [isLoanable, setIsLoanable] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(false);
     const [isBorrowed, setIsBorrowed] = useState<boolean>(false);
+    const [imageError, setImageError] = useState<boolean>(false);
 
-    // Vérifier si le livre a le statut "BORROWED" ou une variante similaire
     const isBookBorrowed = loanStates.some(loan => {
-        // Normaliser l'ID et l'état pour la comparaison
         const bookIdMatches = loan.bookId === id;
-        // Vérifier plusieurs variantes possibles de l'état "BORROWED"
         const stateIsBorrowed =
-            loan.state === "BORROWED" ||
-            loan.state === "borrowed" ||
-            loan.state === "BORROWING" ||
-            loan.state === "1" || // Parfois les états sont stockés comme des nombres/strings
-            loan.state === 1;     // ou des nombres
+            loan.state === LendStatus.BORROWED;
+
 
         return bookIdMatches && stateIsBorrowed;
     });
 
     useEffect(() => {
-        // Vérifier si le livre est dans la liste des empruntés
         setIsBorrowed(borrowedBooks.includes(id));
-
-        // Vérifier si le livre est dans la liste des prêtables
         setIsLoanable(lentBooks.includes(id));
     }, [borrowedBooks, lentBooks, id]);
+
 
     const getBookCoverColor = (bookId: number) => {
         const colors = [
@@ -154,6 +140,16 @@ export const BookCard: React.FC<BookCardProps> = ({
             return dateString;
         }
     };
+    const getThumbnailUrl = () => {
+        if (!book.thumbnailPath || imageError) return null;
+        return `/api/v1/books/images/${book.thumbnailPath}`;
+    };
+
+    const handleImageError = () => {
+        console.error(`Failed to load image for book: ${book.id}, path: ${book.thumbnailPath}`);
+        setImageError(true);
+    };
+
 
     return (
         <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col h-full relative">
@@ -168,13 +164,22 @@ export const BookCard: React.FC<BookCardProps> = ({
                 <div
                     className="w-full h-48 flex items-center justify-center flex-shrink-0"
                     style={{
-                        backgroundColor: getBookCoverColor(book.id),
+                        backgroundColor: getThumbnailUrl() ? 'transparent' : getBookCoverColor(book.id),
                         opacity: isBorrowed ? 0.6 : 1 // Réduit l'opacité si le livre est prêté
                     }}
                 >
-                    <span className="text-white text-5xl font-bold">
-                        {book.title.charAt(0).toUpperCase()}
-                    </span>
+                    {getThumbnailUrl() ? (
+                        <img
+                            src={getThumbnailUrl()!}
+                            alt={`Cover for ${book.title}`}
+                            className="h-full w-full object-contain"
+                            onError={handleImageError}
+                        />
+                    ) : (
+                        <span className="text-white text-5xl font-bold">
+                            {book.title.charAt(0).toUpperCase()}
+                        </span>
+                    )}
                 </div>
 
                 <div className="p-4 flex flex-col flex-grow">
@@ -191,7 +196,7 @@ export const BookCard: React.FC<BookCardProps> = ({
                     <div className="mt-auto">
                         {book.publicationDate && (
                             <p className="text-xs text-gray-500">
-                                Published: {formatDate(book.publicationDate)}
+                                Published: {formatDate(book.publicationDate.toString())}
                             </p>
                         )}
                     </div>

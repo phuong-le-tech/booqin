@@ -7,7 +7,8 @@ import {useAuth} from "../../context/AuthContext.tsx";
 import BookCollectionService from "../../services/BookCollectionService.ts";
 import BookService from "../../services/BookService.ts";
 import axiosInstance from "../../services/AxiosInstance.ts";
-import FollowButton from "../../components/follow/FollowButton.tsx"; // Added import
+import FollowButton from "../../components/follow/FollowButton.tsx";
+import {LendStatus} from "../../model/LendStatus.ts"; // Added import
 
 const CollectionDetails: React.FC = () => {
     const navigate = useNavigate();
@@ -76,7 +77,7 @@ const CollectionDetails: React.FC = () => {
 
         try {
             console.log(`Fetching user book data for user ${user.id}`);
-            const response = await axiosInstance.get(`/v1/loans/user/${user.id}?type=all`);
+            const response = await axiosInstance.get(`/v1/loans/user/${user.id}?type=${LendStatus.ALL}`);
             console.log("User books response:", response);
 
             if (response.data?.success && response.data?.data) {

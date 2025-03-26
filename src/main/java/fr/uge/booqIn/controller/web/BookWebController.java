@@ -12,6 +12,7 @@ import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.BookStatus;
+import fr.uge.booqIn.enums.LendStatus;
 import fr.uge.booqIn.enums.VoteType;
 import fr.uge.booqIn.mapper.BookCollectionMapper;
 import fr.uge.booqIn.model.BookCollection;
@@ -102,7 +103,7 @@ public class BookWebController {
           model.addAttribute("bookCollections", collectionShows);
 
           try {
-            LendingResponseDTO lendingData = bookLendingInterface.findAllUserLendingsAsDTO(currentUser.getId(), "all");
+            LendingResponseDTO lendingData = bookLendingInterface.findAllUserLendingsAsDTO(currentUser.getId(), LendStatus.ALL);
             List<Long> lentBooks = lendingData.lentBooks().stream()
                     .filter(lending -> lending.status() == BookStatus.AVAILABLE)
                     .map(lending -> lending.book().id())

@@ -1,5 +1,6 @@
 import {JSX, useEffect, useState} from "react";
 import { Layout } from "../Layout";
+import { LendStatus } from "../../model/LendStatus";
 import axiosInstance from "../../services/AxiosInstance.ts";
 import { useAuth } from "../../context/AuthContext.tsx";
 import { useNavigate } from "react-router-dom";
@@ -42,7 +43,7 @@ export const BookLending: () => JSX.Element = () => {
     const [lendingData, setLendingData] = useState<LendingResponseDTO | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<"borrowed" | "lent" | "all">("borrowed");
+    const [activeTab, setActiveTab] = useState<LendStatus>(LendStatus.BORROWED)
     const navigate = useNavigate();
     const {user} = useAuth();
 
@@ -73,7 +74,8 @@ export const BookLending: () => JSX.Element = () => {
         fetchLendings();
     }, [user?.id, activeTab]);
 
-    const handleChangeTab = (tab: "borrowed" | "lent" | "all") => {
+
+    const handleChangeTab = (tab: LendStatus) => {
         setActiveTab(tab);
         setLoading(true);
     };
@@ -269,9 +271,9 @@ export const BookLending: () => JSX.Element = () => {
                 <div className="w-full max-w-6xl mb-8">
                     <div className="flex border-b border-gray-200">
                         <button
-                            onClick={() => handleChangeTab("borrowed")}
+                            onClick={() => handleChangeTab(LendStatus.BORROWED)}
                             className={`py-4 px-6 font-medium text-lg ${
-                                activeTab === "borrowed"
+                                activeTab === LendStatus.BORROWED
                                     ? "border-b-2 border-light-blue text-light-blue"
                                     : "text-gray-500 hover:text-gray-700"
                             }`}
@@ -279,9 +281,9 @@ export const BookLending: () => JSX.Element = () => {
                             Borrowed Books
                         </button>
                         <button
-                            onClick={() => handleChangeTab("lent")}
+                            onClick={() => handleChangeTab(LendStatus.LENT)}
                             className={`py-4 px-6 font-medium text-lg ${
-                                activeTab === "lent"
+                                activeTab === LendStatus.LENT
                                     ? "border-b-2 border-light-blue text-light-blue"
                                     : "text-gray-500 hover:text-gray-700"
                             }`}
@@ -289,9 +291,9 @@ export const BookLending: () => JSX.Element = () => {
                             Lent Books
                         </button>
                         <button
-                            onClick={() => handleChangeTab("all")}
+                            onClick={() => handleChangeTab(LendStatus.ALL)}
                             className={`py-4 px-6 font-medium text-lg ${
-                                activeTab === "all"
+                                activeTab === LendStatus.ALL
                                     ? "border-b-2 border-light-blue text-light-blue"
                                     : "text-gray-500 hover:text-gray-700"
                             }`}
@@ -312,9 +314,9 @@ export const BookLending: () => JSX.Element = () => {
                 ) : (
                     <div className="w-full max-w-6xl">
                         {/* Borrowed books */}
-                        {(activeTab === "borrowed" || activeTab === "all") && (
+                        {(activeTab === LendStatus.BORROWED|| activeTab === LendStatus.ALL) && (
                             <div className="mb-8">
-                                {activeTab === "all" && (
+                                {activeTab === LendStatus.ALL && (
                                     <h3 className="text-2xl font-semibold mb-4">Books you have borrowed</h3>
                                 )}
 
@@ -421,12 +423,12 @@ export const BookLending: () => JSX.Element = () => {
                         )}
 
                         {/* Lent books */}
-                        {(activeTab === "lent" || activeTab === "all") && (
+                        {(activeTab === LendStatus.LENT || activeTab === LendStatus.ALL) && (
                             <div>
                                 {/* Lent books with borrower */}
                                 {lendingData?.lentBooks && lendingData.lentBooks.filter(lending => lending.borrower).length > 0 && (
                                     <div className="mb-8">
-                                        {activeTab === "all" && (
+                                        {activeTab === LendStatus.ALL && (
                                             <h3 className="text-2xl font-semibold mb-4">Books currently lent</h3>
                                         )}
 
@@ -503,7 +505,7 @@ export const BookLending: () => JSX.Element = () => {
                                 {/* Books available for lending */}
                                 {lendingData?.lentBooks && lendingData.lentBooks.filter(lending => !lending.borrower).length > 0 && (
                                     <div>
-                                        {activeTab === "all" && (
+                                        {activeTab === LendStatus.ALL && (
                                             <h3 className="text-2xl font-semibold mb-4">Books available for lending</h3>
                                         )}
 

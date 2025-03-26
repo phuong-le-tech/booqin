@@ -9,6 +9,7 @@ import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.BookLending;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.BookStatus;
+import fr.uge.booqIn.enums.LendStatus;
 import fr.uge.booqIn.event.BooqInEventPublisher;
 import fr.uge.booqIn.event.publishable.BookNotAvailableEvent;
 import fr.uge.booqIn.event.publishable.BookReturnedEvent;
@@ -273,14 +274,14 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   }
 
   @Transactional
-  public LendingResponseDTO findAllUserLendingsAsDTO(Long userId, String type) {
-    boolean containsAll = "all".equalsIgnoreCase(type);
+  public LendingResponseDTO findAllUserLendingsAsDTO(Long userId, LendStatus type) {
+    boolean containsAll = type == LendStatus.ALL;
 
-    List<BookLendingShow> borrowedBooks = containsAll || "borrowed".equalsIgnoreCase(type)
+    List<BookLendingShow> borrowedBooks = containsAll ||  type == LendStatus.BORROWED
             ? findBorrowedLendingsAsDTO(userId)
             : List.of();
 
-    List<BookLendingShow> lentBooks = containsAll || "lent".equalsIgnoreCase(type)
+    List<BookLendingShow> lentBooks = containsAll || type == LendStatus.LENT
             ? findLentBooksAsDTO(userId)
             : List.of();
 

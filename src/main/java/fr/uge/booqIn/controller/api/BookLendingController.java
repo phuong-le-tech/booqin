@@ -1,6 +1,7 @@
 package fr.uge.booqIn.controller.api;
 
 import fr.uge.booqIn.dto.lending.LendingResponseDTO;
+import fr.uge.booqIn.enums.LendStatus;
 import fr.uge.booqIn.factory.ApiResponse;
 import fr.uge.booqIn.service.interfaces.BookLendingInterface;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
@@ -62,11 +63,11 @@ public class BookLendingController {
   @GetMapping("/user/{userId}")
   public ResponseEntity<ApiResponse<LendingResponseDTO>> getUserLendings(
           @PathVariable Long userId,
-          @RequestParam(defaultValue = "borrowed") String type) {
+          @RequestParam(defaultValue = "borrowed") LendStatus type) {
     
-    if (!type.equalsIgnoreCase("borrowed") &&
-            !type.equalsIgnoreCase("lent") &&
-            !type.equalsIgnoreCase("all")) {
+    if (!(type == LendStatus.BORROWED) &&
+            !(type == LendStatus.LENT) &&
+            !(type ==  LendStatus.ALL)) {
       return ResponseEntity.badRequest().body(
               ApiResponse.error("Invalid type parameter. Valid values are: borrowed, lent, all", null));
     }
@@ -74,9 +75,9 @@ public class BookLendingController {
     LendingResponseDTO responseDTO = bookLendingInterface.findAllUserLendingsAsDTO(userId, type);
     
     String message;
-    if (type.equalsIgnoreCase("all")) {
+    if (type == LendStatus.ALL) {
       message = "All user book lendings retrieved";
-    } else if (type.equalsIgnoreCase("borrowed")) {
+    } else if (type == LendStatus.BORROWED) {
       message = responseDTO.borrowedBooks().isEmpty() ?
               "No borrowed books found" :
               "Borrowed books retrieved successfully";
@@ -114,7 +115,7 @@ public class BookLendingController {
   @GetMapping("/my-lendings")
   public ResponseEntity<ApiResponse<LendingResponseDTO>> getCurrentUserLendings(
           @RequestParam Long userId) {
-    LendingResponseDTO responseDTO = bookLendingInterface.findAllUserLendingsAsDTO(userId, "lent");
+    LendingResponseDTO responseDTO = bookLendingInterface.findAllUserLendingsAsDTO(userId, LendStatus.LENT);
     if (responseDTO.lentBooks().isEmpty()) {
       return ResponseEntity.ok(ApiResponse.success("No lent books found", responseDTO));
     }else{

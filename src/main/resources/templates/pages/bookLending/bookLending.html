@@ -29,25 +29,26 @@
 
     <h1 class="text-4xl font-bold mb-8 text-center text-light-blue">Vos Prêts de Livres</h1>
 
-    <!-- Onglets -->
+    <!-- Onglets - Utilisation consistante de LendStatus -->
     <div class="flex border-b border-gray-200 mb-8 justify-center">
-        <a th:href="@{/loans(userId=${userId}, type='borrowed')}"
-           th:class="${activeTab == 'borrowed' ? 'border-b-2 border-light-blue text-light-blue' : 'text-gray-500 hover:text-gray-700'} + ' py-4 px-6 font-medium text-lg'">
+        <a th:href="@{/loans(type=${T(fr.uge.booqIn.enums.LendStatus).BORROWED})}"
+           th:class="${activeTab.name() == T(fr.uge.booqIn.enums.LendStatus).BORROWED.name() ? 'border-b-2 border-light-blue text-light-blue' : 'text-gray-500 hover:text-gray-700'} + ' py-4 px-6 font-medium text-lg'">
             Livres Empruntés
         </a>
-        <a th:href="@{/loans(userId=${userId}, type='lent')}"
-           th:class="${activeTab == 'lent' ? 'border-b-2 border-light-blue text-light-blue' : 'text-gray-500 hover:text-gray-700'} + ' py-4 px-6 font-medium text-lg'">
+        <a th:href="@{/loans(type=${T(fr.uge.booqIn.enums.LendStatus).LENT})}"
+           th:class="${activeTab.name() == T(fr.uge.booqIn.enums.LendStatus).LENT.name() ? 'border-b-2 border-light-blue text-light-blue' : 'text-gray-500 hover:text-gray-700'} + ' py-4 px-6 font-medium text-lg'">
             Livres Prêtés
         </a>
-        <a th:href="@{/loans(userId=${userId}, type='all')}"
-           th:class="${activeTab == 'all' ? 'border-b-2 border-light-blue text-light-blue' : 'text-gray-500 hover:text-gray-700'} + ' py-4 px-6 font-medium text-lg'">
+        <a th:href="@{/loans(type=${T(fr.uge.booqIn.enums.LendStatus).ALL})}"
+           th:class="${activeTab.name() == T(fr.uge.booqIn.enums.LendStatus).ALL.name() ? 'border-b-2 border-light-blue text-light-blue' : 'text-gray-500 hover:text-gray-700'} + ' py-4 px-6 font-medium text-lg'">
             Tous les Prêts
         </a>
     </div>
 
-    <!-- Livres empruntés -->
-    <div th:if="${activeTab == 'borrowed' || activeTab == 'all'}" class="mb-8">
-        <h2 th:if="${activeTab == 'all'}" class="text-2xl font-semibold mb-4">Livres que vous avez empruntés</h2>
+    <!-- Livres empruntés - Utilisation de LendStatus -->
+    <!-- Section livres empruntés avec .name() -->
+    <div th:if="${activeTab.name() == T(fr.uge.booqIn.enums.LendStatus).BORROWED.name() || activeTab.name() == T(fr.uge.booqIn.enums.LendStatus).ALL.name()}" class="mb-8">
+        <h2 th:if="${activeTab.name() == T(fr.uge.booqIn.enums.LendStatus).ALL.name()}" class="text-2xl font-semibold mb-4">Livres que vous avez empruntés</h2>
 
         <!-- Liste des livres empruntés -->
         <div th:if="${!lendingData.borrowedBooks.isEmpty()}" class="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-200">
@@ -81,7 +82,12 @@
                                     <div class="flex items-center gap-2 mb-1">
                                         <span class="text-gray-600 font-medium">Statut:</span>
                                         <span class="px-3 py-1 rounded-full text-sm font-medium border"
-                                              th:classappend="${lending.status == 'RESERVED' ? 'bg-yellow-100 text-yellow-800 border-yellow-300' : (lending.status == 'BORROWED' ? 'bg-blue-100 text-blue-800 border-blue-300' : (lending.status == 'RETURNED' ? 'bg-green-100 text-green-800 border-green-300' : (lending.status == 'SHIPPED' ? 'bg-purple-100 text-purple-800 border-purple-300' : (lending.status == 'AVAILABLE' ? 'bg-gray-100 text-gray-800 border-gray-300' : (lending.status == 'PENDING_SHIPMENT' ? 'bg-orange-100 text-orange-800 border-orange-300' : '')))))}">
+                                              th:classappend="${lending.status == 'RESERVED' ? 'bg-yellow-100 text-yellow-800 border-yellow-300' :
+                                                           (lending.status == 'BORROWED' ? 'bg-blue-100 text-blue-800 border-blue-300' :
+                                                           (lending.status == 'RETURNED' ? 'bg-green-100 text-green-800 border-green-300' :
+                                                           (lending.status == 'SHIPPED' ? 'bg-purple-100 text-purple-800 border-purple-300' :
+                                                           (lending.status == 'AVAILABLE' ? 'bg-gray-100 text-gray-800 border-gray-300' :
+                                                           (lending.status == 'PENDING_SHIPMENT' ? 'bg-orange-100 text-orange-800 border-orange-300' : '')))))}">
                                             <span th:switch="${lending.status}">
                                                 <span th:case="'RESERVED'">Réservé</span>
                                                 <span th:case="'BORROWED'">Emprunté</span>
@@ -115,18 +121,29 @@
                                 </div>
                             </div>
 
-                            <!-- Boutons d'action -->
-                            <div class="mt-4" th:if="${lending.status == 'BORROWED'}">
-                                <a th:href="@{/loans/return-book(lendingId=${lending.id}, userId=${userId})}"
-                                   class="bg-light-blue hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors inline-block">
+
+                            <!-- Section des boutons ultra-simplifiée -->
+                            <div class="mt-4 flex flex-wrap gap-2">
+                                <!-- Bouton marquer comme retourné -->
+                                <a th:href="@{/loans/return-book(lendingId=${lending.id})}"
+                                   th:style="${!#strings.equals(lending.status, 'BORROWED')} ? 'display:none;' : ''"
+                                   class="bg-light-blue hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
                                     Marquer comme retourné
                                 </a>
-                            </div>
 
-                            <div class="mt-4" th:if="${lending.status == 'SHIPPED'}">
-                                <a th:href="@{/loans/confirm-loan(lendingId=${lending.id}, userId=${userId})}"
-                                   class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors inline-block">
+                                <!-- Bouton confirmer réception -->
+                                <a th:href="@{/loans/confirm-loan(lendingId=${lending.id})}"
+                                   th:style="${!#strings.equals(lending.status, 'SHIPPED')} ? 'display:none;' : ''"
+                                   class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
                                     Confirmer la réception
+                                </a>
+
+                                <!-- Bouton télécharger étiquette -->
+                                <a th:href="@{/loans/ticket-download/{lendingId}(lendingId=${lending.id})}"
+                                   th:style="${!(#strings.equals(lending.status, 'PENDING_SHIPMENT') || #strings.equals(lending.status, 'SHIPPED'))} ? 'display:none;' : ''"
+                                   target="_blank"
+                                   class="bg-light-blue hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
+                                    Télécharger l'étiquette
                                 </a>
                             </div>
                         </div>
@@ -148,11 +165,10 @@
         </div>
     </div>
 
-    <!-- Livres prêtés -->
-    <div th:if="${activeTab == 'lent' || activeTab == 'all'}">
-        <!-- Livres actuellement prêtés -->
-        <div th:if="${!lendingData.lentBooks.isEmpty() && lendingData.lentBooks.?[borrower != null].size() > 0}" class="mb-8">
-            <h2 th:if="${activeTab == 'all'}" class="text-2xl font-semibold mb-4">Livres actuellement prêtés</h2>
+    <!-- Livres prêtés - Utilisation de LendStatus -->
+    <!-- Section livres prêtés avec .name() -->
+    <div th:if="${activeTab.name() == T(fr.uge.booqIn.enums.LendStatus).LENT.name() || activeTab.name() == T(fr.uge.booqIn.enums.LendStatus).ALL.name()}">
+        <h2 th:if="${activeTab.name() == T(fr.uge.booqIn.enums.LendStatus).ALL.name()}" class="text-2xl font-semibold mb-4">Livres actuellement prêtés</h2>
 
             <div class="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-200">
                 <div class="divide-y divide-gray-200">
@@ -185,7 +201,12 @@
                                         <div class="flex items-center gap-2 mb-1">
                                             <span class="text-gray-600 font-medium">Statut:</span>
                                             <span class="px-3 py-1 rounded-full text-sm font-medium border"
-                                                  th:classappend="${lending.status == 'RESERVED' ? 'bg-yellow-100 text-yellow-800 border-yellow-300' : (lending.status == 'BORROWED' ? 'bg-blue-100 text-blue-800 border-blue-300' : (lending.status == 'RETURNED' ? 'bg-green-100 text-green-800 border-green-300' : (lending.status == 'SHIPPED' ? 'bg-purple-100 text-purple-800 border-purple-300' : (lending.status == 'AVAILABLE' ? 'bg-gray-100 text-gray-800 border-gray-300' : (lending.status == 'PENDING_SHIPMENT' ? 'bg-orange-100 text-orange-800 border-orange-300' : '')))))}">
+                                                  th:classappend="${lending.status == 'RESERVED' ? 'bg-yellow-100 text-yellow-800 border-yellow-300' :
+                                                               (lending.status == 'BORROWED' ? 'bg-blue-100 text-blue-800 border-blue-300' :
+                                                               (lending.status == 'RETURNED' ? 'bg-green-100 text-green-800 border-green-300' :
+                                                               (lending.status == 'SHIPPED' ? 'bg-purple-100 text-purple-800 border-purple-300' :
+                                                               (lending.status == 'AVAILABLE' ? 'bg-gray-100 text-gray-800 border-gray-300' :
+                                                               (lending.status == 'PENDING_SHIPMENT' ? 'bg-orange-100 text-orange-800 border-orange-300' : '')))))}">
                                                 <span th:switch="${lending.status}">
                                                     <span th:case="'RESERVED'">Réservé</span>
                                                     <span th:case="'BORROWED'">Emprunté</span>
@@ -214,11 +235,19 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="mt-4 flex flex-wrap gap-2">
+                                    <!-- Bouton "Télécharger l'étiquette" pour PENDING_SHIPMENT ou SHIPPED -->
+                                    <a th:if="${#strings.equals(lending.status, 'PENDING_SHIPMENT') || #strings.equals(lending.status, 'SHIPPED')}"
+                                       th:href="@{/loans/ticket-download/{lendingId}(lendingId=${lending.id})}"
+                                       target="_blank"
+                                       class="bg-light-blue hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors inline-block mr-2">
+                                        Télécharger l'étiquette d'expédition
+                                    </a>
 
-                                <!-- Boutons d'action pour les livres prêtés -->
-                                <div class="mt-4" th:if="${lending.status == 'RESERVED'}">
-                                    <a th:href="@{/loans/ship-book(lendingId=${lending.id}, userId=${userId})}"
-                                       class="bg-light-blue hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors inline-block">
+                                    <!-- Bouton "Marquer comme expédié" pour PENDING_SHIPMENT -->
+                                    <a th:if="${#strings.equals(lending.status, 'PENDING_SHIPMENT')}"
+                                       th:href="@{/loans/ship-book(lendingId=${lending.id})}"
+                                       class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors inline-block">
                                         Marquer comme expédié
                                     </a>
                                 </div>
@@ -231,7 +260,7 @@
 
         <!-- Livres disponibles pour prêt -->
         <div th:if="${!lendingData.lentBooks.isEmpty() && lendingData.lentBooks.?[borrower == null].size() > 0}" class="mb-8">
-            <h2 th:if="${activeTab == 'all'}" class="text-2xl font-semibold mb-4">Livres disponibles pour prêt</h2>
+            <h2 th:if="${activeTab == T(fr.uge.booqIn.enums.LendStatus).ALL}" class="text-2xl font-semibold mb-4">Livres disponibles pour prêt</h2>
 
             <div class="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-200">
                 <div class="divide-y divide-gray-200">
@@ -273,12 +302,9 @@
                                         </div>
                                     </div>
                                 </div>
-
-                                <!-- Bouton pour retirer de la liste de prêt -->
                                 <div class="mt-4">
                                     <form th:action="@{/loans/remove-loanable}" method="post">
                                         <input type="hidden" name="bookId" th:value="${lending.book.id}">
-                                        <input type="hidden" name="userId" th:value="${userId}">
                                         <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors">
                                             Retirer de la liste de prêt
                                         </button>
@@ -290,22 +316,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Aucun livre disponible -->
-        <div th:if="${lendingData.lentBooks.isEmpty()}" class="bg-gray-50 rounded-xl p-12 text-center border border-gray-200 shadow-md">
-            <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            <h3 class="text-xl font-medium text-gray-700">Vous n'avez aucun livre dans votre collection</h3>
-            <p class="text-gray-500 mt-2 mb-6">Ajoutez des livres à votre collection pour pouvoir les prêter</p>
-            <a href="/profile" class="bg-light-blue hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg transition duration-300 inline-block">
-                Gérer ma collection
-            </a>
-            <a href="/loans/make-loanable" class="border border-light-blue text-light-blue hover:bg-blue-50 font-semibold px-6 py-3 rounded-lg transition duration-300 inline-block ml-2">
-                Ajouter un livre à prêter
-            </a>
-        </div>
     </div>
-</div>
 </body>
 </html>

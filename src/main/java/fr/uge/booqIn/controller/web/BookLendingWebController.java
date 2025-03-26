@@ -3,14 +3,19 @@ package fr.uge.booqIn.controller.web;
 
 import fr.uge.booqIn.dto.lending.LendingResponseDTO;
 import fr.uge.booqIn.entity.User;
+import fr.uge.booqIn.enums.LendStatus;
 import fr.uge.booqIn.service.interfaces.BookLendingInterface;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
 import fr.uge.booqIn.service.interfaces.UserServiceInterface;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.io.IOException;
 
 @Controller
 @RequestMapping("/loans")
@@ -31,13 +36,13 @@ public class BookLendingWebController {
   
   @GetMapping
   public String getLendingsPage(
-          @RequestParam(required = false, defaultValue = "borrowed") String type,
+          @RequestParam(required = false, defaultValue = "BORROWED") LendStatus type,
           @AuthenticationPrincipal User currentUser,
           Model model) {
     // Validation des types de prêts
-    if (!type.equalsIgnoreCase("borrowed") &&
-            !type.equalsIgnoreCase("lent") &&
-            !type.equalsIgnoreCase("all")) {
+      if (!(type == LendStatus.BORROWED) &&
+              !(type == LendStatus.LENT) &&
+              !(type ==  LendStatus.ALL)) {
       model.addAttribute("errorMessage", "Type de prêt invalide. Les valeurs acceptées sont: borrowed, lent, all");
       model.addAttribute("title", "Erreur");
       return "layout";
@@ -56,7 +61,7 @@ public class BookLendingWebController {
     model.addAttribute("activeTab", type);
     model.addAttribute("userId", currentUser.getId());
     model.addAttribute("title", "Vos Prêts de Livres");
-    model.addAttribute("content", "pages/bookLending/index");
+    model.addAttribute("content", "pages/bookLending/bookLending");
     
     return "layout";
   }
@@ -64,7 +69,7 @@ public class BookLendingWebController {
   @GetMapping("/confirm-loan")
   public String confirmLoan(
           @RequestParam Long lendingId,
-          @RequestParam Long userId,
+
           RedirectAttributes redirectAttributes) {
     
     boolean confirmed = bookLendingInterface.confirmLoan(lendingId);
@@ -75,13 +80,12 @@ public class BookLendingWebController {
       redirectAttributes.addFlashAttribute("errorMessage", "Échec de la confirmation du prêt");
     }
     
-    return "redirect:/loans?userId=" + userId;
+    return "redirect:/loans?userId=" + LendStatus.ALL;
   }
   
   @GetMapping("/ship-book")
   public String shipBook(
           @RequestParam Long lendingId,
-          @RequestParam Long userId,
           RedirectAttributes redirectAttributes) {
     
     boolean shipped = bookLendingInterface.markAsShipped(lendingId);
@@ -92,13 +96,12 @@ public class BookLendingWebController {
       redirectAttributes.addFlashAttribute("errorMessage", "Échec du marquage du livre comme expédié");
     }
     
-    return "redirect:/loans?userId=" + userId;
+    return "redirect:/loans?type=" + LendStatus.BORROWED;
   }
   
   @GetMapping("/return-book")
   public String returnBook(
           @RequestParam Long lendingId,
-          @RequestParam Long userId,
           RedirectAttributes redirectAttributes) {
     
     boolean returned = bookLendingInterface.returnBook(lendingId);
@@ -109,7 +112,7 @@ public class BookLendingWebController {
       redirectAttributes.addFlashAttribute("errorMessage", "Échec du marquage du livre comme retourné");
     }
     
-    return "redirect:/loans?userId=" + userId;
+    return "redirect:/loans?type=" + LendStatus.BORROWED;
   }
   
   @GetMapping("/make-loanable")
@@ -123,10 +126,10 @@ public class BookLendingWebController {
   @PostMapping("/make-loanable")
   public String makeBookLoanable(
           @RequestParam Long bookId,
-          @RequestParam Long userId,
+          @AuthenticationPrincipal User currentUser,
           RedirectAttributes redirectAttributes) {
     
-    boolean added = bookLendingInterface.loanable(bookId, userId);
+    boolean added = bookLendingInterface.loanable(bookId, currentUser.getId());
     
     if (added) {
       redirectAttributes.addFlashAttribute("successMessage", "Livre ajouté à la liste de prêt avec succès");
@@ -134,16 +137,16 @@ public class BookLendingWebController {
       redirectAttributes.addFlashAttribute("errorMessage", "Échec de l'ajout du livre à la liste de prêt");
     }
     
-    return "redirect:/loans?userId=" + userId + "&type=lent";
+    return "redirect:/loans?type=" + LendStatus.LENT;
   }
   
   @PostMapping("/remove-loanable")
   public String removeBookFromLoanable(
           @RequestParam Long bookId,
-          @RequestParam Long userId,
+          @AuthenticationPrincipal User currentUser,
           RedirectAttributes redirectAttributes) {
     
-    boolean removed = bookLendingInterface.isNoMoreLoanable(bookId, userId);
+    boolean removed = bookLendingInterface.isNoMoreLoanable(bookId, currentUser.getId());
     
     if (removed) {
       redirectAttributes.addFlashAttribute("successMessage", "Livre retiré de la liste de prêt avec succès");
@@ -151,19 +154,38 @@ public class BookLendingWebController {
       redirectAttributes.addFlashAttribute("errorMessage", "Échec du retrait du livre de la liste de prêt");
     }
     
-    return "redirect:/loans?userId=" + userId + "&type=lent";
+    return "redirect:/loans?type=" + LendStatus.LENT;
   }
   
   @GetMapping("/my-lendings")
   public String getCurrentUserLendings(@RequestParam Long userId, Model model) {
-    LendingResponseDTO responseDTO = bookLendingInterface.findAllUserLendingsAsDTO(userId, "lent");
+    LendingResponseDTO responseDTO = bookLendingInterface.findAllUserLendingsAsDTO(userId, LendStatus.LENT);
     
     model.addAttribute("lendingData", responseDTO);
     model.addAttribute("userId", userId);
     model.addAttribute("title", "Mes Livres à Prêter");
-    model.addAttribute("content", "pages/bookLending/index");
+    model.addAttribute("content", "pages/bookLending/bookLending");
     model.addAttribute("activeTab", "lent");
     
     return "layout";
+  }
+  
+  @GetMapping("/ticket-download/{lendingId}")
+  public void downloadTicket(@PathVariable Long lendingId, HttpServletResponse response) throws IOException {
+    byte[] ticketPDF = bookLendingInterface.getShippingTicketBytes(lendingId);
+    
+    if (ticketPDF == null) {
+      response.sendError(HttpServletResponse.SC_NOT_FOUND, "Étiquette non trouvée");
+      return;
+    }
+    
+    response.setContentType("application/pdf");
+    response.setHeader("Content-Disposition", "attachment; filename=etiquette_expedition_" + lendingId + ".pdf");
+    response.setContentLength(ticketPDF.length);
+    
+    try (ServletOutputStream outputStream = response.getOutputStream()) {
+      outputStream.write(ticketPDF);
+      outputStream.flush();
+    }
   }
 }

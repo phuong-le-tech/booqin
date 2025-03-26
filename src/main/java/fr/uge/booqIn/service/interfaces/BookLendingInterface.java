@@ -4,6 +4,7 @@ import fr.uge.booqIn.dto.lending.BookLendingShow;
 import fr.uge.booqIn.dto.lending.LendingResponseDTO;
 import fr.uge.booqIn.entity.BookLending;
 import fr.uge.booqIn.enums.BookStatus;
+import fr.uge.booqIn.enums.LendStatus;
 import jdk.jshell.Snippet;
 
 import java.util.List;
@@ -32,7 +33,7 @@ public interface BookLendingInterface {
   
   List<BookLendingShow> findLentBooksAsDTO(Long userId);
   
-  LendingResponseDTO findAllUserLendingsAsDTO(Long userId, String type);
+  LendingResponseDTO findAllUserLendingsAsDTO(Long userId, LendStatus type);
   
   
   Optional<BookLending> findBookLendingByBookId(Long bookId);

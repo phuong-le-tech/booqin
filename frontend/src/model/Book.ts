@@ -7,6 +7,7 @@ export interface BookIndex {
     title: string;
     authorNames: string[];
     publicationDate: Date;
+    thumbnailPath: string | null;
 }
 
 export interface BookDetails {
@@ -15,6 +16,7 @@ export interface BookDetails {
     description: string;
     authorNames: string[];
     publicationDate: Date;
+    thumbnailPath: string | null;
 }
 
 // Modèle Book détaillé (BookShow)
@@ -28,6 +30,9 @@ export interface Book {
     createdAt: string;
     updatedAt: string;
     categories?: string[];
+    coverImagePath?: string | null;
+    thumbnailPath?: string | null;
+    coverImageUrl?: string | null;
 }
 
 // Modèle pour la mise à jour partielle de Book

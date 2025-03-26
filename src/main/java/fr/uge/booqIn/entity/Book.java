@@ -76,6 +76,15 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
   @Column(name = "updated_at")
   private LocalDateTime updatedAt = LocalDateTime.now();
 
+  @Column(name = "cover_image_path")
+  private String coverImagePath;
+
+  @Column(name = "thumbnail_path")
+  private String thumbnailPath;
+
+  @Column(name = "cover_image_url")
+  private String coverImageUrl;
+
   public Book() {
   }
 
@@ -100,6 +109,9 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
     this.publicationDate = builder.publicationDate;
     this.createdAt = builder.createdAt;
     this.updatedAt = builder.updatedAt;
+    this.coverImagePath = builder.coverImagePath;
+    this.thumbnailPath = builder.thumbnailPath;
+    this.coverImageUrl = builder.coverImageUrl;
   }
 
   @Override
@@ -147,6 +159,18 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
     return isbns;
   }
 
+  public String getCoverImagePath() {
+    return coverImagePath;
+  }
+
+  public String getThumbnailPath() {
+    return thumbnailPath;
+  }
+
+  public String getCoverImageUrl() {
+    return coverImageUrl;
+  }
+
   // -------------------- SETTERS --------------------
 
   public void setId(Long id) {
@@ -185,6 +209,16 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
     this.isbns.addAll(isbns);
   }
 
+  public void setCoverImagePath(String coverImagePath) {
+    this.coverImagePath = coverImagePath;
+  }
+  public void setThumbnailPath(String thumbnailPath) {
+    this.thumbnailPath = thumbnailPath;
+  }
+  public void setCoverImageUrl(String coverImageUrl) {
+    this.coverImageUrl = coverImageUrl;
+  }
+
   public void addIsbn(String isbn) {
     if (isbn != null) this.isbns.add(isbn);
   }
@@ -192,6 +226,7 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
   public void addCategory(String category) {
     if (category != null) this.categories.add(category);
   }
+
 
   @Override
   public String toString() {
@@ -215,6 +250,9 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
     private Date publicationDate;
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
+    private String coverImagePath;
+    private String thumbnailPath;
+    private String coverImageUrl;
 
     public Builder id(Long id) {
       this.id = id;
@@ -265,6 +303,23 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
     public Builder updatedAt(LocalDateTime updatedAt) {
       Objects.requireNonNull(updatedAt);
       this.updatedAt = updatedAt;
+      return this;
+    }
+    public Builder coverImagePath(String coverImagePath) {
+      Objects.requireNonNull(coverImagePath);
+      this.coverImagePath = coverImagePath;
+      return this;
+    }
+
+    public Builder thumbnailPath(String thumbnailPath) {
+      Objects.requireNonNull(thumbnailPath);
+      this.thumbnailPath = thumbnailPath;
+      return this;
+    }
+
+    public Builder coverImageUrl(String coverImageUrl) {
+      Objects.requireNonNull(coverImageUrl);
+      this.coverImageUrl = coverImageUrl;
       return this;
     }
 
