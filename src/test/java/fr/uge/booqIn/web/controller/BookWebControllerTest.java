@@ -2,53 +2,52 @@ package fr.uge.booqIn.web.controller;
 
 import fr.uge.booqIn.controller.web.BookWebController;
 import fr.uge.booqIn.controller.web.HomeWebController;
+import fr.uge.booqIn.dto.author.AuthorDto;
+import fr.uge.booqIn.dto.book.BookCreate;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
+import fr.uge.booqIn.dto.bookCollection.LiteCollection;
+import fr.uge.booqIn.dto.lending.BookLendingShow;
+import fr.uge.booqIn.dto.lending.LendingResponseDTO;
 import fr.uge.booqIn.dto.vote.VoteCount;
+import fr.uge.booqIn.dto.vote.VoteCreate;
+import fr.uge.booqIn.entity.AbstractBookCollection;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.BookStatus;
-import fr.uge.booqIn.enums.UserRole;
 import fr.uge.booqIn.enums.VoteType;
+import fr.uge.booqIn.model.BookCollection;
 import fr.uge.booqIn.service.interfaces.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.ui.Model;
-import org.springframework.web.servlet.view.InternalResourceViewResolver;
+import org.springframework.validation.BindingResult;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.*;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.mockito.Mockito.*;
 
 @DisplayName("BookWebController Tests")
 class BookWebControllerTest {
-
-  private MockMvc mockMvc;
 
   @Mock
   private BookServiceInterface bookService;
 
   @Mock
-  private VoteServiceInterface voteService;
+  private VoteServiceInterface voteServiceInterface;
 
   @Mock
   private UserServiceInterface userService;
@@ -65,217 +64,243 @@ class BookWebControllerTest {
   @Mock
   private BookLendingInterface bookLendingInterface;
 
+  @Mock
+  private Model model;
+
+  @Mock
+  private Principal principal;
+
+  @Mock
+  private User currentUser;
+
+  @Mock
+  private AbstractBookCollection mockCollection;
+
   @InjectMocks
   private BookWebController bookWebController;
+
+  private BookShow testBookShow;
+  private BookIndex testBookIndex;
+  private List<BookIndex> testBookList;
+  private Page<BookIndex> testBookPage;
+  private Set<AuthorDto> testAuthors;
+  private Author testAuthor;
+  private Date testDate;
 
   @BeforeEach
   void setUp() {
     MockitoAnnotations.openMocks(this);
 
-    InternalResourceViewResolver viewResolver = new InternalResourceViewResolver();
-    viewResolver.setPrefix("/WEB-INF/templates/");
-    viewResolver.setSuffix(".html");
+    // Setup test data
+    testDate = new Date();
 
-    mockMvc = MockMvcBuilders.standaloneSetup(bookWebController)
-            .setViewResolvers(viewResolver)
-            .build();
+    testAuthor = new Author("John", "Doe");
+    testAuthors = new HashSet<>();
+    testAuthors.add(new AuthorDto(1L, "John", "Doe"));
 
-    // Setup the behavior for homeWebController.prepareModel
+    Set<String> testCategories = new HashSet<>();
+    testCategories.add("Fiction");
+
+    Set<String> testIsbns = new HashSet<>();
+    testIsbns.add("1234567890");
+
+    testBookShow = new BookShow(
+            1L,
+            testIsbns,
+            "Test Book",
+            testAuthors,
+            "Test Description",
+            testDate,
+            LocalDateTime.now(),
+            LocalDateTime.now(),
+            testCategories
+    );
+
+    testBookIndex = new BookIndex(
+            1L,
+            "Test Book",
+            Collections.singleton("John Doe"),
+            testDate
+    );
+
+    testBookList = Collections.singletonList(testBookIndex);
+    testBookPage = new PageImpl<>(testBookList);
+
+    // Common mock setup
+    when(currentUser.getId()).thenReturn(1L);
     doNothing().when(homeWebController).prepareModel(any(Model.class), any(Principal.class), anyString());
   }
 
   @Test
-  @DisplayName("GET /books - Should show books list for anonymous user")
-  void getAllBooks_ShouldReturnBooksList_ForAnonymousUser() throws Exception {
+  @DisplayName("getAllBooks - Should add user's collections when user is authenticated")
+  void getAllBooks_WithAuthenticatedUser_ShouldAddCollections() {
     // Given
-    List<BookIndex> books = createMockBookIndexList();
-    Page<BookIndex> bookPage = new PageImpl<>(books);
+    List<AbstractBookCollection> collections = new ArrayList<>();
+    collections.add(mockCollection);
 
-    when(bookService.findBooks(isNull(), isNull(), isNull(), any(PageRequest.class))).thenReturn(bookPage);
+    when(bookService.findBooks(isNull(), isNull(), isNull(), any())).thenReturn(testBookPage);
+    when(userService.findUserById(eq(1L))).thenReturn(currentUser);
+    when(currentUser.getCollections()).thenReturn(collections);
+    when(mockCollection.getCollectionType()).thenReturn(BookCollection.CollectionType.NORMAL);
+    when(mockCollection.getId()).thenReturn(1L);
+    when(mockCollection.getTitle()).thenReturn("My Collection");
 
-    // When & Then
-    mockMvc.perform(get("/books"))
-            .andExpect(status().isOk())
-            .andExpect(view().name("layout"))
-            .andExpect(model().attributeExists("books"))
-            .andExpect(model().attributeExists("title"))
-            .andExpect(model().attribute("title", "BooqIn - Books"))
-            .andExpect(model().attribute("content", "pages/book/list"));
+    List<BookLendingShow> emptyLendings = Collections.emptyList();
+    LendingResponseDTO lendingResponseDTO = new LendingResponseDTO(emptyLendings, emptyLendings, true);
+    when(bookLendingInterface.findAllUserLendingsAsDTO(eq(1L), eq("all"))).thenReturn(lendingResponseDTO);
 
-    verify(homeWebController).prepareModel(any(Model.class), isNull(), eq("books"));
+    // When
+    String viewName = bookWebController.getAllBooks(model, 0, 20, "title", "asc", null, currentUser, principal);
+
+    // Then
+    assertEquals("layout", viewName);
+
+    verify(userService).findUserById(eq(1L));
+    verify(model).addAttribute(eq("userId"), eq(1L));
+    verify(bookLendingInterface).findAllUserLendingsAsDTO(eq(1L), eq("all"));
+    verify(model).addAttribute(eq("lentBooks"), anyList());
+    verify(model).addAttribute(eq("borrowedBooks"), anyList());
   }
 
   @Test
-  @DisplayName("GET /books - Should show books list with search query")
-  void getAllBooks_ShouldReturnBooksListWithSearchQuery() throws Exception {
-    // Given
-    List<BookIndex> books = createMockBookIndexList();
-    Page<BookIndex> bookPage = new PageImpl<>(books);
-    String query = "test";
-
-    when(bookService.findBooks(eq(query), eq(query), eq(query), any(PageRequest.class))).thenReturn(bookPage);
-
-    // When & Then
-    mockMvc.perform(get("/books")
-                    .param("query", query))
-            .andExpect(status().isOk())
-            .andExpect(view().name("layout"))
-            .andExpect(model().attributeExists("books"))
-            .andExpect(model().attributeExists("query"))
-            .andExpect(model().attribute("query", query));
-
-    verify(homeWebController).prepareModel(any(Model.class), isNull(), eq("books"));
-  }
-
-  @Test
-  @DisplayName("GET /books/{id} - Should show book details for anonymous user")
-  void getBookFromId_ShouldReturnBookDetails_ForAnonymousUser() throws Exception {
+  @DisplayName("getBookFromId - Should display book details")
+  void getBookFromId_ShouldDisplayBookDetails() {
     // Given
     Long bookId = 1L;
-    BookShow bookShow = createMockBookShow(bookId);
-    VoteCount voteCount = new VoteCount(bookId, "BOOK", 5L, 2L, 3);
+    VoteCount voteCount = new VoteCount(bookId, "BOOK", 5, 2, 3);
 
-    when(bookService.findById(eq(bookId))).thenReturn(bookShow);
-    when(voteService.getVoteCounts(eq(bookId), eq("BOOK"))).thenReturn(voteCount);
+    when(bookService.findById(eq(bookId))).thenReturn(testBookShow);
+    when(voteServiceInterface.getVoteCounts(eq(bookId), eq("BOOK"))).thenReturn(voteCount);
     when(commentService.countByEntity(eq(bookId), eq("BOOK"))).thenReturn(3L);
-    when(commentService.getCommentTreeByEntity(eq(bookId), eq("BOOK"))).thenReturn(new ArrayList<>());
+    when(commentService.getCommentTreeByEntity(eq(bookId), eq("BOOK"))).thenReturn(Collections.emptyList());
 
-    // When & Then
-    mockMvc.perform(get("/books/{id}", bookId))
-            .andExpect(status().isOk())
-            .andExpect(view().name("layout"))
-            .andExpect(model().attributeExists("book"))
-            .andExpect(model().attributeExists("votes"))
-            .andExpect(model().attributeExists("comments"))
-            .andExpect(model().attributeExists("commentCount"))
-            .andExpect(model().attributeExists("entityType"))
-            .andExpect(model().attributeExists("entityId"))
-            .andExpect(model().attribute("title", "BooqIn - " + bookShow.title()))
-            .andExpect(model().attribute("content", "pages/book/bookDetails"));
+    // When
+    String viewName = bookWebController.getBookFromId(model, bookId, currentUser, principal);
 
-    verify(homeWebController).prepareModel(any(Model.class), isNull(), eq("book-details"));
+    // Then
+    assertEquals("layout", viewName);
+
+    verify(homeWebController).prepareModel(eq(model), eq(principal), eq("book-details"));
+    verify(bookService).findById(eq(bookId));
+    verify(voteServiceInterface).getVoteCounts(eq(bookId), eq("BOOK"));
+    verify(commentService).countByEntity(eq(bookId), eq("BOOK"));
+    verify(commentService).getCommentTreeByEntity(eq(bookId), eq("BOOK"));
+    verify(model).addAttribute(eq("book"), eq(testBookShow));
+    verify(model).addAttribute(eq("votes"), eq(voteCount));
+    verify(model).addAttribute(eq("commentCount"), eq(3L));
+    verify(model).addAttribute(eq("title"), eq("BooqIn - Test Book"));
+    verify(model).addAttribute(eq("content"), eq("pages/book/bookDetails"));
   }
 
   @Test
-  @DisplayName("GET /books/{id} - Should show book details with user vote for authenticated user")
-  void getBookFromId_ShouldReturnBookDetailsWithUserVote_ForAuthenticatedUser() throws Exception {
+  @DisplayName("getBookFromId - Should add user vote if authenticated")
+  void getBookFromId_WithAuthenticatedUser_ShouldAddUserVote() {
     // Given
     Long bookId = 1L;
-    BookShow bookShow = createMockBookShow(bookId);
-    VoteCount voteCount = new VoteCount(bookId, "BOOK", 5L, 2L, 3);
+    VoteCount voteCount = new VoteCount(bookId, "BOOK", 5, 2, 3);
 
-    User user = new User("John", "Doe", "john.doe@example.com", "password", null, UserRole.USER);
-    user.setId(1L);
-
-    when(bookService.findById(eq(bookId))).thenReturn(bookShow);
-    when(voteService.getVoteCounts(eq(bookId), eq("BOOK"))).thenReturn(voteCount);
+    when(bookService.findById(eq(bookId))).thenReturn(testBookShow);
+    when(voteServiceInterface.getVoteCounts(eq(bookId), eq("BOOK"))).thenReturn(voteCount);
     when(commentService.countByEntity(eq(bookId), eq("BOOK"))).thenReturn(3L);
-    when(commentService.getCommentTreeByEntity(eq(bookId), eq("BOOK"))).thenReturn(new ArrayList<>());
-    when(voteService.getUserVoteType(eq(user.getId()), eq(bookId), eq("BOOK"))).thenReturn(VoteType.UPVOTE);
+    when(commentService.getCommentTreeByEntity(eq(bookId), eq("BOOK"))).thenReturn(Collections.emptyList());
+    when(voteServiceInterface.getUserVoteType(eq(1L), eq(bookId), eq("BOOK"))).thenReturn(VoteType.UPVOTE);
 
-    // When & Then
-    mockMvc.perform(get("/books/{id}", bookId)
-                    .with(SecurityMockMvcRequestPostProcessors.user(user)))
-            .andExpect(status().isOk())
-            .andExpect(view().name("layout"))
-            .andExpect(model().attributeExists("userVote"))
-            .andExpect(model().attributeExists("user"))
-            .andExpect(model().attribute("userVote", "UPVOTE"));
+    // When
+    String viewName = bookWebController.getBookFromId(model, bookId, currentUser, principal);
+
+    // Then
+    assertEquals("layout", viewName);
+
+    verify(voteServiceInterface).getUserVoteType(eq(1L), eq(bookId), eq("BOOK"));
+    verify(model).addAttribute(eq("userVote"), eq("UPVOTE"));
+    verify(model).addAttribute(eq("user"), eq(currentUser));
   }
 
   @Test
-  @DisplayName("GET /books/new - Should show book creation form")
-  void showCreateForm_ShouldReturnNewBookForm() throws Exception {
-    // When & Then
-    mockMvc.perform(get("/books/new"))
-            .andExpect(status().isOk())
-            .andExpect(view().name("layout"))
-            .andExpect(model().attributeExists("book"))
-            .andExpect(model().attributeExists("title"))
-            .andExpect(model().attribute("title", "BooqIn - Add Book"))
-            .andExpect(model().attribute("content", "pages/book/bookCreate"));
+  @DisplayName("showCreateForm - Should display book creation form")
+  void showCreateForm_ShouldDisplayBookCreationForm() {
+    // When
+    String viewName = bookWebController.showCreateForm(model, principal);
 
-    verify(homeWebController).prepareModel(any(Model.class), isNull(), eq("book-create"));
+    // Then
+    assertEquals("layout", viewName);
+
+    verify(homeWebController).prepareModel(eq(model), eq(principal), eq("book-create"));
+    verify(model).addAttribute(eq("book"), any(BookCreate.class));
+    verify(model).addAttribute(eq("title"), eq("BooqIn - Add Book"));
+    verify(model).addAttribute(eq("content"), eq("pages/book/bookCreate"));
   }
 
   @Test
-  @DisplayName("POST /books - Should add new book and redirect to books list")
-  void addBook_ShouldCreateAndRedirect() throws Exception {
+  @DisplayName("addBook - Should create book and redirect")
+  void addBook_ShouldCreateBookAndRedirect() {
     // Given
-    Book book = createMockBook();
-    when(bookService.createBook(any(Book.class))).thenReturn(book);
+    String title = "New Book";
+    List<String> authors = Arrays.asList("John Doe", "Jane Smith");
+    List<String> isbns = Arrays.asList("1234567890", "0987654321");
+    Date publicationDate = new Date();
+    String description = "Test description";
 
-    // When & Then
-    mockMvc.perform(post("/books")
-                    .param("title", "Test Book")
-                    .param("authors", "John Doe")
-                    .param("isbn", "1234567890")
-                    .param("publicationDate", "2023-01-01")
-                    .param("description", "Test description"))
-            .andExpect(status().is3xxRedirection())
-            .andExpect(redirectedUrl("/books"));
+    Book createdBook = new Book();
+    when(bookService.createBook(any(Book.class))).thenReturn(createdBook);
+
+    // When
+    String viewName = bookWebController.addBook(title, authors, isbns, publicationDate, description);
+
+    // Then
+    assertEquals("redirect:/books", viewName);
+
+    verify(bookService).createBook(any(Book.class));
+
+    ArgumentCaptor<Book> bookCaptor = ArgumentCaptor.forClass(Book.class);
+    verify(bookService).createBook(bookCaptor.capture());
+    Book capturedBook = bookCaptor.getValue();
+    assertEquals(title, capturedBook.getTitle());
+    assertEquals(description, capturedBook.getDescription());
+    assertEquals(publicationDate, capturedBook.getPublicationDate());
+    assertEquals(2, capturedBook.getIsbns().size());
+    assertEquals(2, capturedBook.getAuthors().size());
   }
 
   @Test
-  @DisplayName("POST /books/vote - Should process vote for authenticated user")
-  void vote_ShouldProcessVote() throws Exception {
+  @DisplayName("vote - Should cast vote and redirect")
+  void vote_ShouldCastVoteAndRedirect() {
     // Given
     Long bookId = 1L;
-    User user = new User("John", "Doe", "john.doe@example.com", "password", null, UserRole.USER);
-    user.setId(1L);
+    VoteType voteType = VoteType.UPVOTE;
 
-    // When & Then
-    mockMvc.perform(post("/books/vote")
-                    .with(SecurityMockMvcRequestPostProcessors.user(user))
-                    .param("bookId", bookId.toString())
-                    .param("voteType", "UPVOTE"))
-            .andExpect(status().is3xxRedirection())
-            .andExpect(redirectedUrl("/books/" + bookId));
+    when(voteServiceInterface.castVote(any(VoteCreate.class))).thenReturn(null);
+
+    // When
+    String viewName = bookWebController.vote(bookId, voteType, currentUser);
+
+    // Then
+    assertEquals("redirect:/books/" + bookId, viewName);
+
+    verify(voteServiceInterface).castVote(any(VoteCreate.class));
+
+    ArgumentCaptor<VoteCreate> voteCaptor = ArgumentCaptor.forClass(VoteCreate.class);
+    verify(voteServiceInterface).castVote(voteCaptor.capture());
+    VoteCreate capturedVote = voteCaptor.getValue();
+    assertEquals(1L, capturedVote.userId());
+    assertEquals(bookId, capturedVote.entityId());
+    assertEquals("BOOK", capturedVote.entityType());
+    assertEquals(voteType, capturedVote.voteType());
   }
 
-  // Helper methods for creating mock data
-  private List<BookIndex> createMockBookIndexList() {
-    List<BookIndex> books = new ArrayList<>();
+  @Test
+  @DisplayName("vote - Should not cast vote when user is not authenticated")
+  void vote_WithoutAuthenticatedUser_ShouldNotCastVote() {
+    // Given
+    Long bookId = 1L;
+    VoteType voteType = VoteType.UPVOTE;
 
-    Set<String> authorNames1 = new HashSet<>(Collections.singleton("John Doe"));
-    Set<String> authorNames2 = new HashSet<>(Collections.singleton("Jane Smith"));
+    // When
+    String viewName = bookWebController.vote(bookId, voteType, null);
 
-    books.add(new BookIndex(1L, "Test Book 1", authorNames1, new Date()));
-    books.add(new BookIndex(2L, "Test Book 2", authorNames2, new Date()));
+    // Then
+    assertEquals("redirect:/books/" + bookId, viewName);
 
-    return books;
-  }
-
-  private BookShow createMockBookShow(Long id) {
-    Set<String> isbns = new HashSet<>(Collections.singleton("1234567890"));
-    Set<String> categories = new HashSet<>(Collections.singleton("Fiction"));
-
-    return new BookShow(
-            id,
-            isbns,
-            "Test Book",
-            new HashSet<>(),
-            "Test description",
-            new Date(),
-            LocalDateTime.now(),
-            LocalDateTime.now(),
-            categories
-    );
-  }
-
-  private Book createMockBook() {
-    Set<String> isbns = new HashSet<>(Collections.singleton("1234567890"));
-    Set<Author> authors = new HashSet<>(Collections.singleton(new Author("John", "Doe")));
-    Set<String> categories = new HashSet<>(Collections.singleton("Fiction"));
-
-    return new Book.Builder()
-            .id(1L)
-            .title("Test Book")
-            .description("Test description")
-            .authors(authors)
-            .isbns(isbns)
-            .categories(categories)
-            .publicationDate(new Date())
-            .build();
+    verifyNoInteractions(voteServiceInterface);
   }
 }

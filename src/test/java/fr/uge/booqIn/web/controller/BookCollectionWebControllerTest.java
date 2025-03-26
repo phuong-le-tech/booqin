@@ -2,20 +2,27 @@ package fr.uge.booqIn.web.controller;
 
 import fr.uge.booqIn.controller.web.BookCollectionWebController;
 import fr.uge.booqIn.controller.web.HomeWebController;
+import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionCreate;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionIndex;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionUpdate;
+import fr.uge.booqIn.dto.lending.BookLendingShow;
 import fr.uge.booqIn.dto.lending.LendingResponseDTO;
 import fr.uge.booqIn.dto.user.UserIndex;
 import fr.uge.booqIn.dto.vote.VoteCount;
+import fr.uge.booqIn.dto.vote.VoteCreate;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.BookStatus;
+import fr.uge.booqIn.enums.UserRole;
 import fr.uge.booqIn.enums.VoteType;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
+import fr.uge.booqIn.factory.BookCollectionFactory;
+import fr.uge.booqIn.factory.fixture.AddressFactory;
+import fr.uge.booqIn.factory.fixture.UserFactory;
 import fr.uge.booqIn.mapper.BookCollectionMapper;
 import fr.uge.booqIn.mapper.BookMapper;
 import fr.uge.booqIn.model.BookCollection;
@@ -25,6 +32,7 @@ import fr.uge.booqIn.service.interfaces.BookLendingInterface;
 import fr.uge.booqIn.service.interfaces.CommentServiceInterface;
 import fr.uge.booqIn.service.interfaces.VoteServiceInterface;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -32,9 +40,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.mock.web.MockHttpSession;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 
@@ -42,16 +48,12 @@ import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@DisplayName("BookCollectionWebController Tests")
 class BookCollectionWebControllerTest {
-
-  private MockMvc mockMvc;
 
   @Mock
   private BookCollectionServiceInterface bookCollectionService;
@@ -60,7 +62,7 @@ class BookCollectionWebControllerTest {
   private VoteServiceInterface voteService;
 
   @Mock
-  private CommentServiceInterface commentService;
+  private CommentServiceInterface commentServiceInterface;
 
   @Mock
   private BookServiceImpl bookService;
@@ -72,480 +74,619 @@ class BookCollectionWebControllerTest {
   private BookLendingInterface bookLendingInterface;
 
   @Mock
+  private BookMapper bookMapper;
+
+  @Mock
+  private BookCollectionMapper bookCollectionMapper;
+
+  @Mock
   private Model model;
 
   @Mock
   private Principal principal;
 
   @Mock
+  private User currentUser;
+
+  @Mock
   private BindingResult bindingResult;
+  
+  @Mock
+  private PasswordEncoder passwordEncoder;
 
   @InjectMocks
   private BookCollectionWebController bookCollectionWebController;
 
+  private BookCollectionShow testCollectionShow;
+  private BookCollectionIndex testCollectionIndex;
+  private List<BookCollectionIndex> testCollectionList;
+  private Page<BookCollectionIndex> testCollectionPage;
+  private Page<BookCollectionShow> testCollectionShowPage;
+  private BookShow testBookShow;
+  private BookIndex testBookIndex;
+  private UserIndex testUserIndex;
+
+  @BeforeEach
   void setUp() {
     MockitoAnnotations.openMocks(this);
-    mockMvc = MockMvcBuilders.standaloneSetup(bookCollectionWebController).build();
+
+    // Setup test data
+    testUserIndex = new UserIndex(
+            1L,
+            "John",
+            "Doe",
+            "john.doe@example.com",
+            AddressFactory.createAddress(),
+            UserRole.USER
+    );
+
+    testBookIndex = new BookIndex(
+            1L,
+            "Test Book",
+            Collections.singleton("John Doe"),
+            new Date()
+    );
+
+    List<BookIndex> books = Collections.singletonList(testBookIndex);
+
+    testCollectionShow = new BookCollectionShow(
+            1L,
+            "Test Collection",
+            "Test Description",
+            true,
+            books,
+            testUserIndex,
+            "NORMAL",
+            LocalDateTime.now(),
+            LocalDateTime.now()
+    );
+
+    testCollectionIndex = new BookCollectionIndex(
+            1L,
+            "Test Collection",
+            "Test Description",
+            "John Doe",
+            1L,
+            1,
+            true,
+            BookCollection.CollectionType.NORMAL
+    );
+
+    testCollectionList = Collections.singletonList(testCollectionIndex);
+    testCollectionPage = new PageImpl<>(testCollectionList);
+    testCollectionShowPage = new PageImpl<>(Collections.singletonList(testCollectionShow));
+
+    testBookShow = new BookShow(
+            1L,
+            Collections.singleton("1234567890"),
+            "Test Book",
+            Collections.emptySet(),
+            "Test Description",
+            new Date(),
+            LocalDateTime.now(),
+            LocalDateTime.now(),
+            Collections.emptySet()
+    );
+
+    // Common mock setup
+    when(currentUser.getId()).thenReturn(1L);
+    doNothing().when(homeWebController).prepareModel(any(Model.class), any(Principal.class), anyString());
   }
 
   @Test
-  void testShowPublicCollections() throws Exception {
-    // Arrange
-    List<BookCollectionIndex> collections = new ArrayList<>();
-    BookCollectionIndex collection = mock(BookCollectionIndex.class);
-    collections.add(collection);
-    Page<BookCollectionIndex> page = new PageImpl<>(collections);
+  @DisplayName("showPublicCollections - Should display public collections")
+  void showPublicCollections_ShouldDisplayPublicCollections() {
+    // Given
+    int page = 0;
+    int size = 10;
 
-    when(bookCollectionService.getPublicCollections(any(PageRequest.class))).thenReturn(page);
+    when(bookCollectionService.getPublicCollections(any(PageRequest.class))).thenReturn(testCollectionPage);
 
-    // Act & Assert
-    mockMvc.perform(get("/collections/public")
-                    .param("page", "0")
-                    .param("size", "10"))
-            .andExpect(status().isOk())
-            .andExpect(view().name("layout"))
-            .andExpect(model().attributeExists("publicCollections"))
-            .andExpect(model().attribute("title", "BooqIn - Public Collections"))
-            .andExpect(model().attribute("content", "pages/collections/public"));
+    // When
+    String viewName = bookCollectionWebController.showPublicCollections(model, principal, page, size);
 
+    // Then
+    assertEquals("layout", viewName);
+
+    verify(homeWebController).prepareModel(eq(model), eq(principal), eq("collections-public"));
     verify(bookCollectionService).getPublicCollections(any(PageRequest.class));
-    verify(homeWebController).prepareModel(any(Model.class), any(Principal.class), eq("collections-public"));
-  }
-  @BeforeEach
-
-  @Test
-  void testShowUserCollections() throws Exception {
-    // Arrange
-    User currentUser = new User();
-    currentUser.setId(1L);
-
-    Page<BookCollectionShow> collections = new PageImpl<>(new ArrayList<>());
-    Page<BookCollectionIndex> publicCollections = new PageImpl<>(new ArrayList<>());
-    Page<BookCollectionIndex> privateCollections = new PageImpl<>(new ArrayList<>());
-
-    when(bookCollectionService.getUserCollectionsWithBooks(eq(currentUser), any())).thenReturn(collections);
-    when(bookCollectionService.getPublicUserCollection(eq(currentUser), any())).thenReturn(publicCollections);
-    when(bookCollectionService.getPrivateUserCollection(eq(currentUser), any())).thenReturn(privateCollections);
-
-    // Act & Assert
-    mockMvc.perform(get("/collections")
-                    .sessionAttr("user", currentUser))
-            .andExpect(status().isOk())
-            .andExpect(view().name("layout"))
-            .andExpect(model().attributeExists("collections"))
-            .andExpect(model().attributeExists("userPublicCollections"))
-            .andExpect(model().attributeExists("userPrivateCollections"))
-            .andExpect(model().attribute("title", "BooqIn - My Collections"))
-            .andExpect(model().attribute("content", "pages/collections/userCollections"));
-
-    verify(homeWebController).prepareModel(any(Model.class), any(Principal.class), eq("collections"));
+    verify(model).addAttribute(eq("publicCollections"), eq(testCollectionPage));
+    verify(model).addAttribute(eq("title"), eq("BooqIn - Public Collections"));
+    verify(model).addAttribute(eq("content"), eq("pages/collections/public"));
   }
 
   @Test
-  void testShowCollectionDetails_Success() throws Exception {
-    // Arrange
+  @DisplayName("showUserCollections - Should display user collections")
+  void showUserCollections_ShouldDisplayUserCollections() {
+    // Given
+    int page = 0;
+    int size = 20;
+    String sort = "title";
+    String direction = "asc";
+
+    when(bookCollectionService.getUserCollectionsWithBooks(eq(currentUser), any())).thenReturn(testCollectionShowPage);
+    when(bookCollectionService.getPublicUserCollection(eq(currentUser), any())).thenReturn(testCollectionPage);
+    when(bookCollectionService.getPrivateUserCollection(eq(currentUser), any())).thenReturn(testCollectionPage);
+
+    // When
+    String viewName = bookCollectionWebController.showUserCollections(model, currentUser, principal, page, size, sort, direction);
+
+    // Then
+    assertEquals("layout", viewName);
+
+    verify(homeWebController).prepareModel(eq(model), eq(principal), eq("collections"));
+    verify(bookCollectionService).getUserCollectionsWithBooks(eq(currentUser), any());
+    verify(bookCollectionService).getPublicUserCollection(eq(currentUser), any());
+    verify(bookCollectionService).getPrivateUserCollection(eq(currentUser), any());
+    verify(model).addAttribute(eq("collections"), eq(testCollectionShowPage));
+    verify(model).addAttribute(eq("userPublicCollections"), eq(testCollectionPage));
+    verify(model).addAttribute(eq("userPrivateCollections"), eq(testCollectionPage));
+    verify(model).addAttribute(eq("title"), eq("BooqIn - My Collections"));
+    verify(model).addAttribute(eq("content"), eq("pages/collections/userCollections"));
+  }
+
+  @Test
+  @DisplayName("showCollectionDetails - Should display collection details")
+  void showCollectionDetails_ShouldDisplayCollectionDetails() {
+    // Given
     Long collectionId = 1L;
-    User currentUser = new User();
-    currentUser.setId(1L);
+    VoteCount voteCount = new VoteCount(collectionId, "COLLECTION", 5, 2, 3);
 
-    UserIndex userIndex = new UserIndex(1L, "John", "Doe", "john@example.com", null, null);
-    BookCollectionShow collection = new BookCollectionShow(
-            collectionId, "Test Collection", "Description", true,
-            new ArrayList<>(), userIndex, "NORMAL",
-            LocalDateTime.now(), LocalDateTime.now());
+    when(bookCollectionService.findBookCollectionById(eq(collectionId))).thenReturn(testCollectionShow);
+    when(voteService.getVoteCounts(eq(collectionId), eq("COLLECTION"))).thenReturn(voteCount);
+    when(commentServiceInterface.countByEntity(eq(collectionId), eq("COLLECTION"))).thenReturn(2L);
+    when(commentServiceInterface.getCommentTreeByEntity(eq(collectionId), eq("COLLECTION"))).thenReturn(Collections.emptyList());
 
-    when(bookCollectionService.findBookCollectionById(collectionId)).thenReturn(collection);
-    when(voteService.getVoteCounts(collectionId, "COLLECTION")).thenReturn(new VoteCount(collectionId, "COLLECTION", 0L, 0L, 0));
-    when(commentService.countByEntity(collectionId, "COLLECTION")).thenReturn(0L);
-    when(commentService.getCommentTreeByEntity(collectionId, "COLLECTION")).thenReturn(new ArrayList<>());
+    // For lending data
+    List<BookLendingShow> emptyLendings = Collections.emptyList();
+    LendingResponseDTO lendingResponseDTO = new LendingResponseDTO(emptyLendings, emptyLendings, true);
+    when(bookLendingInterface.findAllUserLendingsAsDTO(eq(1L), eq("all"))).thenReturn(lendingResponseDTO);
 
-    LendingResponseDTO lendingData = mock(LendingResponseDTO.class);
-    when(lendingData.lentBooks()).thenReturn(Collections.emptyList());
-    when(bookLendingInterface.findAllUserLendingsAsDTO(currentUser.getId(), "all")).thenReturn(lendingData);
+    // When
+    String viewName = bookCollectionWebController.showCollectionDetails(collectionId, model, principal, currentUser);
 
-    // Act & Assert
-    mockMvc.perform(get("/collections/{id}", collectionId)
-                    .sessionAttr("user", currentUser))
-            .andExpect(status().isOk())
-            .andExpect(view().name("layout"))
-            .andExpect(model().attributeExists("collection"))
-            .andExpect(model().attributeExists("votes"))
-            .andExpect(model().attributeExists("comments"))
-            .andExpect(model().attribute("title", "BooqIn - Test Collection"))
-            .andExpect(model().attribute("content", "pages/collections/details"));
+    // Then
+    assertEquals("layout", viewName);
 
-    verify(bookCollectionService).findBookCollectionById(collectionId);
-    verify(homeWebController).prepareModel(any(Model.class), any(Principal.class), eq("collection-details"));
+    verify(homeWebController).prepareModel(eq(model), eq(principal), eq("collection-details"));
+    verify(bookCollectionService).findBookCollectionById(eq(collectionId));
+    verify(voteService).getVoteCounts(eq(collectionId), eq("COLLECTION"));
+    verify(commentServiceInterface).countByEntity(eq(collectionId), eq("COLLECTION"));
+    verify(commentServiceInterface).getCommentTreeByEntity(eq(collectionId), eq("COLLECTION"));
+    verify(model).addAttribute(eq("collection"), eq(testCollectionShow));
+    verify(model).addAttribute(eq("votes"), eq(voteCount));
+    verify(model).addAttribute(eq("commentCount"), eq(2L));
+    verify(model).addAttribute(eq("title"), eq("BooqIn - Test Collection"));
+    verify(model).addAttribute(eq("content"), eq("pages/collections/details"));
   }
 
   @Test
-  void testShowCollectionDetails_NotFound() throws Exception {
-    // Arrange
+  @DisplayName("showCollectionDetails - Should handle not found exception")
+  void showCollectionDetails_WhenNotFound_ShouldRedirect() {
+    // Given
     Long collectionId = 999L;
-    when(bookCollectionService.findBookCollectionById(collectionId))
+
+    when(bookCollectionService.findBookCollectionById(eq(collectionId)))
             .thenThrow(new ResourceNotFoundException("Collection not found"));
 
-    // Act & Assert
-    mockMvc.perform(get("/collections/{id}", collectionId))
-            .andExpect(status().is3xxRedirection())
-            .andExpect(redirectedUrl("/collections"));
+    // When
+    String viewName = bookCollectionWebController.showCollectionDetails(collectionId, model, principal, currentUser);
+
+    // Then
+    assertEquals("redirect:/collections", viewName);
+
+    verify(bookCollectionService).findBookCollectionById(eq(collectionId));
   }
 
   @Test
-  void testShowAddBookForm() throws Exception {
-    // Arrange
+  @DisplayName("showAddBookForm - Should display add book form")
+  void showAddBookForm_ShouldDisplayAddBookForm() {
+    // Given
     Long collectionId = 1L;
-    BookCollectionShow collection = mock(BookCollectionShow.class);
-    List<Book> books = new ArrayList<>();
+    List<Book> books = Collections.singletonList(new Book());
 
-    when(bookCollectionService.findBookCollectionById(collectionId)).thenReturn(collection);
+    when(bookCollectionService.findBookCollectionById(eq(collectionId))).thenReturn(testCollectionShow);
     when(bookService.findAll()).thenReturn(books);
 
-    // Act & Assert
-    mockMvc.perform(get("/collections/{collectionId}/books/add", collectionId))
-            .andExpect(status().isOk())
-            .andExpect(view().name("layout"))
-            .andExpect(model().attributeExists("collection"))
-            .andExpect(model().attributeExists("books"))
-            .andExpect(model().attribute("title", "BooqIn - Add Book to Collection"))
-            .andExpect(model().attribute("content", "pages/collections/addBook"));
+    // When
+    String viewName = bookCollectionWebController.showAddBookForm(collectionId, model, principal);
 
-    verify(bookCollectionService).findBookCollectionById(collectionId);
-    verify(homeWebController).prepareModel(any(Model.class), any(Principal.class), eq("collection-add-book"));
+    // Then
+    assertEquals("layout", viewName);
+
+    verify(homeWebController).prepareModel(eq(model), eq(principal), eq("collection-add-book"));
+    verify(bookCollectionService).findBookCollectionById(eq(collectionId));
+    verify(bookService).findAll();
+    verify(model).addAttribute(eq("collectionId"), eq(collectionId));
+    verify(model).addAttribute(eq("collection"), eq(testCollectionShow));
+    verify(model).addAttribute(eq("books"), anyList());
+    verify(model).addAttribute(eq("title"), eq("BooqIn - Add Book to Collection"));
+    verify(model).addAttribute(eq("content"), eq("pages/collections/addBook"));
   }
 
   @Test
-  void testAddBookToCollection_Success() {
-    // Arrange
+  @DisplayName("addBookToCollection - Should add book to collection")
+  void addBookToCollection_ShouldAddBookToCollection() {
+    // Given
     Long collectionId = 1L;
-    Long bookId = 2L;
-    User currentUser = new User();
-    currentUser.setId(1L);
+    Long bookId = 1L;
 
-    BookCollectionShow collection = mock(BookCollectionShow.class);
-    when(collection.title()).thenReturn("Test Collection");
+    when(bookCollectionService.findBookCollectionById(eq(collectionId))).thenReturn(testCollectionShow);
+    when(bookService.findById(eq(bookId))).thenReturn(testBookShow);
+    when(bookMapper.toAuthor(any())).thenReturn(new Author());
+    doNothing().when(bookCollectionService).addBookToCollection(eq(collectionId), eq(bookId));
 
-    BookShow bookShow = mock(BookShow.class);
-    when(bookShow.id()).thenReturn(bookId);
-    when(bookShow.title()).thenReturn("Test Book");
-    when(bookShow.authors()).thenReturn(Set.of());
+    // When
+    String viewName = bookCollectionWebController.addBookToCollection(collectionId, bookId, currentUser, model, principal);
 
-    when(bookCollectionService.findBookCollectionById(collectionId)).thenReturn(collection);
-    when(bookService.findById(bookId)).thenReturn(bookShow);
-    doNothing().when(bookCollectionService).addBookToCollection(collectionId, bookId);
+    // Then
+    assertEquals("redirect:/collections/" + collectionId, viewName);
 
-    // Act
-    String result = bookCollectionWebController.addBookToCollection(collectionId, bookId, currentUser, model, principal);
-
-    // Assert
-    assertEquals("redirect:/collections/" + collectionId, result);
-    verify(bookCollectionService).findBookCollectionById(collectionId);
-    verify(bookService).findById(bookId);
-    verify(bookCollectionService).addBookToCollection(collectionId, bookId);
+    verify(bookCollectionService).findBookCollectionById(eq(collectionId));
+    verify(bookService).findById(eq(bookId));
+    verify(bookCollectionService).addBookToCollection(eq(collectionId), eq(bookId));
   }
 
   @Test
-  void testAddBookToCollection_NotFound() {
-    // Arrange
+  @DisplayName("removeBookFromCollection - Should remove book from collection")
+  void removeBookFromCollection_ShouldRemoveBookFromCollection() {
+    // Given
     Long collectionId = 1L;
-    Long bookId = 2L;
-    User currentUser = new User();
+    Long bookId = 1L;
 
-    when(bookCollectionService.findBookCollectionById(collectionId))
-            .thenThrow(new ResourceNotFoundException("Collection not found"));
+    when(bookCollectionService.findBookCollectionById(eq(collectionId))).thenReturn(testCollectionShow);
+    doNothing().when(bookCollectionService).removeBookFromCollection(eq(collectionId), eq(bookId));
 
-    // Act
-    String result = bookCollectionWebController.addBookToCollection(collectionId, bookId, currentUser, model, principal);
+    // When
+    String viewName = bookCollectionWebController.removeBookFromCollection(collectionId, bookId, currentUser, model);
 
-    // Assert
-    assertEquals("layout", result);
-    verify(model).addAttribute(eq("error"), anyString());
-    verify(model).addAttribute("title", "BooqIn - Error");
-    verify(model).addAttribute("content", "pages/collections/addBook");
-    verify(homeWebController).prepareModel(any(Model.class), any(Principal.class), eq("collection-add-book"));
+    // Then
+    assertEquals("redirect:/collections/" + collectionId + "?success=bookRemoved", viewName);
+
+    verify(bookCollectionService).findBookCollectionById(eq(collectionId));
+    verify(bookCollectionService).removeBookFromCollection(eq(collectionId), eq(bookId));
   }
 
   @Test
-  void testRemoveBookFromCollection_Success() {
-    // Arrange
-    Long collectionId = 1L;
-    Long bookId = 2L;
-    User currentUser = new User();
-    currentUser.setId(1L);
+  @DisplayName("showCreateCollectionForm - Should display create collection form")
+  void showCreateCollectionForm_ShouldDisplayCreateCollectionForm() {
+    // When
+    String viewName = bookCollectionWebController.showCreateCollectionForm(model, principal);
 
-    UserIndex userIndex = new UserIndex(1L, "John", "Doe", "john@example.com", null, null);
-    BookCollectionShow collection = new BookCollectionShow(
-            collectionId, "Test Collection", "Description", true,
-            new ArrayList<>(), userIndex, "NORMAL",
-            LocalDateTime.now(), LocalDateTime.now());
+    // Then
+    assertEquals("layout", viewName);
 
-    when(bookCollectionService.findBookCollectionById(collectionId)).thenReturn(collection);
-    doNothing().when(bookCollectionService).removeBookFromCollection(collectionId, bookId);
-
-    // Act
-    String result = bookCollectionWebController.removeBookFromCollection(collectionId, bookId, currentUser, model);
-
-    // Assert
-    assertEquals("redirect:/collections/" + collectionId + "?success=bookRemoved", result);
-    verify(bookCollectionService).findBookCollectionById(collectionId);
-    verify(bookCollectionService).removeBookFromCollection(collectionId, bookId);
+    verify(homeWebController).prepareModel(eq(model), eq(principal), eq("collection-create"));
+    verify(model).addAttribute(eq("bookCollection"), any(BookCollectionCreate.class));
+    verify(model).addAttribute(eq("title"), eq("BooqIn - Create Collection"));
+    verify(model).addAttribute(eq("content"), eq("pages/collections/create"));
   }
 
   @Test
-  void testRemoveBookFromCollection_NotOwner() {
-    // Arrange
-    Long collectionId = 1L;
-    Long bookId = 2L;
-    User currentUser = new User();
-    currentUser.setId(2L); // Different from collection owner ID
+  @DisplayName("createCollection - Should create collection and redirect")
+  void createCollection_ShouldCreateCollectionAndRedirect() {
+    // Given
+    BookCollectionCreate bookCollectionCreate = new BookCollectionCreate(
+            "New Collection",
+            "New Description",
+            true,
+            Optional.empty()
+    );
 
-    UserIndex userIndex = new UserIndex(1L, "John", "Doe", "john@example.com", null, null);
-    BookCollectionShow collection = new BookCollectionShow(
-            collectionId, "Test Collection", "Description", true,
-            new ArrayList<>(), userIndex, "NORMAL",
-            LocalDateTime.now(), LocalDateTime.now());
+    when(bookCollectionService.createBookCollection(eq(bookCollectionCreate), eq(currentUser))).thenReturn(testCollectionShow);
 
-    when(bookCollectionService.findBookCollectionById(collectionId)).thenReturn(collection);
+    // When
+    String viewName = bookCollectionWebController.createCollection(bookCollectionCreate, model, principal, currentUser);
 
-    // Act
-    String result = bookCollectionWebController.removeBookFromCollection(collectionId, bookId, currentUser, model);
+    // Then
+    assertEquals("redirect:/collections", viewName);
 
-    // Assert
-    assertEquals("redirect:/collections?error=notOwner", result);
-    verify(bookCollectionService).findBookCollectionById(collectionId);
-    verify(bookCollectionService, never()).removeBookFromCollection(anyLong(), anyLong());
-  }
-
-  @Test
-  void testShowCreateCollectionForm() throws Exception {
-    // Act & Assert
-    mockMvc.perform(get("/collections/new"))
-            .andExpect(status().isOk())
-            .andExpect(view().name("layout"))
-            .andExpect(model().attributeExists("bookCollection"))
-            .andExpect(model().attribute("title", "BooqIn - Create Collection"))
-            .andExpect(model().attribute("content", "pages/collections/create"));
-
-    verify(homeWebController).prepareModel(any(Model.class), any(Principal.class), eq("collection-create"));
-  }
-
-  @Test
-  void testCreateCollection_Success() {
-    // Arrange
-    User currentUser = new User();
-    currentUser.setId(1L);
-
-    BookCollectionCreate bookCollectionCreate = new BookCollectionCreate("Test Collection", "Description", true, Optional.empty());
-    BookCollectionShow createdCollection = mock(BookCollectionShow.class);
-
-    when(bookCollectionService.createBookCollection(eq(bookCollectionCreate), eq(currentUser))).thenReturn(createdCollection);
-
-    // Act
-    String result = bookCollectionWebController.createCollection(bookCollectionCreate, model, principal, currentUser);
-
-    // Assert
-    assertEquals("redirect:/collections", result);
     verify(bookCollectionService).createBookCollection(eq(bookCollectionCreate), eq(currentUser));
   }
 
   @Test
-  void testCreateCollection_Error() {
-    // Arrange
-    User currentUser = new User();
-    currentUser.setId(1L);
-
-    BookCollectionCreate bookCollectionCreate = new BookCollectionCreate("Test Collection", "Description", true, Optional.empty());
+  @DisplayName("createCollection - Should handle exception")
+  void createCollection_WithException_ShouldShowError() {
+    // Given
+    BookCollectionCreate bookCollectionCreate = new BookCollectionCreate(
+            "New Collection",
+            "New Description",
+            true,
+            Optional.empty()
+    );
 
     when(bookCollectionService.createBookCollection(eq(bookCollectionCreate), eq(currentUser)))
             .thenThrow(new ResourceNotFoundException("Error creating collection"));
 
-    // Act
-    String result = bookCollectionWebController.createCollection(bookCollectionCreate, model, principal, currentUser);
+    // When
+    String viewName = bookCollectionWebController.createCollection(bookCollectionCreate, model, principal, currentUser);
 
-    // Assert
-    assertEquals("layout", result);
+    // Then
+    assertEquals("layout", viewName);
+
+    verify(bookCollectionService).createBookCollection(eq(bookCollectionCreate), eq(currentUser));
+    verify(homeWebController).prepareModel(eq(model), eq(principal), eq("collection-create"));
     verify(model).addAttribute(eq("error"), anyString());
-    verify(model).addAttribute("title", "BooqIn - Error");
-    verify(model).addAttribute("content", "pages/collections/create");
-    verify(homeWebController).prepareModel(any(Model.class), any(Principal.class), eq("collection-create"));
+    verify(model).addAttribute(eq("title"), eq("BooqIn - Error"));
+    verify(model).addAttribute(eq("content"), eq("pages/collections/create"));
   }
 
   @Test
-  void testShowEditCollectionForm_Success() throws Exception {
-    // Arrange
+  @DisplayName("showEditCollectionForm - Should display edit collection form when user is owner")
+  void showEditCollectionForm_UserIsOwner_ShouldDisplayEditForm() {
+    // Given
     Long collectionId = 1L;
-    User currentUser = new User();
-    currentUser.setId(1L);
 
-    UserIndex userIndex = new UserIndex(1L, "John", "Doe", "john@example.com", null, null);
-    BookCollectionShow collection = new BookCollectionShow(
-            collectionId, "Test Collection", "Description", true,
-            new ArrayList<>(), userIndex, "NORMAL",
-            LocalDateTime.now(), LocalDateTime.now());
+    when(bookCollectionService.findBookCollectionById(eq(collectionId))).thenReturn(testCollectionShow);
 
-    when(bookCollectionService.findBookCollectionById(collectionId)).thenReturn(collection);
+    // When
+    String viewName = bookCollectionWebController.showEditCollectionForm(collectionId, model, currentUser, principal);
 
-    // Act & Assert
-    mockMvc.perform(get("/collections/{id}/edit", collectionId)
-                    .sessionAttr("user", currentUser))
-            .andExpect(status().isOk())
-            .andExpect(view().name("layout"))
-            .andExpect(model().attributeExists("bookCollection"))
-            .andExpect(model().attribute("title", "BooqIn - Edit Collection"))
-            .andExpect(model().attribute("content", "pages/collections/edit"));
+    // Then
+    assertEquals("layout", viewName);
 
-    verify(bookCollectionService).findBookCollectionById(collectionId);
-    verify(homeWebController).prepareModel(any(Model.class), any(Principal.class), eq("collection-edit"));
+    verify(homeWebController).prepareModel(eq(model), eq(principal), eq("collection-edit"));
+    verify(bookCollectionService).findBookCollectionById(eq(collectionId));
+    verify(model).addAttribute(eq("bookCollection"), eq(testCollectionShow));
+    verify(model).addAttribute(eq("title"), eq("BooqIn - Edit Collection"));
+    verify(model).addAttribute(eq("content"), eq("pages/collections/edit"));
   }
 
   @Test
-  void testShowEditCollectionForm_NotOwner() throws Exception {
-    // Arrange
+  @DisplayName("showEditCollectionForm - Should redirect when user is not owner")
+  void showEditCollectionForm_UserIsNotOwner_ShouldRedirect() {
+    // Given
     Long collectionId = 1L;
-    User currentUser = new User();
-    currentUser.setId(2L); // Different from collection owner ID
+    User otherUser = mock(User.class);
+    when(otherUser.getId()).thenReturn(2L); // Different user ID
 
-    UserIndex userIndex = new UserIndex(1L, "John", "Doe", "john@example.com", null, null);
-    BookCollectionShow collection = new BookCollectionShow(
-            collectionId, "Test Collection", "Description", true,
-            new ArrayList<>(), userIndex, "NORMAL",
-            LocalDateTime.now(), LocalDateTime.now());
+    when(bookCollectionService.findBookCollectionById(eq(collectionId))).thenReturn(testCollectionShow);
 
-    when(bookCollectionService.findBookCollectionById(collectionId)).thenReturn(collection);
+    // When
+    String viewName = bookCollectionWebController.showEditCollectionForm(collectionId, model, otherUser, principal);
 
-    // Act & Assert
-    mockMvc.perform(get("/collections/{id}/edit", collectionId)
-                    .sessionAttr("user", currentUser))
-            .andExpect(status().is3xxRedirection())
-            .andExpect(redirectedUrl("/collections?error=notOwner"));
+    // Then
+    assertEquals("redirect:/collections?error=notOwner", viewName);
 
-    verify(bookCollectionService).findBookCollectionById(collectionId);
+    verify(bookCollectionService).findBookCollectionById(eq(collectionId));
   }
 
   @Test
-  void testUpdateCollection_Success() {
-    // Arrange
+  @DisplayName("showEditCollectionForm - Should handle collection not found")
+  void showEditCollectionForm_CollectionNotFound_ShouldRedirect() {
+    // Given
+    Long collectionId = 999L;
+
+    when(bookCollectionService.findBookCollectionById(eq(collectionId)))
+            .thenThrow(new ResourceNotFoundException("Collection not found"));
+
+    // When
+    String viewName = bookCollectionWebController.showEditCollectionForm(collectionId, model, currentUser, principal);
+
+    // Then
+    assertEquals("redirect:/collections?error=notFound", viewName);
+
+    verify(bookCollectionService).findBookCollectionById(eq(collectionId));
+    verify(model).addAttribute(eq("error"), anyString());
+  }
+
+  @Test
+  @DisplayName("updateCollection - Should update collection when binding has no errors and user is owner")
+  void updateCollection_NoBindingErrorsAndUserIsOwner_ShouldUpdateAndRedirect() {
+    // Given
     Long collectionId = 1L;
-    User currentUser = new User();
-    currentUser.setId(1L);
-    Boolean isPublic = true;
+    boolean isPublic = true;
+    BookCollection bookCollection = BookCollectionFactory.createNormalCollection(
+            "Updated Title", "Updated Description", UserFactory.createUser(passwordEncoder, UserRole.USER), isPublic
+    );
+    bookCollection.setTitle("Updated Title");
+    bookCollection.setDescription("Updated Description");
 
-    BookCollection bookCollection = mock(BookCollection.class);
-    when(bookCollection.getId()).thenReturn(collectionId);
-    when(bookCollection.getTitle()).thenReturn("Updated Title");
-    when(bookCollection.getDescription()).thenReturn("Updated Description");
-
-    UserIndex userIndex = new UserIndex(1L, "John", "Doe", "john@example.com", null, null);
-    BookCollectionShow existingCollection = new BookCollectionShow(
-            collectionId, "Old Title", "Old Description", false,
-            new ArrayList<>(), userIndex, "NORMAL",
-            LocalDateTime.now(), LocalDateTime.now());
-
-    BookCollectionShow updatedCollection = mock(BookCollectionShow.class);
-
-    when(bookCollectionService.findBookCollectionById(collectionId)).thenReturn(existingCollection);
     when(bindingResult.hasErrors()).thenReturn(false);
+    when(bookCollectionService.findBookCollectionById(eq(collectionId))).thenReturn(testCollectionShow);
     when(bookCollectionService.updateBookCollection(eq(collectionId), any(BookCollectionUpdate.class)))
-            .thenReturn(updatedCollection);
+            .thenReturn(testCollectionShow);
 
-    // Act
-    String result = bookCollectionWebController.updateCollection(
+    // When
+    String viewName = bookCollectionWebController.updateCollection(
             collectionId, bookCollection, bindingResult, isPublic, currentUser, model, principal);
 
-    // Assert
-    assertEquals("redirect:/collections", result);
-    verify(bookCollectionService).findBookCollectionById(collectionId);
+    // Then
+    assertEquals("redirect:/collections", viewName);
+
+    verify(bindingResult).hasErrors();
+    verify(bookCollectionService).findBookCollectionById(eq(collectionId));
     verify(bookCollectionService).updateBookCollection(eq(collectionId), any(BookCollectionUpdate.class));
   }
 
   @Test
-  void testUpdateCollection_BindingErrors() {
-    // Arrange
+  @DisplayName("updateCollection - Should handle binding errors")
+  void updateCollection_BindingErrors_ShouldRedirect() {
+    // Given
     Long collectionId = 1L;
-    User currentUser = new User();
-    currentUser.setId(1L);
-    Boolean isPublic = true;
+    boolean isPublic = true;
+    BookCollection bookCollection = BookCollectionFactory.createNormalCollection(
+            "Updated Title", "Updated Description", UserFactory.createUser(passwordEncoder, UserRole.USER), isPublic
+    );
 
-    BookCollection bookCollection = mock(BookCollection.class);
-    when(bookCollection.getId()).thenReturn(collectionId);
-    when(bookCollection.getTitle()).thenReturn("Updated Title");
-    when(bookCollection.getDescription()).thenReturn("Updated Description");
     when(bindingResult.hasErrors()).thenReturn(true);
+    when(bindingResult.getAllErrors()).thenReturn(Collections.emptyList());
 
-    // Act
-    String result = bookCollectionWebController.updateCollection(
+    // When
+    String viewName = bookCollectionWebController.updateCollection(
             collectionId, bookCollection, bindingResult, isPublic, currentUser, model, principal);
 
-    // Assert
-    assertEquals("redirect:/collections?error=notFound", result);
+    // Then
+    assertEquals("redirect:/collections?error=notFound", viewName);
+
     verify(bindingResult).hasErrors();
-    verify(bookCollectionService, never()).findBookCollectionById(anyLong());
+    verifyNoMoreInteractions(bookCollectionService);
   }
 
   @Test
-  void testDeleteCollection_Success() {
-    // Arrange
+  @DisplayName("updateCollection - Should handle exception")
+  void updateCollection_WithException_ShouldShowError() {
+    // Given
     Long collectionId = 1L;
-    User currentUser = new User();
-    currentUser.setId(1L);
+    boolean isPublic = true;
+    BookCollection bookCollection = BookCollectionFactory.createNormalCollection(
+            "Updated Title", "Updated Description", UserFactory.createUser(passwordEncoder, UserRole.USER), isPublic
+    );
+    bookCollection.setTitle("Updated Title");
+    bookCollection.setDescription("Updated Description");
 
-    UserIndex userIndex = new UserIndex(1L, "John", "Doe", "john@example.com", null, null);
-    BookCollectionShow collection = new BookCollectionShow(
-            collectionId, "Test Collection", "Description", true,
-            new ArrayList<>(), userIndex, "NORMAL",
-            LocalDateTime.now(), LocalDateTime.now());
+    when(bindingResult.hasErrors()).thenReturn(false);
+    when(bookCollectionService.findBookCollectionById(eq(collectionId))).thenReturn(testCollectionShow);
+    when(bookCollectionService.updateBookCollection(eq(collectionId), any(BookCollectionUpdate.class)))
+            .thenThrow(new ResourceNotFoundException("Error updating collection"));
 
-    when(bookCollectionService.findBookCollectionById(collectionId)).thenReturn(collection);
-    doNothing().when(bookCollectionService).deleteBookCollection(collectionId);
+    // When
+    String viewName = bookCollectionWebController.updateCollection(
+            collectionId, bookCollection, bindingResult, isPublic, currentUser, model, principal);
 
-    // Act
-    String result = bookCollectionWebController.deleteCollection(collectionId, currentUser);
+    // Then
+    assertEquals("layout", viewName);
 
-    // Assert
-    assertEquals("redirect:/collections?success=deleted", result);
-    verify(bookCollectionService).findBookCollectionById(collectionId);
-    verify(bookCollectionService).deleteBookCollection(collectionId);
+    verify(bindingResult).hasErrors();
+    verify(bookCollectionService).findBookCollectionById(eq(collectionId));
+    verify(bookCollectionService).updateBookCollection(eq(collectionId), any(BookCollectionUpdate.class));
+    verify(homeWebController).prepareModel(eq(model), eq(principal), eq("collection-edit"));
+    verify(model).addAttribute(eq("error"), anyString());
+    verify(model).addAttribute(eq("title"), eq("BooqIn - Error"));
+    verify(model).addAttribute(eq("content"), eq("pages/collections/edit"));
   }
 
   @Test
-  void testDeleteCollection_NotOwner() {
-    // Arrange
+  @DisplayName("deleteCollection - Should delete collection when user is owner")
+  void deleteCollection_UserIsOwner_ShouldDeleteAndRedirect() {
+    // Given
     Long collectionId = 1L;
-    User currentUser = new User();
-    currentUser.setId(2L); // Different from collection owner ID
 
-    UserIndex userIndex = new UserIndex(1L, "John", "Doe", "john@example.com", null, null);
-    BookCollectionShow collection = new BookCollectionShow(
-            collectionId, "Test Collection", "Description", true,
-            new ArrayList<>(), userIndex, "NORMAL",
-            LocalDateTime.now(), LocalDateTime.now());
+    when(bookCollectionService.findBookCollectionById(eq(collectionId))).thenReturn(testCollectionShow);
+    doNothing().when(bookCollectionService).deleteBookCollection(eq(collectionId));
 
-    when(bookCollectionService.findBookCollectionById(collectionId)).thenReturn(collection);
+    // When
+    String viewName = bookCollectionWebController.deleteCollection(collectionId, currentUser);
 
-    // Act
-    String result = bookCollectionWebController.deleteCollection(collectionId, currentUser);
+    // Then
+    assertEquals("redirect:/collections?success=deleted", viewName);
 
-    // Assert
-    assertEquals("redirect:/collections?error=notOwner", result);
-    verify(bookCollectionService).findBookCollectionById(collectionId);
+    verify(bookCollectionService).findBookCollectionById(eq(collectionId));
+    verify(bookCollectionService).deleteBookCollection(eq(collectionId));
+  }
+
+  @Test
+  @DisplayName("deleteCollection - Should redirect when user is not owner")
+  void deleteCollection_UserIsNotOwner_ShouldRedirect() {
+    // Given
+    Long collectionId = 1L;
+    User otherUser = mock(User.class);
+    when(otherUser.getId()).thenReturn(2L); // Different user ID
+
+    when(bookCollectionService.findBookCollectionById(eq(collectionId))).thenReturn(testCollectionShow);
+
+    // When
+    String viewName = bookCollectionWebController.deleteCollection(collectionId, otherUser);
+
+    // Then
+    assertEquals("redirect:/collections?error=notOwner", viewName);
+
+    verify(bookCollectionService).findBookCollectionById(eq(collectionId));
     verify(bookCollectionService, never()).deleteBookCollection(anyLong());
   }
 
   @Test
-  void testVote() {
-    // Arrange
+  @DisplayName("deleteCollection - Should handle collection not found")
+  void deleteCollection_CollectionNotFound_ShouldRedirect() {
+    // Given
+    Long collectionId = 999L;
+
+    when(bookCollectionService.findBookCollectionById(eq(collectionId)))
+            .thenThrow(new ResourceNotFoundException("Collection not found"));
+
+    // When
+    String viewName = bookCollectionWebController.deleteCollection(collectionId, currentUser);
+
+    // Then
+    assertEquals("redirect:/collections?error=notFound", viewName);
+
+    verify(bookCollectionService).findBookCollectionById(eq(collectionId));
+    verify(bookCollectionService, never()).deleteBookCollection(anyLong());
+  }
+
+  @Test
+  @DisplayName("vote - Should cast vote and redirect for authenticated user")
+  void vote_AuthenticatedUser_ShouldCastVoteAndRedirect() {
+    // Given
     Long collectionId = 1L;
-    User currentUser = new User();
-    currentUser.setId(1L);
     VoteType voteType = VoteType.UPVOTE;
 
-    doNothing().when(voteService).castVote(any());
+    // When
+    String viewName = bookCollectionWebController.vote(collectionId, voteType, currentUser, model);
 
-    // Act
-    String result = bookCollectionWebController.vote(collectionId, voteType, currentUser, model);
+    // Then
+    assertEquals("redirect:/collections/" + collectionId, viewName);
 
-    // Assert
-    assertEquals("redirect:/collections/" + collectionId, result);
-    verify(voteService).castVote(any());
+    verify(voteService).castVote(any(VoteCreate.class));
+  }
+
+  @Test
+  @DisplayName("vote - Should redirect without casting vote for unauthenticated user")
+  void vote_UnauthenticatedUser_ShouldRedirectWithoutCastingVote() {
+    // Given
+    Long collectionId = 1L;
+    VoteType voteType = VoteType.UPVOTE;
+
+    // When
+    String viewName = bookCollectionWebController.vote(collectionId, voteType, null, model);
+
+    // Then
+    assertEquals("redirect:/", viewName);
+
+    verifyNoInteractions(voteService);
+  }
+
+  @Test
+  @DisplayName("removeBookFromCollection - Should redirect when collection not found")
+  void removeBookFromCollection_CollectionNotFound_ShouldRedirect() {
+    // Given
+    Long collectionId = 999L;
+    Long bookId = 1L;
+
+    when(bookCollectionService.findBookCollectionById(eq(collectionId)))
+            .thenThrow(new ResourceNotFoundException("Collection not found"));
+
+    // When
+    String viewName = bookCollectionWebController.removeBookFromCollection(collectionId, bookId, currentUser, model);
+
+    // Then
+    assertEquals("redirect:/collections/" + collectionId + "?error=notFound", viewName);
+
+    verify(bookCollectionService).findBookCollectionById(eq(collectionId));
+    verify(bookCollectionService, never()).removeBookFromCollection(anyLong(), anyLong());
+  }
+
+  @Test
+  @DisplayName("addBookToCollection - Should handle collection or book not found")
+  void addBookToCollection_ResourceNotFound_ShouldShowError() {
+    // Given
+    Long collectionId = 1L;
+    Long bookId = 999L;
+
+    when(bookCollectionService.findBookCollectionById(eq(collectionId))).thenReturn(testCollectionShow);
+    when(bookService.findById(eq(bookId))).thenThrow(new ResourceNotFoundException("Book not found"));
+
+    // When
+    String viewName = bookCollectionWebController.addBookToCollection(collectionId, bookId, currentUser, model, principal);
+
+    // Then
+    assertEquals("layout", viewName);
+
+    verify(bookCollectionService).findBookCollectionById(eq(collectionId));
+    verify(bookService).findById(eq(bookId));
+    verify(homeWebController).prepareModel(eq(model), eq(principal), eq("collection-add-book"));
+    verify(model).addAttribute(eq("error"), anyString());
+    verify(model).addAttribute(eq("title"), eq("BooqIn - Error"));
+    verify(model).addAttribute(eq("content"), eq("pages/collections/addBook"));
   }
 }

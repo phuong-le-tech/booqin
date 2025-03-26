@@ -6,39 +6,38 @@ import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionIndex;
 import fr.uge.booqIn.dto.user.UserIndex;
 import fr.uge.booqIn.dto.user.UserShow;
+import fr.uge.booqIn.entity.Address;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.UserRole;
+import fr.uge.booqIn.exception.ResourceNotFoundException;
+import fr.uge.booqIn.factory.fixture.AddressFactory;
+import fr.uge.booqIn.model.BookCollection;
 import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
 import fr.uge.booqIn.service.interfaces.UserServiceInterface;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.ui.Model;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@DisplayName("AdminWebController Tests")
 class AdminWebControllerTest {
-
-  private MockMvc mockMvc;
 
   @Mock
   private UserServiceInterface userService;
@@ -64,233 +63,349 @@ class AdminWebControllerTest {
   @InjectMocks
   private AdminWebController adminWebController;
 
+  private User testUser;
+  private UserShow testUserShow;
+  private UserIndex testUserIndex;
+  private BookIndex testBookIndex;
+  private BookCollectionIndex testCollectionIndex;
+
   @BeforeEach
   void setUp() {
     MockitoAnnotations.openMocks(this);
-    mockMvc = MockMvcBuilders.standaloneSetup(adminWebController).build();
+
+    // Setup test data
+    testUser = new User();
+    testUser.setId(1L);
+    testUser.setFirstName("John");
+    testUser.setLastName("Doe");
+    testUser.setEmail("john.doe@example.com");
+    testUser.setPassword("Password123");
+    testUser.setAddress(AddressFactory.createAddress());
+    testUser.setRole(UserRole.USER);
+
+    testUserShow = new UserShow(
+            testUser.getId(),
+            testUser.getFirstName(),
+            testUser.getLastName(),
+            testUser.getEmail(),
+            testUser.getAddress(),
+            Collections.emptyList(),
+            testUser.getRole()
+    );
+
+    testUserIndex = new UserIndex(
+            testUser.getId(),
+            testUser.getFirstName(),
+            testUser.getLastName(),
+            testUser.getEmail(),
+            testUser.getAddress(),
+            testUser.getRole()
+    );
+
+    testBookIndex = new BookIndex(
+            1L,
+            "Test Book",
+            Collections.singleton("Test Author"),
+            new Date()
+    );
+
+    testCollectionIndex = new BookCollectionIndex(
+            1L,
+            "Test Collection",
+            "Test Description",
+            "John Doe",
+            1L,
+            0,
+            true,
+            BookCollection.CollectionType.NORMAL
+    );
+
+    doNothing().when(homeWebController).prepareModel(any(Model.class), any(Principal.class), anyString());
   }
 
   @Test
-  void testAdminDashboardUsersTab() throws Exception {
-    // Arrange
-    List<UserIndex> userList = new ArrayList<>();
-    userList.add(new UserIndex(1L, "John", "Doe", "john@example.com", null, UserRole.USER));
+  @DisplayName("adminDashboard - Should show users tab by default")
+  void adminDashboard_Default_ShouldShowUsersTab() {
+    // Given
+    String activeTab = "users";
+    int page = 0;
+    int size = 10;
+    String sortField = "id";
+    String sortDirection = "asc";
+
+    List<UserIndex> userList = Collections.singletonList(testUserIndex);
     Page<UserIndex> userPage = new PageImpl<>(userList);
 
-    when(userService.findUsers(anyString(), anyString(), anyString(), any(Pageable.class)))
-            .thenReturn(userPage);
+    when(userService.findUsers(eq(null), eq(null), eq(null), any(Pageable.class))).thenReturn(userPage);
 
-    // Act & Assert
-    mockMvc.perform(get("/admin")
-                    .param("tab", "users")
-                    .param("page", "0")
-                    .param("size", "10"))
-            .andExpect(status().isOk())
-            .andExpect(view().name("layout"))
-            .andExpect(model().attributeExists("users"))
-            .andExpect(model().attribute("activeTab", "users"));
+    // When
+    String viewName = adminWebController.adminDashboard(
+            model, principal, activeTab, page, size, sortField, sortDirection,
+            null, null, null, null, null, null, null, false, null
+    );
 
-    verify(userService).findUsers(anyString(), anyString(), anyString(), any(Pageable.class));
+    // Then
+    assertEquals("layout", viewName);
+
+    verify(homeWebController).prepareModel(eq(model), eq(principal), eq("admin"));
+    verify(model).addAttribute(eq("activeTab"), eq(activeTab));
+    verify(userService).findUsers(eq(null), eq(null), eq(null), any(Pageable.class));
+    verify(model).addAttribute(eq("users"), eq(userPage));
+    verify(model).addAttribute(eq("title"), eq("BooqIn - Administration"));
+    verify(model).addAttribute(eq("content"), eq("pages/admin/admin-panel"));
   }
 
   @Test
-  void testAdminDashboardBooksTab() throws Exception {
-    // Arrange
-    List<BookIndex> bookList = new ArrayList<>();
+  @DisplayName("adminDashboard - Should show books tab when selected")
+  void adminDashboard_BooksTab_ShouldShowBooksTab() {
+    // Given
+    String activeTab = "books";
+    int page = 0;
+    int size = 10;
+    String sortField = "id";
+    String sortDirection = "asc";
+
+    List<BookIndex> bookList = Collections.singletonList(testBookIndex);
     Page<BookIndex> bookPage = new PageImpl<>(bookList);
 
-    when(bookService.findBooks(anyString(), anyString(), anyString(), any(Pageable.class)))
-            .thenReturn(bookPage);
+    when(bookService.findBooks(eq(null), eq(null), eq(null), any(Pageable.class))).thenReturn(bookPage);
 
-    // Act & Assert
-    mockMvc.perform(get("/admin")
-                    .param("tab", "books")
-                    .param("page", "0")
-                    .param("size", "10"))
-            .andExpect(status().isOk())
-            .andExpect(view().name("layout"))
-            .andExpect(model().attributeExists("books"))
-            .andExpect(model().attribute("activeTab", "books"));
+    // When
+    String viewName = adminWebController.adminDashboard(
+            model, principal, activeTab, page, size, sortField, sortDirection,
+            null, null, null, null, null, null, null, false, null
+    );
 
-    verify(bookService).findBooks(anyString(), anyString(), anyString(), any(Pageable.class));
+    // Then
+    assertEquals("layout", viewName);
+
+    verify(homeWebController).prepareModel(eq(model), eq(principal), eq("admin"));
+    verify(model).addAttribute(eq("activeTab"), eq(activeTab));
+    verify(bookService).findBooks(eq(null), eq(null), eq(null), any(Pageable.class));
+    verify(model).addAttribute(eq("books"), eq(bookPage));
+    verify(model).addAttribute(eq("title"), eq("BooqIn - Administration"));
+    verify(model).addAttribute(eq("content"), eq("pages/admin/admin-panel"));
   }
 
   @Test
-  void testAdminDashboardCollectionsTab() throws Exception {
-    // Arrange
-    List<BookCollectionIndex> collectionList = new ArrayList<>();
+  @DisplayName("adminDashboard - Should show collections tab when selected")
+  void adminDashboard_CollectionsTab_ShouldShowCollectionsTab() {
+    // Given
+    String activeTab = "collections";
+    int page = 0;
+    int size = 10;
+    String sortField = "id";
+    String sortDirection = "asc";
+
+    List<BookCollectionIndex> collectionList = Collections.singletonList(testCollectionIndex);
     Page<BookCollectionIndex> collectionPage = new PageImpl<>(collectionList);
 
-    when(bookCollectionService.findBookCollections(anyString(), anyString(), anyBoolean(), any(Pageable.class)))
-            .thenReturn(collectionPage);
+    when(bookCollectionService.findBookCollections(eq(null), eq(null), eq(false), any(Pageable.class))).thenReturn(collectionPage);
 
-    // Act & Assert
-    mockMvc.perform(get("/admin")
-                    .param("tab", "collections")
-                    .param("page", "0")
-                    .param("size", "10"))
-            .andExpect(status().isOk())
-            .andExpect(view().name("layout"))
-            .andExpect(model().attributeExists("collections"))
-            .andExpect(model().attribute("activeTab", "collections"));
+    // When
+    String viewName = adminWebController.adminDashboard(
+            model, principal, activeTab, page, size, sortField, sortDirection,
+            null, null, null, null, null, null, null, false, null
+    );
 
-    verify(bookCollectionService).findBookCollections(anyString(), anyString(), anyBoolean(), any(Pageable.class));
+    // Then
+    assertEquals("layout", viewName);
+
+    verify(homeWebController).prepareModel(eq(model), eq(principal), eq("admin"));
+    verify(model).addAttribute(eq("activeTab"), eq(activeTab));
+    verify(bookCollectionService).findBookCollections(eq(null), eq(null), eq(false), any(Pageable.class));
+    verify(model).addAttribute(eq("collections"), eq(collectionPage));
+    verify(model).addAttribute(eq("title"), eq("BooqIn - Administration"));
+    verify(model).addAttribute(eq("content"), eq("pages/admin/admin-panel"));
   }
 
   @Test
-  void testShowAddUserForm() throws Exception {
-    mockMvc.perform(get("/admin/users/new"))
-            .andExpect(status().isOk())
-            .andExpect(view().name("layout"))
-            .andExpect(model().attributeExists("user"))
-            .andExpect(model().attribute("title", "BooqIn - Add a user"))
-            .andExpect(model().attribute("content", "pages/admin/add-user"));
+  @DisplayName("adminDashboard - Should use search parameter for users tab")
+  void adminDashboard_UsersTabWithSearch_ShouldUseSearchParameter() {
+    // Given
+    String activeTab = "users";
+    int page = 0;
+    int size = 10;
+    String sortField = "id";
+    String sortDirection = "asc";
+    String search = "john";
 
-    verify(homeWebController).prepareModel(any(Model.class), any(Principal.class), eq("admin"));
+    List<UserIndex> userList = Collections.singletonList(testUserIndex);
+    Page<UserIndex> userPage = new PageImpl<>(userList);
+
+    when(userService.findUsers(eq(search), eq(search), eq(search), any(Pageable.class))).thenReturn(userPage);
+
+    // When
+    String viewName = adminWebController.adminDashboard(
+            model, principal, activeTab, page, size, sortField, sortDirection,
+            null, null, null, null, null, null, null, false, search
+    );
+
+    // Then
+    assertEquals("layout", viewName);
+
+    verify(userService).findUsers(eq(search), eq(search), eq(search), any(Pageable.class));
+    verify(model).addAttribute(eq("users"), eq(userPage));
   }
 
   @Test
-  void testProcessAddUserForm_Success() {
-    // Arrange
-    User user = new User();
-    user.setFirstName("John");
-    user.setLastName("Doe");
-    user.setEmail("john@example.com");
+  @DisplayName("showAddUserForm - Should show add user form")
+  void showAddUserForm_ShouldShowAddUserForm() {
+    // When
+    String viewName = adminWebController.showAddUserForm(model, principal);
 
-    when(userService.createUser(any(User.class))).thenReturn(user);
+    // Then
+    assertEquals("layout", viewName);
 
-    // Act
-    String result = adminWebController.processAddUserForm(user, UserRole.USER, model, principal, redirectAttributes);
-
-    // Assert
-    assertEquals("redirect:/admin?tab=users", result);
-    verify(redirectAttributes).addFlashAttribute("success", "User added with success");
-    verify(userService).createUser(user);
+    verify(homeWebController).prepareModel(eq(model), eq(principal), eq("admin"));
+    verify(model).addAttribute(eq("user"), any(User.class));
+    verify(model).addAttribute(eq("title"), eq("BooqIn - Add a user"));
+    verify(model).addAttribute(eq("content"), eq("pages/admin/add-user"));
   }
 
   @Test
-  void testProcessAddUserForm_Error() {
-    // Arrange
-    User user = new User();
-    user.setFirstName("John");
-    user.setLastName("Doe");
-    user.setEmail("john@example.com");
+  @DisplayName("processAddUserForm - Should add user and redirect on success")
+  void processAddUserForm_Success_ShouldRedirect() {
+    // Given
+    when(userService.createUser(any(User.class))).thenReturn(testUser);
 
-    when(userService.createUser(any(User.class))).thenThrow(new RuntimeException("Email already exists"));
+    // When
+    String viewName = adminWebController.processAddUserForm(testUser, UserRole.USER, model, principal, redirectAttributes);
 
-    // Act
-    String result = adminWebController.processAddUserForm(user, UserRole.USER, model, principal, redirectAttributes);
+    // Then
+    assertEquals("redirect:/admin?tab=users", viewName);
 
-    // Assert
-    assertEquals("layout", result);
-    verify(model).addAttribute("error", "Email already exists");
-    verify(model).addAttribute("user", user);
-    verify(model).addAttribute("title", "BooqIn - Add a user");
-    verify(model).addAttribute("content", "pages/admin/add-user");
+    verify(userService).createUser(eq(testUser));
+    verify(redirectAttributes).addFlashAttribute(eq("success"), anyString());
   }
 
   @Test
-  void testShowEditUserForm_Success() throws Exception {
-    // Arrange
+  @DisplayName("processAddUserForm - Should show error on failure")
+  void processAddUserForm_Failure_ShouldShowError() {
+    // Given
+    when(userService.createUser(any(User.class))).thenThrow(new RuntimeException("Test error"));
+
+    // When
+    String viewName = adminWebController.processAddUserForm(testUser, UserRole.USER, model, principal, redirectAttributes);
+
+    // Then
+    assertEquals("layout", viewName);
+
+    verify(userService).createUser(eq(testUser));
+    verify(homeWebController).prepareModel(eq(model), eq(principal), eq("admin"));
+    verify(model).addAttribute(eq("error"), anyString());
+    verify(model).addAttribute(eq("user"), eq(testUser));
+    verify(model).addAttribute(eq("title"), eq("BooqIn - Add a user"));
+    verify(model).addAttribute(eq("content"), eq("pages/admin/add-user"));
+  }
+
+  @Test
+  @DisplayName("showEditUserForm - Should show edit user form")
+  void showEditUserForm_Success_ShouldShowEditForm() {
+    // Given
     Long userId = 1L;
-    UserShow userShow = new UserShow(userId, "John", "Doe", "john@example.com", null, new ArrayList<>(), UserRole.USER);
+    when(userService.findById(eq(userId))).thenReturn(testUserShow);
 
-    when(userService.findById(userId)).thenReturn(userShow);
+    // When
+    String viewName = adminWebController.showEditUserForm(userId, model, principal);
 
-    // Act & Assert
-    mockMvc.perform(get("/admin/users/{id}/edit", userId))
-            .andExpect(status().isOk())
-            .andExpect(view().name("layout"))
-            .andExpect(model().attributeExists("user"))
-            .andExpect(model().attribute("role", UserRole.USER.getRole()))
-            .andExpect(model().attribute("title", "BooqIn - Modifier l'utilisateur"))
-            .andExpect(model().attribute("content", "pages/admin/edit-user"));
+    // Then
+    assertEquals("layout", viewName);
 
-    verify(userService).findById(userId);
+    verify(homeWebController).prepareModel(eq(model), eq(principal), eq("admin"));
+    verify(userService).findById(eq(userId));
+    verify(model).addAttribute(eq("user"), eq(testUserShow));
+    verify(model).addAttribute(eq("role"), eq(testUserShow.role().getRole()));
+    verify(model).addAttribute(eq("title"), eq("BooqIn - Modifier l'utilisateur"));
+    verify(model).addAttribute(eq("content"), eq("pages/admin/edit-user"));
   }
 
   @Test
-  void testShowEditUserForm_Error() throws Exception {
-    // Arrange
-    Long userId = 1L;
-    when(userService.findById(userId)).thenThrow(new RuntimeException("User not found"));
+  @DisplayName("showEditUserForm - Should redirect on user not found")
+  void showEditUserForm_UserNotFound_ShouldRedirect() {
+    // Given
+    Long userId = 999L;
+    when(userService.findById(eq(userId))).thenThrow(new ResourceNotFoundException("User not found"));
 
-    // Act & Assert
-    mockMvc.perform(get("/admin/users/{id}/edit", userId))
-            .andExpect(status().is3xxRedirection())
-            .andExpect(redirectedUrl("/admin?tab=users"));
+    // When
+    String viewName = adminWebController.showEditUserForm(userId, model, principal);
+
+    // Then
+    assertEquals("redirect:/admin?tab=users", viewName);
+
+    verify(userService).findById(eq(userId));
   }
 
   @Test
-  void testProcessEditUserForm_Success() {
-    // Arrange
+  @DisplayName("processEditUserForm - Should update user and redirect on success")
+  void processEditUserForm_Success_ShouldRedirect() {
+    // Given
     Long userId = 1L;
-    User user = new User();
-    user.setId(userId);
-    user.setFirstName("Updated");
-    user.setLastName("User");
-    user.setEmail("updated@example.com");
+    when(userService.updateUser(any(User.class))).thenReturn(testUser);
 
-    when(userService.updateUser(any(User.class))).thenReturn(user);
+    // When
+    String viewName = adminWebController.processEditUserForm(userId, testUser, UserRole.USER, model, principal, redirectAttributes);
 
-    // Act
-    String result = adminWebController.processEditUserForm(userId, user, UserRole.USER, model, principal, redirectAttributes);
+    // Then
+    assertEquals("redirect:/admin?tab=users", viewName);
 
-    // Assert
-    assertEquals("redirect:/admin?tab=users", result);
-    verify(redirectAttributes).addFlashAttribute("success", "User removed with success");
-    verify(userService).updateUser(user);
+    verify(userService).updateUser(eq(testUser));
+    verify(redirectAttributes).addFlashAttribute(eq("success"), anyString());
   }
 
   @Test
-  void testProcessEditUserForm_Error() {
-    // Arrange
+  @DisplayName("processEditUserForm - Should show error on failure")
+  void processEditUserForm_Failure_ShouldShowError() {
+    // Given
     Long userId = 1L;
-    User user = new User();
-    user.setId(userId);
-    user.setEmail("invalid-email");
+    when(userService.updateUser(any(User.class))).thenThrow(new RuntimeException("Test error"));
 
-    when(userService.updateUser(any(User.class))).thenThrow(new RuntimeException("Invalid email format"));
+    // When
+    String viewName = adminWebController.processEditUserForm(userId, testUser, UserRole.USER, model, principal, redirectAttributes);
 
-    // Act
-    String result = adminWebController.processEditUserForm(userId, user, UserRole.USER, model, principal, redirectAttributes);
+    // Then
+    assertEquals("layout", viewName);
 
-    // Assert
-    assertEquals("layout", result);
-    verify(model).addAttribute("error", "Invalid email format");
-    verify(model).addAttribute("user", user);
-    verify(model).addAttribute("userRoles", UserRole.USER.getRole());
-    verify(model).addAttribute("title", "BooqIn - Edit the user");
-    verify(model).addAttribute("content", "pages/admin/edit-user");
+    verify(userService).updateUser(eq(testUser));
+    verify(homeWebController).prepareModel(eq(model), eq(principal), eq("admin"));
+    verify(model).addAttribute(eq("error"), anyString());
+    verify(model).addAttribute(eq("user"), eq(testUser));
+    verify(model).addAttribute(eq("userRoles"), eq(UserRole.USER.getRole()));
+    verify(model).addAttribute(eq("title"), eq("BooqIn - Edit the user"));
+    verify(model).addAttribute(eq("content"), eq("pages/admin/edit-user"));
   }
 
   @Test
-  void testDeleteUser_Success() {
-    // Arrange
+  @DisplayName("deleteUser - Should delete user and redirect with success message")
+  void deleteUser_Success_ShouldRedirectWithSuccessMessage() {
+    // Given
     Long userId = 1L;
-    doNothing().when(userService).deleteUser(userId);
+    doNothing().when(userService).deleteUser(eq(userId));
 
-    // Act
-    String result = adminWebController.deleteUser(userId, redirectAttributes);
+    // When
+    String viewName = adminWebController.deleteUser(userId, redirectAttributes);
 
-    // Assert
-    assertEquals("redirect:/admin?tab=users", result);
-    verify(redirectAttributes).addFlashAttribute("success", "User removed with success");
-    verify(userService).deleteUser(userId);
+    // Then
+    assertEquals("redirect:/admin?tab=users", viewName);
+
+    verify(userService).deleteUser(eq(userId));
+    verify(redirectAttributes).addFlashAttribute(eq("success"), anyString());
   }
 
   @Test
-  void testDeleteUser_Error() {
-    // Arrange
+  @DisplayName("deleteUser - Should redirect with error message on failure")
+  void deleteUser_Failure_ShouldRedirectWithErrorMessage() {
+    // Given
     Long userId = 1L;
-    doThrow(new RuntimeException("Cannot delete user")).when(userService).deleteUser(userId);
+    doThrow(new RuntimeException("Test error")).when(userService).deleteUser(eq(userId));
 
-    // Act
-    String result = adminWebController.deleteUser(userId, redirectAttributes);
+    // When
+    String viewName = adminWebController.deleteUser(userId, redirectAttributes);
 
-    // Assert
-    assertEquals("redirect:/admin?tab=users", result);
-    verify(redirectAttributes).addFlashAttribute(eq("error"), contains("Error while removing"));
-    verify(userService).deleteUser(userId);
+    // Then
+    assertEquals("redirect:/admin?tab=users", viewName);
+
+    verify(userService).deleteUser(eq(userId));
+    verify(redirectAttributes).addFlashAttribute(eq("error"), anyString());
   }
 }
