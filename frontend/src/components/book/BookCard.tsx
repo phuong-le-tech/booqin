@@ -2,7 +2,6 @@ import React, { useState, useEffect} from 'react';
 import { Link } from 'react-router-dom';
 import { BookIndex } from '../../model/Book.ts';
 import axiosInstance from "../../services/AxiosInstance.ts";
-import { useAuth } from "../../context/AuthContext.tsx";
 import { LendStatus } from "../../model/LendStatus";
 import { toast } from "react-toastify";
 import { useAuth } from "../../context/AuthContext";
@@ -20,7 +19,7 @@ interface BookCardProps {
     onLendingChange?: () => void;
 }
 
-export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], lentBooks = [], onLendingChange }) => {
+export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], lentBooks = [], loanStates = [], onLendingChange }) => {
     const { id } = book;
     const { user } = useAuth();
     const userId = user?.id;

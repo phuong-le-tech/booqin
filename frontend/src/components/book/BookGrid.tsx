@@ -47,8 +47,7 @@ export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading}) => {
                             return loan.id;
                         }
                         return null;
-                    }).filter(id => id !== null) as number[];
-
+                    }).filter((id: any) => id !== null) as number[];
                     setLentBooks(lentBookIds);
 
                     // Adapter l'extraction des états de prêt
@@ -80,8 +79,7 @@ export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading}) => {
                             return { bookId, state };
                         }
                         return null;
-                    }).filter(info => info !== null) as LoanInfo[];
-
+                    }).filter((info: any) => info !== null) as LoanInfo[];
                     setLoanStates(loanStatesData);
                 } else {
                     toast.warning("Format de données inattendu pour les livres prêtés");
@@ -98,8 +96,7 @@ export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading}) => {
                             return loan.id;
                         }
                         return null;
-                    }).filter(id => id !== null) as number[];
-
+                    }).filter((id: any) => id !== null) as number[];
                     setBorrowedBooks(borrowedBookIds);
                 }
             } else {
