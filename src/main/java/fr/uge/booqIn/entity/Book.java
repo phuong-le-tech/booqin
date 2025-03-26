@@ -46,7 +46,11 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
   @JoinTable(
           name = "book_author",
           joinColumns = @JoinColumn(name = "book_id"),
-          inverseJoinColumns = @JoinColumn(name = "author_id")
+          inverseJoinColumns = @JoinColumn(name = "author_id"),
+          indexes = {
+                  @Index(name = "idx_book_author_book_id", columnList = "book_id"),
+                  @Index(name = "idx_book_author_author_id", columnList = "author_id")
+          }
   )
   private Set<Author> authors = new HashSet<>();
 
@@ -57,7 +61,8 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
   @ElementCollection
   @CollectionTable(
           name = "book_category",
-          joinColumns = @JoinColumn(name = "book_id")
+          joinColumns = @JoinColumn(name = "book_id"),
+          indexes = @Index(name = "idx_book_category_book_id", columnList = "book_id")
   )
   @Column(name = "category")
   private Set<String> categories = new HashSet<>();
