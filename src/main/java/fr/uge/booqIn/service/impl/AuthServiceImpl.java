@@ -40,8 +40,6 @@ public class AuthServiceImpl implements AuthServiceInterface {
   private final AuthMapper authMapper;
   private final CartRepository cartRepository;
 
-  private final Object refreshLock = new Object();
-
   public AuthServiceImpl(
           UserRepository userRepository,
           PasswordEncoder passwordEncoder,
@@ -126,33 +124,6 @@ public class AuthServiceImpl implements AuthServiceInterface {
             .orElseThrow(() -> new IllegalStateException("User not found"));
 
     return authMapper.toUserMeDto(refreshedUser);
-  }
-
-  @Transactional
-  public AuthResponse refreshToken(String refreshToken) {
-    if (jwtService.isTokenExpired(refreshToken)) {
-      throw new IllegalStateException("Refresh token has expired");
-    }
-
-   /* boolean isFirstUse = jwtService.recordRefreshTokenUsage(refreshToken);
-    if (!isFirstUse) {
-      throw new IllegalStateException("Token reuse detected");
-    }*/
-
-    String username = jwtService.extractUsername(refreshToken);
-
-    synchronized (refreshLock) {
-      User user = userRepository.findByEmail(username)
-              .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-      String newAccessToken = jwtService.generateAccessToken(username);
-      String newRefreshToken = jwtService.generateRefreshToken(username);
-
-      user.setUpdatedAt(new Date());
-      userRepository.save(user);
-
-      return new AuthResponse(newAccessToken, newRefreshToken);
-    }
   }
 
   @Transactional
