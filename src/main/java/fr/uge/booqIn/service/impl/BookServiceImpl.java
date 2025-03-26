@@ -11,8 +11,10 @@ import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.mapper.BookMapper;
 import fr.uge.booqIn.repository.AuthorRepository;
 import fr.uge.booqIn.repository.BookRepository;
+import fr.uge.booqIn.service.ImageService;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
 import fr.uge.booqIn.specification.BookSpecification;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -25,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.logging.Logger;
@@ -36,16 +39,21 @@ public class BookServiceImpl implements BookServiceInterface {
   private final AuthorRepository authorRepository;
   private final BookMapper bookMapper;
   private final BooqInEventPublisher eventPublisher;
+  private final ImageService imageService;
+  @Value("${file.upload-dir}")
+  private String uploadDir;
 
   public BookServiceImpl(
       BookRepository bookRepository,
       AuthorRepository authorRepository,
       BookMapper bookMapper,
-      BooqInEventPublisher eventPublisher) {
+      BooqInEventPublisher eventPublisher,
+      ImageService imageService) {
     this.bookRepository = bookRepository;
     this.authorRepository = authorRepository;
     this.bookMapper = bookMapper;
     this.eventPublisher = eventPublisher;
+    this.imageService = imageService;
   }
 
   @Override
@@ -100,7 +108,7 @@ public class BookServiceImpl implements BookServiceInterface {
     book.setCreatedAt(LocalDateTime.now());
     book.setUpdatedAt(LocalDateTime.now());
     Book savedBook = bookRepository.save(book);
-
+    savedBook = downloadAndSaveCoverImage(savedBook);
     return savedBook;
   }
 
@@ -182,8 +190,10 @@ public class BookServiceImpl implements BookServiceInterface {
     // Check if a book with one of the ISBNs already exists
     Optional<Book> existingBookOpt = findExistingBookByIsbns(toSave.getIsbns());
 
-    existingBookOpt.map(book -> updateExistingBook(book, toSave))
-        .orElseGet(() -> createNewBook(toSave));
+      var savedBook = existingBookOpt.map(book -> updateExistingBook(book, toSave))
+              .orElseGet(() -> createNewBook(toSave));
+
+      downloadAndSaveCoverImage(savedBook);
   }
 
   private Optional<Book> findExistingBookByIsbns(Set<String> isbns) {
@@ -214,6 +224,11 @@ public class BookServiceImpl implements BookServiceInterface {
 
     // Add new authors
     addNewAuthors(existingBook, newBook.getAuthors());
+
+      // Update image url
+      if (isEmptyOrNull(existingBook.getCoverImageUrl()) && !isEmptyOrNull(newBook.getCoverImageUrl())) {
+          existingBook.setCoverImageUrl(newBook.getCoverImageUrl());
+      }
 
     // Update modification date
     existingBook.setUpdatedAt(LocalDateTime.now());
@@ -333,5 +348,30 @@ public class BookServiceImpl implements BookServiceInterface {
   public void recoverFromOptimisticLockingFailureSaveFromApi(
       ObjectOptimisticLockingFailureException ex, Book toSave) {
     throw new ConcurrentModificationException("The book has been modified by someone else. Please try again.", ex);
+  }
+
+  private Book downloadAndSaveCoverImage(Book book) {
+    if (book.getCoverImageUrl() != null && !book.getCoverImageUrl().isEmpty()
+            && (book.getCoverImagePath() == null || book.getCoverImagePath().isEmpty())) {
+      try {
+        logger.info("Téléchargement de l'image de couverture pour le livre ID: " + book.getId() + ", URL: " + book.getCoverImageUrl());
+        var imagePath = imageService.downloadBookCoverFromUrl(book.getCoverImageUrl(), book.getId());
+        book.setCoverImagePath(imagePath);
+
+        try {
+          var originalPath = Paths.get(uploadDir, imagePath);
+          var thumbnailPath = imageService.createThumbnail(originalPath, book.getId());
+          book.setThumbnailPath(thumbnailPath);
+          logger.info("Thumbnail path set to: " + thumbnailPath);
+        } catch (Exception e) {
+          logger.warning("Échec de l'assignation du chemin de miniature: " + e.getMessage());
+        }
+        book = bookRepository.save(book);
+        logger.info("Image de couverture téléchargée et enregistrée: " + imagePath);
+      } catch (Exception e) {
+        logger.warning("Échec du téléchargement de l'image de couverture: " + e.getMessage());
+      }
+    }
+    return book;
   }
 }

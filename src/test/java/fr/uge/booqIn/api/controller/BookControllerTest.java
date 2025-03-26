@@ -11,6 +11,7 @@ import fr.uge.booqIn.entity.AbstractBookCollection;
 import fr.uge.booqIn.exception.DuplicateResourceException;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.factory.ApiResponse;
+import fr.uge.booqIn.service.ImageService;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -41,13 +42,14 @@ import static org.mockito.Mockito.*;
 class BookControllerTest {
 
     private BookServiceInterface bookService;
+    private ImageService imageService;
     private BookController bookController;
     private Book testBook;
 
     @BeforeEach
     void setUp() {
         bookService = Mockito.mock(BookServiceInterface.class);
-        bookController = new BookController(bookService);
+        bookController = new BookController(bookService, imageService);
         testBook = createTestBook();
     }
 
@@ -80,8 +82,8 @@ class BookControllerTest {
         Date date1 = new Date(), date2 = new Date();
 
         List<BookIndex> bookList = List.of(
-                new BookIndex(1L, "Test Book 1", authorNames1, date1),
-                new BookIndex(2L, "Test Book 2", authorNames2, date2)
+                new BookIndex(1L, "Test Book 1", authorNames1, date1, "pathImageTest"),
+                new BookIndex(2L, "Test Book 2", authorNames2, date2, "pathImageTest")
         );
         Page<BookIndex> bookPage = new PageImpl<>(bookList);
         when(bookService.findBooks(eq(title), eq(author), eq(isbn), any(PageRequest.class)))
@@ -121,8 +123,8 @@ class BookControllerTest {
         Date date1 = new Date(), date2 = new Date();
 
         List<BookIndex> bookList = List.of(
-                new BookIndex(2L, "Z Book", authorNames2, date2),
-                new BookIndex(1L, "A Book", authorNames1, date1)
+                new BookIndex(2L, "Z Book", authorNames2, date2, "pathImageTest"),
+                new BookIndex(1L, "A Book", authorNames1, date1, "pathImageTest")
         );
         Page<BookIndex> bookPage = new PageImpl<>(bookList);
         when(bookService.findBooks(eq(title), eq(author), eq(isbn), any(PageRequest.class)))
@@ -166,7 +168,9 @@ class BookControllerTest {
                 publicationDate,
                 createdAt,
                 updatedAt,
-                categories
+                categories,
+                "pathImageTest1",
+                "pathImageTest2"
         );
         when(bookService.findById(eq(bookId))).thenReturn(bookShow);
 
@@ -361,7 +365,9 @@ class BookControllerTest {
                 publicationDate,
                 createdAt,
                 updatedAt,
-                categories
+                categories,
+                "pathImageTest1",
+                "pathImageTest2"
         );
         when(bookService.patchBook(eq(bookId), any(BookUpdate.class))).thenReturn(patchedBook);
 
