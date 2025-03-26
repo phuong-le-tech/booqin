@@ -4,18 +4,17 @@ package fr.uge.booqIn.controller.web;
 import fr.uge.booqIn.dto.book.BookCreate;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
-import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
 import fr.uge.booqIn.dto.bookCollection.LiteCollection;
+import fr.uge.booqIn.dto.comment.CommentDTO;
 import fr.uge.booqIn.dto.vote.VoteCount;
 import fr.uge.booqIn.dto.vote.VoteCreate;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.VoteType;
-import fr.uge.booqIn.mapper.BookCollectionMapper;
 import fr.uge.booqIn.model.BookCollection;
+import fr.uge.booqIn.service.impl.UserVoteService;
 import fr.uge.booqIn.service.interfaces.*;
-import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -28,29 +27,35 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/books")
 public class BookWebController {
+
     private final BookServiceInterface bookService;
     private final VoteServiceInterface voteServiceInterface;
     private final UserServiceInterface userService;
     private final CommentServiceInterface commentService;
     private final HomeWebController homeWebController;
+    private final UserVoteService userVoteService;
 
     @Autowired
     public BookWebController(BookServiceInterface bookService,
                              VoteServiceInterface voteServiceInterface,
-                             BookCollectionServiceInterface bookCollectionService, UserServiceInterface userService,
+                             UserServiceInterface userService,
                              CommentServiceInterface commentService,
-                             HomeWebController homeWebController) {
+                             HomeWebController homeWebController, UserVoteService userVoteService) {
         this.bookService = bookService;
         this.voteServiceInterface = voteServiceInterface;
       this.userService = userService;
         this.commentService = commentService;
         this.homeWebController = homeWebController;
+      this.userVoteService = userVoteService;
     }
     @GetMapping
     public String getAllBooks(Model model,
@@ -120,8 +125,10 @@ public class BookWebController {
         model.addAttribute("commentCount", totalComments);
         model.addAttribute("entityType", "BOOK"); // Ajout pour le formulaire de commentaire
         model.addAttribute("entityId", id); // Ajout pour le formulaire de commentaire
-
         if (currentUser != null) {
+            List<CommentDTO> list = commentService.getCommentTreeByEntity(id, "BOOK");
+            Map<Long, VoteType> commentVotes = userVoteService.collectCommentVotes(currentUser.getId(), list);
+            model.addAttribute("userCommentVotes", commentVotes);
             var voteUser = voteServiceInterface.getUserVoteType(currentUser.getId(),id,"BOOK");
             if(voteUser != null) {
                 model.addAttribute("userVote",voteUser.toString());
