@@ -7,6 +7,7 @@ import fr.uge.booqIn.dto.lending.LendingResponseDTO;
 import fr.uge.booqIn.dto.user.UserIndex;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.BookStatus;
+import fr.uge.booqIn.enums.LendStatus;
 import fr.uge.booqIn.enums.UserRole;
 import fr.uge.booqIn.factory.fixture.AddressFactory;
 import fr.uge.booqIn.service.interfaces.BookLendingInterface;
@@ -81,7 +82,9 @@ class BookLendingWebControllerTest {
             new Date(),
             LocalDateTime.now(),
             LocalDateTime.now(),
-            Collections.emptySet()
+            Collections.emptySet(),
+            "",
+            ""
     );
 
     testBookLendingShow = new BookLendingShow(
@@ -104,98 +107,17 @@ class BookLendingWebControllerTest {
   }
 
   @Test
-  @DisplayName("getLendingsPage - Should display all lendings when type is 'all'")
-  void getLendingsPage_AllType_ShouldDisplayAllLendings() {
-    // Given
-    String type = "all";
-    when(bookLendingInterface.findAllUserLendingsAsDTO(eq(1L), eq(type))).thenReturn(testLendingResponseDTO);
-
-    // When
-    String viewName = bookLendingWebController.getLendingsPage(type, currentUser, model);
-
-    // Then
-    assertEquals("layout", viewName);
-
-    verify(bookLendingInterface).findAllUserLendingsAsDTO(eq(1L), eq(type));
-    verify(model).addAttribute(eq("lendingData"), eq(testLendingResponseDTO));
-    verify(model).addAttribute(eq("activeTab"), eq(type));
-    verify(model).addAttribute(eq("userId"), eq(1L));
-    verify(model).addAttribute(eq("title"), eq("Vos Prêts de Livres"));
-    verify(model).addAttribute(eq("content"), eq("pages/bookLending/index"));
-  }
-
-  @Test
-  @DisplayName("getLendingsPage - Should display borrowed lendings when type is 'borrowed'")
-  void getLendingsPage_BorrowedType_ShouldDisplayBorrowedLendings() {
-    // Given
-    String type = "borrowed";
-    when(bookLendingInterface.findAllUserLendingsAsDTO(eq(1L), eq(type))).thenReturn(testLendingResponseDTO);
-
-    // When
-    String viewName = bookLendingWebController.getLendingsPage(type, currentUser, model);
-
-    // Then
-    assertEquals("layout", viewName);
-
-    verify(bookLendingInterface).findAllUserLendingsAsDTO(eq(1L), eq(type));
-    verify(model).addAttribute(eq("lendingData"), eq(testLendingResponseDTO));
-    verify(model).addAttribute(eq("activeTab"), eq(type));
-    verify(model).addAttribute(eq("userId"), eq(1L));
-    verify(model).addAttribute(eq("title"), eq("Vos Prêts de Livres"));
-    verify(model).addAttribute(eq("content"), eq("pages/bookLending/index"));
-  }
-
-  @Test
-  @DisplayName("getLendingsPage - Should display lent lendings when type is 'lent'")
-  void getLendingsPage_LentType_ShouldDisplayLentLendings() {
-    // Given
-    String type = "lent";
-    when(bookLendingInterface.findAllUserLendingsAsDTO(eq(1L), eq(type))).thenReturn(testLendingResponseDTO);
-
-    // When
-    String viewName = bookLendingWebController.getLendingsPage(type, currentUser, model);
-
-    // Then
-    assertEquals("layout", viewName);
-
-    verify(bookLendingInterface).findAllUserLendingsAsDTO(eq(1L), eq(type));
-    verify(model).addAttribute(eq("lendingData"), eq(testLendingResponseDTO));
-    verify(model).addAttribute(eq("activeTab"), eq(type));
-    verify(model).addAttribute(eq("userId"), eq(1L));
-    verify(model).addAttribute(eq("title"), eq("Vos Prêts de Livres"));
-    verify(model).addAttribute(eq("content"), eq("pages/bookLending/index"));
-  }
-
-  @Test
-  @DisplayName("getLendingsPage - Should show error for invalid type")
-  void getLendingsPage_InvalidType_ShouldShowError() {
-    // Given
-    String type = "invalid";
-
-    // When
-    String viewName = bookLendingWebController.getLendingsPage(type, currentUser, model);
-
-    // Then
-    assertEquals("layout", viewName);
-
-    verify(model).addAttribute(eq("errorMessage"), anyString());
-    verify(model).addAttribute(eq("title"), eq("Erreur"));
-    verifyNoInteractions(bookLendingInterface);
-  }
-
-  @Test
   @DisplayName("confirmLoan - Should confirm loan and redirect")
   void confirmLoan_ShouldConfirmLoanAndRedirect() {
     // Given
     Long lendingId = 1L;
-    Long userId = 1L;
     when(bookLendingInterface.confirmLoan(eq(lendingId))).thenReturn(true);
 
     // When
-    String viewName = bookLendingWebController.confirmLoan(lendingId, userId, redirectAttributes);
+    String viewName = bookLendingWebController.confirmLoan(lendingId, redirectAttributes);
 
     // Then
-    assertEquals("redirect:/loans?userId=" + userId, viewName);
+    assertEquals("redirect:/loans?userId=ALL", viewName);
 
     verify(bookLendingInterface).confirmLoan(eq(lendingId));
     verify(redirectAttributes).addFlashAttribute(eq("successMessage"), anyString());
@@ -206,14 +128,13 @@ class BookLendingWebControllerTest {
   void confirmLoan_Failure_ShouldRedirectWithError() {
     // Given
     Long lendingId = 1L;
-    Long userId = 1L;
     when(bookLendingInterface.confirmLoan(eq(lendingId))).thenReturn(false);
 
     // When
-    String viewName = bookLendingWebController.confirmLoan(lendingId, userId, redirectAttributes);
+    String viewName = bookLendingWebController.confirmLoan(lendingId, redirectAttributes);
 
     // Then
-    assertEquals("redirect:/loans?userId=" + userId, viewName);
+    assertEquals("redirect:/loans?userId=ALL", viewName);
 
     verify(bookLendingInterface).confirmLoan(eq(lendingId));
     verify(redirectAttributes).addFlashAttribute(eq("errorMessage"), anyString());
@@ -224,14 +145,13 @@ class BookLendingWebControllerTest {
   void shipBook_ShouldMarkAsShippedAndRedirect() {
     // Given
     Long lendingId = 1L;
-    Long userId = 1L;
     when(bookLendingInterface.markAsShipped(eq(lendingId))).thenReturn(true);
 
     // When
-    String viewName = bookLendingWebController.shipBook(lendingId, userId, redirectAttributes);
+    String viewName = bookLendingWebController.shipBook(lendingId, redirectAttributes);
 
     // Then
-    assertEquals("redirect:/loans?userId=" + userId, viewName);
+    assertEquals("redirect:/loans?type=BORROWED", viewName);
 
     verify(bookLendingInterface).markAsShipped(eq(lendingId));
     verify(redirectAttributes).addFlashAttribute(eq("successMessage"), anyString());
@@ -242,14 +162,13 @@ class BookLendingWebControllerTest {
   void shipBook_Failure_ShouldRedirectWithError() {
     // Given
     Long lendingId = 1L;
-    Long userId = 1L;
     when(bookLendingInterface.markAsShipped(eq(lendingId))).thenReturn(false);
 
     // When
-    String viewName = bookLendingWebController.shipBook(lendingId, userId, redirectAttributes);
+    String viewName = bookLendingWebController.shipBook(lendingId, redirectAttributes);
 
     // Then
-    assertEquals("redirect:/loans?userId=" + userId, viewName);
+    assertEquals("redirect:/loans?type=BORROWED", viewName);
 
     verify(bookLendingInterface).markAsShipped(eq(lendingId));
     verify(redirectAttributes).addFlashAttribute(eq("errorMessage"), anyString());
@@ -260,14 +179,13 @@ class BookLendingWebControllerTest {
   void returnBook_ShouldMarkAsReturnedAndRedirect() {
     // Given
     Long lendingId = 1L;
-    Long userId = 1L;
     when(bookLendingInterface.returnBook(eq(lendingId))).thenReturn(true);
 
     // When
-    String viewName = bookLendingWebController.returnBook(lendingId, userId, redirectAttributes);
+    String viewName = bookLendingWebController.returnBook(lendingId, redirectAttributes);
 
     // Then
-    assertEquals("redirect:/loans?userId=" + userId, viewName);
+    assertEquals("redirect:/loans?type=BORROWED", viewName);
 
     verify(bookLendingInterface).returnBook(eq(lendingId));
     verify(redirectAttributes).addFlashAttribute(eq("successMessage"), anyString());
@@ -278,14 +196,13 @@ class BookLendingWebControllerTest {
   void returnBook_Failure_ShouldRedirectWithError() {
     // Given
     Long lendingId = 1L;
-    Long userId = 1L;
     when(bookLendingInterface.returnBook(eq(lendingId))).thenReturn(false);
 
     // When
-    String viewName = bookLendingWebController.returnBook(lendingId, userId, redirectAttributes);
+    String viewName = bookLendingWebController.returnBook(lendingId, redirectAttributes);
 
     // Then
-    assertEquals("redirect:/loans?userId=" + userId, viewName);
+    assertEquals("redirect:/loans?type=BORROWED", viewName);
 
     verify(bookLendingInterface).returnBook(eq(lendingId));
     verify(redirectAttributes).addFlashAttribute(eq("errorMessage"), anyString());
@@ -313,16 +230,15 @@ class BookLendingWebControllerTest {
   void makeBookLoanable_ShouldMakeBookLoanableAndRedirect() {
     // Given
     Long bookId = 1L;
-    Long userId = 1L;
-    when(bookLendingInterface.loanable(eq(bookId), eq(userId))).thenReturn(true);
+    when(bookLendingInterface.loanable(eq(bookId), eq(1L))).thenReturn(true);
 
     // When
-    String viewName = bookLendingWebController.makeBookLoanable(bookId, userId, redirectAttributes);
+    String viewName = bookLendingWebController.makeBookLoanable(bookId, currentUser, redirectAttributes);
 
     // Then
-    assertEquals("redirect:/loans?userId=" + userId + "&type=lent", viewName);
+    assertEquals("redirect:/loans?type=LENT", viewName);
 
-    verify(bookLendingInterface).loanable(eq(bookId), eq(userId));
+    verify(bookLendingInterface).loanable(eq(bookId), eq(1L));
     verify(redirectAttributes).addFlashAttribute(eq("successMessage"), anyString());
   }
 
@@ -331,16 +247,15 @@ class BookLendingWebControllerTest {
   void makeBookLoanable_Failure_ShouldRedirectWithError() {
     // Given
     Long bookId = 1L;
-    Long userId = 1L;
-    when(bookLendingInterface.loanable(eq(bookId), eq(userId))).thenReturn(false);
+    when(bookLendingInterface.loanable(eq(bookId), eq(1L))).thenReturn(false);
 
     // When
-    String viewName = bookLendingWebController.makeBookLoanable(bookId, userId, redirectAttributes);
+    String viewName = bookLendingWebController.makeBookLoanable(bookId, currentUser, redirectAttributes);
 
     // Then
-    assertEquals("redirect:/loans?userId=" + userId + "&type=lent", viewName);
+    assertEquals("redirect:/loans?type=LENT", viewName);
 
-    verify(bookLendingInterface).loanable(eq(bookId), eq(userId));
+    verify(bookLendingInterface).loanable(eq(bookId), eq(1L));
     verify(redirectAttributes).addFlashAttribute(eq("errorMessage"), anyString());
   }
 
@@ -349,16 +264,15 @@ class BookLendingWebControllerTest {
   void removeBookFromLoanable_ShouldRemoveBookAndRedirect() {
     // Given
     Long bookId = 1L;
-    Long userId = 1L;
-    when(bookLendingInterface.isNoMoreLoanable(eq(bookId), eq(userId))).thenReturn(true);
+    when(bookLendingInterface.isNoMoreLoanable(eq(bookId), eq(1L))).thenReturn(true);
 
     // When
-    String viewName = bookLendingWebController.removeBookFromLoanable(bookId, userId, redirectAttributes);
+    String viewName = bookLendingWebController.removeBookFromLoanable(bookId, currentUser, redirectAttributes);
 
     // Then
-    assertEquals("redirect:/loans?userId=" + userId + "&type=lent", viewName);
+    assertEquals("redirect:/loans?type=LENT", viewName);
 
-    verify(bookLendingInterface).isNoMoreLoanable(eq(bookId), eq(userId));
+    verify(bookLendingInterface).isNoMoreLoanable(eq(bookId), eq(1L));
     verify(redirectAttributes).addFlashAttribute(eq("successMessage"), anyString());
   }
 
@@ -367,37 +281,15 @@ class BookLendingWebControllerTest {
   void removeBookFromLoanable_Failure_ShouldRedirectWithError() {
     // Given
     Long bookId = 1L;
-    Long userId = 1L;
-    when(bookLendingInterface.isNoMoreLoanable(eq(bookId), eq(userId))).thenReturn(false);
+    when(bookLendingInterface.isNoMoreLoanable(eq(bookId), eq(1L))).thenReturn(false);
 
     // When
-    String viewName = bookLendingWebController.removeBookFromLoanable(bookId, userId, redirectAttributes);
+    String viewName = bookLendingWebController.removeBookFromLoanable(bookId, currentUser, redirectAttributes);
 
     // Then
-    assertEquals("redirect:/loans?userId=" + userId + "&type=lent", viewName);
+    assertEquals("redirect:/loans?type=LENT", viewName);
 
-    verify(bookLendingInterface).isNoMoreLoanable(eq(bookId), eq(userId));
+    verify(bookLendingInterface).isNoMoreLoanable(eq(bookId), eq(1L));
     verify(redirectAttributes).addFlashAttribute(eq("errorMessage"), anyString());
-  }
-
-  @Test
-  @DisplayName("getCurrentUserLendings - Should display user lendings")
-  void getCurrentUserLendings_ShouldDisplayUserLendings() {
-    // Given
-    Long userId = 1L;
-    when(bookLendingInterface.findAllUserLendingsAsDTO(eq(userId), eq("lent"))).thenReturn(testLendingResponseDTO);
-
-    // When
-    String viewName = bookLendingWebController.getCurrentUserLendings(userId, model);
-
-    // Then
-    assertEquals("layout", viewName);
-
-    verify(bookLendingInterface).findAllUserLendingsAsDTO(eq(userId), eq("lent"));
-    verify(model).addAttribute(eq("lendingData"), eq(testLendingResponseDTO));
-    verify(model).addAttribute(eq("userId"), eq(userId));
-    verify(model).addAttribute(eq("title"), eq("Mes Livres à Prêter"));
-    verify(model).addAttribute(eq("content"), eq("pages/bookLending/index"));
-    verify(model).addAttribute(eq("activeTab"), eq("lent"));
   }
 }

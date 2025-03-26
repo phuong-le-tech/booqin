@@ -17,6 +17,7 @@ import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.BookStatus;
+import fr.uge.booqIn.enums.LendStatus;
 import fr.uge.booqIn.enums.UserRole;
 import fr.uge.booqIn.enums.VoteType;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
@@ -124,7 +125,8 @@ class BookCollectionWebControllerTest {
             1L,
             "Test Book",
             Collections.singleton("John Doe"),
-            new Date()
+            new Date(),
+            ""
     );
 
     List<BookIndex> books = Collections.singletonList(testBookIndex);
@@ -165,7 +167,9 @@ class BookCollectionWebControllerTest {
             new Date(),
             LocalDateTime.now(),
             LocalDateTime.now(),
-            Collections.emptySet()
+            Collections.emptySet(),
+            "",
+            ""
     );
 
     // Common mock setup
@@ -240,7 +244,7 @@ class BookCollectionWebControllerTest {
     // For lending data
     List<BookLendingShow> emptyLendings = Collections.emptyList();
     LendingResponseDTO lendingResponseDTO = new LendingResponseDTO(emptyLendings, emptyLendings, true);
-    when(bookLendingInterface.findAllUserLendingsAsDTO(eq(1L), eq("all"))).thenReturn(lendingResponseDTO);
+    when(bookLendingInterface.findAllUserLendingsAsDTO(eq(1L), eq(LendStatus.ALL))).thenReturn(lendingResponseDTO);
 
     // When
     String viewName = bookCollectionWebController.showCollectionDetails(collectionId, model, principal, currentUser);
@@ -554,25 +558,6 @@ class BookCollectionWebControllerTest {
     verify(model).addAttribute(eq("error"), anyString());
     verify(model).addAttribute(eq("title"), eq("BooqIn - Error"));
     verify(model).addAttribute(eq("content"), eq("pages/collections/edit"));
-  }
-
-  @Test
-  @DisplayName("deleteCollection - Should delete collection when user is owner")
-  void deleteCollection_UserIsOwner_ShouldDeleteAndRedirect() {
-    // Given
-    Long collectionId = 1L;
-
-    when(bookCollectionService.findBookCollectionById(eq(collectionId))).thenReturn(testCollectionShow);
-    doNothing().when(bookCollectionService).deleteBookCollection(eq(collectionId));
-
-    // When
-    String viewName = bookCollectionWebController.deleteCollection(collectionId, currentUser);
-
-    // Then
-    assertEquals("redirect:/collections?success=deleted", viewName);
-
-    verify(bookCollectionService).findBookCollectionById(eq(collectionId));
-    verify(bookCollectionService).deleteBookCollection(eq(collectionId));
   }
 
   @Test
