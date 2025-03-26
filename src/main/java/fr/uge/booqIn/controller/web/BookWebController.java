@@ -1,16 +1,18 @@
 
 package fr.uge.booqIn.controller.web;
-
 import fr.uge.booqIn.dto.book.BookCreate;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
 import fr.uge.booqIn.dto.bookCollection.LiteCollection;
+import fr.uge.booqIn.dto.lending.LendingResponseDTO;
 import fr.uge.booqIn.dto.vote.VoteCount;
 import fr.uge.booqIn.dto.vote.VoteCreate;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.User;
+import fr.uge.booqIn.enums.BookStatus;
+import fr.uge.booqIn.enums.LendStatus;
 import fr.uge.booqIn.enums.VoteType;
 import fr.uge.booqIn.mapper.BookCollectionMapper;
 import fr.uge.booqIn.model.BookCollection;
@@ -37,21 +39,28 @@ public class BookWebController {
     private final BookServiceInterface bookService;
     private final VoteServiceInterface voteServiceInterface;
     private final UserServiceInterface userService;
+    private final BookCollectionServiceInterface bookCollectionService;
     private final CommentServiceInterface commentService;
     private final HomeWebController homeWebController;
+    private final BookLendingInterface bookLendingInterface;
 
     @Autowired
     public BookWebController(BookServiceInterface bookService,
                              VoteServiceInterface voteServiceInterface,
-                             BookCollectionServiceInterface bookCollectionService, UserServiceInterface userService,
+                             BookCollectionServiceInterface bookCollectionService,
+                             UserServiceInterface userService,
                              CommentServiceInterface commentService,
-                             HomeWebController homeWebController) {
+                             HomeWebController homeWebController,
+                             BookLendingInterface bookLendingInterface) {
         this.bookService = bookService;
         this.voteServiceInterface = voteServiceInterface;
-      this.userService = userService;
+        this.bookCollectionService = bookCollectionService;
+        this.userService = userService;
         this.commentService = commentService;
         this.homeWebController = homeWebController;
+      this.bookLendingInterface = bookLendingInterface;
     }
+
     @GetMapping
     public String getAllBooks(Model model,
                               @RequestParam(value = "page", defaultValue = "0") int page,
@@ -90,8 +99,26 @@ public class BookWebController {
           model.addAttribute("userId", currentUser.getId());
           var user = userService.findUserById(currentUser.getId());
           List<LiteCollection> collectionShows = user.getCollections().stream().filter(collection -> collection.getCollectionType() != BookCollection.CollectionType.GLOBAL).map(c  -> new LiteCollection(c.getId(),c.getTitle())).toList();
-            System.out.println(collectionShows.size());
+          System.out.println(collectionShows.size());
           model.addAttribute("bookCollections", collectionShows);
+
+          try {
+            LendingResponseDTO lendingData = bookLendingInterface.findAllUserLendingsAsDTO(currentUser.getId(), LendStatus.ALL);
+            List<Long> lentBooks = lendingData.lentBooks().stream()
+                    .filter(lending -> lending.status() == BookStatus.AVAILABLE)
+                    .map(lending -> lending.book().id())
+                    .collect(Collectors.toList());
+            List<Long> borrowedBooks = lendingData.lentBooks().stream()
+                    .filter(lending -> lending.status() == BookStatus.BORROWED)
+                    .map(lending -> lending.book().id())
+                    .collect(Collectors.toList());
+            model.addAttribute("lentBooks", lentBooks);
+            model.addAttribute("borrowedBooks", borrowedBooks);
+            System.out.println("Lending info added to model: lentBooks=" + lentBooks.size() + ", borrowedBooks=" + borrowedBooks.size());
+          } catch (Exception e) {
+            model.addAttribute("lentBooks", Collections.emptyList());
+            model.addAttribute("borrowedBooks", Collections.emptyList());
+          }
         }
 
         // Définir le titre et le template de contenu
@@ -199,4 +226,3 @@ public class BookWebController {
         return "redirect:/books/" + bookId;
     }
 }
-

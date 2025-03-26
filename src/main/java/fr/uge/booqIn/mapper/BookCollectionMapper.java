@@ -7,6 +7,7 @@ import fr.uge.booqIn.entity.AbstractBookCollection;
 import fr.uge.booqIn.entity.GlobalBookCollection;
 import fr.uge.booqIn.entity.NormalBookCollection;
 import fr.uge.booqIn.entity.SmartBookCollection;
+import fr.uge.booqIn.model.BookCollection;
 import org.springframework.stereotype.Component;
 
 /**
@@ -16,8 +17,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class BookCollectionMapper {
   private final BookMapper bookMapper = new BookMapper();
-
-
+  
+  
   /**
    * Converts a book collection entity to an index DTO.
    * The index DTO contains basic information for listing collections.
@@ -33,10 +34,11 @@ public class BookCollectionMapper {
             collection.getOwner().getFullName(),
             collection.getOwner().getId(),
             collection.getBooks().size(),
-            collection.isPublic()
+            collection.isPublic(),
+            BookCollection.CollectionType.valueOf(getCollectionType(collection))
     );
   }
-
+  
   /**
    * Converts a book collection entity to a show DTO.
    * The show DTO contains detailed information including all books.
@@ -45,7 +47,7 @@ public class BookCollectionMapper {
    * @return A BookCollectionShow DTO
    */
   public BookCollectionShow toBookCollectionShow(AbstractBookCollection collection) {
-
+    
     UserIndex user = new UserIndex(
             collection.getOwner().getId(),
             collection.getOwner().getFirstName(),
@@ -66,7 +68,7 @@ public class BookCollectionMapper {
             collection.getUpdatedAt()
     );
   }
-
+  
   /**
    * Determines the string representation of the collection type
    * based on the actual type of the collection entity.

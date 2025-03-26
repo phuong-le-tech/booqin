@@ -70,6 +70,9 @@ public class User implements UserDetails, Followable {
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "updated_at")
   private Date updatedAt = new Date();
+  
+  @Column(name = "lending_points", nullable = false)
+  private Integer lendingPoints = 0;
 
   public User() {
   }
@@ -337,6 +340,17 @@ public class User implements UserDetails, Followable {
         bookLending.setLender(null);
       }
     }
+  }
+  public Integer getLendingPoints() {
+    return lendingPoints;
+  }
+  
+  public void setLendingPoints(Integer lendingPoints) {
+    this.lendingPoints = lendingPoints;
+  }
+  
+  public void incrementLendingPoints() {
+    this.lendingPoints++;
   }
 }
 
