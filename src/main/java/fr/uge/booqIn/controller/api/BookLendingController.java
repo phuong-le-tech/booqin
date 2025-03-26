@@ -1,6 +1,9 @@
 package fr.uge.booqIn.controller.api;
 
+import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.dto.lending.LendingResponseDTO;
+import fr.uge.booqIn.entity.BookLending;
+import fr.uge.booqIn.enums.BookStatus;
 import fr.uge.booqIn.enums.LendStatus;
 import fr.uge.booqIn.factory.ApiResponse;
 import fr.uge.booqIn.service.interfaces.BookLendingInterface;
@@ -15,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("api/v1/loans")
@@ -141,5 +145,20 @@ public class BookLendingController {
       outputStream.write(ticketPDF);
       outputStream.flush();
     }
+  }
+  
+  @GetMapping("check-book-availability/{bookId}")
+  public ResponseEntity<ApiResponse<Boolean>> checkBookAvailability(@PathVariable Long bookId) {
+    if(bookService.findById(bookId) == null) {
+      return ResponseEntity.badRequest().body(ApiResponse.error("Book not found", false));
+    }
+
+    Optional<BookLending> availableBook = bookLendingInterface.findByBookIdAndBorrowerIsNullAndStatus(bookId);
+    boolean isAvailable = availableBook.isPresent();
+    
+    return ResponseEntity.ok(ApiResponse.success(
+            isAvailable ? "Book is available" : "Book is not available",
+            isAvailable
+    ));
   }
 }
