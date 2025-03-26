@@ -74,7 +74,9 @@ class CartControllerTest {
                 new Date(),
                 LocalDateTime.now(),
                 LocalDateTime.now(),
-                Set.of("Genre")
+                Set.of("Genre"),
+                "PathImageTest",
+                "PathImageTest"
         );
 
         when(userService.findUserByIdToIndex(userId)).thenReturn(userIndex);
@@ -117,7 +119,9 @@ class CartControllerTest {
                 new Date(),
                 LocalDateTime.now(),
                 LocalDateTime.now(),
-                Set.of("Genre")
+                Set.of("Genre"),
+                "PathImageTest",
+                "PathImageTest"
         );
 
         when(userService.findUserByIdToIndex(userId)).thenReturn(userIndex);
@@ -155,7 +159,9 @@ class CartControllerTest {
                 new Date(),
                 LocalDateTime.now(),
                 LocalDateTime.now(),
-                Set.of("Genre")
+                Set.of("Genre"),
+                "PathImageTest",
+                "PathImageTest"
         );
 
         when(userService.findUserByIdToIndex(userId)).thenReturn(userIndex);
@@ -221,7 +227,9 @@ class CartControllerTest {
                 new Date(),
                 LocalDateTime.now(),
                 LocalDateTime.now(),
-                Set.of("Genre")
+                Set.of("Genre"),
+                "PathImageTest",
+                "PathImageTest"
         );
 
         when(userService.findUserByIdToIndex(userId)).thenReturn(userIndex);
@@ -279,8 +287,8 @@ class CartControllerTest {
         Long userId = 1L;
         UserIndex userIndex = new UserIndex(userId, "John", "Doe", "john.doe@example.com", null, UserRole.USER);
         List<fr.uge.booqIn.dto.book.BookIndex> bookIndexes = List.of(
-                new BookIndex(1L, "Book 1", Set.of("Author 1"), new Date()),
-                new BookIndex(2L, "Book 2", Set.of("Author 2"), new Date())
+                new BookIndex(1L, "Book 1", Set.of("Author 1"), new Date(), "pathImageTest"),
+                new BookIndex(2L, "Book 2", Set.of("Author 2"), new Date(), "pathImageTest")
         );
         ShopCartDto shopCartDto = new ShopCartDto(1L, userId, bookIndexes);
 

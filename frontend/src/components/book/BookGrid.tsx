@@ -1,9 +1,10 @@
+// src/components/BookGrid.tsx
 import React, {useState, useEffect } from 'react';
-import { BookCard } from './BookCard';
-import { BookIndex } from '../model/Book';
-import axiosInstance from "../services/AxiosInstance.ts";
-import { LendStatus } from "../model/LendStatus";
-import {useAuth} from "../context/AuthContext.tsx";
+import { BookCard } from './BookCard.tsx';
+import { BookIndex } from '../../model/Book.ts';
+import axiosInstance from "../../services/AxiosInstance.ts";
+import {useAuth} from "../../context/AuthContext.tsx";
+import { LendStatus } from "../../model/LendStatus";
 import { toast } from "react-toastify";
 
 interface LoanInfo {
@@ -17,7 +18,7 @@ interface BookGridProps {
     userId?: number;
 }
 
-export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading, userId }) => {
+export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading}) => {
     const [lentBooks, setLentBooks] = useState<number[]>([]);
     const [borrowedBooks, setBorrowedBooks] = useState<number[]>([]);
     const [loanStates, setLoanStates] = useState<LoanInfo[]>([]);
@@ -46,8 +47,7 @@ export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading, userId }) 
                             return loan.id;
                         }
                         return null;
-                    }).filter(id => id !== null) as number[];
-
+                    }).filter((id: any) => id !== null) as number[];
                     setLentBooks(lentBookIds);
 
                     // Adapter l'extraction des états de prêt
@@ -79,8 +79,7 @@ export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading, userId }) 
                             return { bookId, state };
                         }
                         return null;
-                    }).filter(info => info !== null) as LoanInfo[];
-
+                    }).filter((info: any) => info !== null) as LoanInfo[];
                     setLoanStates(loanStatesData);
                 } else {
                     toast.warning("Format de données inattendu pour les livres prêtés");
@@ -97,15 +96,14 @@ export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading, userId }) 
                             return loan.id;
                         }
                         return null;
-                    }).filter(id => id !== null) as number[];
-
+                    }).filter((id: any) => id !== null) as number[];
                     setBorrowedBooks(borrowedBookIds);
                 }
             } else {
-                toast.warning("Format de réponse inattendu lors du chargement de vos livres");
+                console.warn("Unexpected response format from /v1/loans/user", response);
             }
         } catch (err: any) {
-            toast.error("Erreur lors du chargement de vos livres");
+            console.error("Error fetching user books:", err);
         }
     };
 
@@ -128,6 +126,10 @@ export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading, userId }) 
                             <div className="h-4 bg-gray-200 rounded w-3/4"></div>
                             <div className="h-3 bg-gray-200 rounded w-1/2"></div>
                             <div className="h-3 bg-gray-200 rounded w-1/4"></div>
+                            <div className="space-y-2 mt-4">
+                                <div className="h-8 bg-gray-200 rounded"></div>
+                                <div className="h-8 bg-gray-200 rounded"></div>
+                            </div>
                         </div>
                     </div>
                 ))}
