@@ -1,5 +1,5 @@
 // src/pages/BookDetail.tsx
-import React, {useState, useEffect, useContext} from "react";
+import React, {useState, useEffect} from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "../Layout";
 import { Book } from "../../model/Book";
@@ -17,7 +17,11 @@ export const BookDetail: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [isbnExpanded, setIsbnExpanded] = useState<boolean>(false);
     const [authorsExpanded, setAuthorsExpanded] = useState<boolean>(false);
+    const [imageError, setImageError] = useState<boolean>(false);
     const { user } = useAuth();
+
+    const API_BASE_URL = 'http://localhost:8080'; // URL de base de votre API
+    const IMAGE_BASE_URL = `${API_BASE_URL}/api/v1/books/images`;
 
     useEffect(() => {
         const fetchBookDetails = async () => {
@@ -44,7 +48,7 @@ export const BookDetail: React.FC = () => {
         fetchBookDetails();
     }, [id]);
 
-    // Fonction pour générer une couleur à partir de l'id du livre
+    // Fonction pour générer une couleur à partir de l'id du livre (fallback si pas d'image)
     const getBookCoverColor = (bookId: number) => {
         const colors = [
             '#1e3a8a', // bleu foncé
@@ -176,6 +180,35 @@ export const BookDetail: React.FC = () => {
         );
     };
 
+    // Fonction pour rendre la couverture du livre
+    const renderBookCover = () => {
+        if (!book) return null;
+
+        if (book.coverImagePath && !imageError) {
+            return (
+                <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                    <img
+                        src={`${IMAGE_BASE_URL}/${book.coverImagePath}`}
+                        alt={`Cover of ${book.title}`}
+                        className="w-full h-auto max-h-full object-contain"
+                        onError={() => setImageError(true)}
+                    />
+                </div>
+            );
+        }
+
+        // Fallback: afficher juste la première lettre sur un fond coloré
+        return (
+            <div
+                className="w-full h-full flex items-center justify-center text-white font-bold text-6xl"
+                style={{ backgroundColor: getBookCoverColor(book.id) }}
+            >
+                {book.title.substring(0, 1).toUpperCase()}
+            </div>
+        );
+    };
+
+
     if (isLoading) {
         return (
             <Layout>
@@ -243,13 +276,8 @@ export const BookDetail: React.FC = () => {
                 <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
                     <div className="flex flex-col md:flex-row">
                         {/* Book Cover */}
-                        <div className="md:w-1/3 lg:w-1/4">
-                            <div
-                                className="w-full h-64 md:h-full flex items-center justify-center text-white font-bold text-6xl"
-                                style={{ backgroundColor: getBookCoverColor(book.id) }}
-                            >
-                                {book.title.substring(0, 1).toUpperCase()}
-                            </div>
+                        <div className="md:w-1/3 lg:w-1/4 overflow-hidden">
+                            {renderBookCover()}
                         </div>
 
                         {/* Book Details */}

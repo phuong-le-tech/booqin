@@ -1,5 +1,5 @@
 import React from "react";
-import { BookGrid } from "../../components/BookGrid";
+import { BookGrid } from "../../components/book/BookGrid.tsx";
 import { Pagination } from "../../components/Pagination";
 import { Layout } from "../Layout";
 import { useBooks } from "../../context/BooksContext";

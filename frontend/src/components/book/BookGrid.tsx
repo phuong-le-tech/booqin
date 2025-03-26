@@ -1,9 +1,9 @@
 // src/components/BookGrid.tsx
 import React, {useState, useEffect } from 'react';
-import { BookCard } from './BookCard';
-import { BookIndex } from '../model/Book';
-import axiosInstance from "../services/AxiosInstance.ts";
-import {useAuth} from "../context/AuthContext.tsx";
+import { BookCard } from './BookCard.tsx';
+import { BookIndex } from '../../model/Book.ts';
+import axiosInstance from "../../services/AxiosInstance.ts";
+import {useAuth} from "../../context/AuthContext.tsx";
 
 interface BookGridProps {
     books: BookIndex[];
@@ -11,7 +11,7 @@ interface BookGridProps {
     userId?: number;
 }
 
-export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading, userId }) => {
+export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading}) => {
     const [lentBooks, setLentBooks] = useState<number[]>([]);
     const [borrowedBooks, setBorrowedBooks] = useState<number[]>([]);
     const { user } = useAuth();
@@ -54,7 +54,7 @@ export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading, userId }) 
     };
 
     if (isLoading) {
-        // Skeleton loading state
+        // Skeleton loading state with image placeholder
         return (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                 {Array(10).fill(null).map((_, index) => (
@@ -64,6 +64,10 @@ export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading, userId }) 
                             <div className="h-4 bg-gray-200 rounded w-3/4"></div>
                             <div className="h-3 bg-gray-200 rounded w-1/2"></div>
                             <div className="h-3 bg-gray-200 rounded w-1/4"></div>
+                            <div className="space-y-2 mt-4">
+                                <div className="h-8 bg-gray-200 rounded"></div>
+                                <div className="h-8 bg-gray-200 rounded"></div>
+                            </div>
                         </div>
                     </div>
                 ))}

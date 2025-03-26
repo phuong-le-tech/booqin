@@ -1,14 +1,14 @@
 import React, { useState, useEffect} from 'react';
 import { Link } from 'react-router-dom';
-import { BookIndex } from '../model/Book';
-import axiosInstance from "../services/AxiosInstance";
-import { useAuth } from "../context/AuthContext";
+import { BookIndex } from '../../model/Book.ts';
+import axiosInstance from "../../services/AxiosInstance.ts";
+import { useAuth } from "../../context/AuthContext.tsx";
 
 interface BookCardProps {
     book: BookIndex;
     borrowedBooks?: number[];
     lentBooks?: number[];
-    onLendingChange?: () => void; // Nouvelle prop pour notifier le parent des changements
+    onLendingChange?: () => void;
 }
 
 export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], lentBooks = [], onLendingChange }) => {
@@ -18,12 +18,12 @@ export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], le
     const [isLoanable, setIsLoanable] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(false);
     const [isBorrowed, setIsBorrowed] = useState<boolean>(false);
+    const [imageError, setImageError] = useState<boolean>(false);
 
     useEffect(() => {
         setIsBorrowed(borrowedBooks.includes(id));
         setIsLoanable(lentBooks.includes(id));
     }, [borrowedBooks, lentBooks, id]);
-
 
     const getBookCoverColor = (bookId: number) => {
         const colors = [
@@ -127,6 +127,16 @@ export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], le
             return dateString;
         }
     };
+    const getThumbnailUrl = () => {
+        if (!book.thumbnailPath || imageError) return null;
+        return `/api/v1/books/images/${book.thumbnailPath}`;
+    };
+
+    const handleImageError = () => {
+        console.error(`Failed to load image for book: ${book.id}, path: ${book.thumbnailPath}`);
+        setImageError(true);
+    };
+
 
     return (
         <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col h-full relative">
@@ -141,13 +151,22 @@ export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], le
                 <div
                     className="w-full h-48 flex items-center justify-center flex-shrink-0"
                     style={{
-                        backgroundColor: getBookCoverColor(book.id),
+                        backgroundColor: getThumbnailUrl() ? 'transparent' : getBookCoverColor(book.id),
                         opacity: isBorrowed ? 0.6 : 1 // Réduit l'opacité si le livre est prêté
                     }}
                 >
-                    <span className="text-white text-5xl font-bold">
-                        {book.title.charAt(0).toUpperCase()}
-                    </span>
+                    {getThumbnailUrl() ? (
+                        <img
+                            src={getThumbnailUrl()!}
+                            alt={`Cover for ${book.title}`}
+                            className="h-full w-full object-contain"
+                            onError={handleImageError}
+                        />
+                    ) : (
+                        <span className="text-white text-5xl font-bold">
+                            {book.title.charAt(0).toUpperCase()}
+                        </span>
+                    )}
                 </div>
 
                 <div className="p-4 flex flex-col flex-grow">
@@ -164,7 +183,7 @@ export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], le
                     <div className="mt-auto">
                         {book.publicationDate && (
                             <p className="text-xs text-gray-500">
-                                Published: {formatDate(book.publicationDate)}
+                                Published: {formatDate(book.publicationDate.toString())}
                             </p>
                         )}
                     </div>

@@ -14,6 +14,7 @@ import fr.uge.booqIn.repository.BookRepository;
 import fr.uge.booqIn.service.ImageService;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
 import fr.uge.booqIn.specification.BookSpecification;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.logging.Logger;
@@ -38,6 +40,8 @@ public class BookServiceImpl implements BookServiceInterface {
   private final BookMapper bookMapper;
   private final BooqInEventPublisher eventPublisher;
   private final ImageService imageService;
+  @Value("${file.upload-dir}")
+  private String uploadDir;
 
   public BookServiceImpl(
       BookRepository bookRepository,
@@ -353,6 +357,15 @@ public class BookServiceImpl implements BookServiceInterface {
         logger.info("Téléchargement de l'image de couverture pour le livre ID: " + book.getId() + ", URL: " + book.getCoverImageUrl());
         var imagePath = imageService.downloadBookCoverFromUrl(book.getCoverImageUrl(), book.getId());
         book.setCoverImagePath(imagePath);
+
+        try {
+          var originalPath = Paths.get(uploadDir, imagePath);
+          var thumbnailPath = imageService.createThumbnail(originalPath, book.getId());
+          book.setThumbnailPath(thumbnailPath);
+          logger.info("Thumbnail path set to: " + thumbnailPath);
+        } catch (Exception e) {
+          logger.warning("Échec de l'assignation du chemin de miniature: " + e.getMessage());
+        }
         book = bookRepository.save(book);
         logger.info("Image de couverture téléchargée et enregistrée: " + imagePath);
       } catch (Exception e) {
