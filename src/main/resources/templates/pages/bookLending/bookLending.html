@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vos Prêts de Livres | BooqIn</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'light-blue': '#3B82F6',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+<div class="container mx-auto px-4 py-12 max-w-6xl">
+    <!-- Alerts pour les messages flash -->
+    <div th:if="${successMessage}" class="mb-6 bg-green-100 border border-green-300 text-green-700 px-4 py-3 rounded-lg">
+        <span th:text="${successMessage}"></span>
+    </div>
+    <div th:if="${errorMessage}" class="mb-6 bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-lg">
+        <span th:text="${errorMessage}"></span>
+    </div>
+
+    <h1 class="text-4xl font-bold mb-8 text-center text-light-blue">Vos Prêts de Livres</h1>
+
+    <!-- Onglets - Utilisation consistante de LendStatus -->
+    <div class="flex border-b border-gray-200 mb-8 justify-center">
+        <a th:href="@{/loans(type=${T(fr.uge.booqIn.enums.LendStatus).BORROWED})}"
+           th:class="${activeTab.name() == T(fr.uge.booqIn.enums.LendStatus).BORROWED.name() ? 'border-b-2 border-light-blue text-light-blue' : 'text-gray-500 hover:text-gray-700'} + ' py-4 px-6 font-medium text-lg'">
+            Livres Empruntés
+        </a>
+        <a th:href="@{/loans(type=${T(fr.uge.booqIn.enums.LendStatus).LENT})}"
+           th:class="${activeTab.name() == T(fr.uge.booqIn.enums.LendStatus).LENT.name() ? 'border-b-2 border-light-blue text-light-blue' : 'text-gray-500 hover:text-gray-700'} + ' py-4 px-6 font-medium text-lg'">
+            Livres Prêtés
+        </a>
+        <a th:href="@{/loans(type=${T(fr.uge.booqIn.enums.LendStatus).ALL})}"
+           th:class="${activeTab.name() == T(fr.uge.booqIn.enums.LendStatus).ALL.name() ? 'border-b-2 border-light-blue text-light-blue' : 'text-gray-500 hover:text-gray-700'} + ' py-4 px-6 font-medium text-lg'">
+            Tous les Prêts
+        </a>
+    </div>
+
+    <!-- Livres empruntés - Utilisation de LendStatus -->
+    <!-- Section livres empruntés avec .name() -->
+    <div th:if="${activeTab.name() == T(fr.uge.booqIn.enums.LendStatus).BORROWED.name() || activeTab.name() == T(fr.uge.booqIn.enums.LendStatus).ALL.name()}" class="mb-8">
+        <h2 th:if="${activeTab.name() == T(fr.uge.booqIn.enums.LendStatus).ALL.name()}" class="text-2xl font-semibold mb-4">Livres que vous avez empruntés</h2>
+
+        <!-- Liste des livres empruntés -->
+        <div th:if="${!lendingData.borrowedBooks.isEmpty()}" class="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-200">
+            <div class="divide-y divide-gray-200">
+                <div th:each="lending : ${lendingData.borrowedBooks}" class="p-6 hover:bg-gray-50 transition-colors">
+                    <div class="flex flex-col lg:flex-row gap-6">
+                        <!-- Couverture du livre -->
+                        <div class="h-40 w-28 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg flex items-center justify-center flex-shrink-0 border border-gray-200">
+                            <svg class="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                            </svg>
+                        </div>
+
+                        <!-- Informations du livre -->
+                        <div class="flex-1">
+                            <div class="flex flex-col md:flex-row md:items-start md:justify-between">
+                                <div>
+                                    <h3 class="text-xl font-bold text-gray-800" th:text="${lending.book.title}">Titre du livre</h3>
+                                    <p class="text-gray-600 mb-2">
+                                        <span th:each="author, iterStat : ${lending.book.authors}">
+                                            <span th:text="${author.firstName + ' ' + author.lastName}"></span>
+                                            <span th:unless="${iterStat.last}">, </span>
+                                        </span>
+                                    </p>
+
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="text-gray-600 font-medium">Prêté par:</span>
+                                        <span th:text="${lending.lender.firstName + ' ' + lending.lender.lastName}"></span>
+                                    </div>
+
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="text-gray-600 font-medium">Statut:</span>
+                                        <span class="px-3 py-1 rounded-full text-sm font-medium border"
+                                              th:classappend="${lending.status == 'RESERVED' ? 'bg-yellow-100 text-yellow-800 border-yellow-300' :
+                                                           (lending.status == 'BORROWED' ? 'bg-blue-100 text-blue-800 border-blue-300' :
+                                                           (lending.status == 'RETURNED' ? 'bg-green-100 text-green-800 border-green-300' :
+                                                           (lending.status == 'SHIPPED' ? 'bg-purple-100 text-purple-800 border-purple-300' :
+                                                           (lending.status == 'AVAILABLE' ? 'bg-gray-100 text-gray-800 border-gray-300' :
+                                                           (lending.status == 'PENDING_SHIPMENT' ? 'bg-orange-100 text-orange-800 border-orange-300' : '')))))}">
+                                            <span th:switch="${lending.status}">
+                                                <span th:case="'RESERVED'">Réservé</span>
+                                                <span th:case="'BORROWED'">Emprunté</span>
+                                                <span th:case="'RETURNED'">Retourné</span>
+                                                <span th:case="'SHIPPED'">Expédié</span>
+                                                <span th:case="'AVAILABLE'">Disponible</span>
+                                                <span th:case="'PENDING_SHIPMENT'">En attente d'expédition</span>
+                                                <span th:case="*" th:text="${lending.status}"></span>
+                                            </span>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 md:mt-0 md:text-right">
+                                    <div class="text-sm text-gray-600 mb-1">
+                                        <span class="font-medium">Date d'emprunt:</span>
+                                        <span th:text="${#temporals.format(lending.startDate, 'd MMMM yyyy')}"
+                                              th:if="${lending.startDate != null}">1 janvier 2023</span>
+                                        <span th:if="${lending.startDate == null}">Non définie</span>
+                                    </div>
+                                    <div class="text-sm text-gray-600 mb-1">
+                                        <span class="font-medium">Date de retour prévue:</span>
+                                        <span th:text="${#temporals.format(lending.dueDate, 'd MMMM yyyy')}"
+                                              th:if="${lending.dueDate != null}">1 janvier 2023</span>
+                                        <span th:if="${lending.dueDate == null}">Non définie</span>
+                                    </div>
+                                    <div th:if="${lending.returnDate != null}" class="text-sm text-gray-600">
+                                        <span class="font-medium">Retourné le:</span>
+                                        <span th:text="${#temporals.format(lending.returnDate, 'd MMMM yyyy')}">1 janvier 2023</span>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <!-- Section des boutons ultra-simplifiée -->
+                            <div class="mt-4 flex flex-wrap gap-2">
+                                <!-- Bouton marquer comme retourné -->
+                                <a th:href="@{/loans/return-book(lendingId=${lending.id})}"
+                                   th:style="${!#strings.equals(lending.status, 'BORROWED')} ? 'display:none;' : ''"
+                                   class="bg-light-blue hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
+                                    Marquer comme retourné
+                                </a>
+
+                                <!-- Bouton confirmer réception -->
+                                <a th:href="@{/loans/confirm-loan(lendingId=${lending.id})}"
+                                   th:style="${!#strings.equals(lending.status, 'SHIPPED')} ? 'display:none;' : ''"
+                                   class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
+                                    Confirmer la réception
+                                </a>
+
+                                <!-- Bouton télécharger étiquette -->
+                                <a th:href="@{/loans/ticket-download/{lendingId}(lendingId=${lending.id})}"
+                                   th:style="${!(#strings.equals(lending.status, 'PENDING_SHIPMENT') || #strings.equals(lending.status, 'SHIPPED'))} ? 'display:none;' : ''"
+                                   target="_blank"
+                                   class="bg-light-blue hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
+                                    Télécharger l'étiquette
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Aucun livre emprunté -->
+        <div th:if="${lendingData.borrowedBooks.isEmpty()}" class="bg-gray-50 rounded-xl p-12 text-center border border-gray-200 shadow-md">
+            <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+            </svg>
+            <h3 class="text-xl font-medium text-gray-700">Vous n'avez aucun livre emprunté</h3>
+            <p class="text-gray-500 mt-2 mb-6">Parcourez notre catalogue pour trouver des livres à emprunter</p>
+            <a href="/books" class="bg-light-blue hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg transition duration-300 inline-block">
+                Parcourir les livres
+            </a>
+        </div>
+    </div>
+
+    <!-- Livres prêtés - Utilisation de LendStatus -->
+    <!-- Section livres prêtés avec .name() -->
+    <div th:if="${activeTab.name() == T(fr.uge.booqIn.enums.LendStatus).LENT.name() || activeTab.name() == T(fr.uge.booqIn.enums.LendStatus).ALL.name()}">
+        <h2 th:if="${activeTab.name() == T(fr.uge.booqIn.enums.LendStatus).ALL.name()}" class="text-2xl font-semibold mb-4">Livres actuellement prêtés</h2>
+
+            <div class="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-200">
+                <div class="divide-y divide-gray-200">
+                    <div th:each="lending : ${lendingData.lentBooks}" th:if="${lending.borrower != null}" class="p-6 hover:bg-gray-50 transition-colors">
+                        <div class="flex flex-col lg:flex-row gap-6">
+                            <!-- Couverture du livre -->
+                            <div class="h-40 w-28 bg-gradient-to-br from-green-100 to-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 border border-gray-200">
+                                <svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                </svg>
+                            </div>
+
+                            <!-- Informations du livre -->
+                            <div class="flex-1">
+                                <div class="flex flex-col md:flex-row md:items-start md:justify-between">
+                                    <div>
+                                        <h3 class="text-xl font-bold text-gray-800" th:text="${lending.book.title}">Titre du livre</h3>
+                                        <p class="text-gray-600 mb-2">
+                                            <span th:each="author, iterStat : ${lending.book.authors}">
+                                                <span th:text="${author.firstName + ' ' + author.lastName}"></span>
+                                                <span th:unless="${iterStat.last}">, </span>
+                                            </span>
+                                        </p>
+
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <span class="text-gray-600 font-medium">Emprunté par:</span>
+                                            <span th:text="${lending.borrower.firstName + ' ' + lending.borrower.lastName}"></span>
+                                        </div>
+
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <span class="text-gray-600 font-medium">Statut:</span>
+                                            <span class="px-3 py-1 rounded-full text-sm font-medium border"
+                                                  th:classappend="${lending.status == 'RESERVED' ? 'bg-yellow-100 text-yellow-800 border-yellow-300' :
+                                                               (lending.status == 'BORROWED' ? 'bg-blue-100 text-blue-800 border-blue-300' :
+                                                               (lending.status == 'RETURNED' ? 'bg-green-100 text-green-800 border-green-300' :
+                                                               (lending.status == 'SHIPPED' ? 'bg-purple-100 text-purple-800 border-purple-300' :
+                                                               (lending.status == 'AVAILABLE' ? 'bg-gray-100 text-gray-800 border-gray-300' :
+                                                               (lending.status == 'PENDING_SHIPMENT' ? 'bg-orange-100 text-orange-800 border-orange-300' : '')))))}">
+                                                <span th:switch="${lending.status}">
+                                                    <span th:case="'RESERVED'">Réservé</span>
+                                                    <span th:case="'BORROWED'">Emprunté</span>
+                                                    <span th:case="'RETURNED'">Retourné</span>
+                                                    <span th:case="'SHIPPED'">Expédié</span>
+                                                    <span th:case="'AVAILABLE'">Disponible</span>
+                                                    <span th:case="'PENDING_SHIPMENT'">En attente d'expédition</span>
+                                                    <span th:case="*" th:text="${lending.status}"></span>
+                                                </span>
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-4 md:mt-0 md:text-right">
+                                        <div class="text-sm text-gray-600 mb-1">
+                                            <span class="font-medium">Date d'emprunt:</span>
+                                            <span th:text="${#temporals.format(lending.startDate, 'd MMMM yyyy')}"
+                                                  th:if="${lending.startDate != null}">1 janvier 2023</span>
+                                            <span th:if="${lending.startDate == null}">Non définie</span>
+                                        </div>
+                                        <div class="text-sm text-gray-600 mb-1">
+                                            <span class="font-medium">Date de retour prévue:</span>
+                                            <span th:text="${#temporals.format(lending.dueDate, 'd MMMM yyyy')}"
+                                                  th:if="${lending.dueDate != null}">1 janvier 2023</span>
+                                            <span th:if="${lending.dueDate == null}">Non définie</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-4 flex flex-wrap gap-2">
+                                    <!-- Bouton "Télécharger l'étiquette" pour PENDING_SHIPMENT ou SHIPPED -->
+                                    <a th:if="${#strings.equals(lending.status, 'PENDING_SHIPMENT') || #strings.equals(lending.status, 'SHIPPED')}"
+                                       th:href="@{/loans/ticket-download/{lendingId}(lendingId=${lending.id})}"
+                                       target="_blank"
+                                       class="bg-light-blue hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors inline-block mr-2">
+                                        Télécharger l'étiquette d'expédition
+                                    </a>
+
+                                    <!-- Bouton "Marquer comme expédié" pour PENDING_SHIPMENT -->
+                                    <a th:if="${#strings.equals(lending.status, 'PENDING_SHIPMENT')}"
+                                       th:href="@{/loans/ship-book(lendingId=${lending.id})}"
+                                       class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors inline-block">
+                                        Marquer comme expédié
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Livres disponibles pour prêt -->
+        <div th:if="${!lendingData.lentBooks.isEmpty() && lendingData.lentBooks.?[borrower == null].size() > 0}" class="mb-8">
+            <h2 th:if="${activeTab == T(fr.uge.booqIn.enums.LendStatus).ALL}" class="text-2xl font-semibold mb-4">Livres disponibles pour prêt</h2>
+
+            <div class="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-200">
+                <div class="divide-y divide-gray-200">
+                    <div th:each="lending : ${lendingData.lentBooks}" th:if="${lending.borrower == null}" class="p-6 hover:bg-gray-50 transition-colors">
+                        <div class="flex flex-col lg:flex-row gap-6">
+                            <!-- Couverture du livre -->
+                            <div class="h-40 w-28 bg-gradient-to-br from-yellow-100 to-orange-100 rounded-lg flex items-center justify-center flex-shrink-0 border border-gray-200">
+                                <svg class="w-12 h-12 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+
+                            <!-- Informations du livre -->
+                            <div class="flex-1">
+                                <div class="flex flex-col md:flex-row md:items-start md:justify-between">
+                                    <div>
+                                        <h3 class="text-xl font-bold text-gray-800" th:text="${lending.book.title}">Titre du livre</h3>
+                                        <p class="text-gray-600 mb-2">
+                                            <span th:each="author, iterStat : ${lending.book.authors}">
+                                                <span th:text="${author.firstName + ' ' + author.lastName}"></span>
+                                                <span th:unless="${iterStat.last}">, </span>
+                                            </span>
+                                        </p>
+
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <span class="text-gray-600 font-medium">Statut:</span>
+                                            <span class="px-3 py-1 rounded-full text-sm font-medium border bg-yellow-100 text-yellow-800 border-yellow-300">
+                                                Disponible pour prêt
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-4 md:mt-0 md:text-right">
+                                        <div class="text-sm text-gray-600 mb-1">
+                                            <span class="font-medium">Mis à disposition le:</span>
+                                            <span th:text="${#temporals.format(lending.reservedAt, 'd MMMM yyyy')}"
+                                                  th:if="${lending.reservedAt != null}">1 janvier 2023</span>
+                                            <span th:if="${lending.reservedAt == null}">Non définie</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <form th:action="@{/loans/remove-loanable}" method="post">
+                                        <input type="hidden" name="bookId" th:value="${lending.book.id}">
+                                        <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                            Retirer de la liste de prêt
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

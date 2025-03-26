@@ -44,7 +44,12 @@
 </div>
 
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" th:if="${not #lists.isEmpty(books)}">
-    <div th:each="book : ${books}" class="bg-white border border-gray-200 rounded-xl shadow-sm flex flex-col transition duration-300 hover:shadow-md hover:-translate-y-1 book-item">
+    <div th:each="book : ${books}" class="bg-white border border-gray-200 rounded-xl shadow-sm flex flex-col transition duration-300 hover:shadow-md hover:-translate-y-1 book-item relative">
+        <!-- Badge pour les livres empruntés -->
+        <div th:if="${borrowedBooks != null && borrowedBooks.contains(book.id())}" class="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full z-10">
+            Prêté
+        </div>
+
         <div class="w-full h-48 flex justify-center items-center text-2xl text-white rounded-t-xl"
              th:style="'background-color: ' + ${T(java.lang.String).format('#%06x', T(java.lang.Math).abs(book.id().hashCode()) % 0xFFFFFF)}">
             <span th:text="${book.title().substring(0, 1).toUpperCase()}"></span>
@@ -56,8 +61,9 @@
             <!-- Affichage correct de la date de publication -->
             <p th:if="${book.publicationDate() != null}" class="text-xs text-gray-500 mb-3" th:text="'Published: ' + ${#dates.format(book.publicationDate(), 'yyyy-MM-dd')}"></p>
             <p th:if="${book.publicationDate() == null}" class="text-xs text-gray-500 mb-3">Published: Unknown date</p>
-            <!-- Le record BookIndex ne semble pas avoir de description, donc je l'ai retiré -->
+
             <a class="mt-auto text-center py-2 px-4 bg-blue-600 text-white text-sm font-medium rounded-lg transition hover:bg-blue-700" th:href="@{'/books/' + ${book.id()}}">View details</a>
+
             <!-- Boutons pour les actions -->
             <div class="flex gap-2 mt-2">
                 <!-- Bouton Add to Cart -->
@@ -66,10 +72,35 @@
                     <input type="hidden" name="userId" th:value="${userId}">
                     <button type="submit" class="w-full text-center py-2 px-4 bg-green-600 text-white text-sm font-medium rounded-lg transition hover:bg-green-700">Add to Cart</button>
                 </form>
-                <!-- Bouton Add to Collection -->
-                <!--                <a th:href="@{/collections/{collectionId}/books/add(collectionId=${collection.id})}" class="flex-1 text-center py-2 px-4 bg-indigo-600 text-white text-sm font-medium rounded-lg transition hover:bg-indigo-700">-->
-                <!--                    Add to Collection-->
-                <!--                </a>-->
+
+                <!-- Boutons pour le prêt (si connecté et livre pas déjà emprunté) -->
+                <th:block th:if="${userId != null && (borrowedBooks == null || !borrowedBooks.contains(book.id()))}">
+                    <!-- Si le livre est déjà dans la liste de prêt -->
+                    <form th:if="${lentBooks != null && lentBooks.contains(book.id())}"
+                          th:action="@{/loans/remove-loanable}"
+                          method="post"
+                          class="flex-1">
+                        <input type="hidden" name="bookId" th:value="${book.id()}" />
+                        <input type="hidden" name="userId" th:value="${userId}">
+                        <button type="submit"
+                                class="w-full text-center py-2 px-4 bg-yellow-500 text-white text-sm font-medium rounded-lg transition hover:bg-yellow-600">
+                            Remove from lending
+                        </button>
+                    </form>
+
+                    <!-- Si le livre n'est pas encore dans la liste de prêt -->
+                    <form th:if="${lentBooks == null || !lentBooks.contains(book.id())}"
+                          th:action="@{/loans/make-loanable}"
+                          method="post"
+                          class="flex-1">
+                        <input type="hidden" name="bookId" th:value="${book.id()}" />
+                        <input type="hidden" name="userId" th:value="${userId}">
+                        <button type="submit"
+                                class="w-full text-center py-2 px-4 bg-indigo-600 text-white text-sm font-medium rounded-lg transition hover:bg-indigo-700">
+                            Add to lending
+                        </button>
+                    </form>
+                </th:block>
             </div>
         </div>
     </div>

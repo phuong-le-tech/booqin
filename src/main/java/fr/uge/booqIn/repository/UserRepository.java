@@ -29,5 +29,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
   Optional<User> findByCartId(Long cartId);
 
   Optional<User> findByRole(UserRole role);
+  
+  
 
 }
