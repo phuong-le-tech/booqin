@@ -7,7 +7,8 @@ import {useAuth} from "../../context/AuthContext.tsx";
 import BookCollectionService from "../../services/BookCollectionService.ts";
 import BookService from "../../services/BookService.ts";
 import axiosInstance from "../../services/AxiosInstance.ts";
-import FollowButton from "../../components/follow/FollowButton.tsx"; // Added import
+import FollowButton from "../../components/follow/FollowButton.tsx";
+import {LendStatus} from "../../model/LendStatus.ts"; // Added import
 
 const CollectionDetails: React.FC = () => {
     const navigate = useNavigate();
@@ -76,7 +77,7 @@ const CollectionDetails: React.FC = () => {
 
         try {
             console.log(`Fetching user book data for user ${user.id}`);
-            const response = await axiosInstance.get(`/v1/loans/user/${user.id}?type=all`);
+            const response = await axiosInstance.get(`/v1/loans/user/${user.id}?type=${LendStatus.ALL}`);
             console.log("User books response:", response);
 
             if (response.data?.success && response.data?.data) {
@@ -187,11 +188,11 @@ const CollectionDetails: React.FC = () => {
             const response = await BookService.getBooks();
             if (response && Array.isArray(response.content) && response.page) {
                 const books = response.content;
-                console.log(books);// Filtrer les livres déjà dans la collection
+                console.log(books);
                 const collectionBookIds = collection?.books.map(book => book.id) || [];
                 const filteredBooks = books.filter(book => !collectionBookIds.includes(book.id));
 
-                const limitedBooks = filteredBooks.slice(0, 10);    // pour l'instant, on affiche que les 10 premiers
+                const limitedBooks = filteredBooks.slice(0, 10);
                 console.log("10 BOOKS\n", books.slice(0, 10));
                 setAvailableBooks(limitedBooks);
             } else {
@@ -307,6 +308,14 @@ const CollectionDetails: React.FC = () => {
                                                     >
                                                         View Details
                                                     </Link>
+                                                    {isOwner && (
+                                                        <button
+                                                            onClick={() => handleRemoveBook(book.id)}
+                                                            className="px-3 py-1 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 transition-colors"
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                    )}
 
                                                     {user && !borrowedBooks.includes(book.id) && (
                                                         lentBooks.includes(book.id) ? (

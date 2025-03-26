@@ -18,4 +18,8 @@ public record BookCollectionShow(
         String collectionType,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
-) {}
+) {
+
+}
+
+
