@@ -15,6 +15,7 @@ import fr.uge.booqIn.pdf.PdfCreator;
 import fr.uge.booqIn.repository.*;
 import fr.uge.booqIn.service.interfaces.BookLendingInterface;
 
+import fr.uge.booqIn.service.interfaces.BookWaitingQueueServiceInterface;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -37,6 +38,7 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   private final BooqInEventPublisher eventPublisher;
   private final UserRepository userRepository;
   private final PdfCreator pdfCreator = new PdfCreator();
+  private final BookWaitingQueueServiceInterface bookWaitingQueueService;
 
   public BookLendingServiceImpl(
           BookLendingRepository bookLendingRepository,
@@ -45,7 +47,7 @@ public class BookLendingServiceImpl implements BookLendingInterface {
           BookLendingMapper bookLendingMapper,
           BookServiceImpl bookService,
           BooqInEventPublisher eventPublisher,
-          UserRepository userRepository
+          UserRepository userRepository, BookWaitingQueueServiceInterface bookWaitingQueueService
   ) {
     this.bookLendingRepository = bookLendingRepository;
     this.userService = userService;
@@ -54,6 +56,8 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     this.bookService = bookService;
     this.eventPublisher = eventPublisher;
     this.userRepository = userRepository;
+    
+    this.bookWaitingQueueService = bookWaitingQueueService;
   }
 
   @Transactional
@@ -379,6 +383,7 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     }
     Book book = bookOpt.get();
 
+
     User user = userService.findUserById(userId);
     if (user == null) {
       return false;
@@ -395,6 +400,7 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     bookLendingRepository.save(booklend);
     user.addLentBook(booklend);
     userRepository.save(user);
+    bookWaitingQueueService.processNextInQueue(book.getId());
     return true;
   }
 
