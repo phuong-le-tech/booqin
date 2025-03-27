@@ -27,19 +27,17 @@ public class StripeController {
         this.cartService = cartService;
     }
     
-   
-    
     
     @PostMapping("/checkout")
-    public ResponseEntity<ApiResponse<String>> createCheckoutSession(@RequestParam Long cartId) {
+    public ResponseEntity<ApiResponse<String>> createCheckoutSession(@RequestParam Long cartId , @RequestParam(required = false) String returnUrl)  {
         Optional<Cart> cartOptional = Optional.ofNullable(cartService.getCart(cartId));
         
         if (cartOptional.isEmpty() || cartOptional.get().getBooks().isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("Le panier est vide ou inexistant"));
         }
-        
-        Session session = stripeService.createCheckoutSession(cartOptional.get() ,URL_WEBSITE);
+        String successUrl = returnUrl != null ? returnUrl : URL_WEBSITE;
+        Session session = stripeService.createCheckoutSession(cartOptional.get() ,successUrl);
         
         return ResponseEntity.ok(ApiResponse.success("Session Stripe créée", session.getUrl()));
     }
