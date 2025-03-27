@@ -1,5 +1,6 @@
 package fr.uge.booqIn.controller.api;
 import fr.uge.booqIn.dto.notification.BookNotificationDTO;
+import fr.uge.booqIn.dto.notification.NotificationDto;
 import fr.uge.booqIn.factory.ApiResponse;
 import fr.uge.booqIn.service.interfaces.NotificationServiceInterface;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,11 +25,13 @@ public class NotificationController {
           @RequestParam Long bookId,
           @RequestParam Long userId) {
     
+    System.out.println("Received: bookId=" + bookId + ", userId=" + userId);
+    
     boolean added = notificationService.addToNotificationQueue(bookId, userId);
     
     return added
-            ? ResponseEntity.ok(ApiResponse.success("Ajouté à la file d'attente", true))
-            : ResponseEntity.badRequest().body(ApiResponse.error("Déjà dans la file d'attente", false));
+            ? ResponseEntity.ok(ApiResponse.success("Added to notification queue", true))
+            : ResponseEntity.badRequest().body(ApiResponse.error("Already in notification queue", false));
   }
   
   @GetMapping("/active")

@@ -148,28 +148,36 @@ public class AdminWebController {
       return "layout";
     }
   }
-
+  
   @GetMapping("/users/{id}/edit")
   public String showEditUserForm(@PathVariable Long id, Model model, Principal principal) {
-    homeWebController.prepareModel(model, principal, "admin");
-
     try {
+      // Prepare the common model attributes
+      homeWebController.prepareModel(model, principal, "admin");
+      
+      // Load the user for editing
       UserShow userShow = userService.findById(id);
-      model.addAttribute("user", userShow);
-
-      UserRole role = userShow.role();
-      model.addAttribute("role", role.getRole());
-
-      model.addAttribute("title", "BooqIn - Modifier l'utilisateur");
+      
+      // Create a User object for the form
+      User user = new User();
+      user.setId(userShow.id());
+      user.setFirstName(userShow.firstName());
+      user.setLastName(userShow.lastName());
+      user.setEmail(userShow.email());
+      
+      model.addAttribute("user", user);
+      model.addAttribute("role", userShow.role().getRole());
+      
+      // Set title and content for the layout
+      model.addAttribute("title", "BooqIn - Edit User");
       model.addAttribute("content", "pages/admin/edit-user");
-
+      
+      // Return using the layout template
       return "layout";
-
     } catch (Exception e) {
       return "redirect:/admin?tab=users";
     }
   }
-
   @PostMapping("/users/{id}/edit")
   public String processEditUserForm(
           @PathVariable Long id,
@@ -180,18 +188,25 @@ public class AdminWebController {
           RedirectAttributes redirectAttributes)
   {
     try {
-      User updatedUser = userService.updateUser(user);
-      redirectAttributes.addFlashAttribute("success", "User removed with success");
+      User existingUser = userService.findUserById(id);
+      existingUser.setFirstName(user.getFirstName());
+      existingUser.setLastName(user.getLastName());
+      existingUser.setEmail(user.getEmail());
+      existingUser.setRole(role);
+
+      User updatedUser = userService.updateUser(existingUser);
+      redirectAttributes.addFlashAttribute("success", "User updated successfully");
       return "redirect:/admin?tab=users";
     } catch (Exception e) {
       homeWebController.prepareModel(model, principal, "admin");
-
+      
       model.addAttribute("error", e.getMessage());
       model.addAttribute("user", user);
-      model.addAttribute("userRoles", role.getRole());
-
+      model.addAttribute("role", role.getRole());
+      
       model.addAttribute("title", "BooqIn - Edit the user");
       model.addAttribute("content", "pages/admin/edit-user");
+      
       return "layout";
     }
   }
@@ -208,5 +223,19 @@ public class AdminWebController {
       redirectAttributes.addFlashAttribute("error", "Error while removing: " + e.getMessage());
     }
     return "redirect:/admin?tab=users";
+  }
+  
+  @PostMapping("/collections/{id}/delete")
+  public String deleteCollection(
+          @PathVariable Long id,
+          RedirectAttributes redirectAttributes)
+  {
+    try {
+      bookCollectionService.deleteBookCollection(id);
+      redirectAttributes.addFlashAttribute("success", "Collection removed successfully");
+    } catch (Exception e) {
+      redirectAttributes.addFlashAttribute("error", "Error while removing collection: " + e.getMessage());
+    }
+    return "redirect:/admin?tab=collections";
   }
 }

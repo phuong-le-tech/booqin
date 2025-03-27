@@ -6,6 +6,7 @@ import fr.uge.booqIn.dto.book.BookUpdate;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.event.BooqInEventPublisher;
+import fr.uge.booqIn.event.publishable.BookAddedEvent;
 import fr.uge.booqIn.exception.DuplicateResourceException;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.mapper.BookMapper;
@@ -44,11 +45,11 @@ public class BookServiceImpl implements BookServiceInterface {
   private String uploadDir;
 
   public BookServiceImpl(
-      BookRepository bookRepository,
-      AuthorRepository authorRepository,
-      BookMapper bookMapper,
-      BooqInEventPublisher eventPublisher,
-      ImageService imageService) {
+          BookRepository bookRepository,
+          AuthorRepository authorRepository,
+          BookMapper bookMapper,
+          BooqInEventPublisher eventPublisher,
+          ImageService imageService) {
     this.bookRepository = bookRepository;
     this.authorRepository = authorRepository;
     this.bookMapper = bookMapper;
@@ -75,7 +76,7 @@ public class BookServiceImpl implements BookServiceInterface {
     }
 
     return bookRepository.findAll(spec, pageable)
-        .map(bookMapper::toBookIndex);
+            .map(bookMapper::toBookIndex);
   }
 
   @Override
@@ -88,19 +89,19 @@ public class BookServiceImpl implements BookServiceInterface {
   @Override
   @Transactional
   @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {
-      ObjectOptimisticLockingFailureException.class,
-      ConcurrentModificationException.class }, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
+          ObjectOptimisticLockingFailureException.class,
+          ConcurrentModificationException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
   public Book createBook(@NonNull @Validated Book book) {
     // Save authors first if they don't have IDs
     if (book.getAuthors() != null) {
       book.getAuthors().stream()
-          .filter(author -> author.getId() == null)
-          .forEach(authorRepository::save);
+              .filter(author -> author.getId() == null)
+              .forEach(authorRepository::save);
     }
 
     // Check for duplicate ISBNs
     boolean isbnExists = book.getIsbns().stream()
-        .anyMatch(isbn -> findByIsbn(isbn).isPresent());
+            .anyMatch(isbn -> findByIsbn(isbn).isPresent());
     if (isbnExists) {
       throw new DuplicateResourceException("Book", "ISBN", book.getIsbns().toString());
     }
@@ -115,8 +116,8 @@ public class BookServiceImpl implements BookServiceInterface {
   @Override
   @Transactional
   @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {
-      ObjectOptimisticLockingFailureException.class,
-      ConcurrentModificationException.class }, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
+          ObjectOptimisticLockingFailureException.class,
+          ConcurrentModificationException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
   public Book updateBook(@NonNull @Validated Book book) {
     // Check if book exists
     if (!bookRepository.existsById(book.getId())) {
@@ -126,8 +127,8 @@ public class BookServiceImpl implements BookServiceInterface {
     // Save new authors first
     if (book.getAuthors() != null) {
       book.getAuthors().stream()
-          .filter(author -> author.getId() == null)
-          .forEach(authorRepository::save);
+              .filter(author -> author.getId() == null)
+              .forEach(authorRepository::save);
     }
 
     // Check for duplicate ISBNs in other books
@@ -145,8 +146,8 @@ public class BookServiceImpl implements BookServiceInterface {
   @Override
   @Transactional
   @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {
-      ObjectOptimisticLockingFailureException.class,
-      ConcurrentModificationException.class }, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
+          ObjectOptimisticLockingFailureException.class,
+          ConcurrentModificationException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
   public BookShow patchBook(@NonNull Long id, @NonNull @Validated BookUpdate bookUpdate) {
     Book book = findBookById(id);
 
@@ -182,18 +183,19 @@ public class BookServiceImpl implements BookServiceInterface {
 
   @Transactional
   @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {
-      ObjectOptimisticLockingFailureException.class,
-      ConcurrentModificationException.class }, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
+          ObjectOptimisticLockingFailureException.class,
+          ConcurrentModificationException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
   public void saveFromApi(Book toSave) {
     Objects.requireNonNull(toSave, "Book to save cannot be null");
 
     // Check if a book with one of the ISBNs already exists
     Optional<Book> existingBookOpt = findExistingBookByIsbns(toSave.getIsbns());
 
-      var savedBook = existingBookOpt.map(book -> updateExistingBook(book, toSave))
-              .orElseGet(() -> createNewBook(toSave));
+    var savedBook = existingBookOpt.map(book -> updateExistingBook(book, toSave))
+            .orElseGet(() -> createNewBook(toSave));
 
-      downloadAndSaveCoverImage(savedBook);
+    downloadAndSaveCoverImage(savedBook);
+    eventPublisher.publishEvent(new BookAddedEvent(savedBook.getId(), existingBookOpt.isEmpty()));
   }
 
   private Optional<Book> findExistingBookByIsbns(Set<String> isbns) {
@@ -202,10 +204,10 @@ public class BookServiceImpl implements BookServiceInterface {
     }
 
     return isbns.stream()
-        .map(this::findByIsbn)
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        .findFirst();
+            .map(this::findByIsbn)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .findFirst();
   }
 
   private Book updateExistingBook(Book existingBook, Book newBook) {
@@ -225,10 +227,10 @@ public class BookServiceImpl implements BookServiceInterface {
     // Add new authors
     addNewAuthors(existingBook, newBook.getAuthors());
 
-      // Update image url
-      if (isEmptyOrNull(existingBook.getCoverImageUrl()) && !isEmptyOrNull(newBook.getCoverImageUrl())) {
-          existingBook.setCoverImageUrl(newBook.getCoverImageUrl());
-      }
+    // Update image url
+    if (isEmptyOrNull(existingBook.getCoverImageUrl()) && !isEmptyOrNull(newBook.getCoverImageUrl())) {
+      existingBook.setCoverImageUrl(newBook.getCoverImageUrl());
+    }
 
     // Update modification date
     existingBook.setUpdatedAt(LocalDateTime.now());
@@ -261,8 +263,8 @@ public class BookServiceImpl implements BookServiceInterface {
 
     // Save new authors that don't have an ID
     newAuthors.stream()
-        .filter(author -> author.getId() == null)
-        .forEach(authorRepository::save);
+            .filter(author -> author.getId() == null)
+            .forEach(authorRepository::save);
 
     // Add authors to the existing book
     if (existingBook.getAuthors() == null) {
@@ -284,8 +286,8 @@ public class BookServiceImpl implements BookServiceInterface {
     }
 
     toSave.getAuthors().stream()
-        .filter(author -> author.getId() == null)
-        .forEach(authorRepository::save);
+            .filter(author -> author.getId() == null)
+            .forEach(authorRepository::save);
 
     toSave.setCreatedAt(LocalDateTime.now());
     toSave.setUpdatedAt(LocalDateTime.now());
@@ -301,13 +303,13 @@ public class BookServiceImpl implements BookServiceInterface {
   @Transactional(readOnly = true)
   public Book findBookById(Long id) {
     Book bookWithAuthors = bookRepository.findByIdWithAuthors(id)
-        .orElseThrow(() -> new ResourceNotFoundException("Book", "id", id));
+            .orElseThrow(() -> new ResourceNotFoundException("Book", "id", id));
 
     Book bookWithIsbns = bookRepository.findByIdWithIsbns(id)
-        .orElseThrow(() -> new ResourceNotFoundException("Book", "id", id));
+            .orElseThrow(() -> new ResourceNotFoundException("Book", "id", id));
 
     Book bookWithCategories = bookRepository.findByIdWithCategories(id)
-        .orElseThrow(() -> new ResourceNotFoundException("Book", "id", id));
+            .orElseThrow(() -> new ResourceNotFoundException("Book", "id", id));
 
     bookWithAuthors.setIsbns(bookWithIsbns.getIsbns());
     bookWithAuthors.setCategories(bookWithCategories.getCategories());
@@ -328,25 +330,25 @@ public class BookServiceImpl implements BookServiceInterface {
 
   @Recover
   public Book recoverFromOptimisticLockingFailureCreate(
-      ObjectOptimisticLockingFailureException ex, @NonNull @Validated Book book) {
+          ObjectOptimisticLockingFailureException ex, @NonNull @Validated Book book) {
     throw new ConcurrentModificationException("The book has been modified by someone else. Please try again.", ex);
   }
 
   @Recover
   public Book recoverFromOptimisticLockingFailureUpdate(
-      ObjectOptimisticLockingFailureException ex, @NonNull @Validated Book book) {
+          ObjectOptimisticLockingFailureException ex, @NonNull @Validated Book book) {
     throw new ConcurrentModificationException("The book has been modified by someone else. Please try again.", ex);
   }
 
   @Recover
   public BookShow recoverFromOptimisticLockingFailurePatch(
-      ObjectOptimisticLockingFailureException ex, @NonNull Long id, @NonNull @Validated BookUpdate bookUpdate) {
+          ObjectOptimisticLockingFailureException ex, @NonNull Long id, @NonNull @Validated BookUpdate bookUpdate) {
     throw new ConcurrentModificationException("The book has been modified by someone else. Please try again.", ex);
   }
 
   @Recover
   public void recoverFromOptimisticLockingFailureSaveFromApi(
-      ObjectOptimisticLockingFailureException ex, Book toSave) {
+          ObjectOptimisticLockingFailureException ex, Book toSave) {
     throw new ConcurrentModificationException("The book has been modified by someone else. Please try again.", ex);
   }
 

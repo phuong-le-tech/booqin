@@ -188,7 +188,7 @@ public class StripeService {
     
 
     @Transactional
-    public Session createCheckoutSession(Cart cart) {
+    public Session createCheckoutSession(Cart cart , String successUrl) {
         try {
             var cards = cart.getBooks();
             List<SessionCreateParams.LineItem> lineItems = cards.stream()
@@ -207,8 +207,8 @@ public class StripeService {
             SessionCreateParams params = SessionCreateParams.builder()
                     .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
                     .setMode(SessionCreateParams.Mode.PAYMENT)
-                    .setSuccessUrl("http://localhost:5173/")
-                    .setCancelUrl("http://localhost:5173/")
+                    .setSuccessUrl(successUrl)
+                    .setCancelUrl(successUrl)
                     .addAllLineItem(lineItems)
                     .build();
             

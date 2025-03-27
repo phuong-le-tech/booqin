@@ -1,4 +1,3 @@
-/*
 package fr.uge.booqIn.api.controller;
 
 import fr.uge.booqIn.controller.api.AuthController;
@@ -10,6 +9,7 @@ import fr.uge.booqIn.entity.Address;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.UserRole;
 import fr.uge.booqIn.factory.ApiResponse;
+import fr.uge.booqIn.factory.fixture.AddressFactory;
 import fr.uge.booqIn.service.JwtService;
 import fr.uge.booqIn.service.interfaces.AuthServiceInterface;
 import jakarta.servlet.http.Cookie;
@@ -24,11 +24,9 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.context.ActiveProfiles;
-
-import java.util.HashSet;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -40,320 +38,212 @@ import static org.mockito.Mockito.*;
 @DisplayName("AuthController Tests")
 class AuthControllerTest {
 
-    private AuthServiceInterface authService;
-    private JwtService jwtService;
-    private AuthController authController;
-    private HttpServletResponse httpResponse;
-    private HttpServletRequest httpRequest;
-    private Authentication authentication;
+  private AuthServiceInterface authService;
+  private JwtService jwtService;
+  private AuthController authController;
+  private HttpServletResponse response;
+  private HttpServletRequest request;
+  private Authentication authentication;
 
-    @BeforeEach
-    void setUp() {
-        authService = Mockito.mock(AuthServiceInterface.class);
-        jwtService = Mockito.mock(JwtService.class);
-        authController = new AuthController(authService, jwtService);
-        httpResponse = Mockito.mock(HttpServletResponse.class);
-        httpRequest = Mockito.mock(HttpServletRequest.class);
-        authentication = Mockito.mock(Authentication.class);
-    }
+  @BeforeEach
+  void setUp() {
+    authService = Mockito.mock(AuthServiceInterface.class);
+    jwtService = Mockito.mock(JwtService.class);
+    authController = new AuthController(authService, jwtService);
 
-    // Méthode d'aide pour créer une adresse de test
-    private Address createTestAddress() {
-        return new Address("123", "Test St", "Test City", "12345");
-    }
+    // Set token expiration values via reflection
+    ReflectionTestUtils.setField(authController, "ACCESS_TOKEN_EXPIRATION", 900000L); // 15 minutes
+    ReflectionTestUtils.setField(authController, "REFRESH_TOKEN_EXPIRATION", 604800000L); // 7 days
 
-    @Test
-    @DisplayName("POST /auth/login - Retourne tokens et configure les cookies")
-    void login_ShouldReturnTokensAndSetCookies() {
-        // Given
-        LoginDto loginDto = new LoginDto("test@example.com", "password");
-        AuthResponse authResponse = new AuthResponse("access-token", "refresh-token");
-        when(authService.login(any(LoginDto.class))).thenReturn(authResponse);
+    response = Mockito.mock(HttpServletResponse.class);
+    request = Mockito.mock(HttpServletRequest.class);
+    authentication = Mockito.mock(Authentication.class);
+  }
 
-        // When
-        ResponseEntity<ApiResponse<AuthResponse>> response = authController.login(loginDto, httpResponse);
+  @Test
+  @DisplayName("POST /login - Should authenticate user and return tokens")
+  void login_ShouldAuthenticateAndReturnTokens() {
+    // Given
+    LoginDto loginDto = new LoginDto("john.doe@example.com", "password123");
+    AuthResponse authResponse = new AuthResponse("access_token_value", "refresh_token_value");
 
-        // Then
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        ApiResponse<AuthResponse> apiResponse = response.getBody();
-        assertNotNull(apiResponse);
-        assertTrue(apiResponse.success());
-        assertEquals("Login successful", apiResponse.message());
-        assertEquals(authResponse, apiResponse.data());
+    when(authService.login(any(LoginDto.class))).thenReturn(authResponse);
 
-        // Vérification que deux cookies ont été ajoutés
-        ArgumentCaptor<Cookie> cookieCaptor = ArgumentCaptor.forClass(Cookie.class);
-        verify(httpResponse, times(2)).addCookie(cookieCaptor.capture());
-        verify(authService).login(eq(loginDto));
-    }
+    // When
+    ResponseEntity<ApiResponse<AuthResponse>> responseEntity = authController.login(loginDto, response);
 
-    @Test
-    @DisplayName("POST /auth/register - Crée et retourne un utilisateur")
-    void register_ShouldReturnCreatedUser() {
-        // Given
-        Address address = createTestAddress();
-        RegisterDto registerDto = new RegisterDto("John", "Doe", "john.doe@example.com", "Password123", address, UserRole.USER);
-        User createdUser = new User("John", "Doe", "john.doe@example.com", "encoded-password", address, UserRole.USER);
-        createdUser.setId(1L);
-        when(authService.register(any(RegisterDto.class))).thenReturn(createdUser);
+    // Then
+    assertNotNull(responseEntity);
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    ApiResponse<AuthResponse> apiResponse = responseEntity.getBody();
+    assertNotNull(apiResponse);
+    assertTrue(apiResponse.success());
+    assertEquals("Login successful", apiResponse.message());
+    assertEquals(authResponse, apiResponse.data());
 
-        // When
-        ResponseEntity<ApiResponse<User>> response = authController.signUp(registerDto);
+    // Verify cookies were added
+    ArgumentCaptor<Cookie> cookieCaptor = ArgumentCaptor.forClass(Cookie.class);
+    verify(response, times(2)).addCookie(cookieCaptor.capture());
 
-        // Then
-        assertNotNull(response);
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        ApiResponse<User> apiResponse = response.getBody();
-        assertNotNull(apiResponse);
-        assertTrue(apiResponse.success());
-        assertEquals("User registered successfully", apiResponse.message());
-        assertEquals(createdUser, apiResponse.data());
-        verify(authService).register(eq(registerDto));
-    }
+    // Verify service was called
+    verify(authService).login(eq(loginDto));
+  }
 
-    @Test
-    @DisplayName("POST /auth/logout - Révoque les tokens et efface les cookies (avec authentication)")
-    void logout_ShouldRevokeTokensAndClearCookies() {
-        // Given
-        Long userId = 1L;
-        Cookie[] cookies = {
-                new Cookie("jwt", "access-token"),
-                new Cookie("jwt-refresh", "refresh-token")
-        };
-        User mockUser = Mockito.mock(User.class);
-        when(mockUser.getId()).thenReturn(userId);
-        when(httpRequest.getCookies()).thenReturn(cookies);
-        when(authentication.isAuthenticated()).thenReturn(true);
-        when(authentication.getPrincipal()).thenReturn(mockUser);
+  @Test
+  @DisplayName("POST /register - Should register user and return created user")
+  void register_ShouldCreateAndReturnUser() {
+    // Given
+    RegisterDto registerDto = new RegisterDto("John", "Doe", "john.doe@example.com", "Password123", null, UserRole.USER);
+    User createdUser = new User("John", "Doe", "john.doe@example.com", "Password123", null, UserRole.USER);
+    createdUser.setId(1L);
 
-        // When
-        ResponseEntity<ApiResponse<Void>> response = authController.logout(httpRequest, httpResponse, authentication);
+    when(authService.register(any(RegisterDto.class))).thenReturn(createdUser);
 
-        // Then
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        ApiResponse<Void> apiResponse = response.getBody();
-        assertNotNull(apiResponse);
-        assertTrue(apiResponse.success());
-        assertEquals("Logged out successfully", apiResponse.message());
-        assertNull(apiResponse.data());
+    // When
+    ResponseEntity<ApiResponse<User>> responseEntity = authController.signUp(registerDto);
 
-        // Vérification que les cookies ont été effacés
-        ArgumentCaptor<Cookie> cookieCaptor = ArgumentCaptor.forClass(Cookie.class);
-        verify(httpResponse, times(2)).addCookie(cookieCaptor.capture());
-        // Vérification de la révocation des tokens et de l'invalidation de la session utilisateur
-        verify(jwtService).revokeToken("access-token");
-        verify(jwtService).revokeToken("refresh-token");
-        verify(authService).invalidateUserSessions(eq(userId));
-    }
+    // Then
+    assertNotNull(responseEntity);
+    assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
+    ApiResponse<User> apiResponse = responseEntity.getBody();
+    assertNotNull(apiResponse);
+    assertTrue(apiResponse.success());
+    assertEquals("User registered successfully", apiResponse.message());
+    assertEquals(createdUser, apiResponse.data());
 
-    @Test
-    @DisplayName("POST /auth/logout - Fonctionne sans authentication")
-    void logout_WithoutAuthentication_ShouldStillWork() {
-        // Given
-        Cookie[] cookies = {
-                new Cookie("jwt", "access-token"),
-                new Cookie("jwt-refresh", "refresh-token")
-        };
-        when(httpRequest.getCookies()).thenReturn(cookies);
+    // Verify service was called
+    verify(authService).register(eq(registerDto));
+  }
 
-        // When
-        ResponseEntity<ApiResponse<Void>> response = authController.logout(httpRequest, httpResponse, null);
+  @Test
+  @DisplayName("POST /logout - Should logout user and clear cookies")
+  void logout_ShouldLogoutAndClearCookies() {
+    // Given
+    User user = new User("John", "Doe", "john.doe@example.com", "Password123", null, UserRole.USER);
+    user.setId(1L);
 
-        // Then
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        // Vérification que les cookies ont été effacés
-        verify(httpResponse, times(2)).addCookie(any(Cookie.class));
-        // Vérification de la révocation des tokens
-        verify(jwtService).revokeToken("access-token");
-        verify(jwtService).revokeToken("refresh-token");
-        verify(authService, never()).invalidateUserSessions(anyLong());
-    }
+    Cookie refreshCookie = new Cookie("jwt-refresh", "refresh_token_value");
+    Cookie[] cookies = {refreshCookie};
 
-    @Test
-    @DisplayName("POST /auth/refresh-token - Renouvelle le token et met à jour les cookies")
-    void refreshToken_ShouldReturnNewTokensAndSetCookies() {
-        // Given
-        Cookie[] cookies = { new Cookie("jwt-refresh", "refresh-token") };
-        AuthResponse authResponse = new AuthResponse("new-access-token", "new-refresh-token");
-        when(httpRequest.getCookies()).thenReturn(cookies);
-        when(jwtService.isTokenExpired("refresh-token")).thenReturn(false);
-        when(jwtService.isTokenRevoked("refresh-token")).thenReturn(false);
-        when(jwtService.recordRefreshTokenUsage("refresh-token")).thenReturn(true);
+    when(request.getCookies()).thenReturn(cookies);
+    when(authentication.getPrincipal()).thenReturn(user);
+    when(authentication.isAuthenticated()).thenReturn(true);
 
-        // When
-        ResponseEntity<ApiResponse<String>> response = authController.refreshToken(httpRequest, httpResponse);
+    // When
+    ResponseEntity<ApiResponse<Void>> responseEntity = authController.logout(request, response, authentication);
 
-        // Then
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        ApiResponse<String> apiResponse = response.getBody();
-        assertNotNull(apiResponse);
-        assertTrue(apiResponse.success());
-        assertEquals("Access Token refreshed successfully", apiResponse.message());
-        assertEquals("new-access-token", apiResponse.data());
+    // Then
+    assertNotNull(responseEntity);
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    ApiResponse<Void> apiResponse = responseEntity.getBody();
+    assertNotNull(apiResponse);
+    assertTrue(apiResponse.success());
+    assertEquals("Logged out successfully", apiResponse.message());
 
-        // Vérification que les cookies ont été mis à jour
-        ArgumentCaptor<Cookie> cookieCaptor = ArgumentCaptor.forClass(Cookie.class);
-        verify(httpResponse, times(2)).addCookie(cookieCaptor.capture());
-        verify(authService).refreshToken("refresh-token");
-    }
+    // Verify refresh token was revoked
+    verify(jwtService).revokeToken(eq("refresh_token_value"));
 
-    @Test
-    @DisplayName("POST /auth/refresh-token - Avec token manquant, renvoie Unauthorized")
-    void refreshToken_WithMissingToken_ShouldReturnUnauthorized() {
-        // Given
-        when(httpRequest.getCookies()).thenReturn(null);
+    // Verify user sessions were invalidated
+    verify(authService).invalidateUserSessions(eq(1L));
 
-        // When
-        ResponseEntity<ApiResponse<String>> response = authController.refreshToken(httpRequest, httpResponse);
+    // Verify cookies were cleared
+    ArgumentCaptor<Cookie> cookieCaptor = ArgumentCaptor.forClass(Cookie.class);
+    verify(response, times(2)).addCookie(cookieCaptor.capture());
+  }
 
-        // Then
-        assertNotNull(response);
-        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
-        ApiResponse<String> apiResponse = response.getBody();
-        assertNotNull(apiResponse);
-        assertFalse(apiResponse.success());
-        assertEquals("Refresh token is missing", apiResponse.message());
+  @Test
+  @DisplayName("GET /me - Should return current user data")
+  void me_ShouldReturnCurrentUserData() {
+    // Given
+    Address address = AddressFactory.createAddress();
+    UserMeDto userMeDto = new UserMeDto(1L, "John", "Doe", "john.doe@example.com", UserRole.USER.getRole(), address);
+    when(authService.getCurrentUser(any(Authentication.class))).thenReturn(userMeDto);
 
-        verify(authService, never()).refreshToken(anyString());
-        verify(httpResponse, never()).addCookie(any(Cookie.class));
-    }
+    // When
+    ResponseEntity<ApiResponse<UserMeDto>> responseEntity = authController.me(authentication);
 
-    @Test
-    @DisplayName("POST /auth/refresh-token - Avec token expiré, renvoie Unauthorized")
-    void refreshToken_WithExpiredToken_ShouldReturnUnauthorized() {
-        // Given
-        Cookie[] cookies = { new Cookie("jwt-refresh", "expired-token") };
-        when(httpRequest.getCookies()).thenReturn(cookies);
-        when(jwtService.isTokenExpired("expired-token")).thenReturn(true);
+    // Then
+    assertNotNull(responseEntity);
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    ApiResponse<UserMeDto> apiResponse = responseEntity.getBody();
+    assertNotNull(apiResponse);
+    assertTrue(apiResponse.success());
+    assertEquals("Current user data", apiResponse.message());
+    assertEquals(userMeDto, apiResponse.data());
 
-        // When
-        ResponseEntity<ApiResponse<String>> response = authController.refreshToken(httpRequest, httpResponse);
+    // Verify service was called
+    verify(authService).getCurrentUser(eq(authentication));
+  }
 
-        // Then
-        assertNotNull(response);
-        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
-        ApiResponse<String> apiResponse = response.getBody();
-        assertNotNull(apiResponse);
-        assertFalse(apiResponse.success());
-        assertEquals("Refresh token has expired", apiResponse.message());
+  @Test
+  @DisplayName("POST /refresh - Should refresh tokens when valid refresh token is provided")
+  void refreshToken_WithValidToken_ShouldRefreshTokens() {
+    // Given
+    Cookie refreshCookie = new Cookie("jwt-refresh", "valid_refresh_token");
+    Cookie[] cookies = {refreshCookie};
 
-        verify(authService, never()).refreshToken(anyString());
-        verify(httpResponse, never()).addCookie(any(Cookie.class));
-    }
+    when(request.getCookies()).thenReturn(cookies);
+    when(jwtService.attemptTokenRefresh(eq("valid_refresh_token"), any(HttpServletResponse.class))).thenReturn(true);
 
-    @Test
-    @DisplayName("POST /auth/refresh-token - Avec token révoqué, renvoie Unauthorized")
-    void refreshToken_WithRevokedToken_ShouldReturnUnauthorized() {
-        // Given
-        Cookie[] cookies = { new Cookie("jwt-refresh", "revoked-token") };
-        when(httpRequest.getCookies()).thenReturn(cookies);
-        when(jwtService.isTokenExpired("revoked-token")).thenReturn(false);
-        when(jwtService.isTokenRevoked("revoked-token")).thenReturn(true);
+    // When
+    ResponseEntity<ApiResponse<Void>> responseEntity = authController.refreshToken(request, response);
 
-        // When
-        ResponseEntity<ApiResponse<String>> response = authController.refreshToken(httpRequest, httpResponse);
+    // Then
+    assertNotNull(responseEntity);
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    ApiResponse<Void> apiResponse = responseEntity.getBody();
+    assertNotNull(apiResponse);
+    assertTrue(apiResponse.success());
+    assertEquals("Tokens refreshed successfully", apiResponse.message());
 
-        // Then
-        assertNotNull(response);
-        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
-        ApiResponse<String> apiResponse = response.getBody();
-        assertNotNull(apiResponse);
-        assertFalse(apiResponse.success());
-        assertEquals("Refresh token has been revoked", apiResponse.message());
+    // Verify token refresh was attempted
+    verify(jwtService).attemptTokenRefresh(eq("valid_refresh_token"), eq(response));
+  }
 
-        verify(authService, never()).refreshToken(anyString());
-    }
+  @Test
+  @DisplayName("POST /refresh - Should return error when no refresh token is provided")
+  void refreshToken_WithNoToken_ShouldReturnError() {
+    // Given
+    when(request.getCookies()).thenReturn(null);
 
-    @Test
-    @DisplayName("POST /auth/refresh-token - Avec token réutilisé, renvoie Unauthorized et révoque le token")
-    void refreshToken_WithReusedToken_ShouldReturnUnauthorized() {
-        // Given
-        Cookie[] cookies = { new Cookie("jwt-refresh", "reused-token") };
-        when(httpRequest.getCookies()).thenReturn(cookies);
-        when(jwtService.isTokenExpired("reused-token")).thenReturn(false);
-        when(jwtService.isTokenRevoked("reused-token")).thenReturn(false);
-        when(jwtService.recordRefreshTokenUsage("reused-token")).thenReturn(false);
+    // When
+    ResponseEntity<ApiResponse<Void>> responseEntity = authController.refreshToken(request, response);
 
-        // When
-        ResponseEntity<ApiResponse<String>> response = authController.refreshToken(httpRequest, httpResponse);
+    // Then
+    assertNotNull(responseEntity);
+    assertEquals(HttpStatus.UNAUTHORIZED, responseEntity.getStatusCode());
+    ApiResponse<Void> apiResponse = responseEntity.getBody();
+    assertNotNull(apiResponse);
+    assertFalse(apiResponse.success());
+    assertEquals("No refresh token provided", apiResponse.message());
 
-        // Then
-        assertNotNull(response);
-        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
-        ApiResponse<String> apiResponse = response.getBody();
-        assertNotNull(apiResponse);
-        assertFalse(apiResponse.success());
-        assertEquals("Token reuse detected. Please login again.", apiResponse.message());
+    // Verify token refresh was not attempted
+    verify(jwtService, never()).attemptTokenRefresh(anyString(), any(HttpServletResponse.class));
+  }
 
-        verify(jwtService).revokeToken("reused-token");
-        verify(authService, never()).refreshToken(anyString());
-    }
+  @Test
+  @DisplayName("POST /refresh - Should return error when refresh token is invalid")
+  void refreshToken_WithInvalidToken_ShouldReturnError() {
+    // Given
+    Cookie refreshCookie = new Cookie("jwt-refresh", "invalid_refresh_token");
+    Cookie[] cookies = {refreshCookie};
 
-    @Test
-    @DisplayName("GET /auth/me - Retourne les données de l'utilisateur courant")
-    void me_ShouldReturnCurrentUserData() {
-        // Given
-        UserMeDto userMeDto = new UserMeDto(1L, "John", "Doe", "john.doe@example.com", "ROLE_USER", createTestAddress());
-        when(authService.getCurrentUser(any(Authentication.class))).thenReturn(userMeDto);
+    when(request.getCookies()).thenReturn(cookies);
+    when(jwtService.attemptTokenRefresh(eq("invalid_refresh_token"), any(HttpServletResponse.class))).thenReturn(false);
 
-        // When
-        ResponseEntity<ApiResponse<UserMeDto>> response = authController.me(authentication);
+    // When
+    ResponseEntity<ApiResponse<Void>> responseEntity = authController.refreshToken(request, response);
 
-        // Then
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        ApiResponse<UserMeDto> apiResponse = response.getBody();
-        assertNotNull(apiResponse);
-        assertTrue(apiResponse.success());
-        assertEquals("Current user data", apiResponse.message());
-        assertEquals(userMeDto, apiResponse.data());
-        verify(authService).getCurrentUser(eq(authentication));
-    }
+    // Then
+    assertNotNull(responseEntity);
+    assertEquals(HttpStatus.UNAUTHORIZED, responseEntity.getStatusCode());
+    ApiResponse<Void> apiResponse = responseEntity.getBody();
+    assertNotNull(apiResponse);
+    assertFalse(apiResponse.success());
+    assertEquals("Token refresh failed, please login again", apiResponse.message());
 
-    @Test
-    @DisplayName("POST /auth/login - Gère l'exception BadCredentialsException")
-    void loginWithException_ShouldHandleExceptions() {
-        // Given
-        LoginDto loginDto = new LoginDto("test@example.com", "password");
-        when(authService.login(any(LoginDto.class))).thenThrow(new BadCredentialsException("Invalid credentials"));
-
-        // When & Then
-        BadCredentialsException exception = assertThrows(BadCredentialsException.class, () ->
-                authController.login(loginDto, httpResponse)
-        );
-        assertEquals("Invalid credentials", exception.getMessage());
-    }
-
-    @Test
-    @DisplayName("POST /auth/register - Gère l'exception pour email déjà existant")
-    void registerWithDuplicateEmail_ShouldHandleException() {
-        // Given
-        Address address = createTestAddress();
-        RegisterDto registerDto = new RegisterDto("John", "Doe", "existing@example.com", "Password123", address, UserRole.USER);
-        when(authService.register(any(RegisterDto.class))).thenThrow(new IllegalArgumentException("Email already taken"));
-
-        // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                authController.signUp(registerDto)
-        );
-        assertEquals("Email already taken", exception.getMessage());
-    }
-
-    @Test
-    @DisplayName("GET /auth/me - Gère l'exception d'authentification invalide")
-    void meWithInvalidAuthentication_ShouldHandleException() {
-        // Given
-        when(authService.getCurrentUser(any(Authentication.class))).thenThrow(new IllegalStateException("User is not authenticated"));
-
-        // When & Then
-        IllegalStateException exception = assertThrows(IllegalStateException.class, () ->
-                authController.me(authentication)
-        );
-        assertEquals("User is not authenticated", exception.getMessage());
-    }
+    // Verify cookies were cleared
+    ArgumentCaptor<Cookie> cookieCaptor = ArgumentCaptor.forClass(Cookie.class);
+    verify(response, times(2)).addCookie(cookieCaptor.capture());
+  }
 }
-*/
