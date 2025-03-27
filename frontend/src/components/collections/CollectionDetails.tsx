@@ -8,7 +8,9 @@ import BookCollectionService from "../../services/BookCollectionService.ts";
 import BookService from "../../services/BookService.ts";
 import axiosInstance from "../../services/AxiosInstance.ts";
 import FollowButton from "../../components/follow/FollowButton.tsx";
-import {LendStatus} from "../../model/LendStatus.ts"; // Added import
+import {LendStatus} from "../../model/LendStatus.ts";
+import { VoteSection } from "../../components/vote/VoteSection";
+import { CommentSection } from "../../components/comment/CommentSection";
 
 const CollectionDetails: React.FC = () => {
     const navigate = useNavigate();
@@ -258,8 +260,11 @@ const CollectionDetails: React.FC = () => {
                                         </div>
                                     </Link>
 
-                                    {/* Follow buttons - for collection and owner */}
+                                    {/* Voting and Following buttons section */}
                                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                                        {/* Vote Section */}
+                                        <VoteSection entityId={parseInt(id as string, 10)} entityType="COLLECTION" />
+
                                         {/* Follow collection button - only show if not the owner */}
                                         {!isOwner && (
                                             <FollowButton
@@ -308,14 +313,6 @@ const CollectionDetails: React.FC = () => {
                                                     >
                                                         View Details
                                                     </Link>
-                                                    {isOwner && (
-                                                        <button
-                                                            onClick={() => handleRemoveBook(book.id)}
-                                                            className="px-3 py-1 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 transition-colors"
-                                                        >
-                                                            Remove
-                                                        </button>
-                                                    )}
 
                                                     {user && !borrowedBooks.includes(book.id) && (
                                                         lentBooks.includes(book.id) ? (
@@ -380,6 +377,11 @@ const CollectionDetails: React.FC = () => {
                                     {backButtonName}
                                 </Link>
                             </div>
+                        </div>
+
+                        {/* Comment Section */}
+                        <div className="max-w-4xl mx-auto mt-8 bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 p-6">
+                            <CommentSection entityId={parseInt(id as string, 10)} entityType="COLLECTION" />
                         </div>
                     </div>
                 </div>
