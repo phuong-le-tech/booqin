@@ -188,16 +188,12 @@ public class AdminWebController {
           RedirectAttributes redirectAttributes)
   {
     try {
-      // First get the existing user
       User existingUser = userService.findUserById(id);
-      
-      // Update only the fields from the form
       existingUser.setFirstName(user.getFirstName());
       existingUser.setLastName(user.getLastName());
       existingUser.setEmail(user.getEmail());
       existingUser.setRole(role);
-      
-      // Now update with the merged data
+
       User updatedUser = userService.updateUser(existingUser);
       redirectAttributes.addFlashAttribute("success", "User updated successfully");
       return "redirect:/admin?tab=users";

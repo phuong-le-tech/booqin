@@ -16,6 +16,7 @@ import java.util.Optional;
 @RequestMapping("/payment")
 public class StripeWebController {
   
+  private static String  URL_WEBSITE = "http://localhost:8080/";
   private final StripeService stripeService;
   private final CartServiceInterface cartService;
   
@@ -33,7 +34,7 @@ public class StripeWebController {
       return "cart"; // Redirection vers la page du panier en cas d'erreur
     }
     
-    Session session = stripeService.createCheckoutSession(cartOptional.get());
+    Session session = stripeService.createCheckoutSession(cartOptional.get() , URL_WEBSITE);
     // Ajouter l'URL de la session Stripe au modèle pour redirection dans la vue
     model.addAttribute("stripeUrl", session.getUrl());
     return "redirect:" + session.getUrl(); // Redirige vers la page de paiement Stripe
