@@ -87,7 +87,6 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
               .owner(currentUser)
               .isPublic(collection.isPublic())
               .build();
-
       var savedCollection = bookCollectionRepository.save(newCollection);
       return bookCollectionMapper.toBookCollectionShow(savedCollection);
     } else {

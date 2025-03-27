@@ -234,4 +234,10 @@ public class BookWebController {
         }
         return "redirect:/books/" + bookId;
     }
+    
+    @PostMapping("/{bookId}/delete")
+    public String deleteBook(@PathVariable Long bookId) {
+        bookService.deleteBook(bookId);
+        return "redirect:/books";
+    }
 }
