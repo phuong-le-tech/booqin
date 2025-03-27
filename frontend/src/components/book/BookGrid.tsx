@@ -149,24 +149,11 @@ export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading }) => {
             setUserCollections(allCollections);
 
             if (allCollections.length === 0) {
-                // Collections de test si aucune n'est trouvée
-                const testCollections = [
-                    { id: 1, title: 'Favoris (test)' },
-                    { id: 2, title: 'À lire plus tard (test)' },
-                    { id: 3, title: 'Science-fiction (test)' }
-                ];
-                setUserCollections(testCollections);
+
                 console.log("Aucune collection trouvée - Utilisation de collections de test");
             }
         } catch (err: any) {
             console.error("Error fetching user collections:", err);
-
-            // En cas d'erreur, utiliser des collections de test
-            const testCollections = [
-                { id: 1, title: 'Favoris (test)' },
-                { id: 2, title: 'À lire plus tard (test)' }
-            ];
-            setUserCollections(testCollections);
             console.log("Erreur API - Utilisation de collections de test");
         }
     };

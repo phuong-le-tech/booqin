@@ -20,12 +20,14 @@ import { BookLending } from "./pages/bookLending/BookLending.tsx";
 import CreateSmartCollection from "./components/collections/CreateSmartCollection";
 import Following from "./pages/follow/Following.tsx";
 import UserProfile from "./pages/user/UserProfile.tsx";
+import {NotificationProvider} from "./context/NotificationContext"
 
 const App: React.FC = () => {
     return (
         <div className="w-full min-h-screen">
             <Router>
                 <AuthProvider>
+                    <NotificationProvider>
                     <Routes>
                         <Route path="/" element={<Home />} />
                         <Route path="/home" element={<Home />} />
@@ -44,8 +46,7 @@ const App: React.FC = () => {
                         <Route path={"/profile"} element={<Profile />} />
                         <Route path="/users/:id" element={<UserProfile />} />
                         <Route path="/cart" element={<ShoppingCart />} />
-                        <Route path="/dashboard" element={<BookLending />} /> {/* Ajoutez cette nouvelle route */}
-                        {/*<Route path="/books/:id" element={<BookDetails />} />*/}
+                        <Route path="/dashboard" element={<BookLending />} />
                         <Route path="/collections/user" element={<Collections />} />
                         <Route path="/collections/public" element={<PublicCollections />} />
                         <Route path="/collections/:id" element={<CollectionDetails />} />
@@ -55,7 +56,7 @@ const App: React.FC = () => {
                         <Route path="/collections/smart/new" element={<CreateSmartCollection />} />
                     </Routes>
                     <ToastContainer
-                        position="top-right"
+                        position="bottom-left"
                         autoClose={5000}
                         hideProgressBar={false}
                         newestOnTop={false} closeOnClick
@@ -64,6 +65,7 @@ const App: React.FC = () => {
                         draggable
                         pauseOnHover
                     />
+                    </NotificationProvider>
                 </AuthProvider>
             </Router>
         </div>
