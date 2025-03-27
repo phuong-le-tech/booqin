@@ -1,29 +1,12 @@
 import type React from "react"
-import { useState } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { ShoppingCart } from "lucide-react"
 import { useAuth } from "../context/AuthContext"
-import type { Notification } from "../model/Notification.ts"
-import { NotificationsMenu } from "../components/NotificationsMenu.tsx"
-import { UserMenu } from "../components/UserMenu.tsx"
+import { NotificationsMenu } from "../components/notifications/NotificationsMenu"
+import { UserMenu } from "../components/UserMenu"
 
 export const Navbar: React.FC = () => {
     const { user, isAuthenticated, logout } = useAuth()
-    const [notifications, setNotifications] = useState<Notification[]>([
-        {
-            id: 1,
-            message: "New book added to collection",
-            read: false,
-            date: new Date(),
-        },
-        {
-            id: 2,
-            message: "Your order has been shipped",
-            read: false,
-            date: new Date(),
-        },
-    ])
-
     const location = useLocation()
 
     const getPageTitle = () => {
@@ -32,13 +15,19 @@ export const Navbar: React.FC = () => {
                 return "Books"
             case "/dashboard":
                 return "Dashboard"
+            case "/collections/user":
+                return "My Collections"
+            case "/collections/public":
+                return "Public Collections"
+            case "/following":
+                return "Following"
+            case "/cart":
+                return "Shopping Cart"
+            case "/profile":
+                return "Profile"
             default:
                 return ""
         }
-    }
-
-    const markAsRead = (id: number) => {
-        setNotifications(notifications.map((n) => (n.id === id ? {...n, read: true} : n)))
     }
 
     const handleLogout = async () => {
@@ -61,7 +50,7 @@ export const Navbar: React.FC = () => {
                     {isAuthenticated && user != null ? (
                         <div className="flex items-center gap-2 sm:gap-4">
                             <UserMenu user={user} onLogout={handleLogout} />
-                            <NotificationsMenu notifications={notifications} markAsRead={markAsRead} />
+                            <NotificationsMenu />
                         </div>
                     ) : (
                         <>
