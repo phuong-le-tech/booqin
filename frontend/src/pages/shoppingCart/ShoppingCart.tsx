@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import {JSX, useEffect, useState} from "react";
 import { Layout } from "../Layout";
 import axiosInstance from "../../services/AxiosInstance.ts";
 import { useAuth } from "../../context/AuthContext.tsx";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 type Book = {
     id: string;
@@ -17,7 +18,7 @@ type CartDto = {
     books: Book[];
 };
 
-export const ShoppingCart: React.FC = () => {
+export const ShoppingCart: () => JSX.Element = () => {
     const [cart, setCart] = useState<CartDto | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -48,12 +49,14 @@ export const ShoppingCart: React.FC = () => {
                 const parsedCart = JSON.parse(savedCart);
                 const processedCart = processCart(parsedCart);
 
-                // Diagnostic log
-                if (parsedCart.books.length !== processedCart.books.length) {
-                    console.warn('Duplicates detected and removed', {
-                        original: parsedCart.books.length,
-                        processed: processedCart.books.length
-                    });
+                // Log de diagnostic
+                if (!(processedCart) || parsedCart.books.length !== processedCart.books.length) {
+                    if (processedCart) {
+                        console.warn('Doublons détectés et supprimés', {
+                            originaux: parsedCart.books.length,
+                            traités: processedCart.books.length
+                        });
+                    }
                 }
 
                 setCart(processedCart);
@@ -105,6 +108,8 @@ export const ShoppingCart: React.FC = () => {
         fetchCart();
     }, [user?.id]);
 
+
+
     const removeFromCart = async (bookId: string) => {
         if (!cart || !user) {
             console.warn("⚠️ Cannot remove: `cart` or `user` is `null`", { cart, user: user });
@@ -128,12 +133,15 @@ export const ShoppingCart: React.FC = () => {
                     localStorage.setItem("cart", JSON.stringify(updatedCart));
                     return updatedCart;
                 });
+
+                // Notification de succès
+                toast.success("Le livre a été supprimé du panier");
             } else {
-                alert("Unable to remove the book.");
+                toast.error("Impossible de supprimer le livre du panier");
             }
         } catch (error: any) {
-            console.error("❌ Error removing book from cart", error);
-            alert("Error while removing the book.");
+            console.error("❌ Erreur lors de la suppression du livre du panier", error);
+            toast.error("Erreur lors de la suppression du livre");
         }
     };
 
@@ -149,13 +157,13 @@ export const ShoppingCart: React.FC = () => {
             if (response.status === 200) {
                 setCart(null);
                 localStorage.removeItem("cart");
-                alert("Your cart has been cleared!");
+                toast.success("Votre panier a été vidé !");
             } else {
-                alert("Unable to clear the cart.");
+                toast.error("Impossible de vider le panier");
             }
         } catch (error: any) {
-            console.error("❌ Error clearing cart", error);
-            alert("An error occurred while clearing the cart.");
+            console.error("❌ Erreur lors du vidage du panier", error);
+            toast.error("Une erreur est survenue lors du vidage du panier");
         }
     };
 
@@ -170,13 +178,16 @@ export const ShoppingCart: React.FC = () => {
         try {
             const response = await axiosInstance.post(`v1/payment/checkout?cartId=${cart.id}`);
             if (response.data && response.data.success) {
-                console.log("Stripe session creation successful", response.data.data);
+                console.log("Création de session Stripe réussie", response.data.data);
+                toast.info("Redirection vers la page de paiement...");
                 window.location.href = response.data.data;
             } else {
-                console.error("Error creating Stripe session", response);
+                console.error("Erreur lors de la création de la session Stripe", response);
+                toast.error("Erreur lors de la préparation du paiement");
             }
         } catch (error) {
-            console.error("Axios error during payment:", error);
+            console.error("Erreur Axios lors du paiement :", error);
+            toast.error("Impossible de traiter le paiement pour le moment");
         }
     };
 

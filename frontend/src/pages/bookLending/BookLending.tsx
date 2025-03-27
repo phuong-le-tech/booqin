@@ -1,8 +1,10 @@
-import  { useEffect, useState } from "react";
+import {JSX, useEffect, useState} from "react";
 import { Layout } from "../Layout";
+import { LendStatus } from "../../model/LendStatus";
 import axiosInstance from "../../services/AxiosInstance.ts";
 import { useAuth } from "../../context/AuthContext.tsx";
 import { useNavigate } from "react-router-dom";
+import {toast} from "react-toastify";
 
 type Book = {
     id: number;
@@ -38,11 +40,11 @@ type LendingResponseDTO = {
     containsAll: boolean;
 };
 
-export const BookLending: React.FC = () => {
+export const BookLending: () => JSX.Element = () => {
     const [lendingData, setLendingData] = useState<LendingResponseDTO | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<"borrowed" | "lent" | "all">("borrowed");
+    const [activeTab, setActiveTab] = useState<LendStatus>(LendStatus.BORROWED)
     const navigate = useNavigate();
     const {user} = useAuth();
 
@@ -73,7 +75,8 @@ export const BookLending: React.FC = () => {
         fetchLendings();
     }, [user?.id, activeTab]);
 
-    const handleChangeTab = (tab: "borrowed" | "lent" | "all") => {
+
+    const handleChangeTab = (tab: LendStatus) => {
         setActiveTab(tab);
         setLoading(true);
     };
@@ -128,13 +131,13 @@ export const BookLending: React.FC = () => {
                 // Refresh data
                 const updatedResponse = await axiosInstance.get(`/v1/loans/user/${user.id}?type=${activeTab}`);
                 setLendingData(updatedResponse.data.data);
-                alert("The book has been marked as returned!");
+                toast.success("The book has been marked as returned!");
             } else {
-                alert("Unable to update the loan status.");
+                toast.error("Unable to update the loan status.");
             }
         } catch (error) {
             console.error("Error while updating the loan:", error);
-            alert("An error occurred.");
+            toast.error("An error occurred.");
         }
     };
 
@@ -147,16 +150,15 @@ export const BookLending: React.FC = () => {
                 // Refresh data
                 const updatedResponse = await axiosInstance.get(`/v1/loans/user/${user.id}?type=${activeTab}`);
                 setLendingData(updatedResponse.data.data);
-                alert("The loan has been confirmed!");
+                toast.success("The loan has been confirmed!");
             } else {
-                alert("Unable to confirm the loan.");
+                toast.error("Unable to confirm the loan.");
             }
         } catch (error) {
             console.error("Error while confirming the loan:", error);
-            alert("An error occurred.");
+            toast.error("An error occurred.");
         }
     };
-
 
     const removeFromLoanable = async (id: number) => {
         if (!user?.id) return;
@@ -192,7 +194,6 @@ export const BookLending: React.FC = () => {
         }
     };
 
-
     const handleShipBook = async (lendingId: number) => {
         if (!user) return;
 
@@ -202,13 +203,56 @@ export const BookLending: React.FC = () => {
                 // Refresh data
                 const updatedResponse = await axiosInstance.get(`/v1/loans/user/${user.id}?type=${activeTab}`);
                 setLendingData(updatedResponse.data.data);
-                alert("The book has been marked as shipped!");
+                toast.success("The book has been marked as shipped!");
             } else {
-                alert("Unable to update shipping status.");
+                toast.error("Unable to update shipping status.");
             }
         } catch (error) {
             console.error("Error while updating shipping status:", error);
-            alert("An error occurred.");
+            toast.error("An error occurred.");
+        }
+    };
+    const handleDownloadTicket = async (lendingId: number) => {
+        try {
+            console.log(`Téléchargement du ticket pour le prêt ${lendingId}`);
+            const token = localStorage.getItem('token');
+            const url = `${axiosInstance.defaults.baseURL}/v1/loans/ticket-download/${lendingId}`;
+            console.log(`URL de téléchargement: ${url}`);
+
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            console.log(`Statut de la réponse: ${response.status} ${response.statusText}`);
+            console.log(`Type de contenu: ${response.headers.get('Content-Type')}`);
+
+            if (!response.ok) {
+                 throw new Error(`Erreur HTTP: ${response.status}`);
+            }
+
+            const blob = await response.blob();
+            console.log(`Taille du blob: ${blob.size} octets, type: ${blob.type}`);
+
+            const blobUrl = window.URL.createObjectURL(blob);
+
+
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = `ticket_expedition_${lendingId}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            setTimeout(() => {
+                window.URL.revokeObjectURL(blobUrl);
+            }, 100);
+
+        } catch (error) {
+            console.error("Erreur lors du téléchargement du ticket:", error);
+            toast.error("Unable to download shipping ticket.");
         }
     };
 
@@ -228,9 +272,9 @@ export const BookLending: React.FC = () => {
                 <div className="w-full max-w-6xl mb-8">
                     <div className="flex border-b border-gray-200">
                         <button
-                            onClick={() => handleChangeTab("borrowed")}
+                            onClick={() => handleChangeTab(LendStatus.BORROWED)}
                             className={`py-4 px-6 font-medium text-lg ${
-                                activeTab === "borrowed"
+                                activeTab === LendStatus.BORROWED
                                     ? "border-b-2 border-light-blue text-light-blue"
                                     : "text-gray-500 hover:text-gray-700"
                             }`}
@@ -238,9 +282,9 @@ export const BookLending: React.FC = () => {
                             Borrowed Books
                         </button>
                         <button
-                            onClick={() => handleChangeTab("lent")}
+                            onClick={() => handleChangeTab(LendStatus.LENT)}
                             className={`py-4 px-6 font-medium text-lg ${
-                                activeTab === "lent"
+                                activeTab === LendStatus.LENT
                                     ? "border-b-2 border-light-blue text-light-blue"
                                     : "text-gray-500 hover:text-gray-700"
                             }`}
@@ -248,9 +292,9 @@ export const BookLending: React.FC = () => {
                             Lent Books
                         </button>
                         <button
-                            onClick={() => handleChangeTab("all")}
+                            onClick={() => handleChangeTab(LendStatus.ALL)}
                             className={`py-4 px-6 font-medium text-lg ${
-                                activeTab === "all"
+                                activeTab === LendStatus.ALL
                                     ? "border-b-2 border-light-blue text-light-blue"
                                     : "text-gray-500 hover:text-gray-700"
                             }`}
@@ -271,9 +315,9 @@ export const BookLending: React.FC = () => {
                 ) : (
                     <div className="w-full max-w-6xl">
                         {/* Borrowed books */}
-                        {(activeTab === "borrowed" || activeTab === "all") && (
+                        {(activeTab === LendStatus.BORROWED|| activeTab === LendStatus.ALL) && (
                             <div className="mb-8">
-                                {activeTab === "all" && (
+                                {activeTab === LendStatus.ALL && (
                                     <h3 className="text-2xl font-semibold mb-4">Books you have borrowed</h3>
                                 )}
 
@@ -345,6 +389,16 @@ export const BookLending: React.FC = () => {
                                                                 </div>
                                                             )}
 
+                                                            {(lending.status === "PENDING_SHIPMENT" || lending.status === "SHIPPED") && (
+                                                                <div className="mt-4">
+                                                                    <button
+                                                                        onClick={() => handleDownloadTicket(lending.id)}
+                                                                        className="bg-light-blue hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+                                                                    >
+                                                                        Download Label
+                                                                    </button>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -370,12 +424,12 @@ export const BookLending: React.FC = () => {
                         )}
 
                         {/* Lent books */}
-                        {(activeTab === "lent" || activeTab === "all") && (
+                        {(activeTab === LendStatus.LENT || activeTab === LendStatus.ALL) && (
                             <div>
                                 {/* Lent books with borrower */}
                                 {lendingData?.lentBooks && lendingData.lentBooks.filter(lending => lending.borrower).length > 0 && (
                                     <div className="mb-8">
-                                        {activeTab === "all" && (
+                                        {activeTab === LendStatus.ALL && (
                                             <h3 className="text-2xl font-semibold mb-4">Books currently lent</h3>
                                         )}
 
@@ -406,8 +460,8 @@ export const BookLending: React.FC = () => {
                                                                             <div className="flex items-center gap-2 mb-1">
                                                                                 <span className="text-gray-600 font-medium">Status:</span>
                                                                                 <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusBadgeClass(lending.status)}`}>
-                                                        {getStatusLabel(lending.status)}
-                                                    </span>
+                                                                                    {getStatusLabel(lending.status)}
+                                                                                </span>
                                                                             </div>
                                                                         </div>
 
@@ -420,6 +474,26 @@ export const BookLending: React.FC = () => {
                                                                             </div>
                                                                         </div>
                                                                     </div>
+
+                                                                    {(lending.status === "PENDING_SHIPMENT" || lending.status === "SHIPPED") && (
+                                                                        <div className="mt-4">
+                                                                            <button
+                                                                                onClick={() => handleDownloadTicket(lending.id)}
+                                                                                className="bg-light-blue hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors mr-2"
+                                                                            >
+                                                                                Télécharger l'étiquette d'expédition
+                                                                            </button>
+
+                                                                            {lending.status === "PENDING_SHIPMENT" && (
+                                                                                <button
+                                                                                    onClick={() => handleShipBook(lending.id)}
+                                                                                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+                                                                                >
+                                                                                    Marquer comme expédié
+                                                                                </button>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -432,7 +506,7 @@ export const BookLending: React.FC = () => {
                                 {/* Books available for lending */}
                                 {lendingData?.lentBooks && lendingData.lentBooks.filter(lending => !lending.borrower).length > 0 && (
                                     <div>
-                                        {activeTab === "all" && (
+                                        {activeTab === LendStatus.ALL && (
                                             <h3 className="text-2xl font-semibold mb-4">Books available for lending</h3>
                                         )}
 

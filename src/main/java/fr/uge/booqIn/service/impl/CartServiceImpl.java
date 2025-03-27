@@ -107,7 +107,8 @@ public class CartServiceImpl implements CartServiceInterface {
                     book.getAuthors().stream()
                             .map(author -> author.getFirstName() + " " + author.getLastName())
                             .collect(Collectors.toSet()),
-                    book.getPublicationDate()
+                    book.getPublicationDate(),
+                    book.getThumbnailPath()
             ))
             .toList();
 
@@ -129,7 +130,16 @@ public class CartServiceImpl implements CartServiceInterface {
     cartRepository.save(cart);
     return true;
   }
-
+  @Transactional
+  @Override
+  public void clearCartAfterPayment(Long cartId) {
+    Cart cart = getCart(cartId);
+    System.out.println("Clearing cart after payment: " + cart);
+    cart.setStatut(StatusPayment.PENDING);
+    cart.getBooks().clear();
+    cartRepository.save(cart);
+  }
+  
   @Recover
   public Cart recoverFromOptimisticLockingFailureOnUpdate(ObjectOptimisticLockingFailureException ex, Long cartId, StatusPayment status) {
     throw new ConcurrentModificationException("The cart has been modified by someone else. Please try again.", ex);
