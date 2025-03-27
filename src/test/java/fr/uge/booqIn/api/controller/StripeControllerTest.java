@@ -56,13 +56,12 @@ class StripeControllerTest {
     books.add(book1);
     books.add(book2);
     cart.setBooks(books);
-
+    var url = "http://localhost:5173/";
     Session stripeSession = new Session();
     stripeSession.setUrl("https://checkout.stripe.com/test-session");
 
     when(cartService.getCart(eq(cartId))).thenReturn(cart);
-    when(stripeService.createCheckoutSession(any(Cart.class))).thenReturn(stripeSession);
-
+    when(stripeService.createCheckoutSession(any(Cart.class), any(String.class))).thenReturn(stripeSession);
     // When
     ResponseEntity<ApiResponse<String>> response = stripeController.createCheckoutSession(cartId);
 
@@ -76,7 +75,7 @@ class StripeControllerTest {
     assertEquals("https://checkout.stripe.com/test-session", apiResponse.data());
 
     verify(cartService).getCart(eq(cartId));
-    verify(stripeService).createCheckoutSession(eq(cart));
+    verify(stripeService).createCheckoutSession(eq(cart) ,eq(url));
   }
 
   @Test
@@ -103,7 +102,7 @@ class StripeControllerTest {
     assertNull(apiResponse.data());
 
     verify(cartService).getCart(eq(cartId));
-    verify(stripeService, never()).createCheckoutSession(any(Cart.class));
+    verify(stripeService, never()).createCheckoutSession(any(Cart.class) , any(String.class));
   }
 
   @Test
@@ -127,6 +126,6 @@ class StripeControllerTest {
     assertNull(apiResponse.data());
 
     verify(cartService).getCart(eq(cartId));
-    verify(stripeService, never()).createCheckoutSession(any(Cart.class));
+    verify(stripeService, never()).createCheckoutSession(any(Cart.class) , any(String.class));
   }
 }

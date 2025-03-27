@@ -43,6 +43,7 @@ class StripeWebControllerTest {
 
   private Cart testCart;
   private Set<Book> testBooks;
+  private String url = "http://localhost:8080/";
 
   @BeforeEach
   void setUp() {
@@ -67,7 +68,7 @@ class StripeWebControllerTest {
     // Given
     Long cartId = 1L;
     when(cartService.getCart(eq(cartId))).thenReturn(testCart);
-    when(stripeService.createCheckoutSession(eq(testCart))).thenReturn(stripeSession);
+    when(stripeService.createCheckoutSession(eq(testCart) , eq(url))).thenReturn(stripeSession);
 
     // When
     String viewName = stripeWebController.createCheckoutSession(cartId, model);
@@ -76,7 +77,7 @@ class StripeWebControllerTest {
     assertEquals("redirect:https://stripe.com/checkout/session/123", viewName);
 
     verify(cartService).getCart(eq(cartId));
-    verify(stripeService).createCheckoutSession(eq(testCart));
+    verify(stripeService).createCheckoutSession(eq(testCart) , eq(url));
     verify(model).addAttribute(eq("stripeUrl"), eq("https://stripe.com/checkout/session/123"));
   }
 
