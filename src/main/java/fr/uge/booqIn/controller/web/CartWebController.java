@@ -49,11 +49,11 @@ public class CartWebController {
     if (cartOptional.isEmpty()) {
       model.addAttribute("cart", null);
       model.addAttribute("subtotal", 0.0);
-      model.addAttribute("total", 5.99);
+      model.addAttribute("total", 6);
     } else {
       ShopCartDto cart = cartOptional.get();
       var size  = cart.books().size();
-      double subtotal = 0.99;
+      double subtotal = 0.0;
       double total = size * 6;
 
       model.addAttribute("cart", cart);
