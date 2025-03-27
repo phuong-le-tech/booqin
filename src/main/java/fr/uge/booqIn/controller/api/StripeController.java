@@ -18,7 +18,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/v1/payment")
 public class StripeController {
-    
+    private String URL_WEBSITE = "http://localhost:5173/";
     private final StripeService stripeService;
     private final CartServiceInterface cartService;
     
@@ -39,7 +39,7 @@ public class StripeController {
                     .body(ApiResponse.error("Le panier est vide ou inexistant"));
         }
         
-        Session session = stripeService.createCheckoutSession(cartOptional.get());
+        Session session = stripeService.createCheckoutSession(cartOptional.get() ,URL_WEBSITE);
         
         return ResponseEntity.ok(ApiResponse.success("Session Stripe créée", session.getUrl()));
     }

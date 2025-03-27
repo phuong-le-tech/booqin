@@ -96,8 +96,8 @@ class CartWebControllerTest {
     verify(homeWebController).prepareModel(eq(model), eq(principal), eq("cart"));
     verify(cartService).getCartDto(eq(1L));
     verify(model).addAttribute(eq("cart"), eq(testShopCartDto));
-    verify(model).addAttribute(eq("subtotal"), eq(0.99));
-    verify(model).addAttribute(eq("total"), eq(6.98)); // 0.99 + 5.99 shipping
+    verify(model).addAttribute(eq("subtotal"), eq(0.0));
+    verify(model).addAttribute(eq("total"), eq(12.0d));
     verify(model).addAttribute(eq("title"), eq("BooqIn - Votre Panier"));
     verify(model).addAttribute(eq("content"), eq("pages/shoppingCart/shoppingCart"));
   }
@@ -118,7 +118,7 @@ class CartWebControllerTest {
     verify(cartService).getCartDto(eq(1L));
     verify(model).addAttribute(eq("cart"), eq(null));
     verify(model).addAttribute(eq("subtotal"), eq(0.0));
-    verify(model).addAttribute(eq("total"), eq(5.99)); // Just shipping
+    verify(model).addAttribute(eq("total"), eq(6)); // Just shipping
     verify(model).addAttribute(eq("title"), eq("BooqIn - Votre Panier"));
     verify(model).addAttribute(eq("content"), eq("pages/shoppingCart/shoppingCart"));
   }

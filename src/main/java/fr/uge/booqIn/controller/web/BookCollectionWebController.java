@@ -5,6 +5,7 @@ import fr.uge.booqIn.dto.bookCollection.BookCollectionCreate;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionIndex;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionUpdate;
+import fr.uge.booqIn.dto.comment.CommentDTO;
 import fr.uge.booqIn.dto.lending.LendingResponseDTO;
 import fr.uge.booqIn.dto.vote.VoteCreate;
 import fr.uge.booqIn.entity.Author;
@@ -18,6 +19,7 @@ import fr.uge.booqIn.mapper.BookCollectionMapper;
 import fr.uge.booqIn.mapper.BookMapper;
 import fr.uge.booqIn.model.BookCollection;
 import fr.uge.booqIn.service.impl.BookServiceImpl;
+import fr.uge.booqIn.service.impl.UserVoteService;
 import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
 import fr.uge.booqIn.service.interfaces.BookLendingInterface;
 import fr.uge.booqIn.service.interfaces.CommentServiceInterface;
@@ -52,18 +54,22 @@ public class BookCollectionWebController {
   private final Logger logger = Logger.getLogger(BookCollectionWebController.class.getName());
   private final HomeWebController homeWebController;
   private final BookLendingInterface bookLendingInterface;
+  private final UserVoteService userVoteService;
+  private final CommentServiceInterface commentService;
 
   @Autowired
   public BookCollectionWebController(BookCollectionServiceInterface bookCollectionService, VoteServiceInterface voteService, CommentServiceInterface commentServiceInterface,
                                      BookServiceImpl bookService,
                                      HomeWebController homeWebController,
-                                     BookLendingInterface bookLendingInterface) {
+                                     BookLendingInterface bookLendingInterface, UserVoteService userVoteService, CommentServiceInterface commentService) {
     this.bookCollectionService = bookCollectionService;
     this.voteService = voteService;
     this.commentServiceInterface = commentServiceInterface;
     this.bookService = bookService;
     this.homeWebController = homeWebController;
     this.bookLendingInterface = bookLendingInterface;
+    this.userVoteService = userVoteService;
+    this.commentService = commentService;
   }
 
   @GetMapping("/public")
@@ -151,6 +157,9 @@ public class BookCollectionWebController {
       var comments = commentServiceInterface.getCommentTreeByEntity(id,"COLLECTION");
       if(currentUser!=null) {
         model.addAttribute("user", currentUser);
+        List<CommentDTO> list = commentService.getCommentTreeByEntity(id, "COLLECTION");
+        Map<Long, VoteType> commentVotes = userVoteService.collectCommentVotes(currentUser.getId(), list);
+        model.addAttribute("userCommentVotes", commentVotes);
       }
       model.addAttribute("comments", comments);
       model.addAttribute("commentCount", totalComments);

@@ -49,12 +49,12 @@ public class CartWebController {
     if (cartOptional.isEmpty()) {
       model.addAttribute("cart", null);
       model.addAttribute("subtotal", 0.0);
-      model.addAttribute("total", 5.99);
+      model.addAttribute("total", 6);
     } else {
       ShopCartDto cart = cartOptional.get();
-      //double subtotal = cart.books().stream().mapToDouble(book -> book.price()).sum();
-      double subtotal = 0.99;
-      double total = subtotal + 5.99; // Frais de livraison
+      var size  = cart.books().size();
+      double subtotal = 0.0;
+      double total = size * 6;
 
       model.addAttribute("cart", cart);
       model.addAttribute("subtotal", subtotal);

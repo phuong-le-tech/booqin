@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
+import java.security.Principal;
 import java.util.Optional;
 
 @Controller
@@ -28,22 +29,24 @@ public class BookLendingWebController {
   private final UserServiceInterface userService;
   private final BookServiceInterface bookService;
   private final BookLendingInterface bookLendingInterface;
+  private final HomeWebController homeWebController;
   
   public BookLendingWebController(
           UserServiceInterface userService,
           BookServiceInterface bookService,
-          BookLendingInterface bookLendingInterface) {
+          BookLendingInterface bookLendingInterface, HomeWebController homeWebController) {
     this.userService = userService;
     this.bookService = bookService;
     this.bookLendingInterface = bookLendingInterface;
+    this.homeWebController = homeWebController;
   }
   
   @GetMapping
   public String getLendingsPage(
           @RequestParam(required = false, defaultValue = "BORROWED") LendStatus type,
           @AuthenticationPrincipal User currentUser,
-          Model model) {
-    // Validation des types de prêts
+          Model model , Principal principal) {
+    homeWebController.prepareModel(model, principal, "cart");
       if (!(type == LendStatus.BORROWED) &&
               !(type == LendStatus.LENT) &&
               !(type ==  LendStatus.ALL)) {
@@ -144,24 +147,6 @@ public class BookLendingWebController {
     return "redirect:/loans?type=" + LendStatus.LENT;
   }
   
-  @GetMapping("/check-book-availability/{bookId}")
-  public String checkBookAvailability(@PathVariable Long bookId, Model model) {
-    if(bookService.findById(bookId) == null) {
-      model.addAttribute("errorMessage", "Book not found");
-      model.addAttribute("title", "Error");
-      return "layout";
-    }
-    
-    Optional<BookLending> availableBook = bookLendingInterface.findBookLendingByBookId(bookId);
-    boolean isAvailable = availableBook.isPresent();
-    
-    model.addAttribute("isBookAvailable", isAvailable);
-    model.addAttribute("bookId", bookId);
-    model.addAttribute("title", "Book Availability");
-    
-
-    return "fragments/book-availability :: availability-fragment";
-  }
   
   
   @PostMapping("/remove-loanable")
