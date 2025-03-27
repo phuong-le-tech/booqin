@@ -148,19 +148,48 @@ public class BookController {
 
     @GetMapping("/images/{*path}")
     public ResponseEntity<Resource> serveImage(@PathVariable String path) {
+        logger.info("Serving image: {}", path);
+
         try {
-            var imagePath = Paths.get(uploadDir, path);
+            var imagePath = Paths.get(uploadDir, path).normalize();
+            var uploadDirPath = Paths.get(uploadDir).normalize();
+
+            if (!imagePath.startsWith(uploadDirPath)) {
+                logger.warn("Tentative de directory traversal détectée: {}", path);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+
             var resource = new UrlResource(imagePath.toUri());
 
             if (resource.exists()) {
+                var headers = new HttpHeaders();
+                headers.setCacheControl("max-age=86400"); // 24 hours cache
+
+                var contentType = Files.probeContentType(imagePath);
+                if (contentType == null) {
+                    var fileName = imagePath.getFileName().toString().toLowerCase();
+                    if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) {
+                        contentType = "image/jpeg";
+                    } else if (fileName.endsWith(".png")) {
+                        contentType = "image/png";
+                    } else if (fileName.endsWith(".gif")) {
+                        contentType = "image/gif";
+                    } else {
+                        contentType = "application/octet-stream";
+                    }
+                }
+
                 return ResponseEntity.ok()
-                        .header(HttpHeaders.CONTENT_TYPE, Files.probeContentType(imagePath))
+                        .header(HttpHeaders.CONTENT_TYPE, contentType)
+                        .headers(headers)
                         .body(resource);
             } else {
+                logger.warn("Image non trouvée: {}", imagePath);
                 return ResponseEntity.notFound().build();
             }
         } catch (IOException e) {
-            return ResponseEntity.notFound().build();
+            logger.error("Erreur lors de l'accès à l'image: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }
