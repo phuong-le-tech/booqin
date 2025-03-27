@@ -3,7 +3,6 @@ package fr.uge.booqIn.event.listener;
 import fr.uge.booqIn.entity.BookLending;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.BookStatus;
-import fr.uge.booqIn.event.BooqInEventListener;
 import fr.uge.booqIn.event.publishable.StatusUpdateReminderEvent;
 import fr.uge.booqIn.repository.BookLendingRepository;
 
@@ -17,7 +16,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 @Component
-public class StatusUpdateReminderListener implements BooqInEventListener<StatusUpdateReminderEvent> {
+public class StatusUpdateReminderListener  {
   private static final Logger logger = Logger.getLogger(StatusUpdateReminderListener.class.getName());
   
   private final BookLendingRepository bookLendingRepository;
@@ -31,7 +30,6 @@ public class StatusUpdateReminderListener implements BooqInEventListener<StatusU
     this.eventPublisher = eventPublisher;
   }
   
-  @Override
   @EventListener
   public void handleEvent(StatusUpdateReminderEvent event) {
     BookLending lending = event.bookLending();

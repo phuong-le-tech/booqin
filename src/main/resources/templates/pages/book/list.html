@@ -10,6 +10,17 @@
     </a>
 </div>
 
+<!-- Flash messages for success/error notifications -->
+<div th:if="${successMessage}" class="mb-6 bg-green-100 border border-green-300 text-green-700 px-4 py-3 rounded-lg">
+    <span th:text="${successMessage}"></span>
+</div>
+<div th:if="${errorMessage}" class="mb-6 bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-lg">
+    <span th:text="${errorMessage}"></span>
+</div>
+<div th:if="${infoMessage}" class="mb-6 bg-blue-100 border border-blue-300 text-blue-700 px-4 py-3 rounded-lg">
+    <span th:text="${infoMessage}"></span>
+</div>
+
 <!-- Formulaire de recherche et de filtrage -->
 <div class="bg-white rounded-lg shadow-sm p-6 mt-8">
     <h3 class="text-lg font-bold text-gray-800 mb-4">Search & Filter Books</h3>
@@ -50,6 +61,12 @@
             Lent
         </div>
 
+        <!-- Badge for queue position -->
+        <div th:if="${bookQueuePositions != null && bookQueuePositions.containsKey(book.id())}"
+             class="absolute top-2 left-2 bg-purple-500 text-white text-xs px-2 py-1 rounded-full z-10">
+            Queue: <span th:text="${bookQueuePositions.get(book.id())}">0</span>
+        </div>
+
         <div class="w-full h-48 flex justify-center items-center text-2xl text-white rounded-t-xl"
              th:style="'background-color: ' + ${T(java.lang.String).format('#%06x', T(java.lang.Math).abs(book.id().hashCode()) % 0xFFFFFF)}">
             <span th:text="${book.title().substring(0, 1).toUpperCase()}"></span>
@@ -64,11 +81,11 @@
 
             <a class="mt-auto text-center py-2 px-4 bg-blue-600 text-white text-sm font-medium rounded-lg transition hover:bg-blue-700" th:href="@{'/books/' + ${book.id()}}">View details</a>
 
-            <!-- Boutons pour les actions -->
+            <!-- Action buttons -->
             <div class="flex gap-2 mt-2">
-                <!-- Bouton Borrow ou Notify selon disponibilité -->
+                <!-- Borrow/Notify/Cancel Notification buttons based on availability and queue status -->
                 <div class="flex-1">
-                    <!-- Si le livre est disponible, afficher le bouton Borrow -->
+                    <!-- If book is available, show Borrow button -->
                     <form th:if="${availableBooks != null && availableBooks.contains(book.id())}"
                           th:action="@{/cart/add-book}" method="post">
                         <input type="hidden" name="bookId" th:value="${book.id()}" />
@@ -78,20 +95,31 @@
                         </button>
                     </form>
 
-                    <!-- Si le livre n'est pas disponible, afficher le bouton Notify -->
-                    <form th:unless="${availableBooks != null && availableBooks.contains(book.id())}"
-                          th:action="@{/notifications/subscribe}" method="post" class="notify-form">
+                    <!-- If user is in queue (has a position), show Cancel Notification button -->
+                    <form th:if="${bookQueuePositions != null && bookQueuePositions.containsKey(book.id()) && notificationIdsByBook != null && notificationIdsByBook.containsKey(book.id())}"
+                          th:action="@{/book-queue/cancel}" method="post">
+                        <input type="hidden" name="notificationId" th:value="${notificationIdsByBook.get(book.id())}" />
                         <input type="hidden" name="bookId" th:value="${book.id()}" />
-                        <input type="hidden" name="userId" th:value="${userId}">
+                        <input type="hidden" name="returnUrl" th:value="@{/books(page=${currentPage}, sort=${sort}, direction=${direction})}" />
+                        <button type="submit" class="w-full text-center py-2 px-4 bg-red-600 text-white text-sm font-medium rounded-lg transition hover:bg-red-700">
+                            Cancel Notification
+                        </button>
+                    </form>
+
+                    <!-- If book not available and user not in queue, show Notify button -->
+                    <form th:if="${(availableBooks == null || !availableBooks.contains(book.id())) && (bookQueuePositions == null || !bookQueuePositions.containsKey(book.id()))}"
+                          th:action="@{/book-queue/subscribe}" method="post">
+                        <input type="hidden" name="bookId" th:value="${book.id()}" />
+                        <input type="hidden" name="returnUrl" th:value="@{/books(page=${currentPage}, sort=${sort}, direction=${direction})}" />
                         <button type="submit" class="w-full text-center py-2 px-4 bg-purple-600 text-white text-sm font-medium rounded-lg transition hover:bg-purple-700">
                             Notify
                         </button>
                     </form>
                 </div>
 
-                <!-- Boutons pour le prêt (si connecté et livre pas déjà emprunté) -->
+                <!-- Lending buttons (if connected and book not borrowed) -->
                 <th:block th:if="${userId != null && (borrowedBooks == null || !borrowedBooks.contains(book.id()))}">
-                    <!-- Si le livre est déjà dans la liste de prêt -->
+                    <!-- If book is already in lending list -->
                     <form th:if="${lentBooks != null && lentBooks.contains(book.id())}"
                           th:action="@{/loans/remove-loanable}"
                           method="post"
@@ -104,7 +132,7 @@
                         </button>
                     </form>
 
-                    <!-- Si le livre n'est pas encore dans la liste de prêt -->
+                    <!-- If book is not yet in lending list -->
                     <form th:if="${lentBooks == null || !lentBooks.contains(book.id())}"
                           th:action="@{/loans/make-loanable}"
                           method="post"
@@ -127,7 +155,7 @@
     <p class="text-sm text-gray-500">Try adjusting your search or check back later</p>
 </div>
 
-<!-- Pagination avec paramètres de recherche et de tri -->
+<!-- Pagination with search parameters and sorting -->
 <div class="flex items-center justify-center gap-2 my-6" th:if="${totalPages > 1}"
      th:with="visiblePages=5,
               startPage=${(currentPage - 2 < 0) ? 0 : ((currentPage + 2 >= totalPages) ? (totalPages - visiblePages < 0 ? 0 : totalPages - visiblePages) : currentPage - 2)},
@@ -139,7 +167,7 @@
         <span class="nav-icon">&#8592;</span>
     </button>
 
-    <!-- Premier numéro de page avec ellipsis si nécessaire -->
+    <!-- First page number with ellipsis if necessary -->
     <div class="min-w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer transition text-sm text-gray-800 hover:bg-gray-200"
          th:if="${startPage > 0}"
          th:onclick="'window.location.href=\'' + @{/books(page=0, title=${title}, author=${author}, isbn=${isbn}, sort=${sort}, direction=${direction})} + '\''">
@@ -148,7 +176,7 @@
 
     <div class="flex items-center justify-center text-sm text-gray-500 tracking-wider" th:if="${startPage > 1}">...</div>
 
-    <!-- Pages visibles dans la fenêtre coulissante -->
+    <!-- Visible pages in the sliding window -->
     <div class="flex items-center gap-1">
         <div class="min-w-9 h-9 rounded-full flex items-center justify-center cursor-pointer transition text-sm"
              th:each="i : ${#numbers.sequence(startPage, endPage)}"
@@ -158,7 +186,7 @@
         </div>
     </div>
 
-    <!-- Dernier numéro de page avec ellipsis si nécessaire -->
+    <!-- Last page number with ellipsis if necessary -->
     <div class="flex items-center justify-center text-sm text-gray-500 tracking-wider" th:if="${endPage < totalPages - 2}">...</div>
 
     <div class="min-w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer transition text-sm text-gray-800 hover:bg-gray-200"
@@ -173,12 +201,13 @@
         <span class="nav-icon">&#8594;</span>
     </button>
 </div>
+
+<!-- Toast notification -->
 <div id="toast" class="hidden fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg transform transition-all duration-300">
     <span id="toast-message">Message ici</span>
     <span class="ml-2">✓</span>
 </div>
 
-</body>
 <script th:if="${userId != null}" th:inline="javascript">
     // Get the collections data from Thymeleaf model
     const userCollections = /*[[${bookCollections}]]*/ [];
@@ -201,15 +230,7 @@
             .then(response => {
                 if (response.ok) {
                     // Show success message
-                    const successPopup = document.getElementById('success-popup');
-                    if (successPopup) {
-                        successPopup.classList.remove('hidden');
-                        setTimeout(() => {
-                            successPopup.classList.add('hidden');
-                        }, 2000);
-                    } else {
-                        alert(`Book successfully added to collection!`);
-                    }
+                    showToast('Book successfully added to collection', 'success');
                     return response.text();
                 } else {
                     throw new Error('Failed to add book to collection');
@@ -217,7 +238,7 @@
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Failed to add book to collection. Please try again.');
+                showToast('Failed to add book to collection', 'error');
             });
 
         // Close the modal after adding
@@ -228,40 +249,28 @@
 
         return false; // Prevent default link behavior
     }
-    document.addEventListener('DOMContentLoaded', function() {
-        const notifyForms = document.querySelectorAll('form[action="/notifications/subscribe"]');
 
-        notifyForms.forEach(form => {
-            form.addEventListener('submit', function(event) {
-                event.preventDefault();
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toast-message');
 
-                // Récupérer les données du formulaire
-                const formData = new FormData(form);
-                const bookId = form.querySelector('input[name="bookId"]').value;
-                const userId = form.querySelector('input[name="userId"]').value;
+        // Set style based on type
+        if (type === 'success') {
+            toast.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg transform transition-all duration-300';
+        } else if (type === 'error') {
+            toast.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-md shadow-lg transform transition-all duration-300';
+        } else if (type === 'info') {
+            toast.className = 'fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-md shadow-lg transform transition-all duration-300';
+        }
 
-                // Envoyer la requête avec fetch
-                fetch('/notifications/subscribe', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                    .then(response => {
-                        if (response.ok) {
-                            showToast('You will be notified when this book becomes available', 'success');
-                        } else {
-                            showToast('Failed to register notification', 'error');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        showToast('An error occurred. Please try again later.', 'error');
-                    });
-            });
-        });
-    });
+        toastMessage.textContent = message;
+        toast.classList.remove('hidden');
+
+        setTimeout(() => {
+            toast.classList.add('hidden');
+        }, 3000);
+    }
+
     function showCollectionsModal(bookId) {
         // Remove any existing modal
         const existingModal = document.getElementById('collection-modal');
@@ -323,40 +332,10 @@
 
         modal.innerHTML = modalContent;
         document.body.appendChild(modal);
-
-        // Create success popup if it doesn't exist
-        if (!document.getElementById('success-popup')) {
-            const successPopup = document.createElement('div');
-            successPopup.id = 'success-popup';
-            successPopup.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg hidden transform transition-all duration-300';
-            successPopup.innerHTML = `Book successfully added to collection! <span class="ml-2">✓</span>`;
-            document.body.appendChild(successPopup);
-        }
     }
-    function showToast(message, type = 'success') {
-        const toast = document.getElementById('toast');
-        const toastMessage = document.getElementById('toast-message');
 
-        // Définir le style selon le type
-        if (type === 'success') {
-            toast.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg transform transition-all duration-300';
-        } else if (type === 'error') {
-            toast.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-md shadow-lg transform transition-all duration-300';
-        } else if (type === 'info') {
-            toast.className = 'fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-md shadow-lg transform transition-all duration-300';
-        }
-
-
-        toastMessage.textContent = message;
-
-        toast.classList.remove('hidden');
-
-
-        setTimeout(() => {
-            toast.classList.add('hidden');
-        }, 3000);
-    }
     document.addEventListener('DOMContentLoaded', function() {
+        // Handle context menu on book items
         document.querySelectorAll('.book-item').forEach(function(bookItem) {
             bookItem.addEventListener('contextmenu', function(event) {
                 event.preventDefault();
@@ -373,33 +352,35 @@
                 dropdownMenu.style.top = `${event.pageY}px`;
                 dropdownMenu.style.left = `${event.pageX}px`;
 
-                // Get the book ID from the closest parent element
+                // Get the book ID from the closest parent element with form
                 const bookElement = bookItem.closest('.bg-white.border');
-                const bookId = bookElement ? bookElement.querySelector('form input[name="bookId"]').value : 'placeholder-book-id';
+                const bookIdInput = bookElement ? bookElement.querySelector('form input[name="bookId"]') : null;
+                const bookId = bookIdInput ? bookIdInput.value : null;
 
-                // Set the dropdown HTML content with just one option to open the modal
-                dropdownMenu.innerHTML = `
-                <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-200 rounded-md" onclick="event.preventDefault(); showCollectionsModal('${bookId}');">
-                    Ajouter à une collection
-                </a>`;
+                if (bookId) {
+                    // Set the dropdown HTML content
+                    dropdownMenu.innerHTML = `
+                    <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-200 rounded-md" onclick="event.preventDefault(); showCollectionsModal('${bookId}');">
+                        Add to collection
+                    </a>`;
 
-                document.body.appendChild(dropdownMenu);
+                    document.body.appendChild(dropdownMenu);
 
-                // Close dropdown when clicking anywhere else
-                document.addEventListener('click', function closeMenu() {
-                    dropdownMenu.remove();
-                    document.removeEventListener('click', closeMenu);
-                });
-
-                // Close dropdown when pressing escape
-                document.addEventListener('keydown', function escHandler(e) {
-                    if (e.key === 'Escape') {
+                    // Close dropdown when clicking anywhere else
+                    document.addEventListener('click', function closeMenu() {
                         dropdownMenu.remove();
-                        document.removeEventListener('keydown', escHandler);
-                    }
-                });
+                        document.removeEventListener('click', closeMenu);
+                    });
+
+                    // Close dropdown when pressing escape
+                    document.addEventListener('keydown', function escHandler(e) {
+                        if (e.key === 'Escape') {
+                            dropdownMenu.remove();
+                            document.removeEventListener('keydown', escHandler);
+                        }
+                    });
+                }
             });
         });
     });
 </script>
-</html>

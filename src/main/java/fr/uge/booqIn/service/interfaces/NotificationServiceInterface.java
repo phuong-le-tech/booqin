@@ -1,18 +1,55 @@
 package fr.uge.booqIn.service.interfaces;
 
-import fr.uge.booqIn.dto.notification.BookNotificationDTO;
-import fr.uge.booqIn.entity.Book;
-import fr.uge.booqIn.entity.User;
+import fr.uge.booqIn.entity.Notification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Map;
 
 public interface NotificationServiceInterface {
-  boolean addToNotificationQueue(Long bookId, Long userId);
-  void processNextInQueue(Long bookId);
-  void processExpiredNotifications();
-  boolean reserveNotifiedBook(Long notificationId, Long userId);
-  List<BookNotificationDTO> getActiveNotifications(Long userId);
-  void sendBookAvailableNotification(User user, Book book, LocalDateTime expiresAt);
-}
 
+    /**
+     * Gets all notifications for a user
+     * @param userId ID of the user
+     * @param pageable Pagination information
+     * @return DTO containing notifications and counts
+     */
+    Page<Notification> getNotifications(Long userId, Pageable pageable);
+
+    /**
+     * Gets count of unread notifications for a user
+     * @param userId ID of the user
+     * @return Map containing counts by type, with key "unread" for total unread count
+     */
+    int getUnreadCounts(Long userId);
+
+    /**
+     * Marks a notification as read
+     * @param notificationId ID of the notification to mark
+     * @param userId ID of the user who owns the notification
+     * @return true if notification was marked, false otherwise
+     */
+    boolean markAsRead(Long notificationId, Long userId);
+
+    /**
+     * Marks all notifications as read for a user
+     * @param userId ID of the user
+     * @return number of notifications marked as read
+     */
+    int markAllAsRead(Long userId);
+
+    /**
+     * Deletes a notification
+     * @param notificationId ID of the notification
+     * @param userId ID of the user
+     * @return true if deleted successfully, false otherwise
+     */
+    boolean deleteNotification(Long notificationId, Long userId);
+
+    /**
+     * Deletes all notifications for a user
+     * @param userId ID of the user
+     * @return number of notifications deleted
+     */
+    int clearAllNotifications(Long userId);
+}
