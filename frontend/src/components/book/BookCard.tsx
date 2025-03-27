@@ -1,4 +1,4 @@
-import React, { useState, useEffect} from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { BookIndex } from '../../model/Book.ts';
 import axiosInstance from "../../services/AxiosInstance.ts";
@@ -12,15 +12,29 @@ interface LoanInfo {
     state: string;
 }
 
+// Type for collection information
+interface Collection {
+    id: number;
+    title: string;
+}
+
 interface BookCardProps {
     book: BookIndex;
     borrowedBooks?: number[];
     lentBooks?: number[];
     loanStates?: LoanInfo[];
+    userCollections?: Collection[];
     onLendingChange?: () => void;
 }
 
-export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], lentBooks = [], loanStates = [], onLendingChange }) => {
+export const BookCard: React.FC<BookCardProps> = ({
+                                                      book,
+                                                      borrowedBooks = [],
+                                                      lentBooks = [],
+                                                      loanStates = [],
+                                                      userCollections = [],
+                                                      onLendingChange
+                                                  }) => {
     const { id } = book;
     const { user } = useAuth();
     const userId = user?.id;
@@ -29,6 +43,9 @@ export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], le
     const [isBorrowed, setIsBorrowed] = useState<boolean>(false);
     const [imageError, setImageError] = useState<boolean>(false);
     const [isBookAvailable, setIsBookAvailable] = useState<boolean>(true);
+    const [showCollectionDropdown, setShowCollectionDropdown] = useState<boolean>(false);
+    const [showCollectionModal, setShowCollectionModal] = useState<boolean>(false);
+    const cardRef = useRef<HTMLDivElement>(null);
 
     const isBookBorrowed = loanStates.some(loan => {
         const bookIdMatches = loan.bookId === id;
@@ -42,6 +59,19 @@ export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], le
 
         // Check book availability when component loads
         checkBookAvailability();
+
+        // Add event listener for closing the dropdown/modal when clicking outside
+        const handleClickOutside = (event: MouseEvent) => {
+            if (cardRef.current && !cardRef.current.contains(event.target as Node)) {
+                setShowCollectionDropdown(false);
+                setShowCollectionModal(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
     }, [borrowedBooks, lentBooks, id]);
 
     // Check book availability using the existing endpoint
@@ -133,9 +163,9 @@ export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], le
         try {
             const response = await axiosInstance.post("/v1/carts/add-book", {
                 params: {
-                userId,
-                bookId: id,
-            }});
+                    userId,
+                    bookId: id,
+                }});
 
             if (response.status === 200 && response.data?.success) {
                 toast.success("Book has been added to cart");
@@ -199,11 +229,124 @@ export const BookCard: React.FC<BookCardProps> = ({ book, borrowedBooks = [], le
         setImageError(true);
     };
 
+    const handleContextMenu = (e: React.MouseEvent) => {
+        e.preventDefault();
+        setShowCollectionDropdown(true);
+    };
+
+    const handleOpenCollectionModal = (e: React.MouseEvent) => {
+        e.preventDefault();
+        setShowCollectionDropdown(false);
+        setShowCollectionModal(true);
+    };
+
+    const addToCollection = async (collectionId: number) => {
+        if (!userId) return;
+
+        setLoading(true);
+        try {
+            const response = await axiosInstance.post(
+                `/v1/collections/${collectionId}/books/${id}`
+            );
+            console.log("Collection add response:", response);
+
+            if (response.status === 200 && response.data?.success) {
+                toast.success("Book successfully added to collection");
+                setShowCollectionModal(false);
+            } else {
+                toast.error(response.data?.message || "Failed to add book to collection");
+            }
+        } catch (error: any) {
+            console.error("Error adding to collection:", error);
+            const errorMessage = error.response?.data?.message ||
+                error.response?.data?.data?.message ||
+                "Error adding book to collection";
+            toast.error(errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
-        <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col h-full relative">
+        <div
+            ref={cardRef}
+            className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col h-full relative"
+            onContextMenu={handleContextMenu}
+        >
             {isBookBorrowed && (
                 <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full z-10">
                     Lent
+                </div>
+            )}
+
+            {/* Context Menu Dropdown */}
+            {showCollectionDropdown && (
+                <div className="absolute right-0 mt-8 bg-white shadow-lg rounded-md p-2 z-50">
+                    <a
+                        href="#"
+                        className="block px-4 py-2 text-gray-800 hover:bg-gray-200 rounded-md"
+                        onClick={handleOpenCollectionModal}
+                    >
+                        Ajouter à une collection
+                    </a>
+                </div>
+            )}
+
+            {/* Collection Modal */}
+            {showCollectionModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden transform transition-all">
+                        <div className="bg-blue-600 px-4 py-3 flex justify-between items-center">
+                            <h3 className="text-lg font-medium text-white">Add to Collection</h3>
+                            <button
+                                onClick={() => setShowCollectionModal(false)}
+                                className="text-white hover:text-gray-200 focus:outline-none"
+                            >
+                                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="p-4 max-h-96 overflow-y-auto">
+                            {/* Debug information */}
+                            <div className="text-xs text-gray-500 mb-2">
+                                {userCollections ? `${userCollections.length} collections disponibles` : 'Aucune collection chargée'}
+                            </div>
+
+                            {userCollections && userCollections.length > 0 ? (
+                                <div className="space-y-2">
+                                    {userCollections.map(collection => (
+                                        <div
+                                            key={collection.id}
+                                            className="hover:bg-gray-100 p-2 rounded-md cursor-pointer flex items-center"
+                                            onClick={() => addToCollection(collection.id)}
+                                        >
+                                            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white mr-3">
+                                                {collection.title.charAt(0).toUpperCase()}
+                                            </div>
+                                            <div className="font-medium">{collection.title}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-8">
+                                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                                    </svg>
+                                    <p className="mt-2 text-gray-500">No collections available</p>
+                                    <p className="text-sm text-gray-400 mt-1">Create a collection first to add books</p>
+                                </div>
+                            )}
+                        </div>
+                        <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                            <button
+                                onClick={() => setShowCollectionModal(false)}
+                                className="w-full sm:w-auto px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 focus:outline-none"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 

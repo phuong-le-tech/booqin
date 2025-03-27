@@ -1,9 +1,9 @@
 // src/components/BookGrid.tsx
-import React, {useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BookCard } from './BookCard.tsx';
 import { BookIndex } from '../../model/Book.ts';
 import axiosInstance from "../../services/AxiosInstance.ts";
-import {useAuth} from "../../context/AuthContext.tsx";
+import { useAuth } from "../../context/AuthContext.tsx";
 import { LendStatus } from "../../model/LendStatus";
 import { toast } from "react-toastify";
 
@@ -12,50 +12,58 @@ interface LoanInfo {
     state: string;
 }
 
+interface Collection {
+    id: number;
+    title: string;
+}
+
 interface BookGridProps {
     books: BookIndex[];
     isLoading: boolean;
     userId?: number;
 }
 
-export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading}) => {
+export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading }) => {
     const [lentBooks, setLentBooks] = useState<number[]>([]);
     const [borrowedBooks, setBorrowedBooks] = useState<number[]>([]);
     const [loanStates, setLoanStates] = useState<LoanInfo[]>([]);
+    const [userCollections, setUserCollections] = useState<Collection[]>([]);
     const { user } = useAuth();
     const userIds = user?.id;
 
-    const fetchUserBooks = async () => {
-        if (!userIds) {
-            return;
+    useEffect(() => {
+        if (userIds) {
+            fetchUserBooks();
+            fetchUserCollections();
+            console.log("Utilisateur connecté, ID:", userIds);
+        } else {
+            console.log("Aucun utilisateur connecté");
         }
+    }, [userIds]);
+
+    const fetchUserBooks = async () => {
+        if (!userIds) return;
 
         try {
             const response = await axiosInstance.get(`/v1/loans/user/${userIds}?type=${LendStatus.ALL}`);
             if (response.data?.success && response.data?.data) {
-
                 if (Array.isArray(response.data.data.lentBooks)) {
-
                     const lentBookIds = response.data.data.lentBooks.map((loan: any) => {
                         if (loan.book && typeof loan.book.id === 'number') {
                             return loan.book.id;
                         } else if (loan.bookId) {
-                            // Structure alternative possible
                             return loan.bookId;
                         } else if (typeof loan.id === 'number') {
-                            // Autre structure alternative
                             return loan.id;
                         }
                         return null;
                     }).filter((id: any) => id !== null) as number[];
                     setLentBooks(lentBookIds);
 
-                    // Adapter l'extraction des états de prêt
                     const loanStatesData = response.data.data.lentBooks.map((loan: any) => {
                         let bookId: number | null = null;
                         let state: string | null = null;
 
-                        // Déterminer l'ID du livre
                         if (loan.book && typeof loan.book.id === 'number') {
                             bookId = loan.book.id;
                         } else if (loan.bookId) {
@@ -64,14 +72,11 @@ export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading}) => {
                             bookId = loan.id;
                         }
 
-                        // Déterminer l'état du prêt
                         if (typeof loan.state === 'string') {
                             state = loan.state;
                         } else if (loan.status) {
-                            // Structure alternative possible
                             state = loan.status;
                         } else if (loan.loanState) {
-                            // Autre structure alternative
                             state = loan.loanState;
                         }
 
@@ -81,11 +86,8 @@ export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading}) => {
                         return null;
                     }).filter((info: any) => info !== null) as LoanInfo[];
                     setLoanStates(loanStatesData);
-                } else {
-                    toast.warning("Format de données inattendu pour les livres prêtés");
                 }
 
-                // Faire de même pour les livres empruntés
                 if (Array.isArray(response.data.data.borrowedBooks)) {
                     const borrowedBookIds = response.data.data.borrowedBooks.map((loan: any) => {
                         if (loan.book && typeof loan.book.id === 'number') {
@@ -99,17 +101,75 @@ export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading}) => {
                     }).filter((id: any) => id !== null) as number[];
                     setBorrowedBooks(borrowedBookIds);
                 }
-            } else {
-                console.warn("Unexpected response format from /v1/loans/user", response);
             }
         } catch (err: any) {
             console.error("Error fetching user books:", err);
         }
     };
 
-    useEffect(() => {
-        fetchUserBooks();
-    }, [userIds]);
+    const fetchUserCollections = async () => {
+        if (!userIds) return;
+
+        try {
+            console.log("Fetching collections for user ID:", userIds);
+
+            const publicResponse = await axiosInstance.get(`/v1/collections/user/public`, {
+                params: {
+                    page: 0,
+                    size: 100
+                }
+            });
+
+            const privateResponse = await axiosInstance.get(`/v1/collections/user/private`, {
+                params: {
+                    page: 0,
+                    size: 100
+                }
+            });
+
+            console.log("Public collections response:", publicResponse);
+            console.log("Private collections response:", privateResponse);
+
+            // Extraire et combiner les collections
+            let publicCollections: Collection[] = [];
+            let privateCollections: Collection[] = [];
+
+            if (publicResponse.data?.success && publicResponse.data?.data?.content) {
+                publicCollections = publicResponse.data.data.content;
+            }
+
+            if (privateResponse.data?.success && privateResponse.data?.data?.content) {
+                privateCollections = privateResponse.data.data.content;
+            }
+
+            // Combiner les deux ensembles de collections
+            const allCollections = [...publicCollections, ...privateCollections];
+
+            console.log(`${allCollections.length} collections trouvées:`, allCollections);
+            setUserCollections(allCollections);
+
+            if (allCollections.length === 0) {
+                // Collections de test si aucune n'est trouvée
+                const testCollections = [
+                    { id: 1, title: 'Favoris (test)' },
+                    { id: 2, title: 'À lire plus tard (test)' },
+                    { id: 3, title: 'Science-fiction (test)' }
+                ];
+                setUserCollections(testCollections);
+                console.log("Aucune collection trouvée - Utilisation de collections de test");
+            }
+        } catch (err: any) {
+            console.error("Error fetching user collections:", err);
+
+            // En cas d'erreur, utiliser des collections de test
+            const testCollections = [
+                { id: 1, title: 'Favoris (test)' },
+                { id: 2, title: 'À lire plus tard (test)' }
+            ];
+            setUserCollections(testCollections);
+            console.log("Erreur API - Utilisation de collections de test");
+        }
+    };
 
     const handleLendingChange = () => {
         fetchUserBooks();
@@ -137,6 +197,9 @@ export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading}) => {
         );
     }
 
+    // Afficher les collections avant de rendre le composant
+    console.log("Rendering BookGrid with collections:", userCollections);
+
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {books.map(book => (
@@ -146,6 +209,7 @@ export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading}) => {
                     lentBooks={lentBooks}
                     borrowedBooks={borrowedBooks}
                     loanStates={loanStates}
+                    userCollections={userCollections}
                     onLendingChange={handleLendingChange}
                 />
             ))}
