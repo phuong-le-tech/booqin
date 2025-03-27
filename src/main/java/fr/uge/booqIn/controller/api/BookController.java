@@ -76,7 +76,7 @@ public class BookController {
     }
     
     @PostMapping("")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<Book>> createBook(@RequestBody Book book) {
         logger.info("🆕 Création d'un nouveau livre");
         
