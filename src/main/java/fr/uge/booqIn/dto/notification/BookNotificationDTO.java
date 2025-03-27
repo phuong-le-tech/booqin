@@ -1,6 +1,6 @@
 package fr.uge.booqIn.dto.notification;
 
-import fr.uge.booqIn.enums.NotificationStatus;
+import fr.uge.booqIn.enums.QueueStatus;
 import java.time.LocalDateTime;
 
 public record BookNotificationDTO(
@@ -9,7 +9,7 @@ public record BookNotificationDTO(
         String bookTitle,
         String bookCover,
         String authorNames,
-        NotificationStatus status,
+        QueueStatus status,
         LocalDateTime expiresAt,
         Integer position,
         LocalDateTime createdAt
@@ -25,7 +25,7 @@ public record BookNotificationDTO(
     private String bookTitle;
     private String bookCover;
     private String authorNames;
-    private NotificationStatus status;
+    private QueueStatus status;
     private LocalDateTime expiresAt;
     private Integer position;
     private LocalDateTime createdAt;
@@ -55,7 +55,7 @@ public record BookNotificationDTO(
       return this;
     }
     
-    public Builder status(NotificationStatus status) {
+    public Builder status(QueueStatus status) {
       this.status = status;
       return this;
     }

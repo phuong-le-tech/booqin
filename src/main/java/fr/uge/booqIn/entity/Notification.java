@@ -1,6 +1,5 @@
 package fr.uge.booqIn.entity;
 
-import fr.uge.booqIn.enums.NotificationStatus;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -16,10 +15,6 @@ public class Notification {
     
     @Column(nullable = false)
     private String message;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private NotificationStatus type;
     
     @Column(nullable = false)
     private LocalDateTime createdAt;
@@ -32,10 +27,9 @@ public class Notification {
         this.read = false;
     }
     
-    public Notification(Long userId, String message, NotificationStatus type) {
+    public Notification(Long userId, String message) {
         this.userId = userId;
         this.message = message;
-        this.type = type;
         this.createdAt = LocalDateTime.now();
         this.read = false;
     }
@@ -65,13 +59,6 @@ public class Notification {
         this.message = message;
     }
 
-    public NotificationStatus getType() {
-        return type;
-    }
-
-    public void setType(NotificationStatus type) {
-        this.type = type;
-    }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;

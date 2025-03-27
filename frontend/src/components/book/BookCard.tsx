@@ -191,7 +191,7 @@ export const BookCard: React.FC<BookCardProps> = ({
             params.append('userId', userId.toString());
 
             const response = await axiosInstance.post(
-                "/v1/notifications/subscribe",
+                "/v1/book-queue/join",
                 params
             );
 
