@@ -54,7 +54,7 @@ class NotificationControllerTest {
     ApiResponse<Boolean> apiResponse = response.getBody();
     assertNotNull(apiResponse);
     assertTrue(apiResponse.success());
-    assertEquals("Ajouté à la file d'attente", apiResponse.message());
+    assertEquals("Added to notification queue", apiResponse.message());
     assertTrue(apiResponse.data());
     verify(notificationService).addToNotificationQueue(eq(bookId), eq(userId));
   }
@@ -76,7 +76,7 @@ class NotificationControllerTest {
     ApiResponse<Boolean> apiResponse = response.getBody();
     assertNotNull(apiResponse);
     assertFalse(apiResponse.success());
-    assertEquals("Déjà dans la file d'attente", apiResponse.message());
+    assertEquals("Already in notification queue", apiResponse.message());
     assertFalse(apiResponse.data());
     verify(notificationService).addToNotificationQueue(eq(bookId), eq(userId));
   }
