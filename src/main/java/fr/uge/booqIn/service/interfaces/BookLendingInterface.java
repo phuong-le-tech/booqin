@@ -4,6 +4,7 @@ import fr.uge.booqIn.dto.lending.BookLendingShow;
 import fr.uge.booqIn.dto.lending.LendingResponseDTO;
 import fr.uge.booqIn.entity.BookLending;
 import fr.uge.booqIn.enums.BookStatus;
+import fr.uge.booqIn.enums.LendStatus;
 import jdk.jshell.Snippet;
 
 import java.util.List;
@@ -19,6 +20,8 @@ public interface BookLendingInterface {
   boolean markAsShipped(Long lendingId);
   
   void markAsPending(Long bookId, Long userId);
+
+  boolean markAsReturn(Long bookId, Long userId);
   
   boolean cancelBook(Long bookId, Long userId);
   
@@ -30,7 +33,7 @@ public interface BookLendingInterface {
   
   List<BookLendingShow> findLentBooksAsDTO(Long userId);
   
-  LendingResponseDTO findAllUserLendingsAsDTO(Long userId, String type);
+  LendingResponseDTO findAllUserLendingsAsDTO(Long userId, LendStatus type);
   
   
   Optional<BookLending> findBookLendingByBookId(Long bookId);
@@ -38,4 +41,10 @@ public interface BookLendingInterface {
   boolean loanable (Long bookId, Long userId);
   
   boolean isNoMoreLoanable(Long bookId , Long userId);
+  
+
+   Optional<BookLending> findByBookIdAndBorrowerIsNullAndStatus(Long bookId);
+  
+
+  byte[] getShippingTicketBytes(Long lendingId);
 }

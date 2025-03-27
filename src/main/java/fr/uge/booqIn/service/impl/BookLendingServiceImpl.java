@@ -1,15 +1,20 @@
 package fr.uge.booqIn.service.impl;
 
+import com.itextpdf.text.Document;
+import com.itextpdf.text.PageSize;
+import com.itextpdf.text.pdf.PdfWriter;
 import fr.uge.booqIn.dto.lending.BookLendingShow;
 import fr.uge.booqIn.dto.lending.LendingResponseDTO;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.BookLending;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.BookStatus;
+import fr.uge.booqIn.enums.LendStatus;
 import fr.uge.booqIn.event.BooqInEventPublisher;
 import fr.uge.booqIn.event.publishable.BookNotAvailableEvent;
 import fr.uge.booqIn.event.publishable.BookReturnedEvent;
 import fr.uge.booqIn.mapper.BookLendingMapper;
+import fr.uge.booqIn.pdf.PdfCreator;
 import fr.uge.booqIn.repository.BookLendingRepository;
 import fr.uge.booqIn.repository.BookRepository;
 import fr.uge.booqIn.repository.UserRepository;
@@ -22,12 +27,10 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
 
+import java.io.ByteArrayOutputStream;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.util.ConcurrentModificationException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,6 +43,7 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   private final BookServiceImpl bookService;
   private final BooqInEventPublisher eventPublisher;
   private final UserRepository userRepository;
+  private PdfCreator pdfCreator = new PdfCreator();
 
   public BookLendingServiceImpl(
           BookLendingRepository bookLendingRepository,
@@ -76,12 +80,14 @@ public class BookLendingServiceImpl implements BookLendingInterface {
 
     lending.setStatus(BookStatus.BORROWED);
     lending.setStartDate(LocalDateTime.now());
-    lending.setDueDate(lending.getStartDate().plusWeeks(2));
+    lending.setDueDate(lending.getStartDate().plusWeeks(4));
 
     bookLendingRepository.save(lending);
 
     return true;
   }
+  
+
 
   @Transactional
   @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {ConcurrentModificationException.class,
@@ -100,6 +106,8 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     }
 
     lending.setStatus(BookStatus.AVAILABLE);
+    lending.setShippingTicketPDF(null);
+    lending.setBorrower(null);
     lending.setReturnDate(null);
 
     bookLendingRepository.save(lending);
@@ -113,11 +121,9 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   public boolean reserveBook(Long bookId, Long borrowerId) {
     Optional<Book> optionalBook = bookRepository.findById(bookId);
     Optional<User> optionalUser = Optional.ofNullable(userService.findUserById(borrowerId));
-
     if (optionalBook.isEmpty() || optionalUser.isEmpty()) {
       return false;
     }
-
     Book book = optionalBook.get();
     User borrower = optionalUser.get();
 
@@ -127,11 +133,14 @@ public class BookLendingServiceImpl implements BookLendingInterface {
       eventPublisher.publishEvent(new BookNotAvailableEvent(bookId, borrowerId));
       return false;
     }
-    var bl = bookLending.get();
-    bl.setBorrower(borrower);
-    bl.setReservedAt(LocalDateTime.now());
-    bl.setStatus(BookStatus.RESERVED);
-    bookLendingRepository.save(bl);
+    List<BookLending> availableLendings = bookLendingRepository.findAvailableLendingsForBookOrderByLenderPoints(bookId);
+    BookLending selectedLending = availableLendings.getFirst();
+    selectedLending.setBorrower(borrower);
+    selectedLending.setReservedAt(LocalDateTime.now());
+    selectedLending.setStatus(BookStatus.RESERVED);
+    bookLendingRepository.save(selectedLending);
+    User lender = selectedLending.getLender();
+    System.out.println("Book reserved from lender " + lender.getFullName() + " with " + lender.getLendingPoints() + " points");
 
     return true;
   }
@@ -189,6 +198,13 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     if (optLendings.isPresent()) {
       BookLending bookLending = optLendings.get();
       bookLending.setStatus(BookStatus.PENDING_SHIPMENT);
+      var pdf = pdfCreator.generateShippingTicketPDF(bookLending);
+      bookLending.setShippingTicketPDF(pdf);
+      User lender = bookLending.getLender();
+      if (lender != null) {
+        lender.incrementLendingPoints();
+        userRepository.save(lender);
+      }
       bookLendingRepository.save(bookLending);
     }
   }
@@ -215,7 +231,7 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     }
     return false;
   }
-
+  
   public List<BookLending> findUserLendings(Long userId) {
     User user = userService.findUserById(userId);
     return bookLendingRepository.findByBorrower(user);
@@ -225,7 +241,11 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {ConcurrentModificationException.class,
           ObjectOptimisticLockingFailureException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
   public void ListClearBookstoLend(List<BookLending> bookLendings) {
-    bookLendingRepository.deleteAll(bookLendings);
+   for (BookLending bookLending : bookLendings) {
+      bookLending.setBorrower(null);
+      bookLending.setStatus(BookStatus.AVAILABLE);
+      bookLendingRepository.save(bookLending);
+    }
   }
 
   @Transactional
@@ -258,14 +278,14 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   }
 
   @Transactional
-  public LendingResponseDTO findAllUserLendingsAsDTO(Long userId, String type) {
-    boolean containsAll = "all".equalsIgnoreCase(type);
+  public LendingResponseDTO findAllUserLendingsAsDTO(Long userId, LendStatus type) {
+    boolean containsAll = type == LendStatus.ALL;
 
-    List<BookLendingShow> borrowedBooks = containsAll || "borrowed".equalsIgnoreCase(type)
+    List<BookLendingShow> borrowedBooks = containsAll ||  type == LendStatus.BORROWED
             ? findBorrowedLendingsAsDTO(userId)
             : List.of();
 
-    List<BookLendingShow> lentBooks = containsAll || "lent".equalsIgnoreCase(type)
+    List<BookLendingShow> lentBooks = containsAll || type == LendStatus.LENT
             ? findLentBooksAsDTO(userId)
             : List.of();
 
@@ -411,6 +431,33 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     return true;
   }
 
+  @Override
+  @Transactional
+  public byte[] getShippingTicketBytes(Long lendingId) {
+    Optional<BookLending> lendingOpt = bookLendingRepository.findById(lendingId);
+    if (lendingOpt.isEmpty()) {
+      System.out.println("Prêt non trouvé: " + lendingId);
+      return null;
+    }
+
+    BookLending lending = lendingOpt.get();
+    byte[] pdfBytes = lending.getShippingTicketPDF();
+    if (pdfBytes == null) {
+      System.out.println("PDF null pour le prêt: " + lendingId);
+      return null;
+    }
+    System.out.println("Taille du PDF pour le prêt " + lendingId + ": " + pdfBytes.length + " octets");
+    return pdfBytes;
+  }
+  
+  public List<BookLending> findAllLateLendings() {
+    return bookLendingRepository.findByStatusAndDueDateBefore(BookStatus.BORROWED, LocalDateTime.now());
+  }
+  
+  public Optional<BookLending> findByBookIdAndBorrowerIsNullAndStatus(Long bookId) {
+    return Optional.ofNullable(bookLendingRepository.findByBookIdAndBorrowerIsNullAndStatus(bookId, BookStatus.AVAILABLE));
+  }
+  
   @Recover
   public boolean recoverFromOptimisticLockingFailureOnMarkAsReturn(ObjectOptimisticLockingFailureException ex,
                                                                    Long bookId, Long userId) {

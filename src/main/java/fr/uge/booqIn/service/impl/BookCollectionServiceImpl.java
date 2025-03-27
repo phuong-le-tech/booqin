@@ -87,7 +87,6 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
               .owner(currentUser)
               .isPublic(collection.isPublic())
               .build();
-
       var savedCollection = bookCollectionRepository.save(newCollection);
       return bookCollectionMapper.toBookCollectionShow(savedCollection);
     } else {
@@ -187,6 +186,7 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
     // Note: This implementation may need to be adjusted based on your repository method
     // If getUserCollectionsWithBooks is a custom method, it may need pagination support
     List<AbstractBookCollection> collections = bookCollectionRepository.findByOwnerWithBooks(user);
+    System.out.println("ALL USER CL IN SERVICE:\n" + collections);
 
     // Apply pagination manually if necessary
     int start = (int) pageable.getOffset();

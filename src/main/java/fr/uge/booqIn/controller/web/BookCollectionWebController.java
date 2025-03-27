@@ -1,13 +1,17 @@
 package fr.uge.booqIn.controller.web;
 
 import fr.uge.booqIn.dto.book.BookShow;
+import fr.uge.booqIn.dto.bookCollection.BookCollectionCreate;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionIndex;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionUpdate;
+import fr.uge.booqIn.dto.lending.LendingResponseDTO;
 import fr.uge.booqIn.dto.vote.VoteCreate;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.User;
+import fr.uge.booqIn.enums.BookStatus;
+import fr.uge.booqIn.enums.LendStatus;
 import fr.uge.booqIn.enums.VoteType;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.mapper.BookCollectionMapper;
@@ -15,14 +19,16 @@ import fr.uge.booqIn.mapper.BookMapper;
 import fr.uge.booqIn.model.BookCollection;
 import fr.uge.booqIn.service.impl.BookServiceImpl;
 import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
+import fr.uge.booqIn.service.interfaces.BookLendingInterface;
 import fr.uge.booqIn.service.interfaces.CommentServiceInterface;
 import fr.uge.booqIn.service.interfaces.VoteServiceInterface;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -45,16 +51,19 @@ public class BookCollectionWebController {
   private final BookCollectionMapper bookCollectionMapper = new BookCollectionMapper();
   private final Logger logger = Logger.getLogger(BookCollectionWebController.class.getName());
   private final HomeWebController homeWebController;
+  private final BookLendingInterface bookLendingInterface;
 
   @Autowired
   public BookCollectionWebController(BookCollectionServiceInterface bookCollectionService, VoteServiceInterface voteService, CommentServiceInterface commentServiceInterface,
                                      BookServiceImpl bookService,
-                                     HomeWebController homeWebController) {
+                                     HomeWebController homeWebController,
+                                     BookLendingInterface bookLendingInterface) {
     this.bookCollectionService = bookCollectionService;
     this.voteService = voteService;
     this.commentServiceInterface = commentServiceInterface;
     this.bookService = bookService;
     this.homeWebController = homeWebController;
+    this.bookLendingInterface = bookLendingInterface;
   }
 
   @GetMapping("/public")
@@ -66,22 +75,30 @@ public class BookCollectionWebController {
 
     Page<BookCollectionIndex> collections = bookCollectionService.getPublicCollections(PageRequest.of(page, size));
     model.addAttribute("publicCollections", collections);
-
-    // Définir le titre et le contenu
     model.addAttribute("title", "BooqIn - Public Collections");
     model.addAttribute("content", "pages/collections/public");
-
     return "layout";
   }
 
   @GetMapping()
-  public String showUserCollections(Model model, @AuthenticationPrincipal User currentUser, Principal principal) {
-    // Préparer le modèle commun
+  public String showUserCollections(
+          Model model, @AuthenticationPrincipal User currentUser, Principal principal,
+          @RequestParam(value = "page", defaultValue = "0") int page,
+          @RequestParam(value = "size", defaultValue = "20") int size,
+          @RequestParam(value = "sort", defaultValue = "title") String sort,
+          @RequestParam(value = "direction", defaultValue = "asc") String direction
+  ) {
     homeWebController.prepareModel(model, principal, "collections");
 
-    Page<BookCollectionShow> collections = bookCollectionService.getUserCollectionsWithBooks(currentUser, null);
-    List<BookCollectionShow> userPublicCollections = collections.stream().filter(BookCollectionShow::isPublic).toList();
-    List<BookCollectionShow> userPrivateCollections = collections.stream().filter(collection -> !collection.isPublic()).toList();
+    Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction) ?
+            Sort.Direction.DESC : Sort.Direction.ASC;
+    Sort sortObj = Sort.by(sortDirection, sort);
+    Pageable pageable = PageRequest.of(page, size, sortObj);
+
+    Page<BookCollectionShow> collections = bookCollectionService.getUserCollectionsWithBooks(currentUser, pageable);
+    Page<BookCollectionIndex> userPublicCollections = bookCollectionService.getPublicUserCollection(currentUser, pageable);
+    Page<BookCollectionIndex> userPrivateCollections = bookCollectionService.getPrivateUserCollection(currentUser, pageable);
+
     model.addAttribute("collections", collections);
     model.addAttribute("userPublicCollections", userPublicCollections);
     model.addAttribute("userPrivateCollections", userPrivateCollections);
@@ -96,13 +113,37 @@ public class BookCollectionWebController {
   @GetMapping("/{id}")
   public String showCollectionDetails(@PathVariable Long id, Model model, Principal principal, @AuthenticationPrincipal User currentUser) {
     try {
-      // Préparer le modèle commun
       homeWebController.prepareModel(model, principal, "collection-details");
 
       BookCollectionShow collection = bookCollectionService.findBookCollectionById(id);
       System.out.println("BookCollection was found !");
       model.addAttribute("collection", collection);
-      // Définir le titre et le contenu
+      model.addAttribute("currentUser", currentUser);
+      boolean isOwner = (currentUser != null && Objects.equals(collection.user().id(), currentUser.getId()));
+      model.addAttribute("isOwner", isOwner);
+      if (currentUser != null) {
+        try {
+          LendingResponseDTO lendingData = bookLendingInterface.findAllUserLendingsAsDTO(currentUser.getId(), LendStatus.ALL);
+          StringBuilder logMsg = new StringBuilder();
+          System.out.println("Lending data fetched: " + lendingData.lentBooks().size() + " lent books");
+          List<Long> lentBooks = lendingData.lentBooks().stream()
+                  .filter(lending -> lending.status() == BookStatus.AVAILABLE)
+                  .map(lending -> lending.book().id())
+                  .collect(Collectors.toList());
+          List<Long> borrowedBooks = lendingData.lentBooks().stream()
+                  .filter(lending -> lending.status() == BookStatus.BORROWED)
+                  .map(lending -> lending.book().id())
+                  .collect(Collectors.toList());
+          model.addAttribute("lentBooks", lentBooks);
+          model.addAttribute("borrowedBooks", borrowedBooks);
+          logger.info("Lending info added to model: lentBooks=" + lentBooks.size() + ", borrowedBooks=" + borrowedBooks.size());
+        } catch (Exception e) {
+          model.addAttribute("lentBooks", Collections.emptyList());
+          model.addAttribute("borrowedBooks", Collections.emptyList());
+        }
+      }
+
+
       model.addAttribute("title", "BooqIn - " + collection.title());
       model.addAttribute("content", "pages/collections/details");
       model.addAttribute("votes",voteService.getVoteCounts(id,"COLLECTION"));
@@ -206,7 +247,7 @@ public class BookCollectionWebController {
     // Préparer le modèle commun
     homeWebController.prepareModel(model, principal, "collection-create");
 
-    model.addAttribute("bookCollection", null);
+    model.addAttribute("bookCollection", new BookCollectionCreate("", "", false, Optional.empty()));
 
     // Définir le titre et le contenu
     model.addAttribute("title", "BooqIn - Create Collection");
@@ -215,15 +256,17 @@ public class BookCollectionWebController {
     return "layout";
   }
 
-  /*@PostMapping("/new")
+  @PostMapping("/new")
   public String createCollection(
           @Valid @ModelAttribute("bookCollection") BookCollectionCreate bookCollection,
           Model model,
-          Principal principal) {
+          Principal principal,
+          @AuthenticationPrincipal User currentUser
+  ) {
     try {
-      bookCollection.setOwner(currentUser);
-      bookCollection.setPublic(isPublic != null && isPublic);
-      BookCollection createdCollection = bookCollectionService.createBookCollection(bookCollection);
+//      bookCollection.setOwner(currentUser);
+//      bookCollection.setPublic(isPublic != null && isPublic);
+      BookCollectionShow createdCollection = bookCollectionService.createBookCollection(bookCollection, currentUser);
       System.out.println("Collection created: " + createdCollection);
       return "redirect:/collections";
     } catch (ResourceNotFoundException e) {
@@ -236,7 +279,7 @@ public class BookCollectionWebController {
 
       return "layout";
     }
-  }*/
+  }
 
   @GetMapping("/{id}/edit")
   public String showEditCollectionForm(@PathVariable Long id, Model model, @AuthenticationPrincipal User currentUser, Principal principal) {

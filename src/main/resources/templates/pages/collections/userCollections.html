@@ -1,84 +1,276 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>My Collections</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
 <div class="max-w-6xl mx-auto">
     <h1 class="text-4xl font-bold text-gray-800 mb-8 text-center">My Collections</h1>
 
-    <div class="bg-white shadow-lg rounded-lg overflow-hidden mb-8">
-        <div class="p-6">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4">My Private Collections</h2>
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-base font-medium text-gray-700 uppercase tracking-wider">Name</th>
-                    <th class="px-6 py-3 text-left text-base font-medium text-gray-700 uppercase tracking-wider">Description</th>
-                    <th class="px-6 py-3 text-left text-base font-medium text-gray-700 uppercase tracking-wider">Owner</th>
-                    <th class="px-6 py-3 text-left text-base font-medium text-gray-700 uppercase tracking-wider">Actions</th>
-                    <th class="px-6 py-3 text-left text-base font-medium text-gray-700 uppercase tracking-wider">Number of Books</th>
-                </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                <tr th:each="collection : ${userPrivateCollections}" class="hover:bg-gray-100">
-                    <td class="px-6 py-4 text-base text-gray-700" th:text="${collection.title}">Collection Title</td>
-                    <td class="px-6 py-4 text-base text-gray-700" th:text="${collection.description}">Collection Description</td>
-                    <td class="px-6 py-4 text-base text-gray-700" th:text="${collection.user.firstName} + ' ' + ${collection.user.lastName}">Owner</td>
-                    <td class="px-6 py-4 text-base font-medium">
-                        <div class="flex space-x-2">
-                            <a th:href="@{/collections/{id}(id=${collection.id})}" class="bg-blue-600 px-2 py-1 text-white text-base rounded hover:opacity-90">
-                                View
-                            </a>
-                            <a th:href="@{/collections/{id}/edit(id=${collection.id})}" class="px-2 py-1 bg-green-600 text-white text-base rounded hover:bg-green-700">
-                                Edit
-                            </a>
-                            <a th:href="@{/collections/{id}/delete(id=${collection.id})}" class="px-2 py-1 bg-red-600 text-white text-base rounded hover:bg-red-700" onclick="return confirm('Are you sure you want to delete this collection?')">
-                                Delete
-                            </a>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 text-base text-gray-700" th:text="${collection.books.size()}">Nb Books</td>
-                </tr>
-                </tbody>
-            </table>
+    <!-- Onglets de navigation -->
+    <div class="flex border-b border-gray-200 mb-6">
+        <button
+                class="py-2 px-4 font-medium text-blue-600 border-b-2 border-blue-600"
+                id="private-tab"
+                onclick="showTab('private')">
+            Private Collections
+        </button>
+        <button
+                class="py-2 px-4 font-medium text-gray-500 hover:text-gray-700"
+                id="public-tab"
+                onclick="showTab('public')">
+            Public Collections
+        </button>
+        <button
+                class="py-2 px-4 font-medium text-gray-500 hover:text-gray-700"
+                id="smart-tab"
+                onclick="showTab('smart')">
+            Smart Collections
+        </button>
+        <button
+                class="py-2 px-4 font-medium text-gray-500 hover:text-gray-700"
+                id="global-tab"
+                onclick="showTab('global')">
+            Global Collections
+        </button>
+    </div>
+
+    <!-- Private Collections Section -->
+    <div id="private-tab-content">
+        <div class="bg-white shadow-lg rounded-lg overflow-hidden mb-8">
+            <div class="p-6">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">My Private Collections</h2>
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Type</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Description</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Owner</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Number of Books</th>
+                    </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tr th:each="collection : ${userPrivateCollections}" class="hover:bg-gray-100">
+                        <td class="px-6 py-4 text-sm">
+                            <!-- Badge différent selon l'ID de l'utilisateur -->
+                            <span th:if="${collection.userId == 1}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <svg class="mr-1.5 h-2 w-2 text-green-800" fill="currentColor" viewBox="0 0 8 8">
+                                        <circle cx="4" cy="4" r="3" />
+                                    </svg>
+                                    Created Automatically
+                                </span>
+                            <span th:unless="${collection.userId == 1}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    <svg class="mr-1.5 h-2 w-2 text-blue-800" fill="currentColor" viewBox="0 0 8 8">
+                                        <circle cx="4" cy="4" r="3" />
+                                    </svg>
+                                    Created by User
+                                </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-800" th:text="${collection.title}">Collection Title</td>
+                        <td class="px-6 py-4 text-sm text-gray-600 max-w-xs truncate" th:text="${collection.description}">Collection Description</td>
+                        <td class="px-6 py-4 text-sm text-gray-600" th:text="${collection.userFullName}">Owner</td>
+                        <td class="px-6 py-4 text-sm font-medium">
+                            <div class="flex space-x-2">
+                                <a th:href="@{/collections/{id}(id=${collection.id})}" class="text-indigo-600 hover:text-indigo-900 px-2 py-1 bg-indigo-100 rounded">
+                                    View
+                                </a>
+                                <a th:href="@{/collections/{id}/edit(id=${collection.id})}" class="text-green-600 hover:text-green-900 px-2 py-1 bg-green-100 rounded">
+                                    Edit
+                                </a>
+                                <a th:href="@{/collections/{id}/delete(id=${collection.id})}" class="text-red-600 hover:text-red-900 px-2 py-1 bg-red-100 rounded" onclick="return confirm('Are you sure you want to delete this collection?')">
+                                    Delete
+                                </a>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500" th:text="${collection.bookCount}">0</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <div class="bg-white shadow-lg rounded-lg overflow-hidden">
-        <div class="p-6">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4">My Public Collections</h2>
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-base font-medium text-gray-700 uppercase tracking-wider">Name</th>
-                    <th class="px-6 py-3 text-left text-base font-medium text-gray-700 uppercase tracking-wider">Description</th>
-                    <th class="px-6 py-3 text-left text-base font-medium text-gray-700 uppercase tracking-wider">Owner</th>
-                    <th class="px-6 py-3 text-left text-base font-medium text-gray-700 uppercase tracking-wider">Actions</th>
-                    <th class="px-6 py-3 text-left text-base font-medium text-gray-700 uppercase tracking-wider">Number of Books</th>
-                </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                <tr th:each="collection : ${userPublicCollections}" class="hover:bg-gray-100">
-                    <td class="px-6 py-4 text-base text-gray-700" th:text="${collection.title}">Collection Title</td>
-                    <td class="px-6 py-4 text-base text-gray-700" th:text="${collection.description}">Collection Description</td>
-                    <td class="px-6 py-4 text-base text-gray-700" th:text="${collection.user.firstName} + ' ' + ${collection.user.lastName}">Owner</td>
-                    <td class="px-6 py-4 text-base font-medium">
-                        <div class="flex space-x-2">
-                            <a th:href="@{/collections/{id}(id=${collection.id})}" class="bg-blue-600 px-2 py-1 text-white text-base rounded hover:opacity-90">
-                                View
-                            </a>
-                            <a th:href="@{/collections/{id}/edit(id=${collection.id})}" class="px-2 py-1 bg-green-600 text-white text-base rounded hover:bg-green-700">
-                                Edit
-                            </a>
-                            <a th:href="@{/collections/{id}/delete(id=${collection.id})}" class="px-2 py-1 bg-red-600 text-white text-base rounded hover:bg-red-700" onclick="return confirm('Are you sure you want to delete this collection?')">
-                                Delete
-                            </a>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 text-base text-gray-700" th:text="${collection.books.size}">Nb Books</td>
-                </tr>
-                </tbody>
-            </table>
+    <!-- Public Collections Section -->
+    <div id="public-tab-content" style="display: none;">
+        <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+            <div class="p-6">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">My Public Collections</h2>
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Type</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Description</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Owner</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Number of Books</th>
+                    </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tr th:each="collection : ${userPublicCollections}" class="hover:bg-gray-100">
+                        <td class="px-6 py-4 text-sm">
+                            <!-- Badge différent selon l'ID de l'utilisateur -->
+                            <span th:if="${collection.userId == 1}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <svg class="mr-1.5 h-2 w-2 text-green-800" fill="currentColor" viewBox="0 0 8 8">
+                                        <circle cx="4" cy="4" r="3" />
+                                    </svg>
+                                    Created Automatically
+                                </span>
+                            <span th:unless="${collection.userId == 1}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    <svg class="mr-1.5 h-2 w-2 text-blue-800" fill="currentColor" viewBox="0 0 8 8">
+                                        <circle cx="4" cy="4" r="3" />
+                                    </svg>
+                                    Created by User
+                                </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-800" th:text="${collection.title}">Collection Title</td>
+                        <td class="px-6 py-4 text-sm text-gray-600 max-w-xs truncate" th:text="${collection.description}">Collection Description</td>
+                        <td class="px-6 py-4 text-sm text-gray-600" th:text="${collection.userFullName}">Owner</td>
+                        <td class="px-6 py-4 text-sm font-medium">
+                            <div class="flex space-x-2">
+                                <a th:href="@{/collections/{id}(id=${collection.id})}" class="text-indigo-600 hover:text-indigo-900 px-2 py-1 bg-indigo-100 rounded">
+                                    View
+                                </a>
+                                <a th:href="@{/collections/{id}/edit(id=${collection.id})}" class="text-green-600 hover:text-green-900 px-2 py-1 bg-green-100 rounded">
+                                    Edit
+                                </a>
+                                <a th:href="@{/collections/{id}/delete(id=${collection.id})}" class="text-red-600 hover:text-red-900 px-2 py-1 bg-red-100 rounded" onclick="return confirm('Are you sure you want to delete this collection?')">
+                                    Delete
+                                </a>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500" th:text="${collection.bookCount}">0</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <div class="mt-6 text-center">
-        <a th:href="@{/}" class="bg-blue-600 inline-block px-4 py-2 text-white rounded-lg hover:opacity-90 mr-4">Back to Home</a>
-        <a th:href="@{/collections/new}" class="bg-blue-600 inline-block px-4 py-2 text-white rounded-lg hover:opacity-90">Add New Collection</a>
+    <!-- Smart Collections Section -->
+    <div id="smart-tab-content" style="display: none;">
+        <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+            <div class="p-6">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Smart Collections</h2>
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Type</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Description</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Owner</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Number of Books</th>
+                    </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tr th:each="collection : ${smartCollections}" class="hover:bg-gray-100">
+                        <td class="px-6 py-4 text-sm">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                    <svg class="mr-1.5 h-2 w-2 text-purple-800" fill="currentColor" viewBox="0 0 8 8">
+                                        <circle cx="4" cy="4" r="3" />
+                                    </svg>
+                                    Smart Collection
+                                </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-800" th:text="${collection.title}">Smart Collection Title</td>
+                        <td class="px-6 py-4 text-sm text-gray-600 max-w-xs truncate" th:text="${collection.description}">Smart Collection Description</td>
+                        <td class="px-6 py-4 text-sm text-gray-600" th:text="${collection.userFullName}">Owner</td>
+                        <td class="px-6 py-4 text-sm font-medium">
+                            <div class="flex space-x-2">
+                                <a th:href="@{/collections/{id}(id=${collection.id})}" class="text-indigo-600 hover:text-indigo-900 px-2 py-1 bg-indigo-100 rounded">
+                                    View
+                                </a>
+                                <a th:href="@{/collections/{id}/edit(id=${collection.id})}" class="text-green-600 hover:text-green-900 px-2 py-1 bg-green-100 rounded">
+                                    Edit
+                                </a>
+                                <a th:href="@{/collections/{id}/delete(id=${collection.id})}" class="text-red-600 hover:text-red-900 px-2 py-1 bg-red-100 rounded" onclick="return confirm('Are you sure you want to delete this collection?')">
+                                    Delete
+                                </a>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500" th:text="${collection.bookCount}">0</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Collections Section -->
+    <div id="global-tab-content" style="display: none;">
+        <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+            <div class="p-6">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Global Collections</h2>
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Type</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Description</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Owner</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Number of Books</th>
+                    </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tr th:each="collection : ${globalCollections}" class="hover:bg-gray-100">
+                        <td class="px-6 py-4 text-sm">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <svg class="mr-1.5 h-2 w-2 text-green-800" fill="currentColor" viewBox="0 0 8 8">
+                                        <circle cx="4" cy="4" r="3" />
+                                    </svg>
+                                    Created Automatically
+                                </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-800" th:text="${collection.title}">Global Collection Title</td>
+                        <td class="px-6 py-4 text-sm text-gray-600 max-w-xs truncate" th:text="${collection.description}">Global Collection Description</td>
+                        <td class="px-6 py-4 text-sm text-gray-600" th:text="${collection.userFullName}">Owner</td>
+                        <td class="px-6 py-4 text-sm font-medium">
+                            <div class="flex space-x-2">
+                                <a th:href="@{/collections/{id}(id=${collection.id})}" class="text-indigo-600 hover:text-indigo-900 px-2 py-1 bg-indigo-100 rounded">
+                                    View
+                                </a>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500" th:text="${collection.bookCount}">0</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-8 flex justify-center space-x-4">
+        <a th:href="@{/}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Back to Home</a>
+        <a th:href="@{/collections/new}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Create New Collection</a>
+        <a th:href="@{/collections/smart/new}" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">Create Smart Collection</a>
     </div>
 </div>
+
+<script>
+    function showTab(tabName) {
+        document.getElementById('private-tab-content').style.display = 'none';
+        document.getElementById('public-tab-content').style.display = 'none';
+        document.getElementById('smart-tab-content').style.display = 'none';
+        document.getElementById('global-tab-content').style.display = 'none';
+        document.getElementById(tabName + '-tab-content').style.display = 'block';
+        document.getElementById('private-tab').classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+        document.getElementById('public-tab').classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+        document.getElementById('smart-tab').classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+        document.getElementById('global-tab').classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+        document.getElementById('private-tab').classList.add('text-gray-500', 'hover:text-gray-700');
+        document.getElementById('public-tab').classList.add('text-gray-500', 'hover:text-gray-700');
+        document.getElementById('smart-tab').classList.add('text-gray-500', 'hover:text-gray-700');
+        document.getElementById('global-tab').classList.add('text-gray-500', 'hover:text-gray-700');
+        document.getElementById(tabName + '-tab').classList.remove('text-gray-500', 'hover:text-gray-700');
+        document.getElementById(tabName + '-tab').classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+    }
+</script>
+</body>
+</html>

@@ -25,6 +25,7 @@ export interface BookCollectionShow {
 }
 
 export interface BookCollectionIndex {
+    type: string;
     id: number;
     title: string;
     description: string;

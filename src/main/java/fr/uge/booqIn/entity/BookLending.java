@@ -37,6 +37,10 @@ public class BookLending {
   @Column
   private LocalDateTime returnDate;
   
+  @Lob
+  @Column(name = "shipping_ticket_pdf", columnDefinition = "LONGBLOB")
+  private byte[] shippingTicketPDF;
+  
   public BookLending() {
   }
   
@@ -81,6 +85,14 @@ public class BookLending {
   public BookStatus getStatus() {
     return status;
   }
+
+  public void setId(Long id) {
+    this.id = id;
+  }
+
+  public void setBook(Book book) {
+    this.book = book;
+  }
   
   public void setBorrower(User borrower) {
     this.borrower = borrower;
@@ -112,6 +124,14 @@ public class BookLending {
 
   public boolean isReservationExpired() {
     return reservedAt != null && reservedAt.plusMinutes(20).isBefore(LocalDateTime.now());
+  }
+  
+  public byte[] getShippingTicketPDF() {
+    return shippingTicketPDF;
+  }
+  
+  public void setShippingTicketPDF(byte[] shippingTicketPDF) {
+    this.shippingTicketPDF = shippingTicketPDF;
   }
   
   

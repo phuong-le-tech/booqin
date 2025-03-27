@@ -97,7 +97,7 @@ public class GoogleBooksAPI implements BookFetcher {
             categories.addAll(volumeInfo.categories());
         }
 
-        return new Book.Builder()
+        var book = new Book.Builder()
                 .title(volumeInfo.title())
                 .authors(authors)
                 .description(description)
@@ -105,6 +105,17 @@ public class GoogleBooksAPI implements BookFetcher {
                 .isbns(isbns)
                 .categories(categories)
                 .build();
+
+        if (volumeInfo.imageLinks() != null) {
+            var imageUrl = volumeInfo.imageLinks().thumbnail();
+            if (imageUrl != null) {
+                if (imageUrl.startsWith("http:")) {
+                    imageUrl = "https:" + imageUrl.substring(5);
+                }
+                book.setCoverImageUrl(imageUrl);
+            }
+        }
+        return book;
     }
 
     private String getIdentifier(List<IndustryIdentifier> industryIdentifiers, String type){
@@ -121,7 +132,7 @@ public class GoogleBooksAPI implements BookFetcher {
             return null;
         }
 
-        for (SimpleDateFormat format : DATE_FORMATS ) {
+        for (SimpleDateFormat format : DATE_FORMATS) {
             try {
                 format.setLenient(true);
                 return format.parse(dateString);
@@ -129,7 +140,6 @@ public class GoogleBooksAPI implements BookFetcher {
                 // Essayer le format suivant
             }
         }
-
         logger.warning("Failed to parse date: " + dateString);
         return null;
     }

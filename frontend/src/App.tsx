@@ -17,6 +17,7 @@ import Collections from "./components/collections/Collections.tsx";
 import AdminPage from "./pages/admin/AdminPage.tsx";
 import CreateCollection from "./components/collections/CreateCollection.tsx";
 import { BookLending } from "./pages/bookLending/BookLending.tsx";
+import CreateSmartCollection from "./components/collections/CreateSmartCollection";
 import Following from "./pages/follow/Following.tsx";
 import UserProfile from "./pages/user/UserProfile.tsx";
 
@@ -51,6 +52,7 @@ const App: React.FC = () => {
                         <Route path="/admin" element={<AdminPage/>} />
                         <Route path="/collections/new" element={<CreateCollection />} />
                         <Route path="/following" element={<Following/>} />
+                        <Route path="/collections/smart/new" element={<CreateSmartCollection />} />
                     </Routes>
                     <ToastContainer
                         position="top-right"
