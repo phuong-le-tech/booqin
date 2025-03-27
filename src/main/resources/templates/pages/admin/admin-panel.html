@@ -396,7 +396,7 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <a th:href="@{/collections/{id}/edit(id=${collection.id})}" class="text-indigo-600 hover:text-indigo-900 mr-2">Edit</a>
-                                <form th:action="@{/collections/{id}/delete(id=${collection.id})}" method="post" class="inline">
+                                <form th:action="@{/admin/collections/{id}/delete(id=${collection.id})}" method="post" class="inline">
                                     <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Are you sure you want to delete this collection?')">Delete</button>
                                 </form>
                             </td>
