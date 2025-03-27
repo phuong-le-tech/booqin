@@ -42,14 +42,19 @@
                 </div>
 
                 <!-- Book cover background -->
-                <div th:class="${'w-full h-64 md:h-full flex items-center justify-center text-white font-bold text-6xl ' +
-                              (book.id % 7 == 0 ? 'bg-blue-900' :
-                               book.id % 7 == 1 ? 'bg-blue-800' :
-                               book.id % 7 == 2 ? 'bg-blue-700' :
-                               book.id % 7 == 3 ? 'bg-blue-600' :
-                               book.id % 7 == 4 ? 'bg-blue-500' :
-                               book.id % 7 == 5 ? 'bg-blue-400' : 'bg-blue-300')}">
-                    <span th:text="${#strings.substring(book.title, 0, 1).toUpperCase()}">A</span>
+                <div class="h-full flex items-center justify-center">
+                    <div th:if="${book.coverImagePath() != null}" class="w-full h-full flex items-center justify-center">
+                        <img th:src="@{'/api/v1/books/images/' + ${book.coverImagePath()}}" alt="Book Cover" class="w-full h-full object-cover rounded-t-xl">
+                    </div>
+                    <div th:if="${book.coverImagePath() == null}" th:class="${'w-full h-full flex items-center justify-center text-white font-bold text-6xl ' +
+              (book.id % 7 == 0 ? 'bg-blue-900' :
+               book.id % 7 == 1 ? 'bg-blue-800' :
+               book.id % 7 == 2 ? 'bg-blue-700' :
+               book.id % 7 == 3 ? 'bg-blue-600' :
+               book.id % 7 == 4 ? 'bg-blue-500' :
+               book.id % 7 == 5 ? 'bg-blue-400' : 'bg-blue-300')}">
+                        <span th:text="${#strings.substring(book.title, 0, 1).toUpperCase()}">A</span>
+                    </div>
                 </div>
             </div>
 
