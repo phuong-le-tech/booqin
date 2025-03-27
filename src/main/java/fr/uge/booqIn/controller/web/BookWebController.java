@@ -30,10 +30,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
@@ -54,10 +51,8 @@ public class BookWebController {
                              VoteServiceInterface voteServiceInterface,
                              BookCollectionServiceInterface bookCollectionService,
                              UserServiceInterface userService,
-                             UserServiceInterface userService,
                              CommentServiceInterface commentService,
-                             HomeWebController homeWebController, UserVoteService userVoteService) {
-                             HomeWebController homeWebController,
+                             HomeWebController homeWebController, UserVoteService userVoteService,
                              BookLendingInterface bookLendingInterface) {
         this.bookService = bookService;
         this.voteServiceInterface = voteServiceInterface;
@@ -123,11 +118,11 @@ public class BookWebController {
             List<Long> lentBooks = lendingData.lentBooks().stream()
                     .filter(lending -> lending.status() == BookStatus.AVAILABLE)
                     .map(lending -> lending.book().id())
-                    .collect(Collectors.toList());
+                .toList();
             List<Long> borrowedBooks = lendingData.lentBooks().stream()
                     .filter(lending -> lending.status() == BookStatus.BORROWED)
                     .map(lending -> lending.book().id())
-                    .collect(Collectors.toList());
+                    .toList();
             model.addAttribute("lentBooks", lentBooks);
             model.addAttribute("borrowedBooks", borrowedBooks);
             System.out.println("Lending info added to model: lentBooks=" + lentBooks.size() + ", borrowedBooks=" + borrowedBooks.size());
@@ -249,5 +244,4 @@ public class BookWebController {
         bookService.deleteBook(bookId);
         return "redirect:/books";
     }
-}
 }
