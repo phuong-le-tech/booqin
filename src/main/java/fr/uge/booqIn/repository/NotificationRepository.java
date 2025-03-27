@@ -31,13 +31,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     /**
      * Count unread notifications for a user
      */
-    long countByUserIdAndReadFalse(Long userId);
-
-    /**
-     * Find notifications by containing text in message (for filtering)
-     */
-    @Query("SELECT n FROM Notification n WHERE n.userId = ?1 AND LOWER(n.message) LIKE LOWER(CONCAT('%', ?2, '%')) ORDER BY n.createdAt DESC")
-    List<Notification> findByUserIdAndMessageContainingIgnoreCase(Long userId, String text);
+    int countByUserIdAndReadFalse(Long userId);
 
     /**
      * Find notifications by containing text in message with pagination
@@ -46,25 +40,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     Page<Notification> findByUserIdAndMessageContainingIgnoreCase(Long userId, String text, Pageable pageable);
 
     /**
-     * Find notifications created after a specific date
-     */
-    List<Notification> findByUserIdAndCreatedAtAfterOrderByCreatedAtDesc(Long userId, LocalDateTime after);
-
-    /**
      * Delete old read notifications for cleanup
      */
     void deleteByReadTrueAndCreatedAtBefore(LocalDateTime before);
-
-    /**
-     * Filter notifications by type prefix (based on message format)
-     * This allows for type-like filtering without a dedicated type field
-     */
-    @Query("SELECT n FROM Notification n WHERE n.userId = ?1 AND n.message LIKE CONCAT(?2, '%') ORDER BY n.createdAt DESC")
-    List<Notification> findByUserIdAndMessageStartsWithOrderByCreatedAtDesc(Long userId, String prefix);
-
-    /**
-     * Count notifications by type prefix
-     */
-    @Query("SELECT COUNT(n) FROM Notification n WHERE n.userId = ?1 AND n.read = false AND n.message LIKE CONCAT(?2, '%')")
-    long countByUserIdAndReadFalseAndMessageStartsWith(Long userId, String prefix);
 }

@@ -1,0 +1,131 @@
+<!-- Improved Notifications List Page -->
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-3xl mx-auto">
+        <!-- Header Section -->
+        <div class="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <h1 class="text-2xl font-bold text-gray-800">Notifications</h1>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap gap-3">
+                <form th:if="${notifications != null && !notifications.isEmpty()}"
+                      th:action="@{/notifications/read-all}"
+                      method="post">
+                    <button type="submit"
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm transition-colors">
+                        Mark all as read
+                    </button>
+                </form>
+
+                <form th:if="${notifications != null && !notifications.isEmpty()}"
+                      th:action="@{/notifications/clear-all}"
+                      method="post">
+                    <button type="submit"
+                            class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm transition-colors">
+                        Clear all
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Unread Count Summary -->
+        <div class="mb-6 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
+            <p class="text-gray-700 font-medium">
+                <span th:text="${unreadCounts}">0</span> unread notification<span th:if="${unreadCounts != 1}">s</span>
+            </p>
+        </div>
+
+        <!-- Empty State -->
+        <div th:if="${notifications == null || notifications.isEmpty()}"
+             class="p-8 bg-white rounded-lg shadow-sm border border-gray-100 text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <p class="text-gray-600">You have no notifications</p>
+        </div>
+
+        <!-- Notification List -->
+        <div th:if="${notifications != null && !notifications.isEmpty()}"
+             class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-200">
+
+            <div th:each="notification : ${notifications}"
+                 th:class="${notification.read ? 'bg-gray-50' : 'bg-white'}"
+                 class="p-4 hover:bg-gray-50 transition-colors">
+
+                <div class="flex justify-between items-start gap-4">
+                    <!-- Content -->
+                    <div class="flex-grow">
+                        <p th:class="${!notification.read ? 'font-medium' : ''}"
+                           class="text-gray-800 mb-1"
+                           th:text="${notification.message}">
+                            Notification message
+                        </p>
+                        <p class="text-xs text-gray-500"
+                           th:text="${#temporals.format(notification.createdAt, 'dd MMM yyyy HH:mm')}">
+                            01 Jan 2025 12:00
+                        </p>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex gap-3 flex-shrink-0">
+                        <!-- Mark as read button (only for unread notifications) -->
+                        <form th:if="${!notification.read}"
+                              th:action="@{/notifications/{id}/read(id=${notification.id})}"
+                              method="get">
+                            <button type="submit"
+                                    class="text-sm text-blue-600 hover:text-blue-800 transition-colors">
+                                Mark as read
+                            </button>
+                        </form>
+
+                        <!-- Delete button -->
+                        <form th:action="@{/notifications/{id}/delete(id=${notification.id})}"
+                              method="post">
+                            <button type="submit"
+                                    class="text-sm text-red-600 hover:text-red-800 transition-colors">
+                                Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div th:if="${totalPages > 1}" class="mt-8 flex justify-center">
+            <nav class="inline-flex rounded-md shadow-sm" aria-label="Pagination">
+                <!-- Previous page -->
+                <a th:if="${currentPage > 0}"
+                   th:href="@{/notifications(page=${currentPage - 1},size=${notifications.size},sort=${sort},direction=${direction})}"
+                   class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors">
+                    <span class="sr-only">Previous</span>
+                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                </a>
+
+                <!-- Page numbers -->
+                <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                    <a th:if="${i == currentPage}"
+                       class="relative inline-flex items-center px-4 py-2 border border-blue-500 bg-blue-50 text-sm font-medium text-blue-600">
+                        <span th:text="${i + 1}">1</span>
+                    </a>
+                    <a th:if="${i != currentPage}"
+                       th:href="@{/notifications(page=${i},size=${notifications.size},sort=${sort},direction=${direction})}"
+                       class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                        <span th:text="${i + 1}">2</span>
+                    </a>
+                </th:block>
+
+                <!-- Next page -->
+                <a th:if="${currentPage < totalPages - 1}"
+                   th:href="@{/notifications(page=${currentPage + 1},size=${notifications.size},sort=${sort},direction=${direction})}"
+                   class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors">
+                    <span class="sr-only">Next</span>
+                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                </a>
+            </nav>
+        </div>
+    </div>
+</div>

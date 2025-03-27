@@ -85,6 +85,13 @@ public class UserServiceImpl implements UserServiceInterface {
 
   @Override
   @Transactional
+  public User findByUsername(@NotNull String username) {
+    return userRepository.findByEmail(username)
+            .orElseThrow(() -> new ResourceNotFoundException("User", "email", username));
+  }
+
+  @Override
+  @Transactional
   public User createUser(@NotNull @Valid User user) {
     if (userRepository.findByEmail(user.getEmail()).isPresent()) {
       throw new DuplicateResourceException("User", "email", user.getEmail());

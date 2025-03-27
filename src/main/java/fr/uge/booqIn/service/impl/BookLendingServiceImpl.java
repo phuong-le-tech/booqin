@@ -8,6 +8,7 @@ import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.BookStatus;
 import fr.uge.booqIn.enums.LendStatus;
 import fr.uge.booqIn.event.BooqInEventPublisher;
+import fr.uge.booqIn.event.publishable.BookAvailableEvent;
 import fr.uge.booqIn.event.publishable.BookNotAvailableEvent;
 import fr.uge.booqIn.event.publishable.BookReturnedEvent;
 import fr.uge.booqIn.mapper.BookLendingMapper;
@@ -38,7 +39,6 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   private final BooqInEventPublisher eventPublisher;
   private final UserRepository userRepository;
   private final PdfCreator pdfCreator = new PdfCreator();
-  private final BookWaitingQueueServiceInterface bookWaitingQueueService;
 
   public BookLendingServiceImpl(
           BookLendingRepository bookLendingRepository,
@@ -47,7 +47,7 @@ public class BookLendingServiceImpl implements BookLendingInterface {
           BookLendingMapper bookLendingMapper,
           BookServiceImpl bookService,
           BooqInEventPublisher eventPublisher,
-          UserRepository userRepository, BookWaitingQueueServiceInterface bookWaitingQueueService
+          UserRepository userRepository
   ) {
     this.bookLendingRepository = bookLendingRepository;
     this.userService = userService;
@@ -56,15 +56,13 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     this.bookService = bookService;
     this.eventPublisher = eventPublisher;
     this.userRepository = userRepository;
-    
-    this.bookWaitingQueueService = bookWaitingQueueService;
   }
 
   @Transactional
   @Retryable(
           maxAttemptsExpression = "${spring.retry.max-attempts}",
           retryFor = {ConcurrentModificationException.class,
-          ObjectOptimisticLockingFailureException.class},
+                  ObjectOptimisticLockingFailureException.class},
           backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
   public boolean confirmLoan(Long lendingId) {
     Optional<BookLending> optionalLending = bookLendingRepository.findById(lendingId);
@@ -400,7 +398,8 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     bookLendingRepository.save(booklend);
     user.addLentBook(booklend);
     userRepository.save(user);
-    bookWaitingQueueService.processNextInQueue(book.getId());
+
+    eventPublisher.publishEvent(new BookAvailableEvent(user.getId(), book.getTitle(), book.getId()));
     return true;
   }
 

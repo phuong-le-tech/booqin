@@ -18,6 +18,14 @@ interface Collection {
     title: string;
 }
 
+// Type for book notification information
+interface BookNotification {
+    id: number;
+    bookId: number;
+    position: number;
+    status: string;
+}
+
 interface BookCardProps {
     book: BookIndex;
     borrowedBooks?: number[];
@@ -45,6 +53,9 @@ export const BookCard: React.FC<BookCardProps> = ({
     const [isBookAvailable, setIsBookAvailable] = useState<boolean>(true);
     const [showCollectionDropdown, setShowCollectionDropdown] = useState<boolean>(false);
     const [showCollectionModal, setShowCollectionModal] = useState<boolean>(false);
+    const [queuePosition, setQueuePosition] = useState<number>(-1);
+    const [notificationId, setNotificationId] = useState<number | null>(null);
+    const [userNotifications, setUserNotifications] = useState<BookNotification[]>([]);
     const cardRef = useRef<HTMLDivElement>(null);
 
     const isBookBorrowed = loanStates.some(loan => {
@@ -53,12 +64,20 @@ export const BookCard: React.FC<BookCardProps> = ({
         return bookIdMatches && stateIsBorrowed;
     });
 
+    const isInQueue = queuePosition > 0;
+
     useEffect(() => {
         setIsBorrowed(borrowedBooks.includes(id));
         setIsLoanable(lentBooks.includes(id));
 
         // Check book availability when component loads
         checkBookAvailability();
+
+        // Check if user is in queue for this book
+        if (userId) {
+            checkQueuePosition();
+            fetchUserNotifications();
+        }
 
         // Add event listener for closing the dropdown/modal when clicking outside
         const handleClickOutside = (event: MouseEvent) => {
@@ -72,7 +91,55 @@ export const BookCard: React.FC<BookCardProps> = ({
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [borrowedBooks, lentBooks, id]);
+    }, [borrowedBooks, lentBooks, id, userId]);
+
+    // Check if user is in queue for this book
+    const checkQueuePosition = async () => {
+        if (!userId) return;
+
+        try {
+            const response = await axiosInstance.get(`/v1/book-queue/check`, {
+                params: {
+                    bookId: id,
+                    userId: userId
+                }
+            });
+
+            if (response.data?.success) {
+                setQueuePosition(response.data.data);
+            }
+        } catch (error) {
+            console.error("Error checking queue position:", error);
+        }
+    };
+
+    // Fetch user's active notifications
+    const fetchUserNotifications = async () => {
+        if (!userId) return;
+
+        try {
+            const response = await axiosInstance.get(`/v1/book-queue/active`, {
+                params: {
+                    userId: userId
+                }
+            });
+
+            if (response.data?.success) {
+                setUserNotifications(response.data.data);
+
+                // Find notification for this book
+                const bookNotification = response.data.data.find(
+                    (notification: BookNotification) => notification.bookId === id
+                );
+
+                if (bookNotification) {
+                    setNotificationId(bookNotification.id);
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching notifications:", error);
+        }
+    };
 
     // Check book availability using the existing endpoint
     const checkBookAvailability = async () => {
@@ -197,11 +264,46 @@ export const BookCard: React.FC<BookCardProps> = ({
 
             if (response.status === 200 && response.data?.success) {
                 toast.success("You will be notified when the book is available");
+                // Update queue position and notifications after joining
+                checkQueuePosition();
+                fetchUserNotifications();
             } else {
                 toast.error(response.data?.message || "You are already subscribed to notifications");
             }
         } catch (error) {
             toast.error(error.response?.data?.message || "Error subscribing to notifications");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const cancelNotification = async () => {
+        if (!userId || !notificationId) return;
+
+        setLoading(true);
+        try {
+            const response = await axiosInstance.post(
+                "/v1/book-queue/cancel",
+                null,
+                {
+                    params: {
+                        notificationId: notificationId,
+                        userId: userId
+                    }
+                }
+            );
+
+            if (response.status === 200 && response.data?.success) {
+                toast.success("Notification cancelled successfully");
+                setQueuePosition(-1);
+                setNotificationId(null);
+                // Refresh notifications
+                fetchUserNotifications();
+            } else {
+                toast.error(response.data?.message || "Failed to cancel notification");
+            }
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || "Error cancelling notification");
         } finally {
             setLoading(false);
         }
@@ -276,6 +378,12 @@ export const BookCard: React.FC<BookCardProps> = ({
             {isBookBorrowed && (
                 <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full z-10">
                     Lent
+                </div>
+            )}
+
+            {isInQueue && (
+                <div className="absolute top-2 left-2 bg-purple-500 text-white text-xs px-2 py-1 rounded-full z-10">
+                    Queue: {queuePosition}
                 </div>
             )}
 
@@ -395,7 +503,7 @@ export const BookCard: React.FC<BookCardProps> = ({
 
             {/* Action buttons */}
             <div className="p-3 space-y-2">
-                {/* Conditionally display Borrow or Notify button */}
+                {/* Conditionally display Borrow, Notify, or Cancel Notification button */}
                 {isBookAvailable ? (
                     <button
                         onClick={addToCart}
@@ -403,6 +511,14 @@ export const BookCard: React.FC<BookCardProps> = ({
                         disabled={loading || isBookBorrowed}
                     >
                         {loading ? "Processing..." : "Borrow"}
+                    </button>
+                ) : isInQueue ? (
+                    <button
+                        onClick={cancelNotification}
+                        className="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
+                        disabled={loading}
+                    >
+                        {loading ? "Processing..." : "Cancel Notification"}
                     </button>
                 ) : (
                     <button

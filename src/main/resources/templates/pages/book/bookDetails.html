@@ -8,6 +8,17 @@
 </head>
 <body class="bg-gray-50">
 <div class="container mx-auto px-4 py-8">
+    <!-- Flash messages for notifications -->
+    <div th:if="${successMessage}" class="mb-6 bg-green-100 border border-green-300 text-green-700 px-4 py-3 rounded-lg">
+        <span th:text="${successMessage}"></span>
+    </div>
+    <div th:if="${errorMessage}" class="mb-6 bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-lg">
+        <span th:text="${errorMessage}"></span>
+    </div>
+    <div th:if="${infoMessage}" class="mb-6 bg-blue-100 border border-blue-300 text-blue-700 px-4 py-3 rounded-lg">
+        <span th:text="${infoMessage}"></span>
+    </div>
+
     <!-- Navigation back -->
     <div class="flex justify-between items-center mb-6">
         <a href="/books"
@@ -22,9 +33,15 @@
     <!-- Book detail card -->
     <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
         <div class="flex flex-col md:flex-row">
-            <!-- Book Cover -->
-            <div class="md:w-1/3 lg:w-1/4">
-                <!-- Utilisation de classes CSS prédéfinies pour les couleurs de fond -->
+            <!-- Book Cover with relative positioning for badges -->
+            <div class="md:w-1/3 lg:w-1/4 relative">
+                <!-- Queue position badge -->
+                <div th:if="${queuePosition != null && queuePosition > 0}"
+                     class="absolute top-2 left-2 bg-purple-500 text-white text-xs px-2 py-1 rounded-full z-10">
+                    Queue: <span th:text="${queuePosition}">0</span>
+                </div>
+
+                <!-- Book cover background -->
                 <div th:class="${'w-full h-64 md:h-full flex items-center justify-center text-white font-bold text-6xl ' +
                               (book.id % 7 == 0 ? 'bg-blue-900' :
                                book.id % 7 == 1 ? 'bg-blue-800' :
@@ -57,23 +74,23 @@
                         </div>
                     </div>
                 </div>
-                <!-- Auteurs avec troncation -->
+                <!-- Authors with truncation -->
                 <div class="mb-6">
                     <p class="text-lg text-blue-700 font-medium authors-display">
                         Par
-                        <!-- Affiche jusqu'à 3 auteurs -->
+                        <!-- Show up to 3 authors -->
                         <span class="authors-visible" th:if="${book.authors != null && !book.authors.isEmpty()}">
                             <span th:each="author, iterStat : ${book.authors}" th:if="${iterStat.index < 3}">
                                 <span th:text="${author.firstName + ' ' + author.lastName}"></span><span th:if="${!iterStat.last && iterStat.index < 2}">, </span>
                             </span>
-                            <!-- S'il y a plus de 3 auteurs, ajoute un '+X' cliquable -->
+                            <!-- If more than 3 authors, add a clickable '+X' -->
                             <span th:if="${book.authors.size() > 3}" class="text-blue-500 hover:text-blue-700 cursor-pointer ml-1 toggle-authors">
                                 <span th:text="${' +' + (book.authors.size() - 3) + ' autres'}"></span>
                             </span>
                         </span>
                     </p>
 
-                    <!-- Liste complète des auteurs (cachée par défaut) -->
+                    <!-- Complete list of authors (hidden by default) -->
                     <div class="authors-full hidden mt-3 pl-4 border-l-2 border-blue-200 text-blue-700">
                         <p class="mb-1 font-medium">Tous les auteurs:</p>
                         <ul class="space-y-1">
@@ -94,11 +111,11 @@
                     </p>
                 </div>
 
-                <!-- ISBNs avec troncation -->
+                <!-- ISBNs with truncation -->
                 <div class="mb-6 p-4 bg-gray-50 rounded-lg" th:if="${book.isbns != null && !book.isbns.isEmpty()}">
                     <h2 class="text-lg font-semibold text-gray-700 mb-2">ISBN</h2>
 
-                    <!-- Affiche jusqu'à 2 ISBN -->
+                    <!-- Show up to 2 ISBN -->
                     <ul class="space-y-1 isbns-visible">
                         <li th:each="isbn, isbnStat : ${book.isbns}" th:if="${isbnStat.index < 2}"
                             class="text-gray-600 flex items-center">
@@ -107,13 +124,13 @@
                             </svg>
                             <span th:text="${isbn}">ISBN</span>
                         </li>
-                        <!-- S'il y a plus de 2 ISBN, ajoute un '+X' cliquable -->
+                        <!-- If more than 2 ISBNs, add a clickable '+X' -->
                         <li th:if="${book.isbns.size() > 2}" class="text-blue-500 hover:text-blue-700 cursor-pointer ml-6 toggle-isbns">
                             <span th:text="${'+' + (book.isbns.size() - 2) + ' autres ISBN'}"></span>
                         </li>
                     </ul>
 
-                    <!-- Liste complète des ISBN (cachée par défaut) -->
+                    <!-- Complete list of ISBNs (hidden by default) -->
                     <div class="isbns-full hidden mt-3 pl-4 border-l-2 border-blue-200">
                         <p class="mb-1 font-medium text-gray-700">Tous les ISBN:</p>
                         <ul class="space-y-1">
@@ -130,7 +147,7 @@
                             </span>
                         </p>
                     </div>
-                    <!-- Catégories -->
+                    <!-- Categories -->
                     <div class="mb-6" th:if="${book.categories != null && !book.categories.isEmpty()}">
                         <h2 class="text-lg font-semibold text-gray-700 mb-2">Catégories</h2>
                         <div class="flex flex-wrap gap-2">
@@ -150,6 +167,52 @@
                     </div>
                 </div>
 
+                <!-- Action buttons section -->
+                <div class="flex flex-wrap gap-3 mb-6" th:if="${user != null}">
+                    <!-- Book availability and queue buttons -->
+                    <div class="flex-1 min-w-[150px]">
+                        <!-- If book is available, show Borrow button -->
+                        <form th:if="${isBookAvailable == true}"
+                              th:action="@{/cart/add-book}" method="post">
+                            <input type="hidden" name="bookId" th:value="${book.id}" />
+                            <input type="hidden" name="userId" th:value="${user.id}">
+                            <button type="submit"
+                                    class="w-full text-center py-2 px-4 bg-green-600 text-white text-sm font-medium rounded-lg transition hover:bg-green-700">
+                                Borrow
+                            </button>
+                        </form>
+
+                        <!-- If user is in queue (has a position), show Cancel Notification button -->
+                        <form th:if="${queuePosition != null && queuePosition > 0 && notificationId != null}"
+                              th:action="@{/book-queue/cancel}" method="post">
+                            <input type="hidden" name="notificationId" th:value="${notificationId}" />
+                            <input type="hidden" name="bookId" th:value="${book.id}" />
+                            <input type="hidden" name="returnUrl" th:value="@{/books/{id}(id=${book.id})}" />
+                            <button type="submit"
+                                    class="w-full text-center py-2 px-4 bg-red-600 text-white text-sm font-medium rounded-lg transition hover:bg-red-700">
+                                Cancel Notification
+                            </button>
+                        </form>
+
+                        <!-- If book not available and user not in queue, show Notify button -->
+                        <form th:if="${isBookAvailable != true && (queuePosition == null || queuePosition <= 0)}"
+                              th:action="@{/book-queue/subscribe}" method="post">
+                            <input type="hidden" name="bookId" th:value="${book.id}" />
+                            <input type="hidden" name="returnUrl" th:value="@{/books/{id}(id=${book.id})}" />
+                            <button type="submit"
+                                    class="w-full text-center py-2 px-4 bg-purple-600 text-white text-sm font-medium rounded-lg transition hover:bg-purple-700">
+                                Notify
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Add to collection button -->
+                    <button onclick="showCollectionsModal()"
+                            class="flex-1 min-w-[150px] text-center py-2 px-4 bg-blue-600 text-white text-sm font-medium rounded-lg transition hover:bg-blue-700">
+                        Add to Collection
+                    </button>
+                </div>
+
                 <!-- Dates -->
                 <div class="mt-6 pt-4 border-t border-gray-700 text-sm text-gray-500 flex flex-col sm:flex-row sm:justify-between">
                     <!--<p>Ajouté le <span th:text="${#dates.format(book.createdAt, 'dd MMMM yyyy')}">Date de création</span></p>
@@ -158,15 +221,51 @@
             </div>
         </div>
     </div>
+
     <!-- Comments Section -->
     <div th:replace="~{fragments/commentSection :: commentSection(entityId=${book.id}, entityType='BOOK', comments=${comments}, commentCount=${commentCount})}"></div>
     <div th:replace="~{fragments/commentSection :: commentScripts}"></div>
 </div>
 
-<!-- JavaScript pour les interactions -->
-<script>
+<!-- Collection Modal (hidden by default) -->
+<div id="collection-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden transform transition-all">
+        <div class="bg-blue-600 px-4 py-3 flex justify-between items-center">
+            <h3 class="text-lg font-medium text-white">Add to Collection</h3>
+            <button onclick="closeCollectionModal()" class="text-white hover:text-gray-200 focus:outline-none">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div id="collection-modal-content" class="p-4 max-h-96 overflow-y-auto">
+            <!-- Content will be populated by JavaScript -->
+            <div class="text-center py-8">
+                <p class="mt-2 text-gray-500">Loading collections...</p>
+            </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+            <button onclick="closeCollectionModal()" class="w-full sm:w-auto px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 focus:outline-none">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast" class="hidden fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg transform transition-all duration-300">
+    <span id="toast-message">Message ici</span>
+    <span class="ml-2">✓</span>
+</div>
+
+<!-- JavaScript for interactions -->
+<script th:inline="javascript">
+    // Get the book ID and user collections from Thymeleaf
+    const bookId = /*[[${book.id}]]*/ null;
+    const userCollections = /*[[${bookCollections}]]*/ [];
+
     document.addEventListener('DOMContentLoaded', function() {
-        // Toggle pour afficher/masquer la liste complète des auteurs
+        // Toggle for displaying/hiding the complete list of authors
         const authorToggleButtons = document.querySelectorAll('.toggle-authors');
         authorToggleButtons.forEach(button => {
             button.addEventListener('click', function() {
@@ -182,7 +281,7 @@
             });
         });
 
-        // Toggle pour afficher/masquer la liste complète des ISBN
+        // Toggle for displaying/hiding the complete list of ISBNs
         const isbnToggleButtons = document.querySelectorAll('.toggle-isbns');
         isbnToggleButtons.forEach(button => {
             button.addEventListener('click', function() {
@@ -228,6 +327,100 @@
             }, 500); // Small delay to ensure DOM is fully loaded
         }
     });
+
+    function showCollectionsModal() {
+        const modal = document.getElementById('collection-modal');
+        const modalContent = document.getElementById('collection-modal-content');
+
+        if (modal && modalContent) {
+            // Show the modal
+            modal.classList.remove('hidden');
+
+            // Populate the content
+            if (userCollections && userCollections.length > 0) {
+                let html = '<div class="space-y-2">';
+                userCollections.forEach(collection => {
+                    html += `
+                        <div class="hover:bg-gray-100 p-2 rounded-md cursor-pointer flex items-center"
+                             onclick="addToCollection('${collection.id}')">
+                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white mr-3">
+                                ${collection.title.charAt(0).toUpperCase()}
+                            </div>
+                            <div class="font-medium">${collection.title}</div>
+                        </div>`;
+                });
+                html += '</div>';
+                modalContent.innerHTML = html;
+            } else {
+                modalContent.innerHTML = `
+                    <div class="text-center py-8">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                        </svg>
+                        <p class="mt-2 text-gray-500">No collections available</p>
+                        <p class="text-sm text-gray-400 mt-1">Create a collection first to add books</p>
+                    </div>`;
+            }
+        }
+    }
+
+    function closeCollectionModal() {
+        const modal = document.getElementById('collection-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    }
+
+    function addToCollection(collectionId) {
+        if (!bookId) return;
+
+        // Create form data
+        const formData = new FormData();
+        formData.append('bookId', bookId);
+
+        // Make AJAX POST request
+        fetch(`/collections/${collectionId}/books/add`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => {
+                if (response.ok) {
+                    showToast('Book successfully added to collection', 'success');
+                    closeCollectionModal();
+                    return response.text();
+                } else {
+                    throw new Error('Failed to add book to collection');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Failed to add book to collection', 'error');
+            });
+    }
+
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toast-message');
+
+        // Set style based on type
+        if (type === 'success') {
+            toast.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg transform transition-all duration-300';
+        } else if (type === 'error') {
+            toast.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-md shadow-lg transform transition-all duration-300';
+        } else if (type === 'info') {
+            toast.className = 'fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-md shadow-lg transform transition-all duration-300';
+        }
+
+        toastMessage.textContent = message;
+        toast.classList.remove('hidden');
+
+        setTimeout(() => {
+            toast.classList.add('hidden');
+        }, 3000);
+    }
 </script>
 </body>
 </html>

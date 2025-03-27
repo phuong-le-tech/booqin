@@ -38,7 +38,7 @@ public class BookWaitingQueueController {
   public ResponseEntity<ApiResponse<List<BookNotificationDTO>>> getActiveNotifications(@RequestParam Long userId) {
     List<BookNotificationDTO> notifications = notificationService.getUserActiveQueues(userId);
 
-    return ResponseEntity.ok(ApiResponse.success("Notifications actives récupérées", notifications));
+    return ResponseEntity.ok(ApiResponse.success("Active User in queues", notifications));
   }
 
   @PostMapping("/reserve")
@@ -49,7 +49,31 @@ public class BookWaitingQueueController {
     boolean reserved = notificationService.reserveBookFromQueue(notificationId, userId);
 
     return reserved
-            ? ResponseEntity.ok(ApiResponse.success("Livre réservé avec succès", true))
-            : ResponseEntity.badRequest().body(ApiResponse.error("Impossible de réserver le livre", false));
+            ? ResponseEntity.ok(ApiResponse.success("Book reserved", true))
+            : ResponseEntity.badRequest().body(ApiResponse.error("impossible to reserve book", false));
+  }
+
+  @PostMapping("/cancel")
+  public ResponseEntity<ApiResponse<Boolean>> cancelBookNotification(
+          @RequestParam Long notificationId,
+          @RequestParam Long userId) {
+
+    boolean canceled = notificationService.cancelQueueEntry(notificationId, userId);
+
+    return canceled
+            ? ResponseEntity.ok(ApiResponse.success("Notification cancelled successfully", true))
+            : ResponseEntity.badRequest().body(ApiResponse.error("Unable to cancel notification", false));
+  }
+
+  @GetMapping("/check")
+  public ResponseEntity<ApiResponse<Integer>> checkQueuePosition(
+          @RequestParam Long bookId,
+          @RequestParam Long userId) {
+
+    int position = notificationService.getUserQueuePosition(bookId, userId);
+
+    return ResponseEntity.ok(ApiResponse.success(
+            position > 0 ? "User is in queue" : "User is not in queue",
+            position));
   }
 }

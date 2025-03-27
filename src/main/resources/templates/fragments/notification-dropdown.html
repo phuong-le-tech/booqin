@@ -1,0 +1,78 @@
+<!-- CSS-only notification dropdown without JavaScript - Fixed version -->
+<div th:fragment="notification-dropdown" class="relative group">
+    <!-- Bell icon and counter -->
+    <a href="/notifications" class="text-white hover:text-blue-300 relative inline-block p-1 rounded-full">
+        <!-- Bell icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+        </svg>
+
+        <!-- Notification counter -->
+        <span th:if="${unreadNotificationsCount > 0}"
+              th:text="${unreadNotificationsCount}"
+              class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+        </span>
+    </a>
+
+    <!-- Dropdown menu (shown on hover using CSS only) -->
+    <div class="absolute right-0 mt-2 w-72 bg-white rounded-md shadow-lg overflow-hidden z-50 hidden group-hover:block">
+        <div class="py-2">
+            <div class="px-4 py-2 text-sm font-medium border-b border-gray-200 flex justify-between items-center">
+                <span class="text-gray-700">Notifications</span>
+
+                <!-- Mark all as read button -->
+                <form th:if="${latestNotifications != null && !latestNotifications.isEmpty()}"
+                      th:action="@{/notifications/read-all}"
+                      method="post"
+                      class="inline">
+                    <button type="submit" class="text-xs text-blue-600 hover:text-blue-800">
+                        Mark all as read
+                    </button>
+                </form>
+            </div>
+
+            <!-- No notifications message -->
+            <div th:if="${latestNotifications == null || latestNotifications.isEmpty()}"
+                 class="px-4 py-2 text-sm text-gray-700">
+                No notifications
+            </div>
+
+            <!-- Notification list -->
+            <div th:if="${latestNotifications != null && !latestNotifications.isEmpty()}"
+                 class="max-h-64 overflow-y-auto">
+                <div th:each="notification : ${latestNotifications}"
+                     th:class="${notification.read ? 'opacity-50' : ''}"
+                     class="px-4 py-2 text-sm border-b border-gray-100 hover:bg-gray-50">
+                    <div class="flex justify-between">
+                        <!-- Simple "Mark as read" link without returnUrl -->
+                        <a th:href="@{/notifications/{id}/read(id=${notification.id})}"
+                           class="font-medium text-gray-700 block truncate mr-2"
+                           th:text="${notification.message}">
+                            Notification message
+                        </a>
+
+                        <!-- Delete form without returnUrl -->
+                        <form th:action="@{/notifications/{id}/delete(id=${notification.id})}"
+                              method="post"
+                              class="inline">
+                            <button type="submit" class="text-red-500 hover:text-red-700 text-xs">
+                                &times;
+                            </button>
+                        </form>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1"
+                         th:text="${#temporals.format(notification.createdAt, 'dd MMM yyyy HH:mm')}">
+                        01 Jan 2025 12:00
+                    </div>
+                </div>
+            </div>
+
+            <!-- View all link -->
+            <div class="px-4 py-2 text-sm border-t border-gray-100">
+                <a href="/notifications" class="text-blue-600 hover:text-blue-800 block text-center">
+                    View all notifications
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

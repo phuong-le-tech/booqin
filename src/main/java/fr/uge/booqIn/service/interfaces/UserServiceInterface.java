@@ -36,6 +36,7 @@ public interface UserServiceInterface {
    */
   UserShow findById(@NotNull Long id);
 
+  User findByUsername(@NotNull String username);
   /**
    * Create new user
    *

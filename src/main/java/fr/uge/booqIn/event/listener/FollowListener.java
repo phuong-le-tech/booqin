@@ -7,10 +7,16 @@ import fr.uge.booqIn.event.publishable.AddFollowedUserBooks;
 import fr.uge.booqIn.event.publishable.RemoveFollowedUserBooks;
 import fr.uge.booqIn.repository.BookCollectionRepository;
 import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.Random;
 import java.util.logging.Logger;
 
+@Component
 public class FollowListener {
   private static final Logger logger = Logger.getLogger(FollowListener.class.getName());
   private final BookCollectionRepository bookCollectionRepository;
@@ -20,7 +26,8 @@ public class FollowListener {
     this.bookCollectionRepository = bookCollectionRepository;
   }
 
-  @EventListener
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void handleOnFollow(AddFollowedUserBooks event) {
     User follower = event.follower();
     User followed = event.followed();
@@ -36,7 +43,6 @@ public class FollowListener {
       return;
     }
 
-    // Select a random public collection
     AbstractBookCollection randomCollection =
             followedPublicCollection.get(random.nextInt(followedPublicCollection.size()));
 
@@ -53,7 +59,8 @@ public class FollowListener {
             addedBooks, randomCollection.getTitle(), follower.getFullName()));
   }
 
-  @EventListener
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void handleOnUnfollowed(RemoveFollowedUserBooks event) {
     User follower = event.follower();
     User followed = event.followed();

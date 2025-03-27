@@ -73,7 +73,7 @@ public class BookWaitingQueueServiceImpl implements BookWaitingQueueServiceInter
     var available = bookLendingService.findBookLendingByBookId(bookId);
 
     if (available.isPresent()) {
-      eventPublisher.publishEvent(new BookAvailableEvent(userId, book.getTitle()));
+      eventPublisher.publishEvent(new BookAvailableEvent(userId, book.getTitle(), book.getId()));
       return true;
     }
 
@@ -100,7 +100,6 @@ public class BookWaitingQueueServiceImpl implements BookWaitingQueueServiceInter
 
     Optional<BookWaitingQueue> nextInQueue = bookWaitingQueueRepository
             .findFirstByBookIdAndStatusOrderByPositionAsc(bookId, QueueStatus.WAITING);
-
     if (nextInQueue.isPresent()) {
       BookWaitingQueue queueEntry = nextInQueue.get();
       User user = queueEntry.getUser();
@@ -110,7 +109,7 @@ public class BookWaitingQueueServiceImpl implements BookWaitingQueueServiceInter
       queueEntry.setReservationExpiresAt(LocalDateTime.now().plusHours(1));
       bookWaitingQueueRepository.save(queueEntry);
 
-      eventPublisher.publishEvent(new BookAvailableEvent(user.getId(), book.getTitle()));
+      eventPublisher.publishEvent(new BookAvailableEvent(user.getId(), book.getTitle(), book.getId()));
     }
   }
 
@@ -191,16 +190,20 @@ public class BookWaitingQueueServiceImpl implements BookWaitingQueueServiceInter
       return false;
     }
 
-    // Update status
-    entry.setStatus(QueueStatus.CANCELLED);
-    bookWaitingQueueRepository.save(entry);
+    // Store book ID and notification status before deleting the entry
+    Long bookId = entry.getBook().getId();
+    boolean wasNotified = entry.getStatus() == QueueStatus.NOTIFIED;
+    String bookTitle = entry.getBook().getTitle();
+
+    // Delete the entry instead of just updating status
+    bookWaitingQueueRepository.delete(entry);
 
     // If the entry was NOTIFIED, process next in queue
-    if (entry.getStatus() == QueueStatus.NOTIFIED) {
-      processNextInQueue(entry.getBook().getId());
+    if (wasNotified) {
+      processNextInQueue(bookId);
     }
 
-    eventPublisher.publishEvent(new BookQueueCancellationEvent(userId, entry.getBook().getTitle()));
+    eventPublisher.publishEvent(new BookQueueCancellationEvent(userId, bookTitle));
 
     return true;
   }

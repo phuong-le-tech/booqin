@@ -8,7 +8,6 @@ import fr.uge.booqIn.event.publishable.bookqueue.BookQueueJoinedEvent;
 import fr.uge.booqIn.event.publishable.bookqueue.BookQueueReservationEvent;
 import fr.uge.booqIn.factory.NotificationFactory;
 import fr.uge.booqIn.repository.NotificationRepository;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;

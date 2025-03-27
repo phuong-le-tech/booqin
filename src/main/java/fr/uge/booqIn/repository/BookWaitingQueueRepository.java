@@ -14,6 +14,7 @@ public interface BookWaitingQueueRepository extends JpaRepository<BookWaitingQue
 
   List<BookWaitingQueue> findByBookIdAndStatusOrderByPositionAsc(Long bookId, QueueStatus status);
 
+  @Query("SELECT bnq FROM BookWaitingQueue bnq WHERE bnq.book.id = :bookId AND bnq.status = :status ORDER BY bnq.position ASC")
   Optional<BookWaitingQueue> findFirstByBookIdAndStatusOrderByPositionAsc(Long bookId, QueueStatus status);
 
   List<BookWaitingQueue> findByUserIdAndStatusOrderByCreatedAtDesc(Long userId, QueueStatus status);
