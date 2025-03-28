@@ -124,12 +124,10 @@ public class BookServiceImpl implements BookServiceInterface {
       throw new ResourceNotFoundException("Book", "id", book.getId());
     }
 
-    // Save new authors first
     if (book.getAuthors() != null) {
-      book.getAuthors().stream()
-              .filter(author -> author.getId() == null)
-              .forEach(authorRepository::save);
+      processAuthors(book.getAuthors());
     }
+
 
     // Check for duplicate ISBNs in other books
     for (String isbn : book.getIsbns()) {
@@ -188,6 +186,9 @@ public class BookServiceImpl implements BookServiceInterface {
   public void saveFromApi(Book toSave) {
     Objects.requireNonNull(toSave, "Book to save cannot be null");
 
+    if (toSave.getAuthors() != null) {
+      processAuthors(toSave.getAuthors());
+    }
     // Check if a book with one of the ISBNs already exists
     Optional<Book> existingBookOpt = findExistingBookByIsbns(toSave.getIsbns());
 
@@ -225,7 +226,13 @@ public class BookServiceImpl implements BookServiceInterface {
     addNewCategories(existingBook, newBook.getCategories());
 
     // Add new authors
-    addNewAuthors(existingBook, newBook.getAuthors());
+    if (newBook.getAuthors() != null && !newBook.getAuthors().isEmpty()) {
+      processAuthors(newBook.getAuthors());
+      if (existingBook.getAuthors() == null) {
+        existingBook.setAuthors(new HashSet<>());
+      }
+      existingBook.getAuthors().addAll(newBook.getAuthors());
+    }
 
     // Update image url
     if (isEmptyOrNull(existingBook.getCoverImageUrl()) && !isEmptyOrNull(newBook.getCoverImageUrl())) {
@@ -257,21 +264,6 @@ public class BookServiceImpl implements BookServiceInterface {
     newCategories.forEach(existingBook::addCategory);
   }
 
-  private void addNewAuthors(Book existingBook, Set<Author> newAuthors) {
-    if (newAuthors == null)
-      return;
-
-    // Save new authors that don't have an ID
-    newAuthors.stream()
-            .filter(author -> author.getId() == null)
-            .forEach(authorRepository::save);
-
-    // Add authors to the existing book
-    if (existingBook.getAuthors() == null) {
-      existingBook.setAuthors(new HashSet<>());
-    }
-    existingBook.getAuthors().addAll(newAuthors);
-  }
 
   private Book createNewBook(Book toSave) {
     // Check that none of the ISBNs exists in any book
@@ -283,6 +275,8 @@ public class BookServiceImpl implements BookServiceInterface {
 
     if (toSave.getAuthors() == null) {
       toSave.setAuthors(new HashSet<>());
+    } else {
+      processAuthors(toSave.getAuthors());
     }
 
     toSave.getAuthors().stream()
@@ -375,5 +369,34 @@ public class BookServiceImpl implements BookServiceInterface {
       }
     }
     return book;
+  }
+
+  private void processAuthors(Set<Author> authors) {
+    if (authors == null || authors.isEmpty()) {
+      return;
+    }
+
+    Set<Author> processedAuthors = new HashSet<>();
+
+    for (Author author : authors) {
+      if (author.getId() != null) {
+        processedAuthors.add(author);
+        continue;
+      }
+
+      Optional<Author> existingAuthor = authorRepository.findByFirstNameAndLastName(
+              author.getFirstName(), author.getLastName());
+
+      if (existingAuthor.isPresent()) {
+        processedAuthors.add(existingAuthor.get());
+        logger.info("Author already exists: " + existingAuthor.get().getFullName());
+      } else {
+        Author savedAuthor = authorRepository.save(author);
+        processedAuthors.add(savedAuthor);
+      }
+    }
+
+    authors.clear();
+    authors.addAll(processedAuthors);
   }
 }

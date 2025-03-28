@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { BookGrid } from "../../components/book/BookGrid.tsx";
 import { Pagination } from "../../components/Pagination";
 import { Layout } from "../Layout";
 import { useBooks } from "../../context/BooksContext";
+import BookAddModal from "../../components/modal/BookAddModal";
+import BookService from "../../services/BookService"; // Import du service
 
 export const Books: React.FC = () => {
     const {
@@ -17,16 +19,65 @@ export const Books: React.FC = () => {
         setSearchType,
         handleSearch,
         handlePageChange,
-        handleResetSearch
+        handleResetSearch,
+        refreshBooks
     } = useBooks();
 
-    // Determine if active filters exist
+    const [addBookError, setAddBookError] = useState<string | null>(null);
+    const [showAddBookModal, setShowAddBookModal] = useState<boolean>(false);
+    const [, setIsAddingBook] = useState<boolean>(false);
+
+    const toggleAddBookModal = () => {
+        setShowAddBookModal(!showAddBookModal);
+        if (showAddBookModal) {
+            setAddBookError(null);
+        }
+    };
+
+    const handleAddBook = async (bookData: any) => {
+        try {
+            setIsAddingBook(true);
+            setAddBookError(null);
+
+            const formattedData = {
+                title: bookData.title,
+                description: bookData.description || "",
+                publicationDate: bookData.publicationDate || null,
+                isbns: bookData.isbn.filter((isbn: string) => isbn.trim() !== ""),
+                authorNames: bookData.authors.filter((author: string) => author.trim() !== "")
+            };
+            await BookService.createBook(formattedData);
+            toggleAddBookModal();
+            await refreshBooks();
+
+        } catch (error: any) {
+            console.error("Erreur lors de l'ajout du livre:", error);
+            setAddBookError(
+                error.response?.data?.message ||
+                "Une erreur est survenue lors de l'ajout du livre."
+            );
+        } finally {
+            setIsAddingBook(false);
+        }
+    };
+
     const hasActiveFilters = Object.values(activeFilters).some(value => value !== undefined && value !== "");
 
     return (
         <Layout>
             <div className="container mx-auto px-4 py-8">
-                <h1 className="text-3xl font-bold mb-6">Books</h1>
+                <div className="flex justify-between items-center mb-6">
+                    <h1 className="text-3xl font-bold">Books</h1>
+                    <button
+                        onClick={toggleAddBookModal}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                        </svg>
+                        Add Book
+                    </button>
+                </div>
 
                 {/* Search Form */}
                 <form onSubmit={handleSearch} className="mb-8">
@@ -120,6 +171,14 @@ export const Books: React.FC = () => {
                     />
                 )}
             </div>
+
+            {/* Add Book Modal */}
+            <BookAddModal
+                isOpen={showAddBookModal}
+                onClose={toggleAddBookModal}
+                onSubmit={handleAddBook}
+                error={addBookError}
+            />
         </Layout>
     );
 };
