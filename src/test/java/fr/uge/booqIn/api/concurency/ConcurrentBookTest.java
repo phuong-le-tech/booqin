@@ -295,7 +295,7 @@ public class ConcurrentBookTest {
 
         // Verify the created book
         assertNotNull(createdBookId.get(), "A book ID should have been captured");
-        Book foundBook = bookRepository.findById(createdBookId.get()).orElse(null);
+        Book foundBook = bookService.findBookById(createdBookId.get());
         assertNotNull(foundBook, "The created book should exist in the database");
         assertTrue(foundBook.getIsbns().contains(isbn), "The book should have the test ISBN");
     }
