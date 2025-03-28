@@ -232,6 +232,8 @@ public class BookCollectionWebController {
       return "layout";
     }
   }
+  
+  
 
   @GetMapping("/{collectionId}/books/{bookId}/remove")
   public String removeBookFromCollection(
@@ -388,5 +390,41 @@ public class BookCollectionWebController {
 
   private boolean verifyIsSameUser(User currentUser, BookCollectionShow collection) {
     return Objects.equals(collection.user().id(), currentUser.getId());
+  }
+  
+  
+  @GetMapping("/smart/new")
+  public String showCreatSmartCollectionForm(Model model, Principal principal) {
+    // Préparer le modèle commun
+    homeWebController.prepareModel(model, principal, "collection-create");
+    
+    model.addAttribute("bookCollection", new BookCollectionCreate("", "", false, Optional.empty()));
+    
+    // Définir le titre et le contenu
+    model.addAttribute("title", "BooqIn - Create Collection");
+    model.addAttribute("content", "pages/collections/createSmart");
+    
+    return "layout";
+  }
+  
+  @PostMapping("/smart/new")
+  public String createCollectionSmart(
+          @Valid @ModelAttribute("bookCollection") BookCollectionCreate bookCollection,
+          Model model,
+          Principal principal,
+          @AuthenticationPrincipal User currentUser
+  ) {
+    try {
+      BookCollectionShow createdCollection = bookCollectionService.createBookCollection(bookCollection, currentUser);
+      return "redirect:/collections";
+    } catch (ResourceNotFoundException e) {
+      homeWebController.prepareModel(model, principal, "collection-create");
+      
+      model.addAttribute("error", e.getMessage());
+      model.addAttribute("title", "BooqIn - Error");
+      model.addAttribute("content", "pages/collections/createSmart");
+      
+      return "layout";
+    }
   }
 }

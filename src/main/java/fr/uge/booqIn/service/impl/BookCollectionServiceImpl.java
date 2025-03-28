@@ -228,7 +228,9 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
   // Recovery methods for retryable operations
   @Recover
   public BookCollectionShow recoverFromOptimisticLockingFailureCreate(
-          ObjectOptimisticLockingFailureException ex, @NonNull @Validated BookCollectionCreate collection, @NonNull User currentUser) {
+          ObjectOptimisticLockingFailureException ex,
+          BookCollectionCreate collection,
+          User currentUser) {
     logger.warning("Concurrent modification detected while creating collection: " + collection.title());
     throw new ConcurrentModificationException("The collection has been modified by someone else. Please try again.", ex);
   }
@@ -260,4 +262,20 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
     logger.warning("Concurrent modification detected while removing book ID: " + bookId + " from collection ID: " + collectionId);
     throw new ConcurrentModificationException("The collection has been modified by someone else. Please try again.", ex);
   }
+  
+  @Recover
+  public BookCollectionShow recoverFromConcurrentModificationFailureCreate(
+          ConcurrentModificationException ex,
+          BookCollectionCreate collection,
+          User currentUser) {
+    logger.warning("Concurrent modification detected while creating collection: " + collection.title());
+    throw new ConcurrentModificationException("The collection has been modified by someone else. Please try again.", ex);
+  }
+  @Recover
+  public BookCollectionShow recoverFromAllExceptions(
+          Exception ex, @NonNull @Validated BookCollectionCreate collection, @NonNull User currentUser) {
+    logger.warning("Échec après plusieurs tentatives lors de la création de la collection: " + collection.title() + ", erreur: " + ex.getMessage());
+    throw new RuntimeException("Impossible de créer la collection: " + ex.getMessage(), ex);
+  }
+  
 }
