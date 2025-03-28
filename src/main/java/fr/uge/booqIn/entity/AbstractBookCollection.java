@@ -1,6 +1,8 @@
 package fr.uge.booqIn.entity;
 
 import fr.uge.booqIn.model.BookCollection;
+import fr.uge.booqIn.model.Commentable;
+import fr.uge.booqIn.model.Votable;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -16,7 +18,7 @@ import java.util.Objects;
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "collection_type", discriminatorType = DiscriminatorType.STRING)
-public abstract class AbstractBookCollection implements BookCollection {
+public abstract class AbstractBookCollection implements BookCollection, Votable, Commentable {
   private static final String ENTITY_TYPE = "COLLECTION";
 
   @Id

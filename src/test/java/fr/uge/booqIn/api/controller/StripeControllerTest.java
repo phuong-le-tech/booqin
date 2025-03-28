@@ -63,7 +63,7 @@ class StripeControllerTest {
     when(cartService.getCart(eq(cartId))).thenReturn(cart);
     when(stripeService.createCheckoutSession(any(Cart.class), any(String.class))).thenReturn(stripeSession);
     // When
-    ResponseEntity<ApiResponse<String>> response = stripeController.createCheckoutSession(cartId);
+    ResponseEntity<ApiResponse<String>> response = stripeController.createCheckoutSession(cartId , "");
 
     // Then
     assertNotNull(response);
@@ -90,7 +90,7 @@ class StripeControllerTest {
     when(cartService.getCart(eq(cartId))).thenReturn(emptyCart);
 
     // When
-    ResponseEntity<ApiResponse<String>> response = stripeController.createCheckoutSession(cartId);
+    ResponseEntity<ApiResponse<String>> response = stripeController.createCheckoutSession(cartId , "");
 
     // Then
     assertNotNull(response);
@@ -114,7 +114,7 @@ class StripeControllerTest {
     when(cartService.getCart(eq(cartId))).thenReturn(null);
 
     // When
-    ResponseEntity<ApiResponse<String>> response = stripeController.createCheckoutSession(cartId);
+    ResponseEntity<ApiResponse<String>> response = stripeController.createCheckoutSession(cartId , "");
 
     // Then
     assertNotNull(response);

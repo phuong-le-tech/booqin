@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Confirmation - BooqIn</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            color: #343a40;
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .card {
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 480px;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .success-banner {
+            background: linear-gradient(135deg, #4CAF50, #2E7D32);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 120px;
+            z-index: 0;
+        }
+
+        .content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .success-icon {
+            width: 86px;
+            height: 86px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 30px;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .checkmark {
+            color: #4CAF50;
+            font-size: 48px;
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        h1 {
+            color: #343a40;
+            font-size: 28px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        p {
+            color: #6c757d;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .highlight {
+            color: #4CAF50;
+            font-weight: 600;
+        }
+
+        .details {
+            background-color: #f1f8e9;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 30px 0;
+            text-align: left;
+        }
+
+        .details h2 {
+            font-size: 18px;
+            color: #2E7D32;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .details p {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            text-decoration: none;
+            padding: 14px 30px;
+            border-radius: 30px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin-top: 10px;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        .button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(33, 150, 243, 0.4);
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 30px;
+        }
+
+        .logo span {
+            color: #2196F3;
+        }
+
+        .confirmation-code {
+            font-family: monospace;
+            background-color: #e9ecef;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        .animation {
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="card animation">
+    <div class="success-banner"></div>
+    <div class="content">
+        <div class="logo">Booq<span>In</span></div>
+
+        <div class="success-icon">
+            <div class="checkmark">✓</div>
+        </div>
+
+        <h1>Payment Successful!</h1>
+
+        <p>Your payment has been processed successfully.</p>
+        <p>The books are now <span class="highlight">ready for lending</span>.</p>
+
+        <div class="details">
+            <h2>Order Summary</h2>
+            <p>
+                <span>Book Rental</span>
+                <span>€6.00 per book</span>
+            </p>
+            <p>
+                <span>Order ID</span>
+                <span class="confirmation-code" id="orderId">Processing...</span>
+            </p>
+            <p>
+                <span>Date</span>
+                <span id="orderDate">March 27, 2025</span>
+            </p>
+        </div>
+
+        <a id="returnButton" href="#" class="button">Return to Application</a>
+
+        <p style="margin-top: 20px; font-size: 14px;">
+            A confirmation email has been sent to your registered email address.
+        </p>
+    </div>
+</div>
+
+<script>
+    // Format current date
+    const today = new Date();
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    document.getElementById('orderDate').textContent = today.toLocaleDateString('en-US', options);
+
+    // Get cart ID from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const cartId = urlParams.get('cartId') || 'UNKNOWN';
+
+    // Display cart ID as order ID
+    document.getElementById('orderId').textContent = `BQ-${cartId}`;
+
+    // Set up deep link for return button
+    const userId = urlParams.get('userId') || 'UNKNOWN';
+    document.getElementById('returnButton').href = `booqin://payment/success?cartId=${cartId}&userId=${userId}`;
+</script>
+</body>
+</html>

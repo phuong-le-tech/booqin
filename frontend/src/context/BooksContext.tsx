@@ -20,6 +20,7 @@ interface BooksContextType {
     handleSearch: (e: React.FormEvent) => Promise<void>;
     handlePageChange: (page: number) => void;
     handleResetSearch: () => void;
+    refreshBooks: () => Promise<void>; // Ajout de la fonction refreshBooks
 }
 
 const defaultPageInfo: PageInfo = {
@@ -131,6 +132,12 @@ export const BooksProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         }
     };
 
+    // Fonction pour rafraîchir la liste des livres (après ajout d'un livre)
+    const refreshBooks = async (): Promise<void> => {
+        // Utiliser la page courante pour conserver la position de l'utilisateur
+        await fetchBooks(pageInfo.number);
+    };
+
     const handleSearch = async (e: React.FormEvent): Promise<void> => {
         e.preventDefault();
 
@@ -211,7 +218,8 @@ export const BooksProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setSearchType,
         handleSearch,
         handlePageChange,
-        handleResetSearch
+        handleResetSearch,
+        refreshBooks
     };
 
     return (

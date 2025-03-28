@@ -29,7 +29,6 @@ public class ImageService {
     private static final int THUMBNAIL_WIDTH = 150;
     private static final int THUMBNAIL_HEIGHT = 225;
 
-    @Autowired
     public ImageService(@Value("${file.upload-dir}") String uploadDir,
                         @Value("${app.image-base-url}") String imageBaseUrl) {
         this.uploadDir = uploadDir;
