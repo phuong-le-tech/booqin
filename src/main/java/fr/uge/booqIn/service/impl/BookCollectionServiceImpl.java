@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.lang.NonNull;
 
+import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Optional;
@@ -198,7 +199,19 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
 
     return new PageImpl<>(result, pageable, collections.size());
   }
-
+  
+  public  <T> Page<T> createPaginatedResult(List<T> list, Pageable pageable) {
+    int start = (int) pageable.getOffset();
+    int end = Math.min((start + pageable.getPageSize()), list.size());
+    
+    if (start > list.size()) {
+      return new PageImpl<>(Collections.emptyList(), pageable, list.size());
+    }
+    
+    List<T> subList = list.subList(start, end);
+    return new PageImpl<>(subList, pageable, list.size());
+  }
+  
   @Override
   @Transactional(readOnly = true)
   public BookCollection findCollectionById(@NonNull Long id) {
