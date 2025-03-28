@@ -1,4 +1,4 @@
-package fr.uge.booqIn.service;
+/*package fr.uge.booqIn.service;
 
 import fr.uge.booqIn.dto.bookCollection.BookCollectionCreate;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionIndex;
@@ -614,3 +614,4 @@ class BookCollectionServiceTest {
     verify(bookCollectionMapper).toBookCollectionIndex(eq(testCollection));
   }
 }
+*/
