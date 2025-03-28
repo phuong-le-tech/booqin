@@ -177,10 +177,15 @@ public class BookWebController {
     }
 
     private List<LiteCollection> getLiteCollections(User user) {
-        return user.getCollections().stream()
-            .filter(collection -> collection.getCollectionType() != BookCollection.CollectionType.GLOBAL)
-            .map(c -> new LiteCollection(c.getId(), c.getTitle()))
-            .toList();
+        List<LiteCollection> test = user.getCollections().stream()
+                .filter(collection -> collection.getCollectionType() != BookCollection.CollectionType.GLOBAL
+                        && collection.getCollectionType() != BookCollection.CollectionType.SMART
+                        && collection.getCollectionType() != BookCollection.CollectionType.FOLLOWED
+                        && collection.getCollectionType() != BookCollection.CollectionType.LIKED)
+                .map(c -> new LiteCollection(c.getId(), c.getTitle()))
+                .toList();
+        System.out.println("Collections LITE: " + test);
+        return test;
     }
 
     private List<Long> getLentBooks(LendingResponseDTO lendingData, BookStatus available) {
