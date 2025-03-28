@@ -54,7 +54,6 @@ public class BookCollectionController {
     
 
     BookCollectionShow collectionShow = bookCollectionService.createBookCollection(bookCollectionCreateDto, currentUser);
-    System.out.println("Collection created successfully" + collectionShow);
     return ResponseEntity.status(HttpStatus.CREATED)
             .body(ApiResponse.success("Collection created successfully", collectionShow));
   }

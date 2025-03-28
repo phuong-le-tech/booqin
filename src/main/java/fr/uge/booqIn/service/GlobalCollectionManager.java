@@ -4,19 +4,15 @@ import fr.uge.booqIn.entity.*;
 import fr.uge.booqIn.enums.UserRole;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.factory.BookCollectionFactory;
-import fr.uge.booqIn.factory.CriteriaStrategyFactory;
 import fr.uge.booqIn.repository.BookCollectionRepository;
 import fr.uge.booqIn.repository.BookRepository;
 import fr.uge.booqIn.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.QueryTimeoutException;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
@@ -27,12 +23,11 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -40,24 +35,19 @@ import java.util.stream.Collectors;
 @Service
 public class GlobalCollectionManager {
   private static final Logger logger = Logger.getLogger(GlobalCollectionManager.class.getName());
-  private static final String RECENT_BOOKS_COLLECTION_TITLE = "Recent Books";
-  private static final String RECENT_BOOKS_COLLECTION_DESC = "Books added in the last 30 days";
-  private static final String RECENT_BOOKS_CRITERIA = "recent:30";
+  private static final int RECENT_DAYS_RANGE = 30;
 
   private final BookCollectionRepository collectionRepository;
   private final BookRepository bookRepository;
   private final UserRepository userRepository;
-  private final CriteriaStrategyFactory criteriaFactory;
 
   public GlobalCollectionManager(
           BookCollectionRepository collectionRepository,
           BookRepository bookRepository,
-          UserRepository userRepository,
-          CriteriaStrategyFactory criteriaFactory) {
+          UserRepository userRepository) {
     this.collectionRepository = Objects.requireNonNull(collectionRepository, "collectionRepository cannot be null");
     this.bookRepository = Objects.requireNonNull(bookRepository, "bookRepository cannot be null");
     this.userRepository = Objects.requireNonNull(userRepository, "userRepository cannot be null");
-    this.criteriaFactory = Objects.requireNonNull(criteriaFactory, "criteriaFactory cannot be null");
   }
 
   @EventListener(ApplicationReadyEvent.class)
@@ -100,15 +90,18 @@ public class GlobalCollectionManager {
     logger.info("Creating or updating recent books collection");
     try {
       Optional<AbstractBookCollection> existingCollection =
-              collectionRepository.findByTitle(RECENT_BOOKS_COLLECTION_TITLE);
+              collectionRepository.findFirstRecentBookCollection();
 
       if (existingCollection.isPresent()) {
         logger.info("Recent books collection already exists. Updating...");
 
-        if (existingCollection.get() instanceof GlobalBookCollection globalCollection) {
-          updateRecentBooksCollection(globalCollection);
+        if (existingCollection.get() instanceof RecentBookCollection recentCollection) {
+          updateRecentBooksCollection(recentCollection);
         } else {
-          logger.warning("Found collection with title 'Recent Books' but it's not a GlobalBookCollection");
+          logger.warning("Found collection with title 'Recent Books' but it's not a RecentBookCollection");
+          User collectionOwner = existingCollection.get().getOwner();
+          collectionRepository.delete(existingCollection.get());
+          createNewRecentBooksCollection(collectionOwner);
         }
       } else {
         createNewRecentBooksCollection(owner);
@@ -122,18 +115,15 @@ public class GlobalCollectionManager {
   private void createNewRecentBooksCollection(User owner) {
     logger.info("Creating new recent books collection");
 
-    List<Book> books = bookRepository.findAll();
+    LocalDateTime cutoffDate = LocalDateTime.now().minusDays(RECENT_DAYS_RANGE);
+    List<Book> recentBooks = bookRepository.findByCreatedAtAfter(cutoffDate);
 
-    GlobalBookCollection recentBooks = BookCollectionFactory.createGlobalCollection(
-            RECENT_BOOKS_COLLECTION_TITLE,
-            RECENT_BOOKS_COLLECTION_DESC,
-            owner,
-            RECENT_BOOKS_CRITERIA,
-            books
-    );
+    RecentBookCollection recentBooksCollection = BookCollectionFactory.createRecentBookCollection(owner);
 
-    collectionRepository.save(recentBooks);
-    logger.info("Recent books collection created with " + recentBooks.getBooks().size() + " books.");
+    recentBooks.forEach(recentBooksCollection::addBook);
+
+    collectionRepository.save(recentBooksCollection);
+    logger.info("Recent books collection created with " + recentBooksCollection.getBooks().size() + " books.");
   }
 
   @Transactional(isolation = Isolation.READ_COMMITTED)
@@ -145,26 +135,20 @@ public class GlobalCollectionManager {
           },
           backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay:1000}")
   )
-  public void updateRecentBooksCollection(GlobalBookCollection recentBooksCollection) {
+  public void updateRecentBooksCollection(RecentBookCollection recentBooksCollection) {
     Objects.requireNonNull(recentBooksCollection, "Collection cannot be null");
 
     logger.info("Updating recent books collection with ID: " + recentBooksCollection.getId());
 
-    if (recentBooksCollection.getCriteriaStrategy() == null) {
-      recentBooksCollection.initializeCriteriaStrategy(criteriaFactory);
-    }
+    LocalDateTime cutoffDate = LocalDateTime.now().minusDays(recentBooksCollection.getDaysRange());
+    List<Book> recentBooks = bookRepository.findByCreatedAtAfter(cutoffDate);
 
-    // Process books in batches to improve performance and reduce memory usage
-    processBooksInBatches(recentBooksCollection);
+    recentBooksCollection.getBooks().clear();
+    recentBooks.forEach(recentBooksCollection::addBook);
+    recentBooksCollection.setUpdatedAt(LocalDateTime.now());
 
     collectionRepository.save(recentBooksCollection);
     logger.info("Recent books collection updated with " + recentBooksCollection.getBooks().size() + " books.");
-
-  }
-
-  private void processBooksInBatches(GlobalBookCollection collection) {
-      List<Book> bookBatch = bookRepository.findAll();
-      collection.updateBooks(bookBatch.stream().toList());
   }
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -205,75 +189,58 @@ public class GlobalCollectionManager {
   private void updateSingleAuthorCollection(Book book, User adminUser, Author author) {
     String collectionTitle = "Books by " + author.getFullName();
     try {
-      Optional<AbstractBookCollection> collection = collectionRepository.findByTitle(collectionTitle);
+      Optional<AbstractBookCollection> collectionOpt = collectionRepository.findByTitle(collectionTitle);
 
-      if (collection.isPresent()) {
-        AbstractBookCollection authorCollection = collection.get();
+      if (collectionOpt.isPresent()) {
+        AbstractBookCollection collection = collectionOpt.get();
 
-        if (authorCollection instanceof GlobalBookCollection globalCollection) {
-          updateExistingAuthorCollection(book, globalCollection);
+        if (collection instanceof AuthorBookCollection authorCollection) {
+          if (!authorCollection.getBooks().contains(book)) {
+            authorCollection.addBook(book);
+            collectionRepository.save(authorCollection);
+            logger.info("Added new book to author collection: " + authorCollection.getTitle());
+          } else {
+            logger.fine("Book already in author collection, skipping");
+          }
         } else {
           logger.warning("Collection found for author " + author.getFullName() +
-                  " but it's not a GlobalBookCollection");
+                  " but it's not an AuthorBookCollection");
+
+          User collectionOwner = collection.getOwner();
+          collectionRepository.delete(collection);
+          createNewAuthorCollection(collectionOwner, author);
         }
       } else {
-        createNewAuthorCollection(book, adminUser, author, collectionTitle);
+        createNewAuthorCollection(adminUser, author);
       }
     } catch (Exception e) {
       logger.log(Level.WARNING, "Error processing author collection for " + author.getFullName(), e);
-      // Continue with other authors instead of letting the exception propagate
     }
   }
 
-  private void updateExistingAuthorCollection(Book book, GlobalBookCollection globalCollection) {
-    if (globalCollection.getCriteriaStrategy() == null) {
-      globalCollection.initializeCriteriaStrategy(criteriaFactory);
-    }
+  private void createNewAuthorCollection(User adminUser, Author author) {
+    List<Book> authorBooks = findBooksByAuthor(author);
 
-    if (globalCollection.getCriteriaStrategy().satisfy(book)) {
-      if (!globalCollection.getBooks().contains(book)) {
-        globalCollection.addBook(book);
-        collectionRepository.saveAndFlush(globalCollection);
-        logger.info("Added new book to author collection: " + globalCollection.getTitle());
-      } else {
-        logger.fine("Book already in author collection, skipping");
-      }
-    }
-  }
+    AuthorBookCollection newCollection = BookCollectionFactory.createAuthorBookCollection(adminUser, author.getFullName());
 
-  private void createNewAuthorCollection(Book book, User adminUser, Author author, String collectionTitle) {
-    String criteriaString = "author:" + author.getFullName();
-    GlobalBookCollection newCollection = createAndSaveAuthorCollection(
-            collectionTitle,
-            "Collection of all books by " + author.getFullName(),
-            adminUser,
-            criteriaString,
-            List.of(book)
-    );
+    authorBooks.forEach(newCollection::addBook);
+
+    collectionRepository.save(newCollection);
     logger.info("Created new author collection for: " + author.getFullName() +
             " with ID: " + newCollection.getId());
   }
 
-  private GlobalBookCollection createAndSaveAuthorCollection(
-          String title, String description, User owner, String criteria, List<Book> books) {
+  private List<Book> findBooksByAuthor(Author author) {
+    String firstName = author.getFirstName();
+    String lastName = author.getLastName();
 
-    Objects.requireNonNull(title, "Title cannot be null");
-    Objects.requireNonNull(owner, "Owner cannot be null");
-    Objects.requireNonNull(criteria, "Criteria cannot be null");
-    Objects.requireNonNull(books, "Books list cannot be null");
-
-    logger.info("Creating new collection: " + title + " with criteria: " + criteria);
-
-    try {
-      GlobalBookCollection newCollection = BookCollectionFactory.createGlobalCollection(
-              title, description, owner, criteria, books
-      );
-      GlobalBookCollection savedCollection = collectionRepository.saveAndFlush(newCollection);
-      logger.info("Collection saved successfully with ID: " + savedCollection.getId());
-      return savedCollection;
-    } catch (Exception e) {
-      logger.log(Level.SEVERE, "Error creating author collection: " + title, e);
-      throw e;
+    if (firstName != null && lastName != null) {
+      return bookRepository.findByAuthor(firstName, lastName);
+    } else {
+      return bookRepository.findAll().stream()
+              .filter(book -> book.getAuthors().stream()
+                      .anyMatch(a -> Objects.equals(a.getFullName(), author.getFullName())))
+              .collect(Collectors.toList());
     }
   }
 
@@ -290,14 +257,18 @@ public class GlobalCollectionManager {
     try {
       logger.info("Scheduled refresh of recent books collection...");
 
-      Optional<AbstractBookCollection> collection =
-              collectionRepository.findByTitle(RECENT_BOOKS_COLLECTION_TITLE);
+      Optional<AbstractBookCollection> collectionOpt =
+              collectionRepository.findFirstRecentBookCollection();
 
-      if (collection.isPresent()) {
-        if (collection.get() instanceof GlobalBookCollection globalCollection) {
-          updateRecentBooksCollection(globalCollection);
+      if (collectionOpt.isPresent()) {
+        AbstractBookCollection collection = collectionOpt.get();
+        if (collection instanceof RecentBookCollection recentCollection) {
+          updateRecentBooksCollection(recentCollection);
         } else {
-          logger.warning("Found collection with title 'Recent Books' but it's not a GlobalBookCollection");
+          logger.warning("Found collection with title 'Recent Books' but it's not a RecentBookCollection");
+          User owner = collection.getOwner();
+          collectionRepository.delete(collection);
+          createNewRecentBooksCollection(owner);
         }
       } else {
         logger.warning("Recent books collection not found. Creating it...");
@@ -337,29 +308,13 @@ public class GlobalCollectionManager {
   }
 
   @Recover
-  public void recoverFromOptimisticLockingFailureUpdate(ObjectOptimisticLockingFailureException ex, GlobalBookCollection collection) {
+  public void recoverFromOptimisticLockingFailureUpdate(ObjectOptimisticLockingFailureException ex, RecentBookCollection collection) {
     logRecoveryFailure("update recent books collection", ex);
   }
 
   @Recover
   public void recoverFromOptimisticLockingFailureUpdateAuthor(ObjectOptimisticLockingFailureException ex, Book book) {
     logRecoveryFailure("update author collections for book: " + book.getTitle(), ex);
-  }
-
-
-  @Recover
-  public GlobalBookCollection recoverFromOptimisticLockingFailureCreateAuthor(
-          ObjectOptimisticLockingFailureException ex, String title, String description,
-          User owner, String criteria, List<Book> books) {
-
-    logRecoveryFailure("create author collection: " + title, ex);
-
-    throw new ConcurrentModificationException("Failed to create author collection due to concurrent modifications", ex);
-  }
-
-  @Recover
-  public void recoverFromOptimisticLockingFailureRefresh(ObjectOptimisticLockingFailureException ex) {
-    logRecoveryFailure("refresh recent books collection", ex);
   }
 
   @Recover
@@ -377,27 +332,5 @@ public class GlobalCollectionManager {
   private void logRecoveryFailure(String operation, Exception ex) {
     logger.log(Level.SEVERE, "Failed to " + operation + " after multiple retries", ex);
     throw new ConcurrentModificationException("Failed to " + operation + " due to concurrent modifications", ex);
-  }
-
-  @Transactional(readOnly = true)
-  public GlobalBookCollection findGlobalCollectionByTitle(String title) {
-    Objects.requireNonNull(title, "Title cannot be null");
-
-    AbstractBookCollection collection = collectionRepository.findByTitle(title)
-            .orElseThrow(() -> new ResourceNotFoundException("Collection not found with title: " + title));
-
-    if (!(collection instanceof GlobalBookCollection)) {
-      throw new IllegalArgumentException("Collection with title '" + title + "' is not a GlobalBookCollection");
-    }
-
-    return (GlobalBookCollection) collection;
-  }
-
-  @Transactional(readOnly = true)
-  public List<GlobalBookCollection> getAllGlobalCollections() {
-    return collectionRepository.findAll().stream()
-            .filter(c -> c instanceof GlobalBookCollection)
-            .map(c -> (GlobalBookCollection) c)
-            .collect(Collectors.toList());
   }
 }

@@ -7,6 +7,7 @@ import fr.uge.booqIn.dto.user.UserIndex;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.UserRole;
 import fr.uge.booqIn.factory.ApiResponse;
+import fr.uge.booqIn.model.BookCollection;
 import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -110,7 +111,7 @@ class BookCollectionControllerTest {
             true,
             List.of(),
             userIndex,
-            "CUSTOM",
+            BookCollection.CollectionType.NORMAL,
             LocalDateTime.now(),
             LocalDateTime.now()
     );
@@ -146,7 +147,7 @@ class BookCollectionControllerTest {
             true,
             List.of(),
             userIndex,
-            "CUSTOM",
+            BookCollection.CollectionType.NORMAL,
             LocalDateTime.now(),
             LocalDateTime.now()
     );
@@ -203,7 +204,7 @@ class BookCollectionControllerTest {
             false,
             List.of(),
             userIndex,
-            "CUSTOM",
+            BookCollection.CollectionType.NORMAL,
             LocalDateTime.now(),
             LocalDateTime.now()
     );
@@ -395,9 +396,9 @@ class BookCollectionControllerTest {
 
     List<BookCollectionShow> collectionList = List.of(
             new BookCollectionShow(1L, "Collection With Books 1", "Description 1", true,
-                    booksCollection1, userIndex, "CUSTOM", LocalDateTime.now(), LocalDateTime.now()),
+                    booksCollection1, userIndex,             BookCollection.CollectionType.NORMAL, LocalDateTime.now(), LocalDateTime.now()),
             new BookCollectionShow(2L, "Collection With Books 2", "Description 2", false,
-                    booksCollection2, userIndex, "CUSTOM", LocalDateTime.now(), LocalDateTime.now())
+                    booksCollection2, userIndex,             BookCollection.CollectionType.NORMAL, LocalDateTime.now(), LocalDateTime.now())
     );
     Page<BookCollectionShow> collectionPage = new PageImpl<>(collectionList);
 
