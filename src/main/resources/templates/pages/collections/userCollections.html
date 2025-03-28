@@ -10,6 +10,20 @@
 <div class="max-w-6xl mx-auto">
     <h1 class="text-4xl font-bold text-gray-800 mb-8 text-center">My Collections</h1>
 
+    <div class="flex justify-end items-center mb-4 space-x-2">
+        <span class="text-sm text-gray-600">Collections per page:</span>
+        <form method="get" th:action="@{/collections}" class="inline-block">
+            <input type="hidden" name="page" value="0">
+            <select name="size" onchange="this.form.submit()" class="border rounded p-1 text-sm">
+                <option value="5" th:selected="${pageSize == 5}">5</option>
+                <option value="10" th:selected="${pageSize == 10}">10</option>
+                <option value="15" th:selected="${pageSize == 15}">15</option>
+                <option value="20" th:selected="${pageSize == 20}">20</option>
+                <option value="30" th:selected="${pageSize == 30}">30</option>
+            </select>
+        </form>
+    </div>
+
     <!-- Onglets de navigation -->
     <div class="flex border-b border-gray-200 mb-6">
         <button
@@ -91,6 +105,55 @@
                     </tr>
                     </tbody>
                 </table>
+
+                <!-- Pagination -->
+                <div class="flex items-center justify-center gap-2 my-6" th:if="${userPrivateCollections.totalPages > 1}"
+                     th:with="visiblePages=5,
+                          startPage=${(userPrivateCollections.number - 2 < 0) ? 0 : ((userPrivateCollections.number + 2 >= userPrivateCollections.totalPages) ? (userPrivateCollections.totalPages - visiblePages < 0 ? 0 : userPrivateCollections.totalPages - visiblePages) : userPrivateCollections.number - 2)},
+                          endPage=${(startPage + visiblePages - 1 >= userPrivateCollections.totalPages) ? (userPrivateCollections.totalPages - 1) : (startPage + visiblePages - 1)}">
+
+                    <a th:if="${userPrivateCollections.number > 0}"
+                       th:href="@{/collections(page=${userPrivateCollections.number - 1}, size=${pageSize})}"
+                       class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-blue-600 transition hover:bg-blue-600 hover:text-white">
+                        <span class="nav-icon">&#8592;</span>
+                    </a>
+                    <span th:unless="${userPrivateCollections.number > 0}" class="w-10 h-10 rounded-full bg-gray-100 opacity-50 border border-gray-200 flex items-center justify-center text-gray-400">
+                        <span class="nav-icon">&#8592;</span>
+                    </span>
+
+                    <a th:if="${startPage > 0}"
+                       th:href="@{/collections(page=0, size=${pageSize})}"
+                       class="min-w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer transition text-sm text-gray-800 hover:bg-gray-200 px-3">
+                        <span>1</span>
+                    </a>
+                    <div class="flex items-center justify-center text-sm text-gray-500 tracking-wider" th:if="${startPage > 1}">...</div>
+
+                    <div class="flex items-center gap-1">
+                        <a th:each="i : ${#numbers.sequence(startPage, endPage)}"
+                           th:href="@{/collections(page=${i}, size=${pageSize})}"
+                           class="min-w-9 h-9 rounded-full flex items-center justify-center cursor-pointer transition text-sm px-3"
+                           th:classappend="${userPrivateCollections.number == i} ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'">
+                            <span th:text="${i + 1}"></span>
+                        </a>
+                    </div>
+
+                    <div class="flex items-center justify-center text-sm text-gray-500 tracking-wider" th:if="${endPage < userPrivateCollections.totalPages - 2}">...</div>
+
+                    <a th:if="${endPage < userPrivateCollections.totalPages - 1}"
+                       th:href="@{/collections(page=${userPrivateCollections.totalPages - 1}, size=${pageSize})}"
+                       class="min-w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer transition text-sm text-gray-800 hover:bg-gray-200 px-3">
+                        <span th:text="${userPrivateCollections.totalPages}"></span>
+                    </a>
+
+                    <a th:if="${userPrivateCollections.number < userPrivateCollections.totalPages - 1}"
+                       th:href="@{/collections(page=${userPrivateCollections.number + 1}, size=${pageSize})}"
+                       class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-blue-600 transition hover:bg-blue-600 hover:text-white">
+                        <span class="nav-icon">&#8594;</span>
+                    </a>
+                    <span th:unless="${userPrivateCollections.number < userPrivateCollections.totalPages - 1}" class="w-10 h-10 rounded-full bg-gray-100 opacity-50 border border-gray-200 flex items-center justify-center text-gray-400">
+                        <span class="nav-icon">&#8594;</span>
+                    </span>
+                </div>
             </div>
         </div>
     </div>
@@ -148,6 +211,55 @@
                     </tr>
                     </tbody>
                 </table>
+
+                <!-- Pagination -->
+                <div class="flex items-center justify-center gap-2 my-6" th:if="${userPublicCollections.totalPages > 1}"
+                     th:with="visiblePages=5,
+                          startPage=${(userPublicCollections.number - 2 < 0) ? 0 : ((userPublicCollections.number + 2 >= userPublicCollections.totalPages) ? (userPublicCollections.totalPages - visiblePages < 0 ? 0 : userPublicCollections.totalPages - visiblePages) : userPublicCollections.number - 2)},
+                          endPage=${(startPage + visiblePages - 1 >= userPublicCollections.totalPages) ? (userPublicCollections.totalPages - 1) : (startPage + visiblePages - 1)}">
+
+                    <a th:if="${userPublicCollections.number > 0}"
+                       th:href="@{/collections(page=${userPublicCollections.number - 1}, size=${pageSize})}"
+                       class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-blue-600 transition hover:bg-blue-600 hover:text-white">
+                        <span class="nav-icon">&#8592;</span>
+                    </a>
+                    <span th:unless="${userPublicCollections.number > 0}" class="w-10 h-10 rounded-full bg-gray-100 opacity-50 border border-gray-200 flex items-center justify-center text-gray-400">
+                        <span class="nav-icon">&#8592;</span>
+                    </span>
+
+                    <a th:if="${startPage > 0}"
+                       th:href="@{/collections(page=0, size=${pageSize})}"
+                       class="min-w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer transition text-sm text-gray-800 hover:bg-gray-200 px-3">
+                        <span>1</span>
+                    </a>
+                    <div class="flex items-center justify-center text-sm text-gray-500 tracking-wider" th:if="${startPage > 1}">...</div>
+
+                    <div class="flex items-center gap-1">
+                        <a th:each="i : ${#numbers.sequence(startPage, endPage)}"
+                           th:href="@{/collections(page=${i}, size=${pageSize})}"
+                           class="min-w-9 h-9 rounded-full flex items-center justify-center cursor-pointer transition text-sm px-3"
+                           th:classappend="${userPublicCollections.number == i} ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'">
+                            <span th:text="${i + 1}"></span>
+                        </a>
+                    </div>
+
+                    <div class="flex items-center justify-center text-sm text-gray-500 tracking-wider" th:if="${endPage < userPublicCollections.totalPages - 2}">...</div>
+
+                    <a th:if="${endPage < userPublicCollections.totalPages - 1}"
+                       th:href="@{/collections(page=${userPublicCollections.totalPages - 1}, size=${pageSize})}"
+                       class="min-w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer transition text-sm text-gray-800 hover:bg-gray-200 px-3">
+                        <span th:text="${userPublicCollections.totalPages}"></span>
+                    </a>
+
+                    <a th:if="${userPublicCollections.number < userPublicCollections.totalPages - 1}"
+                       th:href="@{/collections(page=${userPublicCollections.number + 1}, size=${pageSize})}"
+                       class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-blue-600 transition hover:bg-blue-600 hover:text-white">
+                        <span class="nav-icon">&#8594;</span>
+                    </a>
+                    <span th:unless="${userPublicCollections.number < userPrivateCollections.totalPages - 1}" class="w-10 h-10 rounded-full bg-gray-100 opacity-50 border border-gray-200 flex items-center justify-center text-gray-400">
+                        <span class="nav-icon">&#8594;</span>
+                    </span>
+                </div>
             </div>
         </div>
     </div>
