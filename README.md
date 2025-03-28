@@ -1,7 +1,6 @@
 # BooqIn LE
 
 
-
 ## Description
 BooqIn est une plateforme de gestion et de prêt de livres entre utilisateurs. <br>
 Le site permet aux utilisateurs de créer des collections, de partager leurs livres et d'emprunter ceux des autres utilisateurs. <br>
@@ -16,14 +15,61 @@ git clone https://gitlab.com/phuong.le77100/booqin-le.git
 cd booqin-le
 ```
 
-## Compiler le projet
-### Backend
+## Lancer l'application
+
+### Backend (avec Docker)
+
+1. Assurez-vous d'avoir [Docker](https://www.docker.com/products/docker-desktop) et [Docker Compose](https://docs.docker.com/compose/install/) installés sur votre machine.
+
+2. Créez un fichier `.env` à la racine du projet avec le contenu suivant :
 ```
-mvn clean package
+JWT_SECRET=votre_jwt_secret
+STRIPE_SECRET_KEY=votre_clé_secrète_stripe
+STRIPE_PUBLIC_KEY=votre_clé_publique_stripe
+STRIPE_WEBHOOK_SECRET=votre_secret_webhook_stripe
 ```
 
-### Frontends
-Se placer dans le dossier `src/frontend`:
+Comment obtenir les clés nécessaires :
+
+- **JWT_SECRET** : Générez une chaîne aléatoire sécurisée (32+ caractères). Vous pouvez utiliser la commande suivante :
+  ```
+  openssl rand -base64 32
+  ```
+
+- **Clés Stripe** : Pour les tests et le développement, créez un compte sur [Stripe](https://stripe.com) et récupérez les clés dans le tableau de bord Stripe :
+    1. Créez ou connectez-vous à votre compte Stripe
+    2. Accédez à [Dashboard > Developers > API keys](https://dashboard.stripe.com/test/apikeys)
+
+- **STRIPE_WEBHOOK_SECRET** : Dans le tableau de bord Stripe, allez dans [Developers > Webhooks](https://dashboard.stripe.com/test/webhooks) :
+    1. Cliquez sur "Add endpoint"
+    2. Entrez l'URL de votre endpoint webhook (par exemple, `https://votre-domaine.com/api/v1/stripe/webhook`)
+    3. Sélectionnez les événements que vous souhaitez recevoir (au minimum `checkout.session.completed`)
+    4. Une fois créé, cliquez sur l'endpoint pour voir le "Signing secret"
+
+3. Lancez les conteneurs Docker :
+```
+docker-compose up -d
+```
+
+Cette commande va :
+- Démarrer l'application Spring Boot avec l'API REST
+- Configurer une base de données H2 préchargée avec des données d'exemple
+- Configurer le service Stripe CLI pour les webhooks
+- Exposer l'API backend sur http://localhost:8080
+
+4. Pour vérifier que les conteneurs fonctionnent correctement :
+```
+docker-compose ps
+```
+
+5. Pour arrêter les conteneurs :
+```
+docker-compose down
+```
+
+### Frontend (avec npm)
+
+Se placer dans le dossier `frontend`:
 ```
 cd frontend
 ```
@@ -36,13 +82,21 @@ npm install
 npm run dev
 ```
 
-## Lancer l'application
+## Compiler le projet (optionnel)
+Si vous préférez lancer l'application sans Docker :
+
+### Backend
+```
+mvn clean package
+```
+
+### Lancer l'application sans Docker
 ```
 java -jar [Chemin du fichier jar]
 ```
 Par exemple :
 ```
-java -jar target/booqin-le-0.0.1-SNAPSHOT.jar
+java -jar target/booqin-le-1.0.0-SNAPSHOT.jar
 ```
 
 ## Liens URL du projet
@@ -71,40 +125,11 @@ STRIPE_SECRET_KEY=votre_clé_secrète_stripe
 STRIPE_PUBLIC_KEY=votre_clé_publique_stripe
 STRIPE_WEBHOOK_SECRET=votre_secret_webhook_stripe
 ```
-
-## Configuration Docker
-
-Le fichier `docker-compose.yml` contient la configuration suivante :
-
-```yaml
-networks:
-  booqin-network:
-    driver: bridge
-
-services:
-  stripe-cli:
-    image: stripe/stripe-cli
-    container_name: booqin-stripe-cli
-    command: listen --forward-to host.docker.internal:8080/api/v1/stripe/webhook
-    env_file:
-      - .env
-    environment:
-      - STRIPE_API_KEY=${STRIPE_SECRET_KEY}
-    networks:
-      - booqin-network
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    restart: unless-stopped
-```
-
-## Utilisation
+## Utilisation Docker
 
 ### Démarrer le service
 
-1. Lancez d'abord votre application Spring Boot sur votre machine locale
-2. Ensuite, démarrez le conteneur Stripe CLI :
-3. Vous n'avez pas besoin de lancer de commande après cela
-
+1. Lancez les conteneurs Docker :
 ```bash
 docker-compose up -d
 ```

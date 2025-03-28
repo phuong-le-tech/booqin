@@ -157,13 +157,10 @@ public class StripeService {
               ));
 
       List<Book> books = new ArrayList<>(cart.getBooks());
-      System.out.println(books.size() + " books" + books);
-      
+
       for (Book book : books) {
 
-          System.out.println("Processing book id " + book.getId() + " for user id " + user.getId());
           bookLendingService.markAsPending(book.getId(), user.getId());
-          System.out.println("Book id " + book.getId() + " successfully processed");
       }
       
     } catch (ResponseStatusException e) {

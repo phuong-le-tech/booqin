@@ -10,6 +10,7 @@ RUN mkdir -p /app/data/images /app/src/main/resources /app/src
 
 # Copy pre-populated database
 COPY docker/data/database.mv.db /app/data/
+COPY docker/data/images /app/data/images
 
 # Copy resources if needed
 COPY src/main/resources/novelists.txt /app/src/main/resources/novelists.txt

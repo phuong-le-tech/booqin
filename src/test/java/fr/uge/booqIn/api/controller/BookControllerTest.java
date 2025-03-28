@@ -52,9 +52,10 @@ class BookControllerTest {
     @BeforeEach
     void setUp() {
         bookService = Mockito.mock(BookServiceInterface.class);
+        imageService = Mockito.mock(ImageService.class);
+        bookMapper = Mockito.mock(BookMapper.class);
         bookController = new BookController(bookService, imageService);
         testBook = createTestBook();
-        bookMapper = new BookMapper();
     }
 
     // Helper method for common test book creation
@@ -273,7 +274,6 @@ class BookControllerTest {
         assertEquals(bookShowDto, body.data());
 
         verify(bookService).createFromDto(any(BookCreate.class));
-        verify(bookMapper).toBookShow(createdBook);
     }
 
 

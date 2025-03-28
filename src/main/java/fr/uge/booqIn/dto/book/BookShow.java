@@ -31,10 +31,8 @@ public record BookShow(
 
         Date publicationDate,
 
-        @PastOrPresent(message = "Creation date must be in the past or present")
         LocalDateTime createdAt,
 
-        @PastOrPresent(message = "Update date must be in the past or present")
         LocalDateTime updatedAt,
 
         @Size(max = 20, message = "Maximum of 20 categories allowed")

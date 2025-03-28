@@ -89,42 +89,13 @@ public class BookServiceImpl implements BookServiceInterface {
     return bookMapper.toBookShow(book);
   }
 
-  @Transactional
-  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {
-          ObjectOptimisticLockingFailureException.class,
-          ConcurrentModificationException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
-  public Book createBook(@NonNull @Valid Book book) {
-
-    if (book.getAuthors() != null) {
-      Set<Author> processedAuthors = book.getAuthors().stream()
-              .map(author ->
-                      authorRepository.findByFirstNameAndLastName(author.getFirstName(), author.getLastName()).orElseGet(() ->
-                              authorRepository.save(author)))
-              .collect(Collectors.toSet());
-      book.setAuthors(processedAuthors);
-    }
-
-    // Check for duplicate ISBNs
-    boolean isbnExists = book.getIsbns().stream()
-            .anyMatch(isbn -> findByIsbn(isbn).isPresent());
-    if (isbnExists) {
-      throw new DuplicateResourceException("Book", "ISBN", book.getIsbns().toString());
-    }
-
-    book.setCreatedAt(LocalDateTime.now());
-    book.setUpdatedAt(LocalDateTime.now());
-    Book savedBook = bookRepository.save(book);
-    savedBook = downloadAndSaveCoverImage(savedBook);
-    return savedBook;
-  }
-
   @Override
   @Transactional
   @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {
           ObjectOptimisticLockingFailureException.class,
           ConcurrentModificationException.class},
           backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
-  public Book createFromDto(BookCreate dto) {
+  public Book createFromDto(@NonNull BookCreate dto) {
     Set<Author> authors = dto.authors().stream()
             .filter(name -> !name.trim().isEmpty())
             .map(name -> {
