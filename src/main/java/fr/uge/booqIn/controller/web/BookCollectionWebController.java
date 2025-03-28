@@ -23,10 +23,7 @@ import fr.uge.booqIn.service.impl.UserVoteService;
 import fr.uge.booqIn.service.interfaces.*;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -37,6 +34,7 @@ import java.security.Principal;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Controller
 @RequestMapping("/collections")
@@ -89,38 +87,83 @@ public class BookCollectionWebController {
     model.addAttribute("content", "pages/collections/public");
     return "layout";
   }
-
+  
   @GetMapping()
   public String showUserCollections(
-          Model model, @AuthenticationPrincipal User currentUser, Principal principal,
+          Model model,
+          @AuthenticationPrincipal User currentUser,
+          Principal principal,
+          @RequestParam(value = "tab", required = false, defaultValue = "private") String activeTab,
           @RequestParam(value = "page", defaultValue = "0") int page,
           @RequestParam(value = "size", defaultValue = "20") int size,
           @RequestParam(value = "sort", defaultValue = "title") String sort,
           @RequestParam(value = "direction", defaultValue = "asc") String direction
   ) {
     homeWebController.prepareModel(model, principal, "collections");
-
+    
+    // Définir l'onglet actif
+    model.addAttribute("activeTab", activeTab);
+    
     Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction) ?
             Sort.Direction.DESC : Sort.Direction.ASC;
     Sort sortObj = Sort.by(sortDirection, sort);
-    Pageable pageable = PageRequest.of(page, size, sortObj);
-
-    Page<BookCollectionShow> collections = bookCollectionService.getUserCollectionsWithBooks(currentUser, pageable);
-    Page<BookCollectionIndex> userPublicCollections = bookCollectionService.getPublicUserCollection(currentUser, pageable);
-    Page<BookCollectionIndex> userPrivateCollections = bookCollectionService.getPrivateUserCollection(currentUser, pageable);
-
-    model.addAttribute("collections", collections);
-    model.addAttribute("pageSize", size);
-    model.addAttribute("userPublicCollections", userPublicCollections);
-    model.addAttribute("userPrivateCollections", userPrivateCollections);
-
-    // Définir le titre et le contenu
+    
+    // Créer différents objets Pageable pour chaque onglet
+    Pageable privatePageable = PageRequest.of("private".equals(activeTab) ? page : 0, size, sortObj);
+    Pageable publicPageable = PageRequest.of("public".equals(activeTab) ? page : 0, size, sortObj);
+    Pageable smartPageable = PageRequest.of("smart".equals(activeTab) ? page : 0, size, sortObj);
+    Pageable globalPageable = PageRequest.of("global".equals(activeTab) ? page : 0, size, sortObj);
+    
+    // Collections privées (type NORMAL uniquement)
+    List<BookCollectionIndex> allUserPrivateCollections = bookCollectionService.getPrivateUserCollection(currentUser, Pageable.unpaged()).getContent();
+    List<BookCollectionIndex> filteredPrivateCollections = allUserPrivateCollections.stream()
+            .filter(collection -> collection.type() == BookCollection.CollectionType.NORMAL)
+            .collect(Collectors.toList());
+    
+    // Collections publiques de l'utilisateur (type NORMAL uniquement)
+    List<BookCollectionIndex> allUserPublicCollections = bookCollectionService.getPublicUserCollection(currentUser, Pageable.unpaged()).getContent();
+    List<BookCollectionIndex> filteredPublicCollections = allUserPublicCollections.stream()
+            .filter(collection -> collection.type() == BookCollection.CollectionType.NORMAL)
+            .collect(Collectors.toList());
+    
+    // Collections smart (type SMART uniquement)
+    List<BookCollectionIndex> filteredSmartCollections = allUserPrivateCollections.stream()
+            .filter(collection -> collection.type() == BookCollection.CollectionType.SMART)
+            .collect(Collectors.toList());
+    
+    // Collections globales (types AUTHOR et RECENT)
+    List<BookCollectionIndex> allPublicSystemCollections = bookCollectionService.getPublicCollections(Pageable.unpaged()).getContent();
+    List<BookCollectionIndex> filteredGlobalCollections = allPublicSystemCollections.stream()
+            .filter(collection -> collection.type() == BookCollection.CollectionType.AUTHOR ||
+                    collection.type() == BookCollection.CollectionType.RECENT)
+            .collect(Collectors.toList());
+    
+    // Paginer les collections filtrées
+    Page<BookCollectionIndex> privateCollections = bookCollectionService.createPaginatedResult(filteredPrivateCollections, privatePageable);
+    Page<BookCollectionIndex> publicCollections = bookCollectionService.createPaginatedResult(filteredPublicCollections, publicPageable);
+    Page<BookCollectionIndex> smartCollections = bookCollectionService.createPaginatedResult(filteredSmartCollections, smartPageable);
+    Page<BookCollectionIndex> globalCollections = bookCollectionService.createPaginatedResult(filteredGlobalCollections, globalPageable);
+    
+    // Ajouter les collections paginées au modèle
+    model.addAttribute("userPrivateCollections", privateCollections);
+    model.addAttribute("userPublicCollections", publicCollections);
+    model.addAttribute("smartCollections", smartCollections);
+    model.addAttribute("globalCollections", globalCollections);
+    
+    // Ajouter les informations de pagination et tri
+    model.addAttribute("sortField", sort);
+    model.addAttribute("sortDirection", direction);
+    model.addAttribute("page", page);
+    model.addAttribute("pageSize", size); // Utiliser pageSize pour correspondre au HTML
     model.addAttribute("title", "BooqIn - My Collections");
     model.addAttribute("content", "pages/collections/userCollections");
-
+    
     return "layout";
   }
+  
 
+
+  
   @GetMapping("/{id}")
   public String showCollectionDetails(
           @PathVariable Long id, Model model, Principal principal, @AuthenticationPrincipal User currentUser,
