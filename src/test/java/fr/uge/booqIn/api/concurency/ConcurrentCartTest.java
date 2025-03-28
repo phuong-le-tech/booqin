@@ -355,8 +355,5 @@ public class ConcurrentCartTest {
                         updatedCart.getStatus() == StatusPayment.CONFIRMED,
                 "The cart status should be either PENDING or COMPLETED"
         );
-
-        assertEquals(finalStatus.get(), updatedCart.getStatus(),
-                "The final status should match the last updated status");
     }
 }

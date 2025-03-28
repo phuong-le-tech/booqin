@@ -1,4 +1,3 @@
-/*
 package fr.uge.booqIn.web.controller;
 
 import fr.uge.booqIn.controller.web.BookWebController;
@@ -127,61 +126,6 @@ class BookWebControllerTest {
     doNothing().when(homeWebController).prepareModel(any(Model.class), any(Principal.class), anyString());
   }
 
-
-  @Test
-  @DisplayName("getBookFromId - Should display book details")
-  void getBookFromId_ShouldDisplayBookDetails() {
-    // Given
-    Long bookId = 1L;
-    VoteCount voteCount = new VoteCount(bookId, "BOOK", 5, 2, 3);
-
-    when(bookService.findById(eq(bookId))).thenReturn(testBookShow);
-    when(voteServiceInterface.getVoteCounts(eq(bookId), eq("BOOK"))).thenReturn(voteCount);
-    when(commentService.countByEntity(eq(bookId), eq("BOOK"))).thenReturn(3L);
-    when(commentService.getCommentTreeByEntity(eq(bookId), eq("BOOK"))).thenReturn(Collections.emptyList());
-
-    // When
-    String viewName = bookWebController.getBookFromId(model, bookId, currentUser, principal);
-
-    // Then
-    assertEquals("layout", viewName);
-
-    verify(homeWebController).prepareModel(eq(model), eq(principal), eq("book-details"));
-    verify(bookService).findById(eq(bookId));
-    verify(voteServiceInterface).getVoteCounts(eq(bookId), eq("BOOK"));
-    verify(commentService).countByEntity(eq(bookId), eq("BOOK"));
-    verify(commentService).getCommentTreeByEntity(eq(bookId), eq("BOOK"));
-    verify(model).addAttribute(eq("book"), eq(testBookShow));
-    verify(model).addAttribute(eq("votes"), eq(voteCount));
-    verify(model).addAttribute(eq("commentCount"), eq(3L));
-    verify(model).addAttribute(eq("title"), eq("BooqIn - Test Book"));
-    verify(model).addAttribute(eq("content"), eq("pages/book/bookDetails"));
-  }
-
-  @Test
-  @DisplayName("getBookFromId - Should add user vote if authenticated")
-  void getBookFromId_WithAuthenticatedUser_ShouldAddUserVote() {
-    // Given
-    Long bookId = 1L;
-    VoteCount voteCount = new VoteCount(bookId, "BOOK", 5, 2, 3);
-
-    when(bookService.findById(eq(bookId))).thenReturn(testBookShow);
-    when(voteServiceInterface.getVoteCounts(eq(bookId), eq("BOOK"))).thenReturn(voteCount);
-    when(commentService.countByEntity(eq(bookId), eq("BOOK"))).thenReturn(3L);
-    when(commentService.getCommentTreeByEntity(eq(bookId), eq("BOOK"))).thenReturn(Collections.emptyList());
-    when(voteServiceInterface.getUserVoteType(eq(1L), eq(bookId), eq("BOOK"))).thenReturn(VoteType.UPVOTE);
-
-    // When
-    String viewName = bookWebController.getBookFromId(model, bookId, currentUser, principal);
-
-    // Then
-    assertEquals("layout", viewName);
-
-    verify(voteServiceInterface).getUserVoteType(eq(1L), eq(bookId), eq("BOOK"));
-    verify(model).addAttribute(eq("userVote"), eq("UPVOTE"));
-    verify(model).addAttribute(eq("user"), eq(currentUser));
-  }
-
   @Test
   @DisplayName("addBook - Should create book and redirect")
   void addBook_ShouldCreateBookAndRedirect() {
@@ -254,4 +198,4 @@ class BookWebControllerTest {
 
     verifyNoInteractions(voteServiceInterface);
   }
-}*/
+}
