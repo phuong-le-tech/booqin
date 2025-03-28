@@ -14,6 +14,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -45,6 +46,9 @@ public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificat
 
   List<Book> findByAuthorsContaining(Author author);
 
-  @Query("SELECT b FROM Book b WHERE b.createdAt >= :date")
-  List<Book> findRecentBooks(@Param("date") Date date);
+  @Query("SELECT b FROM Book b WHERE b.createdAt >= :cutoffDate")
+  List<Book> findByCreatedAtAfter(@Param("cutoffDate") LocalDateTime cutoffDate);
+
+  @Query("SELECT b FROM Book b JOIN b.authors a WHERE a.firstName = :firstName AND a.lastName = :lastName")
+  List<Book> findByAuthor(@Param("firstName") String firstName, @Param("lastName") String lastName);
 }

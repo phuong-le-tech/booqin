@@ -10,6 +10,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.List;
+
 @Validated
 public interface BookServiceInterface {
 
@@ -23,6 +25,8 @@ public interface BookServiceInterface {
    * @return Page of BookIndex DTOs
    */
   Page<BookIndex> findBooks(String title, String author, String isbn, Pageable pageable);
+
+  List<Book> findAll();
 
   /**
    * Find book by ID

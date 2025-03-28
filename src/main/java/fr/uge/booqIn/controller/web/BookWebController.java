@@ -46,6 +46,7 @@ public class BookWebController {
     private final UserServiceInterface userService;
     private final BookCollectionServiceInterface bookCollectionService;
     private final CommentServiceInterface commentService;
+    private final FollowServiceInterface followService;
     private final HomeWebController homeWebController;
     private final UserVoteService userVoteService;
     private final BookLendingInterface bookLendingInterface;
@@ -57,6 +58,7 @@ public class BookWebController {
                              BookCollectionServiceInterface bookCollectionService,
                              UserServiceInterface userService,
                              CommentServiceInterface commentService,
+                              FollowServiceInterface followService,
                              HomeWebController homeWebController,
                              UserVoteService userVoteService,
                              BookLendingInterface bookLendingInterface,
@@ -66,6 +68,7 @@ public class BookWebController {
         this.bookCollectionService = bookCollectionService;
         this.userService = userService;
         this.commentService = commentService;
+        this.followService = followService;
         this.homeWebController = homeWebController;
         this.userVoteService = userVoteService;
         this.bookLendingInterface = bookLendingInterface;
@@ -212,6 +215,13 @@ public class BookWebController {
         model.addAttribute("entityId", id); // Added for comment form
 
         if (currentUser != null) {
+            boolean isFollowing = followService.isFollowing(currentUser.getId(), id, "BOOK");
+            model.addAttribute("isFollowing", isFollowing);
+
+            // Get followers count
+            long followersCount = followService.countFollowers(id, "BOOK");
+            model.addAttribute("followersCount", followersCount);
+
             List<CommentDTO> list = commentService.getCommentTreeByEntity(id, "BOOK");
             Map<Long, VoteType> commentVotes = userVoteService.collectCommentVotes(currentUser.getId(), list);
             model.addAttribute("userCommentVotes", commentVotes);

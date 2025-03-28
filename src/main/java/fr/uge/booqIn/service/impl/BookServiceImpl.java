@@ -315,35 +315,10 @@ public class BookServiceImpl implements BookServiceInterface {
     return bookRepository.findBookByIsbnInSet(isbn);
   }
 
+  @Override
   @Transactional(readOnly = true)
   public List<Book> findAll() {
     return bookRepository.findAll();
-  }
-
-  // Recovery methods for retryable operations
-
-  @Recover
-  public Book recoverFromOptimisticLockingFailureCreate(
-          ObjectOptimisticLockingFailureException ex, @NonNull @Validated Book book) {
-    throw new ConcurrentModificationException("The book has been modified by someone else. Please try again.", ex);
-  }
-
-  @Recover
-  public Book recoverFromOptimisticLockingFailureUpdate(
-          ObjectOptimisticLockingFailureException ex, @NonNull @Validated Book book) {
-    throw new ConcurrentModificationException("The book has been modified by someone else. Please try again.", ex);
-  }
-
-  @Recover
-  public BookShow recoverFromOptimisticLockingFailurePatch(
-          ObjectOptimisticLockingFailureException ex, @NonNull Long id, @NonNull @Validated BookUpdate bookUpdate) {
-    throw new ConcurrentModificationException("The book has been modified by someone else. Please try again.", ex);
-  }
-
-  @Recover
-  public void recoverFromOptimisticLockingFailureSaveFromApi(
-          ObjectOptimisticLockingFailureException ex, Book toSave) {
-    throw new ConcurrentModificationException("The book has been modified by someone else. Please try again.", ex);
   }
 
   private Book downloadAndSaveCoverImage(Book book) {
@@ -398,5 +373,31 @@ public class BookServiceImpl implements BookServiceInterface {
 
     authors.clear();
     authors.addAll(processedAuthors);
+  }
+
+  // Recovery methods for retryable operations
+
+  @Recover
+  public Book recoverFromOptimisticLockingFailureCreate(
+          ObjectOptimisticLockingFailureException ex, @NonNull @Validated Book book) {
+    throw new ConcurrentModificationException("The book has been modified by someone else. Please try again.", ex);
+  }
+
+  @Recover
+  public Book recoverFromOptimisticLockingFailureUpdate(
+          ObjectOptimisticLockingFailureException ex, @NonNull @Validated Book book) {
+    throw new ConcurrentModificationException("The book has been modified by someone else. Please try again.", ex);
+  }
+
+  @Recover
+  public BookShow recoverFromOptimisticLockingFailurePatch(
+          ObjectOptimisticLockingFailureException ex, @NonNull Long id, @NonNull @Validated BookUpdate bookUpdate) {
+    throw new ConcurrentModificationException("The book has been modified by someone else. Please try again.", ex);
+  }
+
+  @Recover
+  public void recoverFromOptimisticLockingFailureSaveFromApi(
+          ObjectOptimisticLockingFailureException ex, Book toSave) {
+    throw new ConcurrentModificationException("The book has been modified by someone else. Please try again.", ex);
   }
 }
