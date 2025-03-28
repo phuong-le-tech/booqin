@@ -15,6 +15,7 @@ interface LoanInfo {
 interface Collection {
     id: number;
     title: string;
+    type: string;
 }
 
 interface BookGridProps {
@@ -138,7 +139,8 @@ export const BookGrid: React.FC<BookGridProps> = ({books, isLoading}) => {
             // Combiner les deux ensembles de collections
             const allCollections = [...publicCollections, ...privateCollections];
 
-            setUserCollections(allCollections);
+            setUserCollections(allCollections.filter(collection => collection.type !== 'LIKED'
+                && collection.type !== 'FOLLOWED'));
 
         } catch (err: any) {
             console.error("Error fetching user collections:", err);

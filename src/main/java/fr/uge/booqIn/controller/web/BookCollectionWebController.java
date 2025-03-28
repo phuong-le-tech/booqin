@@ -406,7 +406,6 @@ public class BookCollectionWebController {
     return Objects.equals(collection.user().id(), currentUser.getId());
   }
   
-  
   @GetMapping("/smart/new")
   public String showCreatSmartCollectionForm(Model model, Principal principal) {
     // Préparer le modèle commun
