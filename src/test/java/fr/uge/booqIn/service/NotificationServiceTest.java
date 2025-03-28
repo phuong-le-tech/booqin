@@ -1,4 +1,3 @@
-/*
 package fr.uge.booqIn.service;
 
 import fr.uge.booqIn.dto.notification.BookNotificationDTO;
@@ -6,6 +5,7 @@ import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.BookWaitingQueue;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.QueueStatus;
+import fr.uge.booqIn.event.BooqInEventPublisher;
 import fr.uge.booqIn.event.publishable.BookNotAvailableEvent;
 import fr.uge.booqIn.event.publishable.BookReturnedEvent;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
@@ -41,6 +41,7 @@ class NotificationServiceTest {
   private User testUser;
   private Book testBook;
   private BookWaitingQueue testNotification;
+  private BooqInEventPublisher  booqInEventPublisher;
 
   @BeforeEach
   void setUp() {
@@ -49,13 +50,15 @@ class NotificationServiceTest {
     userRepository = Mockito.mock(UserRepository.class);
     bookLendingService = Mockito.mock(BookLendingInterface.class);
     notificationMappeur = Mockito.mock(NotificationMapper.class);
+    booqInEventPublisher = Mockito.mock(BooqInEventPublisher.class);
 
     notificationService = new BookWaitingQueueServiceImpl(
             notificationQueueRepository,
             bookRepository,
             userRepository,
             bookLendingService,
-            notificationMappeur
+            notificationMappeur,
+        booqInEventPublisher
     );
 
     // Setup test data
@@ -436,4 +439,4 @@ class NotificationServiceTest {
     verify(notificationQueueRepository).findMaxPositionByBookId(eq(bookId));
     verify(notificationQueueRepository).save(any(BookWaitingQueue.class));
   }
-}*/
+}

@@ -7,14 +7,14 @@ import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.factory.ApiResponse;
 import fr.uge.booqIn.mapper.BookMapper;
 import fr.uge.booqIn.service.ImageService;
+import fr.uge.booqIn.service.interfaces.BookServiceInterface;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import fr.uge.booqIn.service.interfaces.BookServiceInterface;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
@@ -147,19 +147,15 @@ public class BookController {
             if (resource.exists()) {
                 var headers = new HttpHeaders();
                 headers.setCacheControl("max-age=86400"); // 24 hours cache
-
                 var contentType = Files.probeContentType(imagePath);
                 if (contentType == null) {
                     var fileName = imagePath.getFileName().toString().toLowerCase();
-                    if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) {
-                        contentType = "image/jpeg";
-                    } else if (fileName.endsWith(".png")) {
-                        contentType = "image/png";
-                    } else if (fileName.endsWith(".gif")) {
-                        contentType = "image/gif";
-                    } else {
-                        contentType = "application/octet-stream";
-                    }
+                  contentType = switch (fileName.substring(fileName.lastIndexOf('.') + 1)) {
+                    case "jpg", "jpeg" -> "image/jpeg";
+                    case "png" -> "image/png";
+                    case "gif" -> "image/gif";
+                    default -> "application/octet-stream";
+                  };
                 }
 
                 return ResponseEntity.ok()

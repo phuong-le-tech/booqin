@@ -1,4 +1,4 @@
-/*
+
 package fr.uge.booqIn.service;
 
 import fr.uge.booqIn.dto.lending.BookLendingShow;
@@ -393,4 +393,4 @@ class BookLendingServiceTest {
     verify(bookLendingRepository).delete(any(BookLending.class));
     verify(userRepository).save(any(User.class));
   }
-}*/
+}

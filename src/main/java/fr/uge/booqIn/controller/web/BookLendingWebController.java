@@ -2,16 +2,13 @@ package fr.uge.booqIn.controller.web;
 
 
 import fr.uge.booqIn.dto.lending.LendingResponseDTO;
-import fr.uge.booqIn.entity.BookLending;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.LendStatus;
-import fr.uge.booqIn.factory.ApiResponse;
 import fr.uge.booqIn.service.interfaces.BookLendingInterface;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
 import fr.uge.booqIn.service.interfaces.UserServiceInterface;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -20,7 +17,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
 import java.security.Principal;
-import java.util.Optional;
 
 @Controller
 @RequestMapping("/loans")
