@@ -23,7 +23,7 @@ public class AuthorBookCollection extends AbstractBookCollection {
   }
 
   public AuthorBookCollection(User owner, String authorName) {
-    super(AUTHOR_BOOKS_COLLECTION_TITLE, AUTHOR_BOOKS_COLLECTION_DESC, owner, true);
+    super(AUTHOR_BOOKS_COLLECTION_TITLE + authorName, AUTHOR_BOOKS_COLLECTION_DESC + authorName, owner, true);
     this.authorName = authorName;
   }
 
