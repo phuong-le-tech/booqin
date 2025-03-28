@@ -2,12 +2,10 @@ package fr.uge.booqIn.dto.bookCollection;
 
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.user.UserIndex;
-import fr.uge.booqIn.model.BookCollection;
+import fr.uge.booqIn.interfaces.BookCollection;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 public record BookCollectionShow(
         Long id,

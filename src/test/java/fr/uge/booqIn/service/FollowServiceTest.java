@@ -5,7 +5,7 @@ import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.event.BooqInEventPublisher;
 import fr.uge.booqIn.event.publishable.AddFollowedUserBooks;
 import fr.uge.booqIn.event.publishable.RemoveFollowedUserBooks;
-import fr.uge.booqIn.model.Followable;
+import fr.uge.booqIn.interfaces.Followable;
 import fr.uge.booqIn.repository.FollowRepository;
 import fr.uge.booqIn.repository.UserRepository;
 import fr.uge.booqIn.service.impl.FollowServiceImpl;

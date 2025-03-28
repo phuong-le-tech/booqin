@@ -3,13 +3,11 @@ package fr.uge.booqIn.api.controller;
 import fr.uge.booqIn.controller.api.FollowController;
 import fr.uge.booqIn.dto.follow.FollowDto;
 import fr.uge.booqIn.dto.user.UserIndex;
-import fr.uge.booqIn.entity.Book;
-import fr.uge.booqIn.entity.Follow;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.UserRole;
 import fr.uge.booqIn.factory.ApiResponse;
 import fr.uge.booqIn.mapper.UserMapper;
-import fr.uge.booqIn.model.Followable;
+import fr.uge.booqIn.interfaces.Followable;
 import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
 import fr.uge.booqIn.service.interfaces.FollowServiceInterface;
@@ -24,7 +22,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 

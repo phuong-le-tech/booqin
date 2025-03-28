@@ -1,7 +1,7 @@
 package fr.uge.booqIn.strategy;
 
 import fr.uge.booqIn.exception.ResourceNotFoundException;
-import fr.uge.booqIn.model.PolymorphicEntity;
+import fr.uge.booqIn.interfaces.PolymorphicEntity;
 import fr.uge.booqIn.strategy.handlers.EntityHandler;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;

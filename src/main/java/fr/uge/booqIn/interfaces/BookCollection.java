@@ -1,10 +1,9 @@
-package fr.uge.booqIn.model;
+package fr.uge.booqIn.interfaces;
 
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.User;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 public interface BookCollection extends PolymorphicEntity, Commentable, Votable, Followable {
