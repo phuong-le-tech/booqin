@@ -52,10 +52,16 @@ export const Books: React.FC = () => {
             await refreshBooks();
 
         } catch (error: any) {
-            setAddBookError(
-                error.response?.data?.message ||
-                "Une erreur est survenue lors de l'ajout du livre."
-            );
+            console.error("Erreur lors de l'ajout du livre:", error);
+
+            if (error.response?.data?.message && error.response.data.message.includes("author")) {
+                setAddBookError("Problème avec les auteurs: " + error.response.data.message);
+            } else {
+                setAddBookError(
+                    error.response?.data?.message ||
+                    "Une erreur est survenue lors de l'ajout du livre."
+                );
+            }
         } finally {
             setIsAddingBook(false);
         }

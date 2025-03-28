@@ -129,7 +129,7 @@ const BookAddModal: React.FC<BookAddModalProps> = ({ isOpen, onClose, onSubmit, 
         return null;
     };
 
-    const handleAddBook = (e: React.FormEvent) => {
+    const handleAddBook = async (e: React.FormEvent) => {
         e.preventDefault();
 
         const error = validateForm();
@@ -148,11 +148,14 @@ const BookAddModal: React.FC<BookAddModalProps> = ({ isOpen, onClose, onSubmit, 
                 isbn: newBook.isbn.filter(isbn => isbn.trim() !== "")
             };
 
-            onSubmit(formattedData);
+            await onSubmit(formattedData);
         } catch (error) {
+            console.error(error);
+        } finally {
             setIsSubmitting(false);
         }
     };
+
 
     if (!isOpen) return null;
 

@@ -70,15 +70,16 @@ public class BookController {
         BookShow bookShow = bookService.findById(id);
         return ResponseEntity.ok(ApiResponse.success("Book found", bookShow));
     }
-    
+
     @PostMapping("")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<ApiResponse<Book>> create(@RequestBody BookCreate bookCreate) {
+    public ResponseEntity<ApiResponse<BookShow>> create(@RequestBody BookCreate bookCreate) {
         Book book = bookService.createFromDto(bookCreate);
+        BookShow bookShow = bookMapper.toBookShow(book);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Book created successfully", book));
+                .body(ApiResponse.success("Book created successfully", bookShow));
     }
-    
+
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Book>> updateBook(

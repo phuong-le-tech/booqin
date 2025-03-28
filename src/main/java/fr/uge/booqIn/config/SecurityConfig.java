@@ -89,7 +89,7 @@ public class SecurityConfig {
                                 .logout(logout -> logout
                                                 .logoutUrl("/auth/logout") // ou "/auth/logout"
                                                 .logoutSuccessUrl("/home")
-                                                .permitAll());
+                                                .permitAll()).headers(headers -> headers.frameOptions().disable());
 
                 return http.build();
         }

@@ -88,18 +88,19 @@ public class BookServiceImpl implements BookServiceInterface {
     return bookMapper.toBookShow(book);
   }
 
-  @Override
   @Transactional
   @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {
           ObjectOptimisticLockingFailureException.class,
-          ConcurrentModificationException.class},
-          backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
+          ConcurrentModificationException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
   public Book createBook(@NonNull @Valid Book book) {
-    // Save authors first if they don't have IDs
+
     if (book.getAuthors() != null) {
-      book.getAuthors().stream()
-              .filter(author -> author.getId() == null)
-              .forEach(authorRepository::save);
+      Set<Author> processedAuthors = book.getAuthors().stream()
+              .map(author ->
+                      authorRepository.findByFirstNameAndLastName(author.getFirstName(), author.getLastName()).orElseGet(() ->
+                              authorRepository.save(author)))
+              .collect(Collectors.toSet());
+      book.setAuthors(processedAuthors);
     }
 
     // Check for duplicate ISBNs
@@ -118,14 +119,21 @@ public class BookServiceImpl implements BookServiceInterface {
 
   @Override
   @Transactional
+  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {
+          ObjectOptimisticLockingFailureException.class,
+          ConcurrentModificationException.class},
+          backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
   public Book createFromDto(BookCreate dto) {
     Set<Author> authors = dto.authors().stream()
+            .filter(name -> !name.trim().isEmpty())
             .map(name -> {
-              String[] parts = name.trim().split("\\s+", 2);
-              String firstName = parts.length > 1 ? parts[0] : "";
-              String lastName = parts.length > 1 ? parts[1] : parts[0];
+              var parts = name.trim().split("\\s+", 2);
+              var firstName = parts.length > 1 ? parts[0] : "";
+              var lastName = parts.length > 1 ? parts[1] : parts[0];
+
+              Author author = new Author(firstName, lastName);
               return authorRepository.findByFirstNameAndLastName(firstName, lastName)
-                      .orElseGet(() -> authorRepository.save(new Author(firstName, lastName)));
+                      .orElseGet(() -> authorRepository.save(author));
             })
             .collect(Collectors.toSet());
 
@@ -137,6 +145,12 @@ public class BookServiceImpl implements BookServiceInterface {
     book.setAuthors(authors);
     book.setCreatedAt(LocalDateTime.now());
     book.setUpdatedAt(LocalDateTime.now());
+
+    boolean isbnExists = book.getIsbns().stream()
+            .anyMatch(isbn -> findByIsbn(isbn).isPresent());
+    if (isbnExists) {
+      throw new DuplicateResourceException("Book", "ISBN", book.getIsbns().toString());
+    }
 
     return bookRepository.save(book);
   }
