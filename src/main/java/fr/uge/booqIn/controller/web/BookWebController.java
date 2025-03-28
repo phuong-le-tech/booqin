@@ -96,7 +96,7 @@ public class BookWebController {
 
         // Unified search if query provided, otherwise regular search
         Page<BookIndex> booksPage;
-        if (author != null || title !=  null || isbn != null) {
+        if (isnotNullAndNotEmpty(title) ||  isnotNullAndNotEmpty(author) ||  isnotNullAndNotEmpty(isbn)) {
             booksPage = bookService.findBooks(title, author, isbn, pageable);
         } else {
             booksPage = bookService.findBooks(null, null, null, pageable);
@@ -170,6 +170,10 @@ public class BookWebController {
         model.addAttribute("content", "pages/book/list");
 
         return "layout";
+    }
+
+    private boolean isnotNullAndNotEmpty(String str) {
+        return str != null && !str.trim().isEmpty();
     }
 
     private List<LiteCollection> getLiteCollections(User user) {
