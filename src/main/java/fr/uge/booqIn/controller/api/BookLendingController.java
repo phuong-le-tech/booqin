@@ -1,9 +1,7 @@
 package fr.uge.booqIn.controller.api;
 
-import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.dto.lending.LendingResponseDTO;
 import fr.uge.booqIn.entity.BookLending;
-import fr.uge.booqIn.enums.BookStatus;
 import fr.uge.booqIn.enums.LendStatus;
 import fr.uge.booqIn.factory.ApiResponse;
 import fr.uge.booqIn.service.interfaces.BookLendingInterface;
@@ -11,9 +9,6 @@ import fr.uge.booqIn.service.interfaces.BookServiceInterface;
 import fr.uge.booqIn.service.interfaces.UserServiceInterface;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

@@ -5,7 +5,6 @@ import fr.uge.booqIn.dto.bookCollection.BookCollectionCreate;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionIndex;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionUpdate;
-import fr.uge.booqIn.dto.comment.CommentDTO;
 import fr.uge.booqIn.dto.lending.LendingResponseDTO;
 import fr.uge.booqIn.dto.vote.VoteCreate;
 import fr.uge.booqIn.entity.Author;
@@ -18,7 +17,6 @@ import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.mapper.BookCollectionMapper;
 import fr.uge.booqIn.mapper.BookMapper;
 import fr.uge.booqIn.model.BookCollection;
-import fr.uge.booqIn.service.impl.BookServiceImpl;
 import fr.uge.booqIn.service.impl.UserVoteService;
 import fr.uge.booqIn.service.interfaces.*;
 import jakarta.validation.Valid;
@@ -27,7 +25,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -164,8 +161,7 @@ public class BookCollectionWebController {
       var comments = commentServiceInterface.getCommentTreeByEntity(id, "COLLECTION");
       if (currentUser != null) {
         model.addAttribute("user", currentUser);
-        List<CommentDTO> list = commentService.getCommentTreeByEntity(id, "COLLECTION");
-        Map<Long, VoteType> commentVotes = userVoteService.collectCommentVotes(currentUser.getId(), list);
+        Map<Long, VoteType> commentVotes = userVoteService.collectCommentVotes(currentUser.getId(), comments);
         model.addAttribute("userCommentVotes", commentVotes);
       }
       model.addAttribute("comments", comments);
