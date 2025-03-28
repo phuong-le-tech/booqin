@@ -140,7 +140,9 @@ export const BookGrid: React.FC<BookGridProps> = ({books, isLoading}) => {
             const allCollections = [...publicCollections, ...privateCollections];
 
             setUserCollections(allCollections.filter(collection => collection.type !== 'LIKED'
-                && collection.type !== 'FOLLOWED'));
+                && collection.type !== 'FOLLOWED' && collection.type !== 'AUTHOR'
+                && collection.type !== 'RECENT' && collection.type !== 'SMART'
+                && collection.type !== 'GLOBAL'));
 
         } catch (err: any) {
             console.error("Error fetching user collections:", err);

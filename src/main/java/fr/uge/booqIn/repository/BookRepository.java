@@ -134,4 +134,5 @@ public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificat
   @Modifying
   @Query("DELETE FROM BookWaitingQueue q WHERE q.book = :book")
   void deleteBookFromQueues(@Param("book") @NonNull Book book);
+
 }
