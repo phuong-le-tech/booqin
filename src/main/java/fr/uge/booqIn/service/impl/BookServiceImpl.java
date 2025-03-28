@@ -28,6 +28,7 @@ import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -220,6 +221,10 @@ public class BookServiceImpl implements BookServiceInterface {
   @Transactional
   public void deleteBook(@NonNull Long id) {
     Book book = findBookById(id);
+    bookRepository.deleteBookFromCollections(book);
+    bookRepository.deleteBookFromCarts(book);
+    bookRepository.deleteBookFromLendings(book);
+    bookRepository.deleteBookFromQueues(book);
     bookRepository.delete(book);
   }
 

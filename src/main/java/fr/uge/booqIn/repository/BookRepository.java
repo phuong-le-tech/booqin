@@ -3,11 +3,13 @@ package fr.uge.booqIn.repository;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.lang.NonNull;
@@ -116,4 +118,20 @@ public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificat
           @NonNull String firstName,
           @NonNull String lastName
   );
+
+  @Modifying
+  @Query("DELETE FROM AbstractBookCollection c WHERE :book MEMBER OF c.books")
+  void deleteBookFromCollections(@Param("book") @NonNull Book book);
+
+  @Modifying
+  @Query("DELETE FROM Cart c WHERE :book MEMBER OF c.books")
+  void deleteBookFromCarts(@Param("book") @NonNull Book book);
+
+  @Modifying
+  @Query("DELETE FROM BookLending l WHERE l.book = :book")
+  void deleteBookFromLendings(@Param("book") @NonNull Book book);
+
+  @Modifying
+  @Query("DELETE FROM BookWaitingQueue q WHERE q.book = :book")
+  void deleteBookFromQueues(@Param("book") @NonNull Book book);
 }
