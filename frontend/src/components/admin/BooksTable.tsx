@@ -40,14 +40,9 @@ export const BooksTable: React.FC = () => {
             )
 
             if (response) {
-                // Debugging to see the actual response
-                console.log("API Response:", response.content)
 
                 // Map BookIndex to BookForDisplay with additional display info
                 setBooks(response.content.map(book => {
-                    // Debugging the isbns array
-                    console.log(`Book ${book.id} isbns:`, book.isbns)
-
                     return {
                         ...book,
                         // Default collection name if there's no data

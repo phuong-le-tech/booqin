@@ -29,7 +29,6 @@ public record RegisterDto(
         @NotNull(message = "Address is required")
         Address address,
 
-        @NotNull(message = "User role is required")
         UserRole role
 ) {
 }

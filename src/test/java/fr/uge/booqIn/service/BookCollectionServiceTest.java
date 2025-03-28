@@ -429,14 +429,17 @@ class BookCollectionServiceTest {
             .build();
     collection.setId(collectionId);
 
-    when(bookCollectionRepository.findById(eq(collectionId))).thenReturn(Optional.of(collection));
-    when(bookRepository.findById(eq(bookId))).thenReturn(Optional.of(testBook));
+    when(bookCollectionRepository.findByIdWithBooks(eq(collectionId)))
+            .thenReturn(Optional.of(collection));
+
+    when(bookRepository.findById(eq(bookId)))
+            .thenReturn(Optional.of(testBook));
 
     // When
     bookCollectionService.addBookToCollection(collectionId, bookId);
 
     // Then
-    verify(bookCollectionRepository).findById(eq(collectionId));
+    verify(bookCollectionRepository).findByIdWithBooks(eq(collectionId));
     verify(bookRepository).findById(eq(bookId));
 
     // Verify that the book was added to the collection
@@ -458,15 +461,17 @@ class BookCollectionServiceTest {
             .build();
     collection.setId(collectionId);
 
-    when(bookCollectionRepository.findById(eq(collectionId))).thenReturn(Optional.of(collection));
-    when(bookRepository.findById(eq(bookId))).thenReturn(Optional.empty());
+    when(bookCollectionRepository.findByIdWithBooks(eq(collectionId)))
+            .thenReturn(Optional.of(collection));
+
+    when(bookRepository.findById(eq(999L))).thenReturn(Optional.empty());
 
     // When & Then
     assertThrows(ResourceNotFoundException.class, () ->
             bookCollectionService.addBookToCollection(collectionId, bookId)
     );
 
-    verify(bookCollectionRepository).findById(eq(collectionId));
+    verify(bookCollectionRepository).findByIdWithBooks(eq(collectionId));
     verify(bookRepository).findById(eq(bookId));
   }
 
@@ -488,14 +493,16 @@ class BookCollectionServiceTest {
     // Add the book to the collection first
     collection.addBook(testBook);
 
-    when(bookCollectionRepository.findById(eq(collectionId))).thenReturn(Optional.of(collection));
+    when(bookCollectionRepository.findByIdWithBooks(eq(collectionId)))
+            .thenReturn(Optional.of(collection));
+
     when(bookRepository.findById(eq(bookId))).thenReturn(Optional.of(testBook));
 
     // When
     bookCollectionService.removeBookFromCollection(collectionId, bookId);
 
     // Then
-    verify(bookCollectionRepository).findById(eq(collectionId));
+    verify(bookCollectionRepository).findByIdWithBooks(eq(collectionId));
     verify(bookRepository).findById(eq(bookId));
 
     // Verify that the book was removed from the collection

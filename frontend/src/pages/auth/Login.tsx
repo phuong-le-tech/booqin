@@ -52,12 +52,10 @@ export const Login = () => {
         setIsLoading(true)
 
         try {
-            console.log("Submitting login form...")
 
             // Use the login function from our auth hook instead of service
             await login(formData.login, formData.password)
 
-            console.log("Login successful")
             toast.success("Login successful!")
 
             // Redirect is handled by the useEffect above

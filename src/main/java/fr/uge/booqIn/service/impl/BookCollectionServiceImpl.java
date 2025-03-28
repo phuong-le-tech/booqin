@@ -235,15 +235,10 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
    * Helper methods
    */
   private AbstractBookCollection findById(Long id) {
-    return bookCollectionRepository.findById(id)
-            .map(collection -> {
-              // Ensure required associations are loaded
-              if (collection.getOwner() != null) {
-                collection.getOwner().getFullName();
-              }
-              return collection;
-            })
+    AbstractBookCollection collectionWithBooks = bookCollectionRepository.findByIdWithBooks(id)
             .orElseThrow(() -> new ResourceNotFoundException("BookCollection", "id", id));
+    collectionWithBooks.getOwner().getFullName();
+    return collectionWithBooks;
   }
 
   // Recovery methods for retryable operations
@@ -305,6 +300,15 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
           ConcurrentModificationException ex, @NonNull Long id, @NonNull @Valid BookCollectionUpdate collection) {
     logger.warning("Concurrent modification detected while updating collection with ID: " + id);
     throw new ConcurrentModificationException("The collection has been modified by someone else. Please try again.", ex);
+  }
+
+  @Recover
+  public void recoverFromResourceNotFound(
+          ResourceNotFoundException ex,
+          @NonNull Long collectionId,
+          @NonNull Long bookId) {
+    logger.warning("Collection not found while processing book ID: " + bookId + " for collection ID: " + collectionId);
+    throw ex; // Re-throw the original exception
   }
 
 
