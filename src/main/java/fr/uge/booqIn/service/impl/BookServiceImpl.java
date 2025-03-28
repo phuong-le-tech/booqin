@@ -27,11 +27,13 @@ import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Service
 public class BookServiceImpl implements BookServiceInterface {
@@ -86,23 +88,24 @@ public class BookServiceImpl implements BookServiceInterface {
     return bookMapper.toBookShow(book);
   }
 
-  @Override
   @Transactional
   @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {
-          ObjectOptimisticLockingFailureException.class,
-          ConcurrentModificationException.class},
-          backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
-  public Book createBook(@NonNull @Valid Book book) {
-    // Save authors first if they don't have IDs
+      ObjectOptimisticLockingFailureException.class,
+      ConcurrentModificationException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
+  public Book createBook(@NonNull @Validated Book book) {
+
     if (book.getAuthors() != null) {
-      book.getAuthors().stream()
-              .filter(author -> author.getId() == null)
-              .forEach(authorRepository::save);
+      Set<Author> processedAuthors = book.getAuthors().stream()
+          .map(author ->
+              authorRepository.findByFirstNameAndLastName(author.getFirstName(), author.getLastName()).orElseGet(() ->
+                  authorRepository.save(author)))
+          .collect(Collectors.toSet());
+      book.setAuthors(processedAuthors);
     }
 
     // Check for duplicate ISBNs
     boolean isbnExists = book.getIsbns().stream()
-            .anyMatch(isbn -> findByIsbn(isbn).isPresent());
+        .anyMatch(isbn -> findByIsbn(isbn).isPresent());
     if (isbnExists) {
       throw new DuplicateResourceException("Book", "ISBN", book.getIsbns().toString());
     }
