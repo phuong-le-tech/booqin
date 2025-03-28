@@ -62,7 +62,6 @@ public class AuthWebController {
 
   @PostMapping("/register")
   public String processRegisterForm(@ModelAttribute RegisterDto registerDto, Model model, Principal principal) {
-    System.out.println(registerDto);
     try {
       authService.register(registerDto);
       return "redirect:/";

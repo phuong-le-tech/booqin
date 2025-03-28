@@ -16,7 +16,6 @@ import fr.uge.booqIn.pdf.PdfCreator;
 import fr.uge.booqIn.repository.*;
 import fr.uge.booqIn.service.interfaces.BookLendingInterface;
 
-import fr.uge.booqIn.service.interfaces.BookWaitingQueueServiceInterface;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -127,7 +126,6 @@ public class BookLendingServiceImpl implements BookLendingInterface {
 
     var bookLending = findBookLendingByBookId(bookId);
     if (bookLending.isEmpty()) {
-      System.out.println("Book already reserved");
       eventPublisher.publishEvent(new BookNotAvailableEvent(bookId, borrowerId));
       return false;
     }
@@ -138,7 +136,6 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     selectedLending.setStatus(BookStatus.RESERVED);
     bookLendingRepository.save(selectedLending);
     User lender = selectedLending.getLender();
-    System.out.println("Book reserved from lender " + lender.getFullName() + " with " + lender.getLendingPoints() + " points");
 
     return true;
   }
@@ -250,7 +247,6 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   public List<BookLendingShow> findBorrowedLendingsAsDTO(Long userId) {
     User user = userService.findUserById(userId);
     List<BookLending> borrows = bookLendingRepository.findByBorrower(user);
-    System.out.println(borrows);
     for (BookLending borrow : borrows) {
       initializeBookLendingLazyRelations(borrow);
     }
@@ -261,10 +257,8 @@ public class BookLendingServiceImpl implements BookLendingInterface {
 
   @Transactional
   public List<BookLendingShow> findLentBooksAsDTO(Long userId) {
-    System.out.println("Finding lent books ================================= ");
     User user = userService.findUserById(userId);
     List<BookLending> lendings = bookLendingRepository.findBookLendingsByLender(user);
-    System.out.println(lendings);
 
     for (BookLending lending : lendings) {
       initializeBookLendingLazyRelations(lending);
@@ -408,14 +402,12 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   public boolean isNoMoreLoanable(Long bookId, Long userId) {
     Optional<Book> bookOpt = bookRepository.findById(bookId);
     if (bookOpt.isEmpty()) {
-      System.out.println("Book not found");
       return false;
     }
     Book book = bookOpt.get();
 
     User user = userService.findUserById(userId);
     if (user == null) {
-      System.out.println("User not found");
       return false;
     }
     Optional<BookLending> bookLending = userRepository.findById(userId).get().getLentBooks().stream()
@@ -437,17 +429,14 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   public byte[] getShippingTicketBytes(Long lendingId) {
     Optional<BookLending> lendingOpt = bookLendingRepository.findById(lendingId);
     if (lendingOpt.isEmpty()) {
-      System.out.println("Prêt non trouvé: " + lendingId);
       return null;
     }
 
     BookLending lending = lendingOpt.get();
     byte[] pdfBytes = lending.getShippingTicketPDF();
     if (pdfBytes == null) {
-      System.out.println("PDF null pour le prêt: " + lendingId);
       return null;
     }
-    System.out.println("Taille du PDF pour le prêt " + lendingId + ": " + pdfBytes.length + " octets");
     return pdfBytes;
   }
 

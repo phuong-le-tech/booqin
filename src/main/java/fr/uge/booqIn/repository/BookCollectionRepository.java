@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -15,7 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface BookCollectionRepository extends JpaRepository<AbstractBookCollection, Long>, JpaSpecificationExecutor<AbstractBookCollection> {
+public interface BookCollectionRepository extends JpaRepository<AbstractBookCollection, Long>, JpaSpecificationExecutor<AbstractBookCollection>, CrudRepository<AbstractBookCollection, Long> {
 
   /**
    * Find all collections by owner with pagination
@@ -32,6 +33,9 @@ public interface BookCollectionRepository extends JpaRepository<AbstractBookColl
    */
   @Query("SELECT c FROM AbstractBookCollection c JOIN FETCH c.books WHERE c.owner = ?1")
   List<AbstractBookCollection> findByOwnerWithBooks(User owner);
+
+  @Query("SELECT c FROM AbstractBookCollection c JOIN FETCH c.books WHERE c.id = ?1")
+  Optional<AbstractBookCollection> findByIdWithBooks(Long id);
 
   /**
    * Find public collections by owner with pagination
@@ -55,4 +59,12 @@ public interface BookCollectionRepository extends JpaRepository<AbstractBookColl
   @Query("SELECT c FROM AbstractBookCollection c WHERE c.owner = :owner AND c.isPublic = true")
   List<AbstractBookCollection> findPublicCollectionsByOwner(@Param("owner") User owner);
 
+  @Query("SELECT c FROM LikedBookCollection c WHERE c.owner.id = :ownerId")
+  Optional<AbstractBookCollection> findLikedCollectionByOwnerId(Long ownerId);
+
+  @Query("SELECT c FROM FollowedBookCollection c WHERE c.owner.id = :ownerId")
+  Optional<AbstractBookCollection> findFollowedCollectionByOwnerId(Long ownerId);
+
+  @Query("SELECT c FROM RecentBookCollection c")
+  Optional<AbstractBookCollection> findFirstRecentBookCollection();
 }

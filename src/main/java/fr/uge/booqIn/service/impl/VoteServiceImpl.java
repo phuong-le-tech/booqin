@@ -6,6 +6,8 @@ import fr.uge.booqIn.dto.vote.VoteResponse;
 import fr.uge.booqIn.dto.vote.VoteUpdate;
 import fr.uge.booqIn.entity.Vote;
 import fr.uge.booqIn.enums.VoteType;
+import fr.uge.booqIn.event.BooqInEventPublisher;
+import fr.uge.booqIn.event.publishable.VoteBookEvent;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.mapper.VoteMapper;
 import fr.uge.booqIn.model.Votable;
@@ -28,193 +30,202 @@ import java.util.stream.Collectors;
 
 @Service
 public class VoteServiceImpl implements VoteServiceInterface {
-    private final VoteRepository voteRepository;
-    private final UserRepository userRepository;
-    private final EntityStrategyContext strategyContext;
-    private final VoteMapper voteMapper;
+  private final VoteRepository voteRepository;
+  private final UserRepository userRepository;
+  private final EntityStrategyContext strategyContext;
+  private final VoteMapper voteMapper;
+  private final BooqInEventPublisher eventPublisher;
 
-    public VoteServiceImpl(VoteRepository voteRepository, UserRepository userRepository,
-                           EntityStrategyContext strategyContext, VoteMapper voteMapper) {
-        this.voteRepository = voteRepository;
-        this.userRepository = userRepository;
-        this.strategyContext = strategyContext;
-        this.voteMapper = voteMapper;
-    }
+  public VoteServiceImpl(VoteRepository voteRepository,
+                         UserRepository userRepository,
+                         EntityStrategyContext strategyContext,
+                         VoteMapper voteMapper,
+                         BooqInEventPublisher eventPublisher) {
+    this.voteRepository = voteRepository;
+    this.userRepository = userRepository;
+    this.strategyContext = strategyContext;
+    this.voteMapper = voteMapper;
+    this.eventPublisher = eventPublisher;
+  }
 
-    @Override
-    @Transactional
-    @Retryable(
-            maxAttemptsExpression = "${spring.retry.max-attempts}",
-            retryFor = {ConcurrentModificationException.class, ObjectOptimisticLockingFailureException.class},
-            backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
-    )
-    public VoteResponse castVote(@NotNull @Valid VoteCreate voteCreate) {
-        var user = userRepository.findById(voteCreate.userId())
+  @Override
+  @Transactional
+  @Retryable(
+          maxAttemptsExpression = "${spring.retry.max-attempts}",
+          retryFor = {ConcurrentModificationException.class, ObjectOptimisticLockingFailureException.class},
+          backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
+  )
+  public VoteResponse castVote(@NotNull @Valid VoteCreate voteCreate) {
+    var user = userRepository.findById(voteCreate.userId())
             .orElseThrow(() -> new ResourceNotFoundException("User", "id", voteCreate.userId()));
 
-        var targetEntity = strategyContext.findByTypeAndId(
+    var targetEntity = strategyContext.findByTypeAndId(
             voteCreate.entityType(),
             voteCreate.entityId());
 
-        if (!(targetEntity instanceof Votable votable)) {
-            throw new IllegalArgumentException("Entity of type " + voteCreate.entityType() + " is not votable");
-        }
+    if (!(targetEntity instanceof Votable)) {
+      throw new IllegalArgumentException("Entity of type " + voteCreate.entityType() + " is not votable");
+    }
 
-        // Récupérer explicitement le type d'entité avant de sauvegarder
-        String entityType = voteCreate.entityType();
-        Long entityId = voteCreate.entityId();
+    // Récupérer explicitement le type d'entité avant de sauvegarder
+    String entityType = voteCreate.entityType();
+    Long entityId = voteCreate.entityId();
 
-        var existingVote = voteRepository.findByUserAndEntityIdAndEntityType(
+    var existingVote = voteRepository.findByUserAndEntityIdAndEntityType(
             user, entityId, entityType);
 
-        Vote vote;
-        if (existingVote.isPresent()) {
-            vote = existingVote.get();
-            vote.setVoteType(voteCreate.voteType());
-        } else {
-            vote = new Vote(user, voteCreate.voteType());
-            vote.setEntityId(entityId);
-            vote.setEntityType(entityType);
-        }
-
-        vote = voteRepository.save(vote);
-        return voteMapper.toVoteResponse(vote);
+    Vote vote;
+    if (existingVote.isPresent()) {
+      vote = existingVote.get();
+      vote.setVoteType(voteCreate.voteType());
+    } else {
+      vote = new Vote(user, voteCreate.voteType());
+      vote.setEntityId(entityId);
+      vote.setEntityType(entityType);
     }
 
-    @Override
-    @Transactional
-    @Retryable(
-            maxAttemptsExpression = "${spring.retry.max-attempts}",
-            retryFor = {ConcurrentModificationException.class, ObjectOptimisticLockingFailureException.class},
-            backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
-    )
-    public VoteResponse updateVote(@NotNull Long userId, @NotNull Long entityId,
-                                   @NotNull String entityType, @NotNull @Valid VoteUpdate voteUpdate) {
-        var user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+    vote = voteRepository.save(vote);
 
-        var targetEntity = strategyContext.findByTypeAndId(entityType, entityId);
+    if (voteCreate.entityType().equals("BOOK")) {
+      eventPublisher.publishEvent(new VoteBookEvent(user.getId(), entityId, vote.getVoteType()));
+    }
+    return voteMapper.toVoteResponse(vote);
+  }
 
-        if (!(targetEntity instanceof Votable)) {
-            throw new IllegalArgumentException("Entity of type " + entityType + " is not votable");
-        }
+  @Override
+  @Transactional
+  @Retryable(
+          maxAttemptsExpression = "${spring.retry.max-attempts}",
+          retryFor = {ConcurrentModificationException.class, ObjectOptimisticLockingFailureException.class},
+          backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
+  )
+  public VoteResponse updateVote(@NotNull Long userId, @NotNull Long entityId,
+                                 @NotNull String entityType, @NotNull @Valid VoteUpdate voteUpdate) {
+    var user = userRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
 
-        var vote = voteRepository.findByUserAndEntityIdAndEntityType(user, entityId, entityType)
-                .orElseThrow(() -> new ResourceNotFoundException("Vote", "user and entity",
-                        userId + ", " + entityId + ", " + entityType));
+    var targetEntity = strategyContext.findByTypeAndId(entityType, entityId);
 
-        vote.setVoteType(voteUpdate.voteType());
-        vote = voteRepository.save(vote);
-
-        return voteMapper.toVoteResponse(vote);
+    if (!(targetEntity instanceof Votable)) {
+      throw new IllegalArgumentException("Entity of type " + entityType + " is not votable");
     }
 
-    @Override
-    @Transactional
-    @Retryable(
-            maxAttemptsExpression = "${spring.retry.max-attempts}",
-            retryFor = {ConcurrentModificationException.class, ObjectOptimisticLockingFailureException.class},
-            backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
-    )
-    public void deleteVote(@NotNull Long userId, @NotNull Long entityId, @NotNull String entityType) {
-        var user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+    var vote = voteRepository.findByUserAndEntityIdAndEntityType(user, entityId, entityType)
+            .orElseThrow(() -> new ResourceNotFoundException("Vote", "user and entity",
+                    userId + ", " + entityId + ", " + entityType));
 
-        var vote = voteRepository.findByUserAndEntityIdAndEntityType(user, entityId, entityType)
-                .orElseThrow(() -> new ResourceNotFoundException("Vote", "user and entity",
-                        userId + ", " + entityId + ", " + entityType));
+    vote.setVoteType(voteUpdate.voteType());
+    vote = voteRepository.save(vote);
 
-        voteRepository.delete(vote);
-    }
+    return voteMapper.toVoteResponse(vote);
+  }
 
-    @Override
-    @Transactional
-    public VoteResponse getVote(@NotNull Long userId, @NotNull Long entityId, @NotNull String entityType) {
-        var user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+  @Override
+  @Transactional
+  @Retryable(
+          maxAttemptsExpression = "${spring.retry.max-attempts}",
+          retryFor = {ConcurrentModificationException.class, ObjectOptimisticLockingFailureException.class},
+          backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
+  )
+  public void deleteVote(@NotNull Long userId, @NotNull Long entityId, @NotNull String entityType) {
+    var user = userRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
 
-        var vote = voteRepository.findByUserAndEntityIdAndEntityType(user, entityId, entityType)
-                .orElseThrow(() -> new ResourceNotFoundException("Vote", "user and entity",
-                        userId + ", " + entityId + ", " + entityType));
+    var vote = voteRepository.findByUserAndEntityIdAndEntityType(user, entityId, entityType)
+            .orElseThrow(() -> new ResourceNotFoundException("Vote", "user and entity",
+                    userId + ", " + entityId + ", " + entityType));
 
-        return voteMapper.toVoteResponse(vote);
-    }
+    voteRepository.delete(vote);
+  }
 
-    @Override
-    @Transactional
-    public List<VoteResponse> getVotesByEntity(@NotNull Long entityId, @NotNull String entityType) {
-        strategyContext.findByTypeAndId(entityType, entityId);
+  @Override
+  @Transactional
+  public VoteResponse getVote(@NotNull Long userId, @NotNull Long entityId, @NotNull String entityType) {
+    var user = userRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
 
-        return voteRepository.findAllByEntityIdAndEntityType(entityId, entityType).stream()
-                .map(voteMapper::toVoteResponse)
-                .collect(Collectors.toList());
-    }
+    var vote = voteRepository.findByUserAndEntityIdAndEntityType(user, entityId, entityType)
+            .orElseThrow(() -> new ResourceNotFoundException("Vote", "user and entity",
+                    userId + ", " + entityId + ", " + entityType));
 
-    @Override
-    @Transactional
-    public List<VoteResponse> getVotesByUser(@NotNull Long userId) {
-        var user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+    return voteMapper.toVoteResponse(vote);
+  }
 
-        return voteRepository.findAllByUser(user).stream()
-                .map(voteMapper::toVoteResponse)
-                .collect(Collectors.toList());
-    }
+  @Override
+  @Transactional
+  public List<VoteResponse> getVotesByEntity(@NotNull Long entityId, @NotNull String entityType) {
+    strategyContext.findByTypeAndId(entityType, entityId);
 
-    @Override
-    @Transactional
-    public VoteCount getVoteCounts(@NotNull Long entityId, @NotNull String entityType) {
-        strategyContext.findByTypeAndId(entityType, entityId);
+    return voteRepository.findAllByEntityIdAndEntityType(entityId, entityType).stream()
+            .map(voteMapper::toVoteResponse)
+            .collect(Collectors.toList());
+  }
 
-        var upvoteCount = voteRepository.countByEntityIdAndEntityTypeAndVoteType(
-                entityId, entityType, VoteType.UPVOTE);
+  @Override
+  @Transactional
+  public List<VoteResponse> getVotesByUser(@NotNull Long userId) {
+    var user = userRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
 
-        var downvoteCount = voteRepository.countByEntityIdAndEntityTypeAndVoteType(
-                entityId, entityType, VoteType.DOWNVOTE);
+    return voteRepository.findAllByUser(user).stream()
+            .map(voteMapper::toVoteResponse)
+            .collect(Collectors.toList());
+  }
 
-        var score = voteRepository.getVoteScore(entityId, entityType);
+  @Override
+  @Transactional
+  public VoteCount getVoteCounts(@NotNull Long entityId, @NotNull String entityType) {
+    strategyContext.findByTypeAndId(entityType, entityId);
 
-        return voteMapper.toVoteCount(entityId, entityType, upvoteCount, downvoteCount, score != null ? score : 0);
-    }
+    var upvoteCount = voteRepository.countByEntityIdAndEntityTypeAndVoteType(
+            entityId, entityType, VoteType.UPVOTE);
 
-    @Override
-    @Transactional
-    public boolean hasVoted(@NotNull Long userId, @NotNull Long entityId, @NotNull String entityType) {
-        var user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+    var downvoteCount = voteRepository.countByEntityIdAndEntityTypeAndVoteType(
+            entityId, entityType, VoteType.DOWNVOTE);
 
-        return voteRepository.findByUserAndEntityIdAndEntityType(user, entityId, entityType).isPresent();
-    }
+    var score = voteRepository.getVoteScore(entityId, entityType);
 
-    @Override
-    @Transactional
-    public VoteType getUserVoteType(@NotNull Long userId, @NotNull Long entityId, @NotNull String entityType) {
-        var user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+    return voteMapper.toVoteCount(entityId, entityType, upvoteCount, downvoteCount, score != null ? score : 0);
+  }
 
-        var vote = voteRepository.findByUserAndEntityIdAndEntityType(user, entityId, entityType);
-        return vote.map(Vote::getVoteType).orElse(null);
-    }
+  @Override
+  @Transactional
+  public boolean hasVoted(@NotNull Long userId, @NotNull Long entityId, @NotNull String entityType) {
+    var user = userRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
 
-    @Recover
-    public VoteResponse recoverFromOptimisticLockingFailureOnCastVote(ObjectOptimisticLockingFailureException ex, @NotNull @Valid VoteCreate voteCreate) {
-        throw new ConcurrentModificationException("The vote has been modified by someone else. Please try again.", ex);
-    }
+    return voteRepository.findByUserAndEntityIdAndEntityType(user, entityId, entityType).isPresent();
+  }
 
-    @Recover
-    public VoteResponse recoverFromOptimisticLockingFailureOnUpdateVote(ObjectOptimisticLockingFailureException ex,
-                                                                        @NotNull Long userId,
-                                                                        @NotNull Long entityId,
-                                                                        @NotNull String entityType,
-                                                                        @NotNull @Valid VoteUpdate voteUpdate) {
-        throw new ConcurrentModificationException("The vote has been modified by someone else. Please try again.", ex);
-    }
+  @Override
+  @Transactional
+  public VoteType getUserVoteType(@NotNull Long userId, @NotNull Long entityId, @NotNull String entityType) {
+    var user = userRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
 
-    @Recover
-    public void recoverFromOptimisticLockingFailureOnDeleteVote(ObjectOptimisticLockingFailureException ex,
-                                                                @NotNull Long userId,
-                                                                @NotNull Long entityId,
-                                                                @NotNull String entityType) {
-        throw new ConcurrentModificationException("The vote has been modified by someone else. Please try again.", ex);
-    }
+    var vote = voteRepository.findByUserAndEntityIdAndEntityType(user, entityId, entityType);
+    return vote.map(Vote::getVoteType).orElse(null);
+  }
+
+  @Recover
+  public VoteResponse recoverFromOptimisticLockingFailureOnCastVote(ObjectOptimisticLockingFailureException ex, @NotNull @Valid VoteCreate voteCreate) {
+    throw new ConcurrentModificationException("The vote has been modified by someone else. Please try again.", ex);
+  }
+
+  @Recover
+  public VoteResponse recoverFromOptimisticLockingFailureOnUpdateVote(ObjectOptimisticLockingFailureException ex,
+                                                                      @NotNull Long userId,
+                                                                      @NotNull Long entityId,
+                                                                      @NotNull String entityType,
+                                                                      @NotNull @Valid VoteUpdate voteUpdate) {
+    throw new ConcurrentModificationException("The vote has been modified by someone else. Please try again.", ex);
+  }
+
+  @Recover
+  public void recoverFromOptimisticLockingFailureOnDeleteVote(ObjectOptimisticLockingFailureException ex,
+                                                              @NotNull Long userId,
+                                                              @NotNull Long entityId,
+                                                              @NotNull String entityType) {
+    throw new ConcurrentModificationException("The vote has been modified by someone else. Please try again.", ex);
+  }
 }

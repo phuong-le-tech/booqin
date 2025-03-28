@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6 text-gray-800">Following</h1>
+
+    <!-- Success/Error Messages -->
+    <div th:if="${successMessage}" class="mb-6 bg-green-100 border border-green-300 text-green-700 px-4 py-3 rounded-lg">
+        <span th:text="${successMessage}"></span>
+    </div>
+    <div th:if="${errorMessage}" class="mb-6 bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-lg">
+        <span th:text="${errorMessage}"></span>
+    </div>
+
+    <!-- Tabs -->
+    <div class="mb-8">
+        <div class="flex border-b border-gray-200">
+            <a th:href="@{/following(tab='users')}"
+               th:class="${activeTab == 'users' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'} + ' py-3 px-6 font-medium flex items-center'">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                Users
+            </a>
+            <a th:href="@{/following(tab='books')}"
+               th:class="${activeTab == 'books' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'} + ' py-3 px-6 font-medium flex items-center'">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                </svg>
+                Books
+            </a>
+            <a th:href="@{/following(tab='collections')}"
+               th:class="${activeTab == 'collections' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'} + ' py-3 px-6 font-medium flex items-center'">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+                Collections
+            </a>
+        </div>
+    </div>
+
+    <!-- Users Tab Content -->
+    <div th:if="${activeTab == 'users'}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div th:if="${followedUsers != null && !followedUsers.isEmpty()}"
+             th:each="user : ${followedUsers}"
+             class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+            <div class="p-5">
+                <div class="flex items-start">
+                    <div class="bg-blue-100 rounded-full p-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-semibold text-gray-800" th:text="${user.firstName + ' ' + user.lastName}">User Name</h3>
+                        <p class="text-gray-600 text-sm" th:text="${user.email}">user@example.com</p>
+                    </div>
+                </div>
+                <div class="mt-4 flex justify-between">
+                    <a th:href="@{/profile/{id}(id=${user.id})}" class="text-blue-600 hover:text-blue-800 font-medium text-sm">
+                        View Profile
+                    </a>
+                    <form th:action="@{/following/unfollow}" method="post">
+                        <input type="hidden" name="entityId" th:value="${user.id}" />
+                        <input type="hidden" name="entityType" value="USER" />
+                        <button type="submit" class="text-red-600 hover:text-red-800 text-sm">Unfollow</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty state for Users -->
+        <div th:if="${followedUsers == null || followedUsers.isEmpty()}" class="col-span-full text-center py-10 bg-gray-50 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400 mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <h3 class="text-lg font-medium text-gray-900">No users followed yet</h3>
+            <p class="mt-2 text-gray-500">
+                You are not following any users yet. Follow users to see their updates.
+            </p>
+        </div>
+    </div>
+
+    <!-- Books Tab Content -->
+    <div th:if="${activeTab == 'books'}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div th:if="${followedBooks != null && !followedBooks.isEmpty()}"
+             th:each="book : ${followedBooks}"
+             class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+            <div class="p-5">
+                <div class="flex items-start">
+                    <div class="bg-green-100 rounded-full p-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-semibold text-gray-800" th:text="${book.title}">Book Title</h3>
+                        <p class="text-gray-600 text-sm" th:text="${book.authorNames != null and !book.authorNames.isEmpty() ? #strings.listJoin(book.authorNames, ', ') : 'Unknown Author'}">Author Names</p>
+                    </div>
+                </div>
+                <div class="mt-4 flex justify-between">
+                    <a th:href="@{/books/{id}(id=${book.id})}" class="text-blue-600 hover:text-blue-800 font-medium text-sm">
+                        View Details
+                    </a>
+                    <form th:action="@{/following/unfollow}" method="post">
+                        <input type="hidden" name="entityId" th:value="${book.id}" />
+                        <input type="hidden" name="entityType" value="BOOK" />
+                        <button type="submit" class="text-red-600 hover:text-red-800 text-sm">Unfollow</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty state for Books -->
+        <div th:if="${followedBooks == null || followedBooks.isEmpty()}" class="col-span-full text-center py-10 bg-gray-50 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400 mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+            </svg>
+            <h3 class="text-lg font-medium text-gray-900">No books followed yet</h3>
+            <p class="mt-2 text-gray-500">
+                You are not following any books yet. Follow books to receive updates about them.
+            </p>
+        </div>
+    </div>
+
+    <!-- Collections Tab Content -->
+    <div th:if="${activeTab == 'collections'}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div th:if="${followedCollections != null && !followedCollections.isEmpty()}"
+             th:each="collection : ${followedCollections}"
+             class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+            <div class="p-5">
+                <div class="flex items-start">
+                    <div class="bg-purple-100 rounded-full p-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-semibold text-gray-800" th:text="${collection.title}">Collection Title</h3>
+                        <p class="text-gray-600 text-sm" th:text="${'by ' + collection.userFullName}">by User Name</p>
+                    </div>
+                </div>
+                <div class="mt-4 flex justify-between">
+                    <a th:href="@{/collections/{id}(id=${collection.id})}" class="text-blue-600 hover:text-blue-800 font-medium text-sm">
+                        View Collection
+                    </a>
+                    <form th:action="@{/following/unfollow}" method="post">
+                        <input type="hidden" name="entityId" th:value="${collection.id}" />
+                        <input type="hidden" name="entityType" value="COLLECTION" />
+                        <button type="submit" class="text-red-600 hover:text-red-800 text-sm">Unfollow</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty state for Collections -->
+        <div th:if="${followedCollections == null || followedCollections.isEmpty()}" class="col-span-full text-center py-10 bg-gray-50 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400 mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            </svg>
+            <h3 class="text-lg font-medium text-gray-900">No collections followed yet</h3>
+            <p class="mt-2 text-gray-500">
+                You are not following any collections yet. Follow collections to stay updated.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript to highlight the active tab -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // This JavaScript is only needed if you want to add any dynamic behavior
+        // All the tab switching is handled by the server-side navigation
+    });
+</script>
+</body>
+</html>

@@ -321,9 +321,35 @@ public class BookServiceImpl implements BookServiceInterface {
     return bookRepository.findBookByIsbnInSet(isbn);
   }
 
+  @Override
   @Transactional(readOnly = true)
   public List<Book> findAll() {
     return bookRepository.findAll();
+  }
+
+  private Book downloadAndSaveCoverImage(Book book) {
+    if (book.getCoverImageUrl() != null && !book.getCoverImageUrl().isEmpty()
+            && (book.getCoverImagePath() == null || book.getCoverImagePath().isEmpty())) {
+      try {
+        logger.info("Téléchargement de l'image de couverture pour le livre ID: " + book.getId() + ", URL: " + book.getCoverImageUrl());
+        var imagePath = imageService.downloadBookCoverFromUrl(book.getCoverImageUrl(), book.getId());
+        book.setCoverImagePath(imagePath);
+
+        try {
+          var originalPath = Paths.get(uploadDir, imagePath);
+          var thumbnailPath = imageService.createThumbnail(originalPath, book.getId());
+          book.setThumbnailPath(thumbnailPath);
+          logger.info("Thumbnail path set to: " + thumbnailPath);
+        } catch (Exception e) {
+          logger.warning("Échec de l'assignation du chemin de miniature: " + e.getMessage());
+        }
+        book = bookRepository.save(book);
+        logger.info("Image de couverture téléchargée et enregistrée: " + imagePath);
+      } catch (Exception e) {
+        logger.warning("Échec du téléchargement de l'image de couverture: " + e.getMessage());
+      }
+    }
+    return book;
   }
 
   // Recovery methods for retryable operations
@@ -350,30 +376,5 @@ public class BookServiceImpl implements BookServiceInterface {
   public void recoverFromOptimisticLockingFailureSaveFromApi(
           ObjectOptimisticLockingFailureException ex, Book toSave) {
     throw new ConcurrentModificationException("The book has been modified by someone else. Please try again.", ex);
-  }
-
-  private Book downloadAndSaveCoverImage(Book book) {
-    if (book.getCoverImageUrl() != null && !book.getCoverImageUrl().isEmpty()
-            && (book.getCoverImagePath() == null || book.getCoverImagePath().isEmpty())) {
-      try {
-        logger.info("Téléchargement de l'image de couverture pour le livre ID: " + book.getId() + ", URL: " + book.getCoverImageUrl());
-        var imagePath = imageService.downloadBookCoverFromUrl(book.getCoverImageUrl(), book.getId());
-        book.setCoverImagePath(imagePath);
-
-        try {
-          var originalPath = Paths.get(uploadDir, imagePath);
-          var thumbnailPath = imageService.createThumbnail(originalPath, book.getId());
-          book.setThumbnailPath(thumbnailPath);
-          logger.info("Thumbnail path set to: " + thumbnailPath);
-        } catch (Exception e) {
-          logger.warning("Échec de l'assignation du chemin de miniature: " + e.getMessage());
-        }
-        book = bookRepository.save(book);
-        logger.info("Image de couverture téléchargée et enregistrée: " + imagePath);
-      } catch (Exception e) {
-        logger.warning("Échec du téléchargement de l'image de couverture: " + e.getMessage());
-      }
-    }
-    return book;
   }
 }

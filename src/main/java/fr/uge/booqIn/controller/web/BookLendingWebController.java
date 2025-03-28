@@ -56,7 +56,6 @@ public class BookLendingWebController {
     }
     
     if (currentUser.getId() == null) {
-      System.out.println("ID utilisateur requis");
       model.addAttribute("errorMessage", "ID utilisateur requis");
       model.addAttribute("title", "Erreur");
       return "layout";

@@ -138,7 +138,7 @@ class BookCollectionWebControllerTest {
             true,
             books,
             testUserIndex,
-            "NORMAL",
+            BookCollection.CollectionType.NORMAL,
             LocalDateTime.now(),
             LocalDateTime.now()
     );

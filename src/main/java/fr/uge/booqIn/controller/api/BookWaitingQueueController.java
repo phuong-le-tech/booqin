@@ -24,9 +24,6 @@ public class BookWaitingQueueController {
   public ResponseEntity<ApiResponse<Boolean>> subscribeToNotifications(
           @RequestParam Long bookId,
           @RequestParam Long userId) {
-
-    System.out.println("Received: bookId=" + bookId + ", userId=" + userId);
-
     boolean added = notificationService.addToWaitingQueue(bookId, userId);
 
     return added
