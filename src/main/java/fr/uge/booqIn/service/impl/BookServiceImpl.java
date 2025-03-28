@@ -1,5 +1,6 @@
 package fr.uge.booqIn.service.impl;
 
+import fr.uge.booqIn.dto.book.BookCreate;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.dto.book.BookUpdate;
@@ -32,6 +33,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Service
 public class BookServiceImpl implements BookServiceInterface {
@@ -112,6 +114,32 @@ public class BookServiceImpl implements BookServiceInterface {
     savedBook = downloadAndSaveCoverImage(savedBook);
     return savedBook;
   }
+
+  @Override
+  @Transactional
+  public Book createFromDto(BookCreate dto) {
+    Set<Author> authors = dto.getAuthors().stream()
+            .map(name -> {
+              String[] parts = name.trim().split("\\s+", 2);
+              String firstName = parts.length > 1 ? parts[0] : "";
+              String lastName = parts.length > 1 ? parts[1] : parts[0];
+              return authorRepository.findByFirstNameAndLastName(firstName, lastName)
+                      .orElseGet(() -> authorRepository.save(new Author(firstName, lastName)));
+            })
+            .collect(Collectors.toSet());
+
+    Book book = new Book();
+    book.setTitle(dto.getTitle());
+    book.setDescription(dto.getDescription());
+    book.setIsbns(Set.copyOf(dto.getIsbn()));
+    book.setPublicationDate(dto.getPublicationDate());
+    book.setAuthors(authors);
+    book.setCreatedAt(LocalDateTime.now());
+    book.setUpdatedAt(LocalDateTime.now());
+
+    return bookRepository.save(book);
+  }
+
 
   @Override
   @Transactional

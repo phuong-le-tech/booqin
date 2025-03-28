@@ -1,5 +1,6 @@
 package fr.uge.booqIn.controller.api;
 
+import fr.uge.booqIn.dto.book.BookCreate;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.dto.book.BookUpdate;
@@ -74,18 +75,17 @@ public class BookController {
         BookShow bookShow = bookService.findById(id);
         return ResponseEntity.ok(ApiResponse.success("Book found", bookShow));
     }
-    
+
     @PostMapping("")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<ApiResponse<Book>> createBook(@RequestBody Book book) {
-        logger.info("🆕 Création d'un nouveau livre");
-        
-        Book createdBook = bookService.createBook(book);
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Book created successfully", createdBook));
+    public ResponseEntity<ApiResponse<Book>> create(@RequestBody BookCreate bookCreate) {
+        logger.info("🆕 Création d'un nouveau livre depuis BookCreate DTO");
+        Book book = bookService.createFromDto(bookCreate);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Book created successfully", book));
     }
-    
+
+
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Book>> updateBook(

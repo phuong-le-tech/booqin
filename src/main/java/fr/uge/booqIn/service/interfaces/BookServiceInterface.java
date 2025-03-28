@@ -1,5 +1,6 @@
 package fr.uge.booqIn.service.interfaces;
 
+import fr.uge.booqIn.dto.book.BookCreate;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.dto.book.BookUpdate;
@@ -44,6 +45,9 @@ public interface BookServiceInterface {
    * @throws jakarta.validation.ValidationException if validation fails
    */
   Book createBook(@NotNull @Valid Book book);
+
+  Book createFromDto(@NotNull @Valid BookCreate dto);
+
 
   /**
    * Save book from API

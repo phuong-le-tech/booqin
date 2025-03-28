@@ -44,7 +44,7 @@ export const Books: React.FC = () => {
                 description: bookData.description || "",
                 publicationDate: bookData.publicationDate || null,
                 isbns: bookData.isbn.filter((isbn: string) => isbn.trim() !== ""),
-                authorNames: bookData.authors.filter((author: string) => author.trim() !== "")
+                authors: bookData.authors.filter((author: string) => author.trim() !== "")
             };
             await BookService.createBook(formattedData);
             toggleAddBookModal();
