@@ -10,7 +10,10 @@ import java.util.Set;
     indexes = {
         @Index(name = "idx_author_first_name", columnList = "first_name"),
         @Index(name = "idx_author_last_name", columnList = "last_name")
-    }
+    },
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_author_name", columnNames = {"first_name", "last_name"})
+        }
 )
 public class Author {
 
