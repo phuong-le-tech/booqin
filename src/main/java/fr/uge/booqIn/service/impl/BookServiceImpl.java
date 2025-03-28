@@ -1,5 +1,6 @@
 package fr.uge.booqIn.service.impl;
 
+import fr.uge.booqIn.dto.book.BookCreate;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.dto.book.BookUpdate;
@@ -32,6 +33,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Service
 public class BookServiceImpl implements BookServiceInterface {
@@ -86,18 +88,19 @@ public class BookServiceImpl implements BookServiceInterface {
     return bookMapper.toBookShow(book);
   }
 
-  @Override
   @Transactional
   @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {
           ObjectOptimisticLockingFailureException.class,
-          ConcurrentModificationException.class},
-          backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
+          ConcurrentModificationException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
   public Book createBook(@NonNull @Valid Book book) {
-    // Save authors first if they don't have IDs
+
     if (book.getAuthors() != null) {
-      book.getAuthors().stream()
-              .filter(author -> author.getId() == null)
-              .forEach(authorRepository::save);
+      Set<Author> processedAuthors = book.getAuthors().stream()
+              .map(author ->
+                      authorRepository.findByFirstNameAndLastName(author.getFirstName(), author.getLastName()).orElseGet(() ->
+                              authorRepository.save(author)))
+              .collect(Collectors.toSet());
+      book.setAuthors(processedAuthors);
     }
 
     // Check for duplicate ISBNs
@@ -113,6 +116,45 @@ public class BookServiceImpl implements BookServiceInterface {
     savedBook = downloadAndSaveCoverImage(savedBook);
     return savedBook;
   }
+
+  @Override
+  @Transactional
+  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {
+          ObjectOptimisticLockingFailureException.class,
+          ConcurrentModificationException.class},
+          backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
+  public Book createFromDto(BookCreate dto) {
+    Set<Author> authors = dto.authors().stream()
+            .filter(name -> !name.trim().isEmpty())
+            .map(name -> {
+              var parts = name.trim().split("\\s+", 2);
+              var firstName = parts.length > 1 ? parts[0] : "";
+              var lastName = parts.length > 1 ? parts[1] : parts[0];
+
+              Author author = new Author(firstName, lastName);
+              return authorRepository.findByFirstNameAndLastName(firstName, lastName)
+                      .orElseGet(() -> authorRepository.save(author));
+            })
+            .collect(Collectors.toSet());
+
+    Book book = new Book();
+    book.setTitle(dto.title());
+    book.setDescription(dto.description());
+    book.setIsbns(Set.copyOf(dto.isbn()));
+    book.setPublicationDate(dto.publicationDate());
+    book.setAuthors(authors);
+    book.setCreatedAt(LocalDateTime.now());
+    book.setUpdatedAt(LocalDateTime.now());
+
+    boolean isbnExists = book.getIsbns().stream()
+            .anyMatch(isbn -> findByIsbn(isbn).isPresent());
+    if (isbnExists) {
+      throw new DuplicateResourceException("Book", "ISBN", book.getIsbns().toString());
+    }
+
+    return bookRepository.save(book);
+  }
+
 
   @Override
   @Transactional
