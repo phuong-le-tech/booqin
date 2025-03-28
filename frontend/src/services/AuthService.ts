@@ -88,14 +88,12 @@ const AuthService = {
      */
     login: async (credentials: Credentials): Promise<User> => {
         try {
-            console.log("Login attempt with:", credentials);
 
             const response = await axiosInstance.post<ApiResponse<any>>(
                 "/v1/auth/login",
                 credentials
             );
 
-            console.log("Login response:", response);
 
             // Fetch user details after successful login
             const userData = await AuthService.fetchCurrentUser();
@@ -104,7 +102,6 @@ const AuthService = {
                 throw new Error("Login successful but failed to fetch user data");
             }
 
-            console.log("User data fetched successfully:", userData);
 
             return userData;
         } catch (error: any) {
@@ -138,7 +135,6 @@ const AuthService = {
                 }
             };
 
-            console.log("Sending registration data:", registerDto);
 
             const response = await axiosInstance.post<ApiResponse<User>>(
                 "/v1/auth/register",
@@ -150,11 +146,8 @@ const AuthService = {
                 }
             );
 
-            console.log("Registration response:", response);
-
             // Successful registration (Spring returns 201 Created)
             if (response.status === 201 || (response.data && response.data.success)) {
-                console.log("Registration successful!");
                 return;
             } else {
                 console.error("Unexpected response:", response);

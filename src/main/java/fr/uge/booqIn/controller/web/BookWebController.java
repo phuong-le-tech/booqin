@@ -184,7 +184,6 @@ public class BookWebController {
                         && collection.getCollectionType() != BookCollection.CollectionType.LIKED)
                 .map(c -> new LiteCollection(c.getId(), c.getTitle()))
                 .toList();
-        System.out.println("Collections LITE: " + test);
         return test;
     }
 

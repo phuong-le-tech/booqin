@@ -188,7 +188,6 @@ export const Register = () => {
         setIsLoading(true)
         try {
             // First register the user
-            console.log("Submitting registration form:", formData);
 
             await AuthService.register(formData)
             toast.success("Registration successful!")
@@ -197,8 +196,6 @@ export const Register = () => {
             await new Promise(resolve => setTimeout(resolve, 500));
 
             try {
-                // Then log them in using our centralized login function
-                console.log("Attempting login with:", formData.email);
 
                 // Create login credentials in the format expected by backend
                 const loginCredentials = {
@@ -208,7 +205,6 @@ export const Register = () => {
 
                 // Use AuthService directly to avoid issues with the login function from context
                 const userData = await AuthService.login(loginCredentials);
-                console.log("Login successful, user data:", userData);
 
                 // After successful login, navigate to home or saved redirect URL
                 const redirectUrl = localStorage.getItem('redirectAfterLogin') || "/"
@@ -217,7 +213,6 @@ export const Register = () => {
                 }
 
                 // Force navigation
-                console.log("Redirecting to:", redirectUrl)
                 navigate(redirectUrl, { replace: true })
             } catch (loginError: any) {
                 console.error("Login after registration failed:", loginError)

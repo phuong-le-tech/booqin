@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,93 +26,94 @@ import jakarta.servlet.http.HttpServletResponse;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-        @Bean
-        @Order(1)
-        public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http,
-                        JwtAuthFilter jwtAuthFilter,
-                        AuthenticationProvider authenticationProvider) throws Exception {
-                http
-                                // On applique cette config seulement pour les URLs commençant par /api/
-                                .securityMatcher("/api/**")
-                                .csrf(AbstractHttpConfigurer::disable)
-                                .authorizeHttpRequests(auth -> auth
-                                                .requestMatchers("/auth/**", "/home", "/favicon.ico", "/static/**")
-                                                .permitAll()
-                                                .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login","/api/v1/books",
-                                                        "/api/v1/collections", "/api/v1/collections/**" ,"/api/v1/stripe/webhook",
-                                                        "/api/v1/books/images/**" ,"/api/v1/public/**")
-                                                .permitAll()
-                                                .anyRequest().authenticated())
-                                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                                .authenticationProvider(authenticationProvider)
-                                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                                .exceptionHandling(exc -> exc
-                                                .authenticationEntryPoint((request, response, authException) -> {
-                                                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                                                        response.setContentType("application/json");
-                                                        response.getWriter().write(
-                                                                        "{\"success\":false,\"message\":\"Unauthorized\"}");
-                                                }))
-                                .formLogin(AbstractHttpConfigurer::disable)
-                                .logout(AbstractHttpConfigurer::disable);
+  @Bean
+  @Order(1)
+  public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http,
+                                                    JwtAuthFilter jwtAuthFilter,
+                                                    AuthenticationProvider authenticationProvider) throws Exception {
+    http
+            // On applique cette config seulement pour les URLs commençant par /api/
+            .securityMatcher("/api/**")
+            .csrf(AbstractHttpConfigurer::disable)
+            .authorizeHttpRequests(auth -> auth
+                    .requestMatchers("/auth/**", "/home", "/favicon.ico", "/static/**")
+                    .permitAll()
+                    .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/books",
+                            "/api/v1/collections", "/api/v1/collections/**", "/api/v1/stripe/webhook",
+                            "/api/v1/books/images/**", "/api/v1/public/**")
+                    .permitAll()
+                    .anyRequest().authenticated())
+            .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authenticationProvider(authenticationProvider)
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+            .exceptionHandling(exc -> exc
+                    .authenticationEntryPoint((request, response, authException) -> {
+                      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                      response.setContentType("application/json");
+                      response.getWriter().write(
+                              "{\"success\":false,\"message\":\"Unauthorized\"}");
+                    }))
+            .formLogin(AbstractHttpConfigurer::disable)
+            .logout(AbstractHttpConfigurer::disable);
 
-                return http.build();
-        }
+    return http.build();
+  }
 
-        /**
-         * 2) SecurityFilterChain pour l'application Thymeleaf,
-         * en mode STATEFUL + session classique.
-         */
-        @Bean
-        @Order(2)
-        public SecurityFilterChain webSecurityFilterChain(HttpSecurity http,
-                        AuthenticationProvider authenticationProvider) throws Exception {
-                http
-                                // On applique cette config pour tout le reste (/**), sauf /api/** qui matche
-                                // déjà au-dessus
-                                .securityMatcher("/**")
-                                .csrf(AbstractHttpConfigurer::disable)
-                                .authorizeHttpRequests(auth -> auth
-                                                .requestMatchers("/auth/**", "/home", "/h2-console/**", "/static/**",
-                                                                "/favicon.ico", "/books/**", "/books/{id}","/comments/*", "/carts/**" , "/api/v1/stripe/webhook")
-                                        
-                                                .permitAll()
-                                                .anyRequest().authenticated())
-                                .sessionManagement(
-                                                sess -> sess.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-                                .authenticationProvider(authenticationProvider)
-                                .formLogin(login -> login
-                                                .loginPage("/auth/login")
-                                                .loginProcessingUrl("/auth/login")
-                                                .defaultSuccessUrl("/home", true)
-                                                .failureUrl("/auth/login?error=true")
-                                                .permitAll())
-                                .logout(logout -> logout
-                                                .logoutUrl("/auth/logout") // ou "/auth/logout"
-                                                .logoutSuccessUrl("/home")
-                                                .permitAll());
+  /**
+   * 2) SecurityFilterChain pour l'application Thymeleaf,
+   * en mode STATEFUL + session classique.
+   */
+  @Bean
+  @Order(2)
+  public SecurityFilterChain webSecurityFilterChain(HttpSecurity http,
+                                                    AuthenticationProvider authenticationProvider) throws Exception {
+    http
+            // On applique cette config pour tout le reste (/**), sauf /api/** qui matche
+            // déjà au-dessus
+            .securityMatcher("/**")
+            .csrf(AbstractHttpConfigurer::disable)
+            .authorizeHttpRequests(auth -> auth
+                    .requestMatchers("/auth/**", "/home", "/h2-console/**", "/static/**",
+                            "/favicon.ico", "/books/**", "/books/{id}", "/comments/*", "/carts/**", "/api/v1/stripe/webhook")
 
-                return http.build();
-        }
+                    .permitAll()
+                    .anyRequest().authenticated())
+            .sessionManagement(
+                    sess -> sess.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+            .authenticationProvider(authenticationProvider)
+            .formLogin(login -> login
+                    .loginPage("/auth/login")
+                    .loginProcessingUrl("/auth/login")
+                    .defaultSuccessUrl("/home", true)
+                    .failureUrl("/auth/login?error=true")
+                    .permitAll())
+            .logout(logout -> logout
+                    .logoutUrl("/auth/logout") // ou "/auth/logout"
+                    .logoutSuccessUrl("/home")
+                    .permitAll())
+            .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable));
 
-        @Bean
-        public PasswordEncoder passwordEncoder() {
-                return new BCryptPasswordEncoder();
-        }
+    return http.build();
+  }
 
-        @Bean
-        public AuthenticationProvider authenticationProvider(
-                        UserDetailsServiceImpl userDetailsServiceImpl,
-                        PasswordEncoder passwordEncoder) {
-                DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-                authProvider.setUserDetailsService(userDetailsServiceImpl);
-                authProvider.setPasswordEncoder(passwordEncoder);
-                return authProvider;
-        }
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
 
-        @Bean
-        public AuthenticationManager authenticationManager(
-                        AuthenticationConfiguration config) throws Exception {
-                return config.getAuthenticationManager();
-        }
+  @Bean
+  public AuthenticationProvider authenticationProvider(
+          UserDetailsServiceImpl userDetailsServiceImpl,
+          PasswordEncoder passwordEncoder) {
+    DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+    authProvider.setUserDetailsService(userDetailsServiceImpl);
+    authProvider.setPasswordEncoder(passwordEncoder);
+    return authProvider;
+  }
+
+  @Bean
+  public AuthenticationManager authenticationManager(
+          AuthenticationConfiguration config) throws Exception {
+    return config.getAuthenticationManager();
+  }
 }

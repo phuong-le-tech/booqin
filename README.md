@@ -1,93 +1,238 @@
 # BooqIn LE
 
 
-
-## Getting started
-
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin https://gitlab.com/phuong.le77100/booqin-le.git
-git branch -M main
-git push -uf origin main
-```
-
-## Integrate with your tools
-
-- [ ] [Set up project integrations](https://gitlab.com/phuong.le77100/booqin-le/-/settings/integrations)
-
-## Collaborate with your team
-
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+## Description
+BooqIn est une plateforme de gestion et de prêt de livres entre utilisateurs. <br>
+Le site permet aux utilisateurs de créer des collections, de partager leurs livres et d'emprunter ceux des autres utilisateurs. <br>
+La plateforme importe automatiquement des livres depuis plusieurs API publiques et propose un système complet <br>
+de gestion de prêts avec suivi des commandes et paiements sécurisés.
 
 ***
 
-# Editing this README
+## Cloner le projet
+```
+git clone https://gitlab.com/phuong.le77100/booqin-le.git
+cd booqin-le
+```
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+## Lancer l'application
 
-## Suggestions for a good README
+### Backend (avec Docker)
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+1. Assurez-vous d'avoir [Docker](https://www.docker.com/products/docker-desktop) et [Docker Compose](https://docs.docker.com/compose/install/) installés sur votre machine.
 
-## Name
-Choose a self-explaining name for your project.
+2. Créez un fichier `.env` à la racine du projet avec le contenu suivant :
+```
+JWT_SECRET=votre_jwt_secret
+STRIPE_SECRET_KEY=votre_clé_secrète_stripe
+STRIPE_PUBLIC_KEY=votre_clé_publique_stripe
+STRIPE_WEBHOOK_SECRET=votre_secret_webhook_stripe
+```
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+Comment obtenir les clés nécessaires :
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+- **JWT_SECRET** : Générez une chaîne aléatoire sécurisée (32+ caractères). Vous pouvez utiliser la commande suivante :
+  ```
+  openssl rand -base64 32
+  ```
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+- **Clés Stripe** : Pour les tests et le développement, créez un compte sur [Stripe](https://stripe.com) et récupérez les clés dans le tableau de bord Stripe :
+    1. Créez ou connectez-vous à votre compte Stripe
+    2. Accédez à [Dashboard > Developers > API keys](https://dashboard.stripe.com/test/apikeys)
+    3. Utilisez les clés de test pour le développement (commençant par "pk_test_" et "sk_test_")
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+- **STRIPE_WEBHOOK_SECRET** : Dans le tableau de bord Stripe, allez dans [Developers > Webhooks](https://dashboard.stripe.com/test/webhooks) :
+    1. Cliquez sur "Add endpoint"
+    2. Entrez l'URL de votre endpoint webhook (par exemple, `https://votre-domaine.com/api/v1/stripe/webhook`)
+    3. Sélectionnez les événements que vous souhaitez recevoir (au minimum `checkout.session.completed`)
+    4. Une fois créé, cliquez sur l'endpoint pour voir le "Signing secret"
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+3. Lancez les conteneurs Docker :
+```
+docker-compose up -d
+```
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+Cette commande va :
+- Démarrer l'application Spring Boot avec l'API REST
+- Configurer une base de données H2 préchargée avec des données d'exemple
+- Configurer le service Stripe CLI pour les webhooks
+- Exposer l'API backend sur http://localhost:8080
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+4. Pour vérifier que les conteneurs fonctionnent correctement :
+```
+docker-compose ps
+```
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+5. Pour arrêter les conteneurs :
+```
+docker-compose down
+```
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+### Frontend (avec npm)
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+Se placer dans le dossier `frontend`:
+```
+cd frontend
+```
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+Puis :
+```
+npm install
+```
+```
+npm run dev
+```
 
-## License
-For open source projects, say how it is licensed.
+## Compiler le projet (optionnel)
+Si vous préférez lancer l'application sans Docker :
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+### Backend
+```
+mvn clean package
+```
+
+### Lancer l'application sans Docker
+```
+java -jar [Chemin du fichier jar]
+```
+Par exemple :
+```
+java -jar target/booqin-le-0.0.1-SNAPSHOT.jar
+```
+
+## Liens URL du projet
+Après que l'application est bien lancée !
+* Léger (Thymeleaf) : http://localhost:8080
+* Lourd (React) : http://localhost:5173
+
+***
+# Configuration de Stripe CLI avec Docker
+
+Ce projet configure Stripe CLI dans un conteneur Docker pour faciliter le développement et les tests des webhooks Stripe avec votre application Spring Boot.
+
+## Prérequis
+
+- Docker et Docker Compose installés sur votre machine
+- Une application Spring Boot avec un endpoint webhook configuré (`/api/v1/stripe/webhook`)
+- Un fichier `.env` contenant vos clés d'API Stripe
+
+## Structure du fichier .env
+
+Créez un fichier `.env` à la racine du projet avec le contenu suivant :
+
+```
+JWT_SECRET=votre_jwt_secret
+STRIPE_SECRET_KEY=votre_clé_secrète_stripe
+STRIPE_PUBLIC_KEY=votre_clé_publique_stripe
+STRIPE_WEBHOOK_SECRET=votre_secret_webhook_stripe
+```
+
+## Configuration Docker
+
+Le fichier `docker-compose.yml` contient la configuration suivante :
+
+```yaml
+networks:
+  booqin-network:
+    driver: bridge
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: src/Dockerfile
+    container_name: booqin-app
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - SERVER_PORT=8080
+      - SPRING_DATASOURCE_URL=jdbc:h2:file:/app/data/database
+      - SPRING_DATASOURCE_USERNAME=sa
+      - SPRING_DATASOURCE_PASSWORD=
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_H2_CONSOLE_ENABLED=true
+      - JWT_SECRET=${JWT_SECRET}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_PUBLIC_KEY=${STRIPE_PUBLIC_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - APP_IMAGE_BASE_URL=http://localhost:8080/api/v1/books/images/
+      - APP_CLIENTURLS_REACT=http://localhost:5173/
+      - APP_CLIENTURLS_THYMELEAF=http://localhost:8080/
+      - APP_DEFAULTURL=http://localhost:5173/
+    volumes:
+      - booqin-data:/app/data
+    networks:
+      - booqin-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  stripe-cli:
+    image: stripe/stripe-cli
+    container_name: booqin-stripe-cli
+    command: listen --forward-to app:8080/api/v1/stripe/webhook
+    environment:
+      - STRIPE_API_KEY=${STRIPE_SECRET_KEY}
+    networks:
+      - booqin-network
+    depends_on:
+      - app
+    restart: unless-stopped
+
+volumes:
+  booqin-data:
+```
+
+## Utilisation
+
+### Démarrer le service
+
+1. Lancez les conteneurs Docker :
+```bash
+docker-compose up -d
+```
+
+### Vérifier l'état du service
+
+Pour voir les logs du conteneur Stripe CLI :
+
+```bash
+docker-compose logs -f stripe-cli
+```
+
+Vous devriez voir un message comme :
+```
+Ready! You are using Stripe API Version [2025-01-27]. Your webhook signing secret is whsec_xxx (^C to quit)
+```
+
+### Tester les webhooks (Optionnel)
+
+Pour simuler un événement webhook et l'envoyer à votre application, utilisez :
+
+```bash
+docker-compose exec stripe-cli stripe trigger payment_intent.succeeded
+```
+
+Autres événements disponibles :
+```bash
+docker-compose exec stripe-cli stripe trigger checkout.session.completed
+```
+
+Pour voir tous les événements disponibles :
+```bash
+docker-compose exec stripe-cli stripe trigger --help
+```
+
+### Arrêter le service
+
+```bash
+docker-compose down
+```
+
+## Dépannage
+
+Si les webhooks n'atteignent pas votre application, vérifiez :
+
+1. Que votre application Spring Boot est bien en cours d'exécution sur le port 8080
+2. Que le pare-feu ne bloque pas les connexions entrantes
+3. Que votre contrôleur Spring Boot est correctement configuré pour traiter les webhooks Stripe

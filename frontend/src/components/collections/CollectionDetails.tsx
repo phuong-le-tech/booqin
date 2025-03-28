@@ -103,7 +103,6 @@ const CollectionDetails: React.FC = () => {
     };
 
     const handlePageChange = (page: number) => {
-        console.log(`[DEBUG] Page changed to ${page}`);
         setPageInfo(prev => ({
             ...prev,
             number: page
@@ -264,7 +263,6 @@ const CollectionDetails: React.FC = () => {
 
     const handlePageSizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newSize = parseInt(e.target.value, 10);
-        console.log(`[DEBUG] Page size changed to ${newSize}`);
         setPageInfo(prev => ({
             ...prev,
             size: newSize,
