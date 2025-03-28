@@ -221,6 +221,10 @@ public class BookServiceImpl implements BookServiceInterface {
   @Transactional
   public void deleteBook(@NonNull Long id) {
     Book book = findBookById(id);
+    bookRepository.deleteBookFromCollections(book);
+    bookRepository.deleteBookFromCarts(book);
+    bookRepository.deleteBookFromLendings(book);
+    bookRepository.deleteBookFromQueues(book);
     bookRepository.delete(book);
   }
 
