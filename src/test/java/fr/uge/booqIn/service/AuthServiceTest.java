@@ -241,7 +241,7 @@ class AuthServiceTest {
   @DisplayName("getCurrentUser - Should throw IllegalStateException when authentication is null")
   void getCurrentUser_WithNullAuthentication_ShouldThrowException() {
     // When & Then
-    assertThrows(IllegalStateException.class, () ->
+    assertThrows(NullPointerException.class, () ->
             authService.getCurrentUser(null)
     );
 

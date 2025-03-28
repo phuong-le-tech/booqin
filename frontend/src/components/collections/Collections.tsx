@@ -62,7 +62,6 @@ const Collections: React.FC = () => {
 
         try {
             setLoading(true);
-            console.log("[DEBUG] Fetching all collections");
 
             // Fetch with a large size to get potentially all collections
             const privateResp = await BookCollectionService.getUserPrivateCollections(0, 1000, sortField, sortDirection);
@@ -73,7 +72,6 @@ const Collections: React.FC = () => {
             if (privateResp && privateResp.content) {
                 privateData = privateResp.content;
                 setPrivateCollections(privateData);
-                console.log(`[DEBUG] Loaded ${privateData.length} private collections`);
             }
 
             // Process public collections
@@ -81,7 +79,6 @@ const Collections: React.FC = () => {
             if (publicResp && publicResp.content) {
                 publicData = publicResp.content;
                 setPublicCollections(publicData);
-                console.log(`[DEBUG] Loaded ${publicData.length} public collections`);
             }
 
             // Combine all collections
@@ -92,7 +89,6 @@ const Collections: React.FC = () => {
                 new Map(allCollectionsData.map(item => [item.id, item])).values()
             );
 
-            console.log(`[DEBUG] Total unique collections loaded: ${uniqueCollections.length}`);
 
             // Sort collections
             const sortedCollections = sortCollections(uniqueCollections, sortField, sortDirection);
@@ -112,7 +108,6 @@ const Collections: React.FC = () => {
                 typeCounts[type]++;
             });
 
-            console.log(`[DEBUG] Collection type counts: SMART=${typeCounts.SMART}, GLOBAL=${typeCounts.GLOBAL}, NORMAL=${typeCounts.NORMAL}`);
 
         } catch (error) {
             console.error("Error fetching collections:", error);
@@ -139,7 +134,6 @@ const Collections: React.FC = () => {
     const filterAndPaginateCollections = () => {
         if (!allCollections.length) return;
 
-        console.log(`[DEBUG] Filtering for tab: ${activeTab}`);
 
         // Filter based on tab
         let filtered: BookCollectionIndex[] = [];
@@ -155,7 +149,6 @@ const Collections: React.FC = () => {
                             collection.type === "RECENT" ||
                             collection.type === "AUTHOR");
                 });
-                console.log(`[DEBUG] PRIVATE tab showing ${filtered.length} private collections`);
                 break;
 
             case "PUBLIC":
@@ -168,7 +161,6 @@ const Collections: React.FC = () => {
                             collection.type === "RECENT" ||
                             collection.type === "AUTHOR");
                 });
-                console.log(`[DEBUG] PUBLIC tab showing ${filtered.length} public collections`);
                 break;
 
             case "SMART":
@@ -176,7 +168,6 @@ const Collections: React.FC = () => {
                 filtered = allCollections.filter(collection => {
                     return getCollectionType(collection) === "SMART";
                 });
-                console.log(`[DEBUG] SMART tab showing ${filtered.length} smart collections`);
                 break;
 
             case "GLOBAL":
@@ -186,14 +177,12 @@ const Collections: React.FC = () => {
                         collection.type === "RECENT" ||
                         collection.type === "AUTHOR";
                 });
-                console.log(`[DEBUG] GLOBAL tab showing ${filtered.length} global collections`);
                 break;
 
             case "ALL":
             default:
                 // All tab: show all collections
                 filtered = [...allCollections];
-                console.log(`[DEBUG] ALL tab showing all ${filtered.length} collections`);
                 break;
         }
 
@@ -220,7 +209,6 @@ const Collections: React.FC = () => {
             totalPages
         });
 
-        console.log(`[DEBUG] Displaying ${paginatedCollections.length} collections on page ${currentPage+1}/${totalPages}`);
     };
 
     // Load all collections on component mount
@@ -237,7 +225,6 @@ const Collections: React.FC = () => {
 
     // Handle page change
     const handlePageChange = (page: number) => {
-        console.log(`[DEBUG] Page changed to ${page}`);
         setPageInfo(prev => ({
             ...prev,
             number: page
@@ -247,7 +234,6 @@ const Collections: React.FC = () => {
     // Handle changing the sort field/direction
     const handleSortChange = (field: string) => {
         const direction = field === sortField && sortDirection === "asc" ? "desc" : "asc";
-        console.log(`[DEBUG] Sort changed to ${field} ${direction}`);
 
         setSortField(field);
         setSortDirection(direction);
@@ -311,7 +297,6 @@ const Collections: React.FC = () => {
 
     // Toggle between tabs
     const handleTabChange = (tab: TabType) => {
-        console.log(`[DEBUG] Tab changing from ${activeTab} to ${tab}`);
         setActiveTab(tab);
         // Reset to first page when tab changes
         setPageInfo(prev => ({

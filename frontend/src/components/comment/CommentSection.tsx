@@ -43,7 +43,6 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ entityId, entity
         const fetchCurrentUser = async () => {
             try {
                 const user = await AuthService.fetchCurrentUser();
-                console.log("Current user fetched:", user);
                 setCurrentUser(user);
             } catch (err) {
                 console.error("Failed to get current user:", err);
@@ -54,7 +53,6 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ entityId, entity
     }, []);
 
     useEffect(() => {
-        console.log(`CommentSection: Fetching comments due to refreshKey=${refreshKey}`);
         fetchComments();
         fetchCommentCount();
     }, [entityId, entityType, refreshKey, sortOrder]);
@@ -62,10 +60,8 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ entityId, entity
     const fetchComments = async () => {
         try {
             setIsLoading(true);
-            console.log(`Fetching comments for ${entityType} with ID ${entityId}`);
 
             const commentTree = await CommentService.getCommentTreeForEntity(entityType, entityId);
-            console.log("CommentSection: Received comments:", commentTree);
 
             let sortedComments = [...(commentTree || [])];
             if (sortOrder === 'newest') {
@@ -112,14 +108,6 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ entityId, entity
 
             setIsLoading(true);
 
-            console.log("CommentSection: Submitting comment with data:", {
-                userId: currentUser.id,
-                entityId,
-                entityType,
-                content,
-                parentId
-            });
-
             await CommentService.createComment({
                 userId: currentUser.id,
                 entityId,
@@ -128,7 +116,6 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ entityId, entity
                 parentId
             });
 
-            console.log("CommentSection: Comment submitted successfully, refreshing comments...");
             setRefreshKey(prev => prev + 1);
             setError(null);
             setFormActive(false);
@@ -148,10 +135,8 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ entityId, entity
 
             setIsLoading(true);
 
-            console.log("CommentSection: Deleting comment with ID:", commentId);
             await CommentService.delete(commentId, currentUser.id);
 
-            console.log("CommentSection: Comment deleted successfully, refreshing comments...");
             setRefreshKey(prev => prev + 1);
             setError(null);
         } catch (err) {
@@ -170,10 +155,8 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ entityId, entity
 
             setIsLoading(true);
 
-            console.log("CommentSection: Editing comment with ID:", commentId, "and content:", content);
             await CommentService.update(commentId, currentUser.id, { content });
 
-            console.log("CommentSection: Comment edited successfully, refreshing comments...");
             setRefreshKey(prev => prev + 1);
             setError(null);
         } catch (err) {

@@ -71,7 +71,8 @@ public class ConcurrentCartTest {
         // Generate a unique ISBN to avoid duplicate insertion issues.
         String uniqueIsbn = "ISBN-" + UUID.randomUUID();
 
-        Author author1 = new Author("Test", "Author1");
+        String uniqueSuffix = UUID.randomUUID().toString().substring(0, 8);
+        Author author1 = new Author("Test_" + uniqueSuffix, "Author1");
         author1 = authorRepository.saveAndFlush(author1);
         createdAuthorIds.add(author1.getId());
 

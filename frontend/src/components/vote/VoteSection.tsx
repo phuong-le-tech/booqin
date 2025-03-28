@@ -25,7 +25,6 @@ export const VoteSection: React.FC<VoteSectionProps> = ({ entityId, entityType }
         const fetchVoteData = async () => {
             try {
                 setIsLoading(true);
-                console.log(`Fetching vote data for entity: ${entityId}, type: ${normalizedEntityType}`);
 
                 // Get vote counts for this entity
                 const counts = await VoteService.getVoteCounts(entityId, normalizedEntityType);
