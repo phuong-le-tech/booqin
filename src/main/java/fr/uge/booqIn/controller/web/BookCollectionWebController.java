@@ -15,9 +15,9 @@ import fr.uge.booqIn.enums.BookStatus;
 import fr.uge.booqIn.enums.LendStatus;
 import fr.uge.booqIn.enums.VoteType;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
+import fr.uge.booqIn.interfaces.BookCollection;
 import fr.uge.booqIn.mapper.BookCollectionMapper;
 import fr.uge.booqIn.mapper.BookMapper;
-import fr.uge.booqIn.interfaces.BookCollection;
 import fr.uge.booqIn.service.impl.UserVoteService;
 import fr.uge.booqIn.service.interfaces.*;
 import jakarta.validation.Valid;
@@ -161,8 +161,7 @@ public class BookCollectionWebController {
       var comments = commentServiceInterface.getCommentTreeByEntity(id, "COLLECTION");
       if (currentUser != null) {
         model.addAttribute("user", currentUser);
-        List<CommentDTO> list = commentService.getCommentTreeByEntity(id, "COLLECTION");
-        Map<Long, VoteType> commentVotes = userVoteService.collectCommentVotes(currentUser.getId(), list);
+        Map<Long, VoteType> commentVotes = userVoteService.collectCommentVotes(currentUser.getId(), comments);
         model.addAttribute("userCommentVotes", commentVotes);
       }
       model.addAttribute("comments", comments);

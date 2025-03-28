@@ -68,8 +68,8 @@
         </div>
 
         <div class="w-full h-48 flex justify-center items-center text-2xl text-white rounded-t-xl"
-             th:style="'background-color: ' + ${T(java.lang.String).format('#%06x', T(java.lang.Math).abs(book.id().hashCode()) % 0xFFFFFF)}">
-            <span th:text="${book.title().substring(0, 1).toUpperCase()}"></span>
+             th:style="${book.thumbnailPath() != null} ? 'background-image: url(\'/api/v1/books/images/' + ${book.thumbnailPath()} + '\'); background-size: cover; background-position: center;' : 'background-color: ' + ${T(java.lang.String).format('#%06x', T(java.lang.Math).abs(book.id().hashCode()) % 0xFFFFFF)}">
+            <span th:if="${book.thumbnailPath() == null}" th:text="${book.title().substring(0, 1).toUpperCase()}"></span>
         </div>
         <div class="p-4 flex flex-col flex-grow">
             <h3 class="text-lg font-bold text-gray-800 mb-1 line-clamp-2" th:text="${book.title()}"></h3>

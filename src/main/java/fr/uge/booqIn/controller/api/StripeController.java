@@ -1,17 +1,16 @@
 package fr.uge.booqIn.controller.api;
 
-import com.stripe.exception.StripeException;
-import com.stripe.model.PaymentIntent;
 import com.stripe.model.checkout.Session;
-import fr.uge.booqIn.dto.stripe.PaymentIntentResponseDTO;
 import fr.uge.booqIn.entity.Cart;
 import fr.uge.booqIn.factory.ApiResponse;
 import fr.uge.booqIn.service.StripeService;
-import fr.uge.booqIn.service.impl.CartServiceImpl;
 import fr.uge.booqIn.service.interfaces.CartServiceInterface;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Optional;
 

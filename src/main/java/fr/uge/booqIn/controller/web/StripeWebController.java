@@ -1,14 +1,14 @@
 package fr.uge.booqIn.controller.web;
 
-import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
 import fr.uge.booqIn.entity.Cart;
 import fr.uge.booqIn.service.StripeService;
 import fr.uge.booqIn.service.interfaces.CartServiceInterface;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Optional;
 
