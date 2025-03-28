@@ -4,6 +4,7 @@ import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.cart.ShopCartDto;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.Cart;
+import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.StatusPayment;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.repository.BookRepository;
@@ -98,8 +99,9 @@ public class CartServiceImpl implements CartServiceInterface {
   public boolean removeBookFromCart(@NonNull Long userId, @NonNull Long bookId) {
     Objects.requireNonNull(userId, "User ID cannot be null");
     Objects.requireNonNull(bookId, "Book ID cannot be null");
-
-    cartRepository.deleteBookFromCart(userId, bookId);
+    User user = userService.findUserById(userId);
+    Cart cart = getCart(userId);
+    cartRepository.deleteBookFromCart(cart.getId(), bookId);
     return true;
   }
 
