@@ -96,7 +96,7 @@ java -jar [Chemin du fichier jar]
 ```
 Par exemple :
 ```
-java -jar target/booqin-le-0.0.1-SNAPSHOT.jar
+java -jar target/booqin-le-1.0.0-SNAPSHOT.jar
 ```
 
 ## Liens URL du projet
@@ -125,64 +125,7 @@ STRIPE_SECRET_KEY=votre_clé_secrète_stripe
 STRIPE_PUBLIC_KEY=votre_clé_publique_stripe
 STRIPE_WEBHOOK_SECRET=votre_secret_webhook_stripe
 ```
-
-## Configuration Docker
-
-Le fichier `docker-compose.yml` contient la configuration suivante :
-
-```yaml
-networks:
-  booqin-network:
-    driver: bridge
-
-services:
-  app:
-    build:
-      context: ..
-      dockerfile: src/Dockerfile
-    container_name: booqin-app
-    restart: always
-    ports:
-      - "8080:8080"
-    environment:
-      - SERVER_PORT=8080
-      - SPRING_DATASOURCE_URL=jdbc:h2:file:/app/data/database
-      - SPRING_DATASOURCE_USERNAME=sa
-      - SPRING_DATASOURCE_PASSWORD=
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
-      - SPRING_H2_CONSOLE_ENABLED=true
-      - JWT_SECRET=${JWT_SECRET}
-      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
-      - STRIPE_PUBLIC_KEY=${STRIPE_PUBLIC_KEY}
-      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
-      - APP_IMAGE_BASE_URL=http://localhost:8080/api/v1/books/images/
-      - APP_CLIENTURLS_REACT=http://localhost:5173/
-      - APP_CLIENTURLS_THYMELEAF=http://localhost:8080/
-      - APP_DEFAULTURL=http://localhost:5173/
-    volumes:
-      - booqin-data:/app/data
-    networks:
-      - booqin-network
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-
-  stripe-cli:
-    image: stripe/stripe-cli
-    container_name: booqin-stripe-cli
-    command: listen --forward-to app:8080/api/v1/stripe/webhook
-    environment:
-      - STRIPE_API_KEY=${STRIPE_SECRET_KEY}
-    networks:
-      - booqin-network
-    depends_on:
-      - app
-    restart: unless-stopped
-
-volumes:
-  booqin-data:
-```
-
-## Utilisation
+## Utilisation Docker
 
 ### Démarrer le service
 

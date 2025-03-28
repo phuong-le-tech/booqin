@@ -7,7 +7,6 @@ import fr.uge.booqIn.interfaces.Votable;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
 import org.hibernate.validator.constraints.Length;
 
@@ -51,12 +50,10 @@ public abstract class AbstractBookCollection implements BookCollection, Votable,
   private boolean isPublic = false;
 
   @NotNull(message = "Creation date is required")
-  @PastOrPresent(message = "Creation date cannot be in the future")
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "created_at", nullable = false, updatable = false)
   private LocalDateTime createdAt = LocalDateTime.now();
 
-  @PastOrPresent(message = "Update date cannot be in the future")
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "updated_at")
   private LocalDateTime updatedAt = LocalDateTime.now();

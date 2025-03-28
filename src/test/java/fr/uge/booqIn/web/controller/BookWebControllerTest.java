@@ -3,6 +3,7 @@ package fr.uge.booqIn.web.controller;
 import fr.uge.booqIn.controller.web.BookWebController;
 import fr.uge.booqIn.controller.web.HomeWebController;
 import fr.uge.booqIn.dto.author.AuthorDto;
+import fr.uge.booqIn.dto.book.BookCreate;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.dto.vote.VoteCount;
@@ -136,8 +137,19 @@ class BookWebControllerTest {
     Date publicationDate = new Date();
     String description = "Test description";
 
+    BookCreate bookCreateDto = new BookCreate(
+            title,
+            authors,
+            description,
+            publicationDate,
+            isbns
+    );
+
     Book createdBook = new Book();
-    when(bookService.createBook(any(Book.class))).thenReturn(createdBook);
+    createdBook.setId(1L);
+
+    // Mocker la méthode createFromDto au lieu de createBook
+    when(bookService.createFromDto(any(BookCreate.class))).thenReturn(createdBook);
 
     // When
     String viewName = bookWebController.addBook(title, authors, isbns, publicationDate, description);
@@ -145,16 +157,18 @@ class BookWebControllerTest {
     // Then
     assertEquals("redirect:/books", viewName);
 
-    verify(bookService).createBook(any(Book.class));
+    // Vérifier que createFromDto est appelé avec le bon DTO
+    verify(bookService).createFromDto(any(BookCreate.class));
 
-    ArgumentCaptor<Book> bookCaptor = ArgumentCaptor.forClass(Book.class);
-    verify(bookService).createBook(bookCaptor.capture());
-    Book capturedBook = bookCaptor.getValue();
-    assertEquals(title, capturedBook.getTitle());
-    assertEquals(description, capturedBook.getDescription());
-    assertEquals(publicationDate, capturedBook.getPublicationDate());
-    assertEquals(2, capturedBook.getIsbns().size());
-    assertEquals(2, capturedBook.getAuthors().size());
+    ArgumentCaptor<BookCreate> dtoCaptor = ArgumentCaptor.forClass(BookCreate.class);
+    verify(bookService).createFromDto(dtoCaptor.capture());
+    BookCreate capturedDto = dtoCaptor.getValue();
+
+    assertEquals(title, capturedDto.title());
+    assertEquals(description, capturedDto.description());
+    assertEquals(publicationDate, capturedDto.publicationDate());
+    assertEquals(new ArrayList<>(isbns), capturedDto.isbn());
+    assertEquals(new ArrayList<>(authors), capturedDto.authors());
   }
 
   @Test
