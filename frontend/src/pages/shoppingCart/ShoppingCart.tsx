@@ -74,13 +74,9 @@ export const ShoppingCart: () => JSX.Element = () => {
 
         const fetchCart = async () => {
             try {
-                console.log("📦 Fetching cart for userId:", user.id);
                 const response = await axiosInstance.get(`/v1/carts/user-cart/${user.id}`);
 
-                console.log("📦 Raw API response:", response.data);
-
                 if (response.data?.success && response.data?.data) {
-                    console.log("📚 Books before processing:", response.data.data.books);
 
                     const booksArray = Array.isArray(response.data.data.books)
                         ? response.data.data.books
@@ -91,7 +87,6 @@ export const ShoppingCart: () => JSX.Element = () => {
                         books: booksArray
                     });
 
-                    console.log("📚 Books after cleaning:", newCart.books);
 
                     setCart(newCart);
                     localStorage.setItem("cart", JSON.stringify(newCart));
@@ -178,7 +173,6 @@ export const ShoppingCart: () => JSX.Element = () => {
         try {
             const response = await axiosInstance.post(`v1/payment/checkout?cartId=${cart.id}`);
             if (response.data && response.data.success) {
-                console.log("Création de session Stripe réussie", response.data.data);
                 toast.info("Redirection vers la page de paiement...");
                 window.location.href = response.data.data;
             } else {

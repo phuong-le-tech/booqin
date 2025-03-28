@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.lang.NonNull;
 
+import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Optional;
@@ -198,7 +199,19 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
 
     return new PageImpl<>(result, pageable, collections.size());
   }
-
+  
+  public  <T> Page<T> createPaginatedResult(List<T> list, Pageable pageable) {
+    int start = (int) pageable.getOffset();
+    int end = Math.min((start + pageable.getPageSize()), list.size());
+    
+    if (start > list.size()) {
+      return new PageImpl<>(Collections.emptyList(), pageable, list.size());
+    }
+    
+    List<T> subList = list.subList(start, end);
+    return new PageImpl<>(subList, pageable, list.size());
+  }
+  
   @Override
   @Transactional(readOnly = true)
   public BookCollection findCollectionById(@NonNull Long id) {
@@ -235,15 +248,10 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
    * Helper methods
    */
   private AbstractBookCollection findById(Long id) {
-    return bookCollectionRepository.findById(id)
-            .map(collection -> {
-              // Ensure required associations are loaded
-              if (collection.getOwner() != null) {
-                collection.getOwner().getFullName();
-              }
-              return collection;
-            })
+    AbstractBookCollection collectionWithBooks = bookCollectionRepository.findByIdWithBooks(id)
             .orElseThrow(() -> new ResourceNotFoundException("BookCollection", "id", id));
+    collectionWithBooks.getOwner().getFullName();
+    return collectionWithBooks;
   }
 
   // Recovery methods for retryable operations
@@ -305,6 +313,15 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
           ConcurrentModificationException ex, @NonNull Long id, @NonNull @Valid BookCollectionUpdate collection) {
     logger.warning("Concurrent modification detected while updating collection with ID: " + id);
     throw new ConcurrentModificationException("The collection has been modified by someone else. Please try again.", ex);
+  }
+
+  @Recover
+  public void recoverFromResourceNotFound(
+          ResourceNotFoundException ex,
+          @NonNull Long collectionId,
+          @NonNull Long bookId) {
+    logger.warning("Collection not found while processing book ID: " + bookId + " for collection ID: " + collectionId);
+    throw ex; // Re-throw the original exception
   }
 
 

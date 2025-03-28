@@ -19,14 +19,26 @@
         <span th:text="${infoMessage}"></span>
     </div>
 
-    <!-- Navigation back -->
+    <!-- Bouton de retour générique -->
     <div class="flex justify-between items-center mb-6">
-        <a href="/books"
+        <!-- Si une URL de retour est définie, l'utiliser, sinon utiliser l'historique du navigateur -->
+        <a th:if="${returnUrl != null}"
+           th:href="${returnUrl}"
            class="text-blue-600 hover:text-blue-800 flex items-center font-medium">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
             </svg>
-            Retour à la liste des livres
+            Retour
+        </a>
+
+        <!-- Si aucune URL de retour n'est définie, utiliser l'historique du navigateur -->
+        <a th:unless="${returnUrl != null}"
+           href="javascript:history.back();"
+           class="text-blue-600 hover:text-blue-800 flex items-center font-medium">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+            </svg>
+            Retour
         </a>
     </div>
 

@@ -10,36 +10,47 @@
 <div class="max-w-6xl mx-auto">
     <h1 class="text-4xl font-bold text-gray-800 mb-8 text-center">My Collections</h1>
 
+    <div class="flex justify-end items-center mb-4 space-x-2">
+        <span class="text-sm text-gray-600">Collections per page:</span>
+        <form method="get" th:action="@{/collections}" class="inline-block">
+            <input type="hidden" name="page" value="0">
+            <input type="hidden" name="tab" th:value="${activeTab}">
+            <select name="size" onchange="this.form.submit()" class="border rounded p-1 text-sm">
+                <option value="5" th:selected="${pageSize == 5}">5</option>
+                <option value="10" th:selected="${pageSize == 10}">10</option>
+                <option value="15" th:selected="${pageSize == 15}">15</option>
+                <option value="20" th:selected="${pageSize == 20}">20</option>
+                <option value="30" th:selected="${pageSize == 30}">30</option>
+            </select>
+        </form>
+    </div>
+
     <!-- Onglets de navigation -->
     <div class="flex border-b border-gray-200 mb-6">
-        <button
-                class="py-2 px-4 font-medium text-blue-600 border-b-2 border-blue-600"
-                id="private-tab"
-                onclick="showTab('private')">
+        <a th:href="@{/collections(tab='private')}"
+           th:classappend="${activeTab == 'private' || activeTab == null ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}"
+           class="py-2 px-4 font-medium">
             Private Collections
-        </button>
-        <button
-                class="py-2 px-4 font-medium text-gray-500 hover:text-gray-700"
-                id="public-tab"
-                onclick="showTab('public')">
+        </a>
+        <a th:href="@{/collections(tab='public')}"
+           th:classappend="${activeTab == 'public' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}"
+           class="py-2 px-4 font-medium">
             Public Collections
-        </button>
-        <button
-                class="py-2 px-4 font-medium text-gray-500 hover:text-gray-700"
-                id="smart-tab"
-                onclick="showTab('smart')">
+        </a>
+        <a th:href="@{/collections(tab='smart')}"
+           th:classappend="${activeTab == 'smart' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}"
+           class="py-2 px-4 font-medium">
             Smart Collections
-        </button>
-        <button
-                class="py-2 px-4 font-medium text-gray-500 hover:text-gray-700"
-                id="global-tab"
-                onclick="showTab('global')">
+        </a>
+        <a th:href="@{/collections(tab='global')}"
+           th:classappend="${activeTab == 'global' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}"
+           class="py-2 px-4 font-medium">
             Global Collections
-        </button>
+        </a>
     </div>
 
     <!-- Private Collections Section -->
-    <div id="private-tab-content">
+    <div id="private-tab-content" th:style="${activeTab != 'private' && activeTab != null ? 'display: none;' : ''}">
         <div class="bg-white shadow-lg rounded-lg overflow-hidden mb-8">
             <div class="p-6">
                 <h2 class="text-2xl font-semibold text-gray-800 mb-4">My Private Collections</h2>
@@ -47,7 +58,14 @@
                     <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Type</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                            <a th:href="@{/collections(sort='title', direction=${sortDirection == 'asc' ? 'desc' : 'asc'}, tab='private')}">
+                                Name
+                                <span th:if="${sortField == 'title'}">
+                                    <span th:text="${sortDirection == 'asc' ? '↑' : '↓'}"></span>
+                                </span>
+                            </a>
+                        </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Description</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Owner</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
@@ -57,19 +75,45 @@
                     <tbody class="bg-white divide-y divide-gray-200">
                     <tr th:each="collection : ${userPrivateCollections}" class="hover:bg-gray-100">
                         <td class="px-6 py-4 text-sm">
-                            <!-- Badge différent selon l'ID de l'utilisateur -->
-                            <span th:if="${collection.userId == 1}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <!-- Badge différent selon le type de collection -->
+                            <th:block th:switch="${collection.type}">
+                                <span th:case="'NORMAL'" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                    <svg class="mr-1.5 h-2 w-2 text-gray-800" fill="currentColor" viewBox="0 0 8 8">
+                                        <circle cx="4" cy="4" r="3" />
+                                    </svg>
+                                    User Collection
+                                </span>
+                                <span th:case="'RECENT'" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    <svg class="mr-1.5 h-2 w-2 text-blue-800" fill="currentColor" viewBox="0 0 8 8">
+                                        <circle cx="4" cy="4" r="3" />
+                                    </svg>
+                                    Recent Books
+                                </span>
+                                <span th:case="'AUTHOR'" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                    <svg class="mr-1.5 h-2 w-2 text-indigo-800" fill="currentColor" viewBox="0 0 8 8">
+                                        <circle cx="4" cy="4" r="3" />
+                                    </svg>
+                                    Author Collection
+                                </span>
+                                <span th:case="'SMART'" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                    <svg class="mr-1.5 h-2 w-2 text-purple-800" fill="currentColor" viewBox="0 0 8 8">
+                                        <circle cx="4" cy="4" r="3" />
+                                    </svg>
+                                    Smart Collection
+                                </span>
+                                <span th:case="'GLOBAL'" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                     <svg class="mr-1.5 h-2 w-2 text-green-800" fill="currentColor" viewBox="0 0 8 8">
                                         <circle cx="4" cy="4" r="3" />
                                     </svg>
-                                    Created Automatically
+                                    Global Collection
                                 </span>
-                            <span th:unless="${collection.userId == 1}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                <span th:case="*" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                     <svg class="mr-1.5 h-2 w-2 text-blue-800" fill="currentColor" viewBox="0 0 8 8">
                                         <circle cx="4" cy="4" r="3" />
                                     </svg>
                                     Created by User
                                 </span>
+                            </th:block>
                         </td>
                         <td class="px-6 py-4 text-sm font-medium text-gray-800" th:text="${collection.title}">Collection Title</td>
                         <td class="px-6 py-4 text-sm text-gray-600 max-w-xs truncate" th:text="${collection.description}">Collection Description</td>
@@ -91,12 +135,66 @@
                     </tr>
                     </tbody>
                 </table>
+
+                <!-- Pagination -->
+                <div class="flex items-center justify-center gap-2 my-6" th:if="${userPrivateCollections.totalPages > 1}"
+                     th:with="visiblePages=5,
+                              startPage=${(userPrivateCollections.number - 2 < 0) ? 0 : ((userPrivateCollections.number + 2 >= userPrivateCollections.totalPages) ? (userPrivateCollections.totalPages - visiblePages < 0 ? 0 : userPrivateCollections.totalPages - visiblePages) : userPrivateCollections.number - 2)},
+                              endPage=${(startPage + visiblePages - 1 >= userPrivateCollections.totalPages) ? (userPrivateCollections.totalPages - 1) : (startPage + visiblePages - 1)}">
+
+                    <a th:if="${userPrivateCollections.number > 0}"
+                       th:href="@{/collections(page=${userPrivateCollections.number - 1}, size=${pageSize}, tab='private', sort=${sortField}, direction=${sortDirection})}"
+                       class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-blue-600 transition hover:bg-blue-600 hover:text-white">
+                        <span class="nav-icon">&#8592;</span>
+                    </a>
+                    <span th:unless="${userPrivateCollections.number > 0}" class="w-10 h-10 rounded-full bg-gray-100 opacity-50 border border-gray-200 flex items-center justify-center text-gray-400">
+                        <span class="nav-icon">&#8592;</span>
+                    </span>
+
+                    <a th:if="${startPage > 0}"
+                       th:href="@{/collections(page=0, size=${pageSize}, tab='private', sort=${sortField}, direction=${sortDirection})}"
+                       class="min-w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer transition text-sm text-gray-800 hover:bg-gray-200 px-3">
+                        <span>1</span>
+                    </a>
+                    <div class="flex items-center justify-center text-sm text-gray-500 tracking-wider" th:if="${startPage > 1}">...</div>
+
+                    <div class="flex items-center gap-1">
+                        <a th:each="i : ${#numbers.sequence(startPage, endPage)}"
+                           th:href="@{/collections(page=${i}, size=${pageSize}, tab='private', sort=${sortField}, direction=${sortDirection})}"
+                           class="min-w-9 h-9 rounded-full flex items-center justify-center cursor-pointer transition text-sm px-3"
+                           th:classappend="${userPrivateCollections.number == i} ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'">
+                            <span th:text="${i + 1}"></span>
+                        </a>
+                    </div>
+
+                    <div class="flex items-center justify-center text-sm text-gray-500 tracking-wider" th:if="${endPage < userPrivateCollections.totalPages - 2}">...</div>
+
+                    <a th:if="${endPage < userPrivateCollections.totalPages - 1}"
+                       th:href="@{/collections(page=${userPrivateCollections.totalPages - 1}, size=${pageSize}, tab='private', sort=${sortField}, direction=${sortDirection})}"
+                       class="min-w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer transition text-sm text-gray-800 hover:bg-gray-200 px-3">
+                        <span th:text="${userPrivateCollections.totalPages}"></span>
+                    </a>
+
+                    <a th:if="${userPrivateCollections.number < userPrivateCollections.totalPages - 1}"
+                       th:href="@{/collections(page=${userPrivateCollections.number + 1}, size=${pageSize}, tab='private', sort=${sortField}, direction=${sortDirection})}"
+                       class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-blue-600 transition hover:bg-blue-600 hover:text-white">
+                        <span class="nav-icon">&#8594;</span>
+                    </a>
+                    <span th:unless="${userPrivateCollections.number < userPrivateCollections.totalPages - 1}" class="w-10 h-10 rounded-full bg-gray-100 opacity-50 border border-gray-200 flex items-center justify-center text-gray-400">
+                        <span class="nav-icon">&#8594;</span>
+                    </span>
+                </div>
+
+                <!-- Message si aucune collection -->
+                <div th:if="${userPrivateCollections.totalElements == 0}" class="text-center py-10">
+                    <p class="text-gray-500">No private collections found.</p>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Public Collections Section -->
-    <div id="public-tab-content" style="display: none;">
+    <div id="public-tab-content" th:style="${activeTab != 'public' ? 'display: none;' : ''}">
         <div class="bg-white shadow-lg rounded-lg overflow-hidden">
             <div class="p-6">
                 <h2 class="text-2xl font-semibold text-gray-800 mb-4">My Public Collections</h2>
@@ -104,7 +202,14 @@
                     <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Type</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                            <a th:href="@{/collections(sort='title', direction=${sortDirection == 'asc' ? 'desc' : 'asc'}, tab='public')}">
+                                Name
+                                <span th:if="${sortField == 'title'}">
+                                    <span th:text="${sortDirection == 'asc' ? '↑' : '↓'}"></span>
+                                </span>
+                            </a>
+                        </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Description</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Owner</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
@@ -114,19 +219,45 @@
                     <tbody class="bg-white divide-y divide-gray-200">
                     <tr th:each="collection : ${userPublicCollections}" class="hover:bg-gray-100">
                         <td class="px-6 py-4 text-sm">
-                            <!-- Badge différent selon l'ID de l'utilisateur -->
-                            <span th:if="${collection.userId == 1}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <!-- Badge différent selon le type de collection -->
+                            <th:block th:switch="${collection.type}">
+                                <span th:case="'NORMAL'" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                    <svg class="mr-1.5 h-2 w-2 text-gray-800" fill="currentColor" viewBox="0 0 8 8">
+                                        <circle cx="4" cy="4" r="3" />
+                                    </svg>
+                                    User Collection
+                                </span>
+                                <span th:case="'RECENT'" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    <svg class="mr-1.5 h-2 w-2 text-blue-800" fill="currentColor" viewBox="0 0 8 8">
+                                        <circle cx="4" cy="4" r="3" />
+                                    </svg>
+                                    Recent Books
+                                </span>
+                                <span th:case="'AUTHOR'" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                    <svg class="mr-1.5 h-2 w-2 text-indigo-800" fill="currentColor" viewBox="0 0 8 8">
+                                        <circle cx="4" cy="4" r="3" />
+                                    </svg>
+                                    Author Collection
+                                </span>
+                                <span th:case="'SMART'" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                    <svg class="mr-1.5 h-2 w-2 text-purple-800" fill="currentColor" viewBox="0 0 8 8">
+                                        <circle cx="4" cy="4" r="3" />
+                                    </svg>
+                                    Smart Collection
+                                </span>
+                                <span th:case="'GLOBAL'" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                     <svg class="mr-1.5 h-2 w-2 text-green-800" fill="currentColor" viewBox="0 0 8 8">
                                         <circle cx="4" cy="4" r="3" />
                                     </svg>
-                                    Created Automatically
+                                    Global Collection
                                 </span>
-                            <span th:unless="${collection.userId == 1}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                <span th:case="*" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                     <svg class="mr-1.5 h-2 w-2 text-blue-800" fill="currentColor" viewBox="0 0 8 8">
                                         <circle cx="4" cy="4" r="3" />
                                     </svg>
                                     Created by User
                                 </span>
+                            </th:block>
                         </td>
                         <td class="px-6 py-4 text-sm font-medium text-gray-800" th:text="${collection.title}">Collection Title</td>
                         <td class="px-6 py-4 text-sm text-gray-600 max-w-xs truncate" th:text="${collection.description}">Collection Description</td>
@@ -148,12 +279,66 @@
                     </tr>
                     </tbody>
                 </table>
+
+                <!-- Pagination -->
+                <div class="flex items-center justify-center gap-2 my-6" th:if="${userPublicCollections.totalPages > 1}"
+                     th:with="visiblePages=5,
+                              startPage=${(userPublicCollections.number - 2 < 0) ? 0 : ((userPublicCollections.number + 2 >= userPublicCollections.totalPages) ? (userPublicCollections.totalPages - visiblePages < 0 ? 0 : userPublicCollections.totalPages - visiblePages) : userPublicCollections.number - 2)},
+                              endPage=${(startPage + visiblePages - 1 >= userPublicCollections.totalPages) ? (userPublicCollections.totalPages - 1) : (startPage + visiblePages - 1)}">
+
+                    <a th:if="${userPublicCollections.number > 0}"
+                       th:href="@{/collections(page=${userPublicCollections.number - 1}, size=${pageSize}, tab='public', sort=${sortField}, direction=${sortDirection})}"
+                       class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-blue-600 transition hover:bg-blue-600 hover:text-white">
+                        <span class="nav-icon">&#8592;</span>
+                    </a>
+                    <span th:unless="${userPublicCollections.number > 0}" class="w-10 h-10 rounded-full bg-gray-100 opacity-50 border border-gray-200 flex items-center justify-center text-gray-400">
+                        <span class="nav-icon">&#8592;</span>
+                    </span>
+
+                    <a th:if="${startPage > 0}"
+                       th:href="@{/collections(page=0, size=${pageSize}, tab='public', sort=${sortField}, direction=${sortDirection})}"
+                       class="min-w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer transition text-sm text-gray-800 hover:bg-gray-200 px-3">
+                        <span>1</span>
+                    </a>
+                    <div class="flex items-center justify-center text-sm text-gray-500 tracking-wider" th:if="${startPage > 1}">...</div>
+
+                    <div class="flex items-center gap-1">
+                        <a th:each="i : ${#numbers.sequence(startPage, endPage)}"
+                           th:href="@{/collections(page=${i}, size=${pageSize}, tab='public', sort=${sortField}, direction=${sortDirection})}"
+                           class="min-w-9 h-9 rounded-full flex items-center justify-center cursor-pointer transition text-sm px-3"
+                           th:classappend="${userPublicCollections.number == i} ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'">
+                            <span th:text="${i + 1}"></span>
+                        </a>
+                    </div>
+
+                    <div class="flex items-center justify-center text-sm text-gray-500 tracking-wider" th:if="${endPage < userPublicCollections.totalPages - 2}">...</div>
+
+                    <a th:if="${endPage < userPublicCollections.totalPages - 1}"
+                       th:href="@{/collections(page=${userPublicCollections.totalPages - 1}, size=${pageSize}, tab='public', sort=${sortField}, direction=${sortDirection})}"
+                       class="min-w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer transition text-sm text-gray-800 hover:bg-gray-200 px-3">
+                        <span th:text="${userPublicCollections.totalPages}"></span>
+                    </a>
+
+                    <a th:if="${userPublicCollections.number < userPublicCollections.totalPages - 1}"
+                       th:href="@{/collections(page=${userPublicCollections.number + 1}, size=${pageSize}, tab='public', sort=${sortField}, direction=${sortDirection})}"
+                       class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-blue-600 transition hover:bg-blue-600 hover:text-white">
+                        <span class="nav-icon">&#8594;</span>
+                    </a>
+                    <span th:unless="${userPublicCollections.number < userPublicCollections.totalPages - 1}" class="w-10 h-10 rounded-full bg-gray-100 opacity-50 border border-gray-200 flex items-center justify-center text-gray-400">
+                        <span class="nav-icon">&#8594;</span>
+                    </span>
+                </div>
+
+                <!-- Message si aucune collection -->
+                <div th:if="${userPublicCollections.totalElements == 0}" class="text-center py-10">
+                    <p class="text-gray-500">No public collections found.</p>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Smart Collections Section -->
-    <div id="smart-tab-content" style="display: none;">
+    <div id="smart-tab-content" th:style="${activeTab != 'smart' ? 'display: none;' : ''}">
         <div class="bg-white shadow-lg rounded-lg overflow-hidden">
             <div class="p-6">
                 <h2 class="text-2xl font-semibold text-gray-800 mb-4">Smart Collections</h2>
@@ -161,7 +346,14 @@
                     <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Type</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                            <a th:href="@{/collections(sort='title', direction=${sortDirection == 'asc' ? 'desc' : 'asc'}, tab='smart')}">
+                                Name
+                                <span th:if="${sortField == 'title'}">
+                                    <span th:text="${sortDirection == 'asc' ? '↑' : '↓'}"></span>
+                                </span>
+                            </a>
+                        </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Description</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Owner</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
@@ -171,12 +363,12 @@
                     <tbody class="bg-white divide-y divide-gray-200">
                     <tr th:each="collection : ${smartCollections}" class="hover:bg-gray-100">
                         <td class="px-6 py-4 text-sm">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                    <svg class="mr-1.5 h-2 w-2 text-purple-800" fill="currentColor" viewBox="0 0 8 8">
-                                        <circle cx="4" cy="4" r="3" />
-                                    </svg>
-                                    Smart Collection
-                                </span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                <svg class="mr-1.5 h-2 w-2 text-purple-800" fill="currentColor" viewBox="0 0 8 8">
+                                    <circle cx="4" cy="4" r="3" />
+                                </svg>
+                                Smart Collection
+                            </span>
                         </td>
                         <td class="px-6 py-4 text-sm font-medium text-gray-800" th:text="${collection.title}">Smart Collection Title</td>
                         <td class="px-6 py-4 text-sm text-gray-600 max-w-xs truncate" th:text="${collection.description}">Smart Collection Description</td>
@@ -198,12 +390,66 @@
                     </tr>
                     </tbody>
                 </table>
+
+                <!-- Pagination pour Smart Collections -->
+                <div class="flex items-center justify-center gap-2 my-6" th:if="${smartCollections.totalPages > 1}"
+                     th:with="visiblePages=5,
+                              startPage=${(smartCollections.number - 2 < 0) ? 0 : ((smartCollections.number + 2 >= smartCollections.totalPages) ? (smartCollections.totalPages - visiblePages < 0 ? 0 : smartCollections.totalPages - visiblePages) : smartCollections.number - 2)},
+                              endPage=${(startPage + visiblePages - 1 >= smartCollections.totalPages) ? (smartCollections.totalPages - 1) : (startPage + visiblePages - 1)}">
+
+                    <a th:if="${smartCollections.number > 0}"
+                       th:href="@{/collections(page=${smartCollections.number - 1}, size=${pageSize}, tab='smart', sort=${sortField}, direction=${sortDirection})}"
+                       class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-blue-600 transition hover:bg-blue-600 hover:text-white">
+                        <span class="nav-icon">&#8592;</span>
+                    </a>
+                    <span th:unless="${smartCollections.number > 0}" class="w-10 h-10 rounded-full bg-gray-100 opacity-50 border border-gray-200 flex items-center justify-center text-gray-400">
+                        <span class="nav-icon">&#8592;</span>
+                    </span>
+
+                    <a th:if="${startPage > 0}"
+                       th:href="@{/collections(page=0, size=${pageSize}, tab='smart', sort=${sortField}, direction=${sortDirection})}"
+                       class="min-w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer transition text-sm text-gray-800 hover:bg-gray-200 px-3">
+                        <span>1</span>
+                    </a>
+                    <div class="flex items-center justify-center text-sm text-gray-500 tracking-wider" th:if="${startPage > 1}">...</div>
+
+                    <div class="flex items-center gap-1">
+                        <a th:each="i : ${#numbers.sequence(startPage, endPage)}"
+                           th:href="@{/collections(page=${i}, size=${pageSize}, tab='smart', sort=${sortField}, direction=${sortDirection})}"
+                           class="min-w-9 h-9 rounded-full flex items-center justify-center cursor-pointer transition text-sm px-3"
+                           th:classappend="${smartCollections.number == i} ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'">
+                            <span th:text="${i + 1}"></span>
+                        </a>
+                    </div>
+
+                    <div class="flex items-center justify-center text-sm text-gray-500 tracking-wider" th:if="${endPage < smartCollections.totalPages - 2}">...</div>
+
+                    <a th:if="${endPage < smartCollections.totalPages - 1}"
+                       th:href="@{/collections(page=${smartCollections.totalPages - 1}, size=${pageSize}, tab='smart', sort=${sortField}, direction=${sortDirection})}"
+                       class="min-w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer transition text-sm text-gray-800 hover:bg-gray-200 px-3">
+                        <span th:text="${smartCollections.totalPages}"></span>
+                    </a>
+
+                    <a th:if="${smartCollections.number < smartCollections.totalPages - 1}"
+                       th:href="@{/collections(page=${smartCollections.number + 1}, size=${pageSize}, tab='smart', sort=${sortField}, direction=${sortDirection})}"
+                       class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-blue-600 transition hover:bg-blue-600 hover:text-white">
+                        <span class="nav-icon">&#8594;</span>
+                    </a>
+                    <span th:unless="${smartCollections.number < smartCollections.totalPages - 1}" class="w-10 h-10 rounded-full bg-gray-100 opacity-50 border border-gray-200 flex items-center justify-center text-gray-400">
+                        <span class="nav-icon">&#8594;</span>
+                    </span>
+                </div>
+
+                <!-- Message si aucune collection -->
+                <div th:if="${smartCollections.totalElements == 0}" class="text-center py-10">
+                    <p class="text-gray-500">No smart collections found.</p>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Global Collections Section -->
-    <div id="global-tab-content" style="display: none;">
+    <div id="global-tab-content" th:style="${activeTab != 'global' ? 'display: none;' : ''}">
         <div class="bg-white shadow-lg rounded-lg overflow-hidden">
             <div class="p-6">
                 <h2 class="text-2xl font-semibold text-gray-800 mb-4">Global Collections</h2>
@@ -211,7 +457,14 @@
                     <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Type</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                            <a th:href="@{/collections(sort='title', direction=${sortDirection == 'asc' ? 'desc' : 'asc'}, tab='global')}">
+                                Name
+                                <span th:if="${sortField == 'title'}">
+                                    <span th:text="${sortDirection == 'asc' ? '↑' : '↓'}"></span>
+                                </span>
+                            </a>
+                        </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Description</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Owner</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
@@ -221,12 +474,27 @@
                     <tbody class="bg-white divide-y divide-gray-200">
                     <tr th:each="collection : ${globalCollections}" class="hover:bg-gray-100">
                         <td class="px-6 py-4 text-sm">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <!-- Badge selon le type de collection -->
+                            <th:block th:switch="${collection.type}">
+                                <span th:case="'AUTHOR'" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                    <svg class="mr-1.5 h-2 w-2 text-indigo-800" fill="currentColor" viewBox="0 0 8 8">
+                                        <circle cx="4" cy="4" r="3" />
+                                    </svg>
+                                    Author Collection
+                                </span>
+                                <span th:case="'RECENT'" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    <svg class="mr-1.5 h-2 w-2 text-blue-800" fill="currentColor" viewBox="0 0 8 8">
+                                        <circle cx="4" cy="4" r="3" />
+                                    </svg>
+                                    Recent Books
+                                </span>
+                                <span th:case="*" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                     <svg class="mr-1.5 h-2 w-2 text-green-800" fill="currentColor" viewBox="0 0 8 8">
                                         <circle cx="4" cy="4" r="3" />
                                     </svg>
-                                    Created Automatically
+                                    System Collection
                                 </span>
+                            </th:block>
                         </td>
                         <td class="px-6 py-4 text-sm font-medium text-gray-800" th:text="${collection.title}">Global Collection Title</td>
                         <td class="px-6 py-4 text-sm text-gray-600 max-w-xs truncate" th:text="${collection.description}">Global Collection Description</td>
@@ -236,12 +504,67 @@
                                 <a th:href="@{/collections/{id}(id=${collection.id})}" class="text-indigo-600 hover:text-indigo-900 px-2 py-1 bg-indigo-100 rounded">
                                     View
                                 </a>
+
                             </div>
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-500" th:text="${collection.bookCount}">0</td>
                     </tr>
                     </tbody>
                 </table>
+
+                <!-- Pagination pour Global Collections -->
+                <div class="flex items-center justify-center gap-2 my-6" th:if="${globalCollections.totalPages > 1}"
+                     th:with="visiblePages=5,
+                              startPage=${(globalCollections.number - 2 < 0) ? 0 : ((globalCollections.number + 2 >= globalCollections.totalPages) ? (globalCollections.totalPages - visiblePages < 0 ? 0 : globalCollections.totalPages - visiblePages) : globalCollections.number - 2)},
+                              endPage=${(startPage + visiblePages - 1 >= globalCollections.totalPages) ? (globalCollections.totalPages - 1) : (startPage + visiblePages - 1)}">
+
+                    <a th:if="${globalCollections.number > 0}"
+                       th:href="@{/collections(page=${globalCollections.number - 1}, size=${pageSize}, tab='global', sort=${sortField}, direction=${sortDirection})}"
+                       class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-blue-600 transition hover:bg-blue-600 hover:text-white">
+                        <span class="nav-icon">&#8592;</span>
+                    </a>
+                    <span th:unless="${globalCollections.number > 0}" class="w-10 h-10 rounded-full bg-gray-100 opacity-50 border border-gray-200 flex items-center justify-center text-gray-400">
+                        <span class="nav-icon">&#8592;</span>
+                    </span>
+
+                    <a th:if="${startPage > 0}"
+                       th:href="@{/collections(page=0, size=${pageSize}, tab='global', sort=${sortField}, direction=${sortDirection})}"
+                       class="min-w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer transition text-sm text-gray-800 hover:bg-gray-200 px-3">
+                        <span>1</span>
+                    </a>
+                    <div class="flex items-center justify-center text-sm text-gray-500 tracking-wider" th:if="${startPage > 1}">...</div>
+
+                    <div class="flex items-center gap-1">
+                        <a th:each="i : ${#numbers.sequence(startPage, endPage)}"
+                           th:href="@{/collections(page=${i}, size=${pageSize}, tab='global', sort=${sortField}, direction=${sortDirection})}"
+                           class="min-w-9 h-9 rounded-full flex items-center justify-center cursor-pointer transition text-sm px-3"
+                           th:classappend="${globalCollections.number == i} ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'">
+                            <span th:text="${i + 1}"></span>
+                        </a>
+                    </div>
+
+                    <div class="flex items-center justify-center text-sm text-gray-500 tracking-wider" th:if="${endPage < globalCollections.totalPages - 2}">...</div>
+
+                    <a th:if="${endPage < globalCollections.totalPages - 1}"
+                       th:href="@{/collections(page=${globalCollections.totalPages - 1}, size=${pageSize}, tab='global', sort=${sortField}, direction=${sortDirection})}"
+                       class="min-w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer transition text-sm text-gray-800 hover:bg-gray-200 px-3">
+                        <span th:text="${globalCollections.totalPages}"></span>
+                    </a>
+
+                    <a th:if="${globalCollections.number < globalCollections.totalPages - 1}"
+                       th:href="@{/collections(page=${globalCollections.number + 1}, size=${pageSize}, tab='global', sort=${sortField}, direction=${sortDirection})}"
+                       class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-blue-600 transition hover:bg-blue-600 hover:text-white">
+                        <span class="nav-icon">&#8594;</span>
+                    </a>
+                    <span th:unless="${globalCollections.number < globalCollections.totalPages - 1}" class="w-10 h-10 rounded-full bg-gray-100 opacity-50 border border-gray-200 flex items-center justify-center text-gray-400">
+                        <span class="nav-icon">&#8594;</span>
+                    </span>
+                </div>
+
+                <!-- Message si aucune collection -->
+                <div th:if="${globalCollections.totalElements == 0}" class="text-center py-10">
+                    <p class="text-gray-500">No global collections found.</p>
+                </div>
             </div>
         </div>
     </div>
@@ -252,25 +575,5 @@
         <a th:href="@{/collections/smart/new}" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">Create Smart Collection</a>
     </div>
 </div>
-
-<script>
-    function showTab(tabName) {
-        document.getElementById('private-tab-content').style.display = 'none';
-        document.getElementById('public-tab-content').style.display = 'none';
-        document.getElementById('smart-tab-content').style.display = 'none';
-        document.getElementById('global-tab-content').style.display = 'none';
-        document.getElementById(tabName + '-tab-content').style.display = 'block';
-        document.getElementById('private-tab').classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
-        document.getElementById('public-tab').classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
-        document.getElementById('smart-tab').classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
-        document.getElementById('global-tab').classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
-        document.getElementById('private-tab').classList.add('text-gray-500', 'hover:text-gray-700');
-        document.getElementById('public-tab').classList.add('text-gray-500', 'hover:text-gray-700');
-        document.getElementById('smart-tab').classList.add('text-gray-500', 'hover:text-gray-700');
-        document.getElementById('global-tab').classList.add('text-gray-500', 'hover:text-gray-700');
-        document.getElementById(tabName + '-tab').classList.remove('text-gray-500', 'hover:text-gray-700');
-        document.getElementById(tabName + '-tab').classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
-    }
-</script>
 </body>
 </html>

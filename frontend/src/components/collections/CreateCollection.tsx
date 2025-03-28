@@ -48,9 +48,9 @@ const CreateCollection: React.FC = () => {
                 isPublic: formData.isPublic
                 // Ne pas inclure owner ici, il sera défini côté serveur
             };
-            console.log("Sending collection data:", collectionData);
+
             const createdCollection = await BookCollectionService.createBookCollection(collectionData);
-            console.log("Collection created successfully:", createdCollection);
+
             navigate(`/collections/user`);
         } catch (err: any) {
             console.error("Error creating collection:", err);

@@ -1,5 +1,20 @@
 <div class="max-w-4xl mx-auto">
     <h1 class="text-3xl font-bold text-gray-900 mb-6">Public Collections</h1>
+
+    <div class="flex justify-end items-center mb-4 space-x-2">
+        <span class="text-sm text-gray-600">Collections per page:</span>
+        <form method="get" th:action="@{/collections/public}" class="inline-block">
+            <input type="hidden" name="page" value="0">
+            <select name="size" onchange="this.form.submit()" class="border rounded p-1 text-sm">
+                <option value="5" th:selected="${pageSize == 5}">5</option>
+                <option value="10" th:selected="${pageSize == 10}">10</option>
+                <option value="15" th:selected="${pageSize == 15}">15</option>
+                <option value="20" th:selected="${pageSize == 20}">20</option>
+                <option value="30" th:selected="${pageSize == 30}">30</option>
+            </select>
+        </form>
+    </div>
+
     <div class="bg-white shadow-md rounded-lg overflow-hidden">
         <table class="min-w-full">
             <thead class="bg-gray-50">
@@ -35,45 +50,53 @@
               startPage=${(publicCollections.number - 2 < 0) ? 0 : ((publicCollections.number + 2 >= publicCollections.totalPages) ? (publicCollections.totalPages - visiblePages < 0 ? 0 : publicCollections.totalPages - visiblePages) : publicCollections.number - 2)},
               endPage=${(startPage + visiblePages - 1 >= publicCollections.totalPages) ? (publicCollections.totalPages - 1) : (startPage + visiblePages - 1)}">
 
-        <button class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-blue-600 transition hover:bg-blue-600 hover:text-white"
-                th:if="${publicCollections.number > 0}"
-                th:onclick="'window.location.href=\'' + @{/collections/public(page=${publicCollections.number - 1})} + '\''">
+        <!-- Bouton précédent -->
+        <a th:if="${publicCollections.number > 0}"
+           th:href="@{/collections/public(page=${publicCollections.number - 1}, size=${pageSize})}"
+           class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-blue-600 transition hover:bg-blue-600 hover:text-white">
             <span class="nav-icon">&#8592;</span>
-        </button>
+        </a>
+        <span th:unless="${publicCollections.number > 0}" class="w-10 h-10 rounded-full bg-gray-100 opacity-50 border border-gray-200 flex items-center justify-center text-gray-400">
+            <span class="nav-icon">&#8592;</span>
+        </span>
 
         <!-- Premier numéro de page avec ellipsis si nécessaire -->
-        <div class="min-w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer transition text-sm text-gray-800 hover:bg-gray-200"
-             th:if="${startPage > 0}"
-             th:onclick="'window.location.href=\'' + @{/collections/public(page=0)} + '\''">
+        <a th:if="${startPage > 0}"
+           th:href="@{/collections/public(page=0, size=${pageSize})}"
+           class="min-w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer transition text-sm text-gray-800 hover:bg-gray-200 px-3">
             <span>1</span>
-        </div>
+        </a>
 
         <div class="flex items-center justify-center text-sm text-gray-500 tracking-wider" th:if="${startPage > 1}">...</div>
 
-        <!-- Pages visibles dans la fenêtre coulissante -->
+        <!-- Pages visibles -->
         <div class="flex items-center gap-1">
-            <div class="min-w-9 h-9 rounded-full flex items-center justify-center cursor-pointer transition text-sm"
-                 th:each="i : ${#numbers.sequence(startPage, endPage)}"
-                 th:classappend="${publicCollections.number == i} ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'"
-                 th:onclick="'window.location.href=\'' + @{/collections/public(page=${i})} + '\''">
+            <a th:each="i : ${#numbers.sequence(startPage, endPage)}"
+               th:href="@{/collections/public(page=${i}, size=${pageSize})}"
+               class="min-w-9 h-9 rounded-full flex items-center justify-center cursor-pointer transition text-sm px-3"
+               th:classappend="${publicCollections.number == i} ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'">
                 <span th:text="${i + 1}"></span>
-            </div>
+            </a>
         </div>
 
         <!-- Dernier numéro de page avec ellipsis si nécessaire -->
         <div class="flex items-center justify-center text-sm text-gray-500 tracking-wider" th:if="${endPage < publicCollections.totalPages - 2}">...</div>
 
-        <div class="min-w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer transition text-sm text-gray-800 hover:bg-gray-200"
-             th:if="${endPage < publicCollections.totalPages - 1}"
-             th:onclick="'window.location.href=\'' + @{/collections/public(page=${publicCollections.totalPages - 1})} + '\''">
+        <a th:if="${endPage < publicCollections.totalPages - 1}"
+           th:href="@{/collections/public(page=${publicCollections.totalPages - 1}, size=${pageSize})}"
+           class="min-w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer transition text-sm text-gray-800 hover:bg-gray-200 px-3">
             <span th:text="${publicCollections.totalPages}"></span>
-        </div>
+        </a>
 
-        <button class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-blue-600 transition hover:bg-blue-600 hover:text-white"
-                th:if="${publicCollections.number < publicCollections.totalPages - 1}"
-                th:onclick="'window.location.href=\'' + @{/collections/public(page=${publicCollections.number + 1})} + '\''">
+        <!-- Bouton suivant -->
+        <a th:if="${publicCollections.number < publicCollections.totalPages - 1}"
+           th:href="@{/collections/public(page=${publicCollections.number + 1}, size=${pageSize})}"
+           class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-blue-600 transition hover:bg-blue-600 hover:text-white">
             <span class="nav-icon">&#8594;</span>
-        </button>
+        </a>
+        <span th:unless="${publicCollections.number < publicCollections.totalPages - 1}" class="w-10 h-10 rounded-full bg-gray-100 opacity-50 border border-gray-200 flex items-center justify-center text-gray-400">
+            <span class="nav-icon">&#8594;</span>
+        </span>
     </div>
 
     <div class="mt-6 text-center">
