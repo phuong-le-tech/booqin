@@ -1,4 +1,4 @@
-/*
+
 package fr.uge.booqIn.service;
 
 import fr.uge.booqIn.dto.lending.BookLendingShow;
@@ -10,7 +10,7 @@ import fr.uge.booqIn.enums.BookStatus;
 import fr.uge.booqIn.event.BooqInEventPublisher;
 import fr.uge.booqIn.event.publishable.BookReturnedEvent;
 import fr.uge.booqIn.mapper.BookLendingMapper;
-import fr.uge.booqIn.pdf.PdfCreator;
+import fr.uge.booqIn.service.PdfCreator;
 import fr.uge.booqIn.repository.BookLendingRepository;
 import fr.uge.booqIn.repository.BookRepository;
 import fr.uge.booqIn.repository.UserRepository;
@@ -393,4 +393,4 @@ class BookLendingServiceTest {
     verify(bookLendingRepository).delete(any(BookLending.class));
     verify(userRepository).save(any(User.class));
   }
-}*/
+}

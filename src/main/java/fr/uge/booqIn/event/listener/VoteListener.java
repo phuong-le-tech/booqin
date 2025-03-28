@@ -7,6 +7,8 @@ import fr.uge.booqIn.event.publishable.VoteBookEvent;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.repository.BookCollectionRepository;
 import fr.uge.booqIn.repository.BookRepository;
+import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
+import fr.uge.booqIn.service.interfaces.BookServiceInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -21,14 +23,14 @@ import java.util.Optional;
 public class VoteListener {
   private static final Logger logger = LoggerFactory.getLogger(VoteListener.class);
 
-  private final BookCollectionRepository bookCollectionRepository;
-  private final BookRepository bookRepository;
+  private final BookCollectionServiceInterface bookCollectionService;
+  private final BookServiceInterface bookService;
 
   public VoteListener(
-          BookCollectionRepository bookCollectionRepository,
-          BookRepository bookRepository) {
-    this.bookCollectionRepository = bookCollectionRepository;
-    this.bookRepository = bookRepository;
+          BookCollectionServiceInterface bookCollectionService,
+          BookServiceInterface bookService) {
+    this.bookCollectionService = bookCollectionService;
+    this.bookService = bookService;
   }
 
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -39,29 +41,13 @@ public class VoteListener {
     VoteType voteType = event.voteType();
 
     logger.debug("Processing book vote event: userId={}, bookId={}, voteType={}", userId, bookId, voteType);
+    AbstractBookCollection collection = bookCollectionService.findLikedCollectionByOwnerId(userId);
+    Book book = bookService.findBookById(bookId);
 
     if (voteType != VoteType.UPVOTE) {
-      logger.debug("Skipping non-upvote event");
+      bookCollectionService.removeBookFromCollection(collection.getId(), book.getId());
       return;
     }
-
-    try {
-      Optional<AbstractBookCollection> collectionOpt = bookCollectionRepository.findLikedCollectionByOwnerId(userId);
-      AbstractBookCollection likedCollection = collectionOpt.orElseThrow(() ->
-              new ResourceNotFoundException("Liked collection not found for user: " + userId));
-
-      Book book = bookRepository.findById(bookId)
-              .orElseThrow(() -> new ResourceNotFoundException("Book not found with id: " + bookId));
-
-      likedCollection.addBook(book);
-      bookCollectionRepository.save(likedCollection);
-
-      logger.info("Successfully added book id={} to user's (id={}) liked collection", bookId, userId);
-
-    } catch (ResourceNotFoundException e) {
-      logger.warn("Unable to add book to liked collection: {}", e.getMessage());
-    } catch (IllegalArgumentException e) {
-      logger.error("Book already in the collection", e);
-    }
+    bookCollectionService.addBookToCollection(collection.getId(), book.getId());
   }
 }

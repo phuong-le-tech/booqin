@@ -1,4 +1,4 @@
-package fr.uge.booqIn.configuration;
+package fr.uge.booqIn.config;
 
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;

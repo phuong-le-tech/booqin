@@ -5,6 +5,7 @@ import fr.uge.booqIn.dto.auth.LoginDto;
 import fr.uge.booqIn.dto.auth.RegisterDto;
 import fr.uge.booqIn.dto.auth.UserMeDto;
 import fr.uge.booqIn.entity.User;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
 
 public interface AuthServiceInterface {
@@ -17,7 +18,7 @@ public interface AuthServiceInterface {
    * @return the created user
    * @throws fr.uge.booqIn.exception.DuplicateResourceException if email already exists
    */
-  User register(RegisterDto registerDto);
+  User register(@NonNull RegisterDto registerDto);
 
   /**
    * Authenticates a user and returns JWT tokens
@@ -26,7 +27,7 @@ public interface AuthServiceInterface {
    * @return AuthResponse containing access and refresh tokens
    * @throws org.springframework.security.authentication.BadCredentialsException if credentials are invalid
    */
-  AuthResponse login(LoginDto loginDto);
+  AuthResponse login(@NonNull LoginDto loginDto);
 
   /**
    * Retrieves current user data from the authentication context
@@ -35,7 +36,7 @@ public interface AuthServiceInterface {
    * @return UserMeDto containing user data
    * @throws IllegalStateException if user is not authenticated
    */
-  UserMeDto getCurrentUser(Authentication authentication);
+  UserMeDto getCurrentUser(@NonNull Authentication authentication);
 
 
   /**
@@ -44,5 +45,5 @@ public interface AuthServiceInterface {
    * @param userId the user ID
    * @throws IllegalStateException if user not found
    */
-  void invalidateUserSessions(Long userId);
+  void invalidateUserSessions(@NonNull Long userId);
 }

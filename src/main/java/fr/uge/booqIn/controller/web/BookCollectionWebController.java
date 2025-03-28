@@ -5,6 +5,7 @@ import fr.uge.booqIn.dto.bookCollection.BookCollectionCreate;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionIndex;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionUpdate;
+import fr.uge.booqIn.dto.comment.CommentDTO;
 import fr.uge.booqIn.dto.lending.LendingResponseDTO;
 import fr.uge.booqIn.dto.vote.VoteCreate;
 import fr.uge.booqIn.entity.Author;
@@ -14,9 +15,9 @@ import fr.uge.booqIn.enums.BookStatus;
 import fr.uge.booqIn.enums.LendStatus;
 import fr.uge.booqIn.enums.VoteType;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
+import fr.uge.booqIn.interfaces.BookCollection;
 import fr.uge.booqIn.mapper.BookCollectionMapper;
 import fr.uge.booqIn.mapper.BookMapper;
-import fr.uge.booqIn.model.BookCollection;
 import fr.uge.booqIn.service.impl.UserVoteService;
 import fr.uge.booqIn.service.interfaces.*;
 import jakarta.validation.Valid;
@@ -146,7 +147,6 @@ public class BookCollectionWebController {
                   .collect(Collectors.toList());
           model.addAttribute("lentBooks", lentBooks);
           model.addAttribute("borrowedBooks", borrowedBooks);
-          logger.info("Lending info added to model: lentBooks=" + lentBooks.size() + ", borrowedBooks=" + borrowedBooks.size());
         } catch (Exception e) {
           model.addAttribute("lentBooks", Collections.emptyList());
           model.addAttribute("borrowedBooks", Collections.emptyList());
@@ -202,10 +202,8 @@ public class BookCollectionWebController {
           Model model,
           Principal principal
   ) {
-    logger.info("Adding book with ID " + bookId + " to collection with ID " + collectionId);
     try {
       BookCollectionShow collectionOpt = bookCollectionService.findBookCollectionById(collectionId);
-      logger.info("Collection found: " + collectionOpt.title());
       BookShow bookShow = bookService.findById(bookId);
       Set<Author> authors = bookShow.authors().stream().map(bookMapper::toAuthor).collect(Collectors.toSet());
       Book book = new Book.Builder().id(bookShow.id())
@@ -237,7 +235,6 @@ public class BookCollectionWebController {
           @PathVariable Long bookId,
           @AuthenticationPrincipal User currentUser,
           Model model) {
-    logger.info("Removing book with ID " + bookId + " from collection with ID " + collectionId);
     try {
       // Verify that the current user owns the collection
       BookCollectionShow collection = bookCollectionService.findBookCollectionById(collectionId);

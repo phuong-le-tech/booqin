@@ -16,7 +16,7 @@ import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.BookStatus;
 import fr.uge.booqIn.enums.LendStatus;
 import fr.uge.booqIn.enums.VoteType;
-import fr.uge.booqIn.model.BookCollection;
+import fr.uge.booqIn.interfaces.BookCollection;
 import fr.uge.booqIn.service.impl.UserVoteService;
 import fr.uge.booqIn.service.interfaces.*;
 import org.springframework.data.domain.Page;
@@ -154,11 +154,6 @@ public class BookWebController {
                                 (existing, replacement) -> existing // Keep first in case of duplicates
                         ));
                 model.addAttribute("notificationIdsByBook", notificationIdsByBook);
-
-                logger.info("Lending info added to model: lentBooks=" + lentBooks.size() +
-                        ", borrowedBooks=" + borrowedBooks.size() +
-                        ", queuePositions=" + bookQueuePositions.size() +
-                        ", activeQueues=" + activeQueues.size());
             } catch (Exception e) {
                 logger.warning("Error loading lending data: " + e.getMessage());
                 model.addAttribute("lentBooks", Collections.emptyList());

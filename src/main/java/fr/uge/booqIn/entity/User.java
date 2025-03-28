@@ -2,7 +2,7 @@ package fr.uge.booqIn.entity;
 
 import fr.uge.booqIn.enums.UserRole;
 import fr.uge.booqIn.factory.BookCollectionFactory;
-import fr.uge.booqIn.model.Followable;
+import fr.uge.booqIn.interfaces.Followable;
 import jakarta.persistence.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;

@@ -29,17 +29,12 @@ public class GlobalCollectionListener {
     public void handleEvent(BookAddedEvent event) {
         Long bookId = event.bookId();
         boolean isNewBook = event.isNewBook();
-
-        logger.info("Handling BookAddedEvent for book ID: " + bookId +
-                " (isNewBook: " + isNewBook + ")");
-
         Book book = bookRepository.findBookById(bookId);
 
         try {
             globalCollectionManager.updateAuthorCollectionsForNewBook(book);
 
             if (isNewBook) {
-                logger.info("Book is new, refreshing recent books collection...");
                 globalCollectionManager.refreshRecentBooksCollection();
             }
         } catch (Exception e) {

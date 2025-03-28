@@ -1,4 +1,3 @@
-/*
 package fr.uge.booqIn.service;
 
 import fr.uge.booqIn.dto.bookCollection.BookCollectionCreate;
@@ -7,8 +6,8 @@ import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionUpdate;
 import fr.uge.booqIn.entity.*;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
+import fr.uge.booqIn.interfaces.BookCollection;
 import fr.uge.booqIn.mapper.BookCollectionMapper;
-import fr.uge.booqIn.model.BookCollection;
 import fr.uge.booqIn.repository.BookCollectionRepository;
 import fr.uge.booqIn.repository.BookRepository;
 import fr.uge.booqIn.service.impl.BookCollectionServiceImpl;
@@ -121,7 +120,7 @@ class BookCollectionServiceTest {
             testCollection.isPublic(),
             Collections.emptyList(),
             null,
-            "NORMAL",
+            BookCollection.CollectionType.NORMAL,
             LocalDateTime.now(),
             LocalDateTime.now()
     );
@@ -183,7 +182,7 @@ class BookCollectionServiceTest {
             createDTO.isPublic(),
             Collections.emptyList(),
             null,
-            "NORMAL",
+            BookCollection.CollectionType.NORMAL,
             LocalDateTime.now(),
             LocalDateTime.now()
     );
@@ -240,7 +239,7 @@ class BookCollectionServiceTest {
             createDTO.isPublic(),
             Collections.emptyList(),
             null,
-            "SMART",
+            BookCollection.CollectionType.SMART,
             LocalDateTime.now(),
             LocalDateTime.now()
     );
@@ -293,7 +292,7 @@ class BookCollectionServiceTest {
             updatedPublic,
             Collections.emptyList(),
             null,
-            "NORMAL",
+            BookCollection.CollectionType.NORMAL,
             LocalDateTime.now(),
             LocalDateTime.now()
     );
@@ -518,7 +517,7 @@ class BookCollectionServiceTest {
             testCollection.isPublic(),
             Collections.emptyList(),
             null,
-            "NORMAL",
+            BookCollection.CollectionType.NORMAL,
             LocalDateTime.now(),
             LocalDateTime.now()
     );
@@ -607,4 +606,4 @@ class BookCollectionServiceTest {
     verify(bookCollectionRepository).findPrivateCollectionsByOwner(eq(testUser), eq(pageable));
     verify(bookCollectionMapper).toBookCollectionIndex(eq(testCollection));
   }
-}*/
+}
