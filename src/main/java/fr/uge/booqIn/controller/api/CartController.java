@@ -50,7 +50,6 @@ public class CartController {
     
     @PostMapping("/add-book")
     public ResponseEntity<ApiResponse<Boolean>> addBookToCart(@RequestBody CartDto request) {
-        System.out.println(request);
         Optional<UserIndex> userOptional = Optional.ofNullable(userService.findUserByIdToIndex(request.userId()));
         
         Optional<BookShow> bookOptional = Optional.ofNullable(bookService.findById(request.bookId()));

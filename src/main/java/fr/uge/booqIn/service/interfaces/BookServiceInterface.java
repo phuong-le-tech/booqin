@@ -51,12 +51,10 @@ public interface BookServiceInterface {
   /**
    * Create a new book in the system.
    *
-   * @param book Book entity to create
+   * @param dto Book entity to create
    * @return Created book entity with generated ID
    * @throws jakarta.validation.ValidationException if validation fails
    */
-  Book createBook(@NonNull @Valid Book book);
-
   Book createFromDto(@NonNull @Valid BookCreate dto);
 
 

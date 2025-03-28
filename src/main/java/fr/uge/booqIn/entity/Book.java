@@ -69,12 +69,10 @@ public class Book implements PolymorphicEntity, Votable, Commentable, Followable
   private Date publicationDate;
 
   @NotNull(message = "Creation date is required")
-  @PastOrPresent(message = "Creation date cannot be in the future")
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "created_at", nullable = false, updatable = false)
   private LocalDateTime createdAt = LocalDateTime.now();
 
-  @PastOrPresent(message = "Update date cannot be in the future")
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "updated_at")
   private LocalDateTime updatedAt = LocalDateTime.now();

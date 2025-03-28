@@ -282,19 +282,19 @@ public class BookWebController {
             @RequestParam("publicationDate") @DateTimeFormat(pattern = "yyyy-MM-dd") Date publicationDate,
             @RequestParam("description") String description) {
 
-        Set<Author> authorSet = getAuthors(authors);
+        Set<String> authorSet = getAuthors(authors);
         // Conversion en Set pour les ISBN et filtrage des valeurs vides
         Set<String> isbnSet = getIsbnSet(isbns);
         // Construction du livre
-        Book book = new Book.Builder()
-                .isbns(isbnSet)
-                .title(title)
-                .authors(authorSet)
-                .description(description)
-                .publicationDate(publicationDate)
-                .build();
+        BookCreate book = new BookCreate(
+                title,
+                authorSet.stream().toList(),
+                description,
+                publicationDate,
+                isbnSet.stream().toList()
+        );
 
-        bookService.createBook(book);
+        bookService.createFromDto(book);
         return "redirect:/books";
     }
 
@@ -304,12 +304,10 @@ public class BookWebController {
             .collect(Collectors.toSet());
     }
 
-    private Set<Author> getAuthors(List<String> authors) {
+    private Set<String> getAuthors(List<String> authors) {
         return authors.stream()
-            .filter(a -> a != null && !a.trim().isEmpty())
-            .map(a -> a.split(" ", 2))
-            .map(author -> new Author(author[0], author.length > 1 ? author[1] : ""))
-            .collect(Collectors.toSet());
+                .filter(a -> a != null && !a.trim().isEmpty())
+                .collect(Collectors.toSet());
     }
 
     @PostMapping("/vote")
