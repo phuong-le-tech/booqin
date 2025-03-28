@@ -67,15 +67,12 @@ class VoteService {
     async getVoteCounts(entityId: number, entityType: string) {
         try {
             const normalizedEntityType = normalizeEntityType(entityType);
-            console.log(`Fetching vote counts for entityId: ${entityId}, type: ${normalizedEntityType}`);
             const response = await axios.get<ApiResponse<VoteCount>>(
                 `${API_URL}/count/entity/${entityId}/type/${normalizedEntityType}`
             );
             return response.data.data;
         } catch (error: any) {
             console.error('Error getting vote counts:', error);
-            console.log('Response status:', error.response?.status);
-            console.log('Response data:', error.response?.data);
 
             // Return default count object instead of throwing
             return {

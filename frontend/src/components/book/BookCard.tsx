@@ -229,10 +229,9 @@ export const BookCard: React.FC<BookCardProps> = ({
         setLoading(true);
         try {
             const response = await axiosInstance.post("/v1/carts/add-book", {
-                params: {
-                    userId,
-                    bookId: id,
-                }});
+                userId,
+                bookId: id
+            });
 
             if (response.status === 200 && response.data?.success) {
                 toast.success("Book has been added to cart");
@@ -350,7 +349,6 @@ export const BookCard: React.FC<BookCardProps> = ({
             const response = await axiosInstance.post(
                 `/v1/collections/${collectionId}/books/${id}`
             );
-            console.log("Collection add response:", response);
 
             if (response.status === 200 && response.data?.success) {
                 toast.success("Book successfully added to collection");

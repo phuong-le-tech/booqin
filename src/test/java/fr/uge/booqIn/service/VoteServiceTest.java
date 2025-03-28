@@ -7,9 +7,10 @@ import fr.uge.booqIn.dto.vote.VoteUpdate;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.entity.Vote;
 import fr.uge.booqIn.enums.VoteType;
+import fr.uge.booqIn.event.BooqInEventPublisher;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
+import fr.uge.booqIn.interfaces.Votable;
 import fr.uge.booqIn.mapper.VoteMapper;
-import fr.uge.booqIn.model.Votable;
 import fr.uge.booqIn.repository.UserRepository;
 import fr.uge.booqIn.repository.VoteRepository;
 import fr.uge.booqIn.service.impl.VoteServiceImpl;
@@ -40,6 +41,7 @@ class VoteServiceTest {
   private User testUser;
   private Vote testVote;
   private Votable testVotableEntity;
+  private BooqInEventPublisher booqInEventPublisher;
 
   @BeforeEach
   void setUp() {
@@ -47,8 +49,9 @@ class VoteServiceTest {
     userRepository = Mockito.mock(UserRepository.class);
     strategyContext = Mockito.mock(EntityStrategyContext.class);
     voteMapper = Mockito.mock(VoteMapper.class);
+    booqInEventPublisher = Mockito.mock(BooqInEventPublisher.class);
 
-    voteService = new VoteServiceImpl(voteRepository, userRepository, strategyContext, voteMapper);
+    voteService = new VoteServiceImpl(voteRepository, userRepository, strategyContext, voteMapper, booqInEventPublisher);
 
     // Setup test data
     testUser = new User();

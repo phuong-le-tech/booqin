@@ -1,14 +1,10 @@
 package fr.uge.booqIn.entity;
 
 import fr.uge.booqIn.enums.VoteType;
-import fr.uge.booqIn.model.PolymorphicAssociation;
-import fr.uge.booqIn.model.PolymorphicEntity;
-import fr.uge.booqIn.model.Votable;
+import fr.uge.booqIn.interfaces.PolymorphicAssociation;
+import fr.uge.booqIn.interfaces.Votable;
 import jakarta.persistence.*;
 
-/**
- * Entity representing a vote.
- */
 @Entity
 @Table(uniqueConstraints = {
         @UniqueConstraint(columnNames = {"user_id", "entity_id", "entity_type"})

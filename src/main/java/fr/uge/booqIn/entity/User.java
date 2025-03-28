@@ -1,7 +1,8 @@
 package fr.uge.booqIn.entity;
 
 import fr.uge.booqIn.enums.UserRole;
-import fr.uge.booqIn.model.Followable;
+import fr.uge.booqIn.factory.BookCollectionFactory;
+import fr.uge.booqIn.interfaces.Followable;
 import jakarta.persistence.*;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
@@ -12,7 +13,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.*;
 
 @Entity
-@Table(name="users")
+@Table(name = "users")
 public class User implements UserDetails, Followable {
   private static final String ENTITY_TYPE = "USER";
 
@@ -70,7 +71,7 @@ public class User implements UserDetails, Followable {
   @Temporal(TemporalType.TIMESTAMP)
   @Column(name = "updated_at")
   private Date updatedAt = new Date();
-  
+
   @Column(name = "lending_points", nullable = false)
   private Integer lendingPoints = 0;
 
@@ -85,7 +86,6 @@ public class User implements UserDetails, Followable {
     this.address = address;
     this.role = role;
 
-    // Initialize default collections
     initializeDefaultCollections();
   }
 
@@ -98,7 +98,6 @@ public class User implements UserDetails, Followable {
     this.role = role;
     this.cart = cart;
 
-    // Initialize default collections
     initializeDefaultCollections();
   }
 
@@ -108,21 +107,15 @@ public class User implements UserDetails, Followable {
    * 2. Followed Users' Books - Smart collection of books from followed users' public collections
    */
   private void initializeDefaultCollections() {
-    // Create "Liked Books" smart collection
-    SmartBookCollection likedBooksCollection = new SmartBookCollection();
-    likedBooksCollection.setTitle("Liked Books");
-    likedBooksCollection.setDescription("Automatic collection of books that the user has liked");
-    likedBooksCollection.setOwner(this);
-    likedBooksCollection.setPublic(false);
+    LikedBookCollection likedBooksCollection = BookCollectionFactory.createLikedBookCollection(
+            this,
+            true
+    );
 
-    // Create "Followed Users' Books" smart collection
-    SmartBookCollection followedUsersCollection = new SmartBookCollection();
-    followedUsersCollection.setTitle("Followed Users' Books");
-    followedUsersCollection.setDescription("Automatic collection of books from users that the user follows");
-    followedUsersCollection.setOwner(this);
-    followedUsersCollection.setPublic(false);
+    FollowedBookCollection followedUsersCollection = BookCollectionFactory.createFollowedBookCollection(
+            this
+    );
 
-    // Add collections to user
     this.collections.add(likedBooksCollection);
     this.collections.add(followedUsersCollection);
   }
@@ -146,6 +139,7 @@ public class User implements UserDetails, Followable {
   public String getFullName() {
     return firstName + " " + lastName;
   }
+
   public String getEmail() {
     return email;
   }
@@ -248,6 +242,7 @@ public class User implements UserDetails, Followable {
     collections.add(collection);
     collection.setOwner(this);
   }
+
   public List<BookLending> getLentBooks() {
     return lentBooks;
   }
@@ -266,24 +261,26 @@ public class User implements UserDetails, Followable {
 
   /**
    * Gets the user's "Liked Books" collection
+   *
    * @return The smart collection of liked books or null if not found
    */
-  public SmartBookCollection getLikedBooksCollection() {
+  public LikedBookCollection getLikedBooksCollection() {
     return collections.stream()
-            .filter(c -> c instanceof SmartBookCollection && "Liked Books".equals(c.getTitle()))
-            .map(c -> (SmartBookCollection) c)
+            .filter(c -> c instanceof LikedBookCollection && "Liked Books".equals(c.getTitle()))
+            .map(c -> (LikedBookCollection) c)
             .findFirst()
             .orElse(null);
   }
 
   /**
    * Gets the user's "Followed Users' Books" collection
+   *
    * @return The smart collection of books from followed users or null if not found
    */
-  public SmartBookCollection getFollowedUsersCollection() {
+  public FollowedBookCollection getFollowedUsersCollection() {
     return collections.stream()
             .filter(c -> "Followed Users' Books".equals(c.getTitle()))
-            .map(c -> (SmartBookCollection) c)
+            .map(c -> (FollowedBookCollection) c)
             .findFirst()
             .orElse(null);
   }
@@ -341,14 +338,15 @@ public class User implements UserDetails, Followable {
       }
     }
   }
+
   public Integer getLendingPoints() {
     return lendingPoints;
   }
-  
+
   public void setLendingPoints(Integer lendingPoints) {
     this.lendingPoints = lendingPoints;
   }
-  
+
   public void incrementLendingPoints() {
     this.lendingPoints++;
   }

@@ -5,11 +5,11 @@ import fr.uge.booqIn.entity.*;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.factory.BookCollectionFactory;
 import fr.uge.booqIn.mapper.BookCollectionMapper;
-import fr.uge.booqIn.model.BookCollection;
+import fr.uge.booqIn.interfaces.BookCollection;
 import fr.uge.booqIn.repository.*;
 import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
 import fr.uge.booqIn.specification.BookCollectionSpecification;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -21,7 +21,6 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.lang.NonNull;
-import org.springframework.validation.annotation.Validated;
 
 import java.util.ConcurrentModificationException;
 import java.util.List;
@@ -45,11 +44,14 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
 
   @Override
   @Transactional(readOnly = true)
-  public Page<BookCollectionIndex> findBookCollections(String name, String description, boolean isPublic, Pageable pageable) {
+  public Page<BookCollectionIndex> findBookCollections(String title,
+                                                       String description,
+                                                       boolean isPublic,
+                                                       @NonNull Pageable pageable) {
     Specification<AbstractBookCollection> spec = Specification.where(null);
 
-    if (name != null && !name.isEmpty()) {
-      spec = spec.and(BookCollectionSpecification.hasTitle(name));
+    if (title != null && !title.isEmpty()) {
+      spec = spec.and(BookCollectionSpecification.hasTitle(title));
     }
 
     if (description != null && !description.isEmpty()) {
@@ -66,7 +68,7 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
 
   @Override
   @Transactional(readOnly = true)
-  public BookCollectionShow findBookCollectionById(Long id) throws ResourceNotFoundException {
+  public BookCollectionShow findBookCollectionById(@NonNull Long id) throws ResourceNotFoundException {
     return bookCollectionRepository.findById(id)
             .map(bookCollectionMapper::toBookCollectionShow)
             .orElseThrow(() -> new ResourceNotFoundException("Collection not found"));
@@ -79,7 +81,8 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
           retryFor = {ObjectOptimisticLockingFailureException.class, ConcurrentModificationException.class},
           backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
   )
-  public BookCollectionShow createBookCollection(@NonNull @Validated BookCollectionCreate collection, @NonNull User currentUser) {
+  public BookCollectionShow createBookCollection(@NonNull @Valid BookCollectionCreate collection,
+                                                 @NonNull User currentUser) {
     if (collection.criteria().isEmpty()) {
       NormalBookCollection newCollection = new NormalBookCollection.Builder()
               .title(collection.title())
@@ -110,7 +113,8 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
           retryFor = {ObjectOptimisticLockingFailureException.class, ConcurrentModificationException.class},
           backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
   )
-  public BookCollectionShow updateBookCollection(@NonNull Long id, @NonNull @Validated BookCollectionUpdate collection) {
+  public BookCollectionShow updateBookCollection(@NonNull Long id,
+                                                 @NonNull @Valid BookCollectionUpdate collection) {
     AbstractBookCollection existingCollection = bookCollectionRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Collection not found"));
 
@@ -121,7 +125,6 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
       existingCollection.setDescription(collection.description().get());
     }
     existingCollection.setPublic(collection.isPublic());
-    System.out.println("ICICI");
     AbstractBookCollection updatedCollection = bookCollectionRepository.save(existingCollection);
     return bookCollectionMapper.toBookCollectionShow(updatedCollection);
   }
@@ -141,7 +144,7 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
 
   @Override
   @Transactional(readOnly = true)
-  public Page<BookCollectionIndex> getPublicCollections(Pageable pageable) {
+  public Page<BookCollectionIndex> getPublicCollections(@NonNull Pageable pageable) {
     Page<AbstractBookCollection> collectionsPage = bookCollectionRepository.findByIsPublicTrue(pageable);
     return collectionsPage.map(bookCollectionMapper::toBookCollectionIndex);
   }
@@ -153,14 +156,14 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
           retryFor = {ObjectOptimisticLockingFailureException.class, ConcurrentModificationException.class},
           backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
   )
-  public void addBookToCollection(@NotNull Long collectionId, @NotNull Long bookId) {
-    BookCollection collection = findById(collectionId);
-
+  public void addBookToCollection(@NonNull Long collectionId, @NonNull Long bookId) {
+    AbstractBookCollection collection = findById(collectionId);
     Optional<Book> book = bookRepo.findById(bookId);
     if (book.isEmpty()) {
       throw new ResourceNotFoundException("Book", "id", bookId);
     }
     collection.addBook(book.get());
+    bookCollectionRepository.save(collection);
   }
 
   @Override
@@ -171,24 +174,20 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
           backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
   )
   public void removeBookFromCollection(@NonNull Long collectionId, @NonNull Long bookId) {
-    BookCollection collection = findById(collectionId);
+    AbstractBookCollection collection = findById(collectionId);
     Optional<Book> book = bookRepo.findById(bookId);
     if (book.isEmpty()) {
       throw new ResourceNotFoundException("Book", "id", bookId);
     }
-
     collection.removeBook(book.get());
+    bookCollectionRepository.save(collection);
   }
 
   @Override
   @Transactional(readOnly = true)
-  public Page<BookCollectionShow> getUserCollectionsWithBooks(User user, Pageable pageable) {
-    // Note: This implementation may need to be adjusted based on your repository method
-    // If getUserCollectionsWithBooks is a custom method, it may need pagination support
+  public Page<BookCollectionShow> getUserCollectionsWithBooks(@NonNull User user, @NonNull Pageable pageable) {
     List<AbstractBookCollection> collections = bookCollectionRepository.findByOwnerWithBooks(user);
-    System.out.println("ALL USER CL IN SERVICE:\n" + collections);
 
-    // Apply pagination manually if necessary
     int start = (int) pageable.getOffset();
     int end = Math.min((start + pageable.getPageSize()), collections.size());
 
@@ -202,44 +201,59 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
 
   @Override
   @Transactional(readOnly = true)
-  public BookCollection findCollectionById(Long id) {
-    return bookCollectionRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("BookCollection", "id", id));
+  public BookCollection findCollectionById(@NonNull Long id) {
+    return findById(id);
   }
 
   @Override
   @Transactional(readOnly = true)
-  public Page<BookCollectionIndex> getPublicUserCollection(User owner, Pageable pageable) {
+  public Page<BookCollectionIndex> getPublicUserCollection(@NonNull User owner, @NonNull Pageable pageable) {
     Page<AbstractBookCollection> collectionsPage = bookCollectionRepository.findPublicCollectionsByOwner(owner, pageable);
     return collectionsPage.map(bookCollectionMapper::toBookCollectionIndex);
   }
 
   @Override
   @Transactional(readOnly = true)
-  public Page<BookCollectionIndex> getPrivateUserCollection(User owner, Pageable pageable) {
+  public Page<BookCollectionIndex> getPrivateUserCollection(@NonNull User owner, @NonNull Pageable pageable) {
     Page<AbstractBookCollection> collectionsPage = bookCollectionRepository.findPrivateCollectionsByOwner(owner, pageable);
     return collectionsPage.map(bookCollectionMapper::toBookCollectionIndex);
   }
 
+  @Override
+  @Transactional(readOnly = true)
+  public  List<AbstractBookCollection> findPublicCollectionsByOwnerId(@NonNull Long ownerId) {
+    return bookCollectionRepository.findPublicCollectionsByOwnerId(ownerId);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public AbstractBookCollection findLikedCollectionByOwnerId(@NonNull Long ownerId) {
+    return bookCollectionRepository.findLikedCollectionByOwnerId(ownerId)
+            .orElseThrow( () -> new ResourceNotFoundException("Liked collection not found for user: " + ownerId));
+  }
   /**
    * Helper methods
    */
-  private BookCollection findById(Long id) {
-    return bookCollectionRepository.findById(id)
+  private AbstractBookCollection findById(Long id) {
+    AbstractBookCollection collectionWithBooks = bookCollectionRepository.findByIdWithBooks(id)
             .orElseThrow(() -> new ResourceNotFoundException("BookCollection", "id", id));
+    collectionWithBooks.getOwner().getFullName();
+    return collectionWithBooks;
   }
 
   // Recovery methods for retryable operations
   @Recover
   public BookCollectionShow recoverFromOptimisticLockingFailureCreate(
-          ObjectOptimisticLockingFailureException ex, @NonNull @Validated BookCollectionCreate collection, @NonNull User currentUser) {
+          ObjectOptimisticLockingFailureException ex,
+          BookCollectionCreate collection,
+          User currentUser) {
     logger.warning("Concurrent modification detected while creating collection: " + collection.title());
     throw new ConcurrentModificationException("The collection has been modified by someone else. Please try again.", ex);
   }
 
   @Recover
   public BookCollectionShow recoverFromOptimisticLockingFailureUpdate(
-          ObjectOptimisticLockingFailureException ex, @NonNull Long id, @NonNull @Validated BookCollectionUpdate collection) {
+          ObjectOptimisticLockingFailureException ex, @NonNull Long id, @NonNull @Valid BookCollectionUpdate collection) {
     logger.warning("Concurrent modification detected while updating collection with ID: " + id);
     throw new ConcurrentModificationException("The collection has been modified by someone else. Please try again.", ex);
   }
@@ -253,7 +267,7 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
 
   @Recover
   public void recoverFromOptimisticLockingFailureAddBook(
-          ObjectOptimisticLockingFailureException ex, @NotNull Long collectionId, @NotNull Long bookId) {
+          ObjectOptimisticLockingFailureException ex, @NonNull Long collectionId, @NonNull Long bookId) {
     logger.warning("Concurrent modification detected while adding book ID: " + bookId + " to collection ID: " + collectionId);
     throw new ConcurrentModificationException("The collection has been modified by someone else. Please try again.", ex);
   }
@@ -264,4 +278,38 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
     logger.warning("Concurrent modification detected while removing book ID: " + bookId + " from collection ID: " + collectionId);
     throw new ConcurrentModificationException("The collection has been modified by someone else. Please try again.", ex);
   }
+
+  @Recover
+  public BookCollectionShow recoverFromConcurrentModificationFailureCreate(
+          ConcurrentModificationException ex,
+          BookCollectionCreate collection,
+          User currentUser) {
+    logger.warning("Concurrent modification detected while creating collection: " + collection.title());
+    throw new ConcurrentModificationException("The collection has been modified by someone else. Please try again.", ex);
+  }
+
+  @Recover
+  public BookCollectionShow recoverFromAllExceptions(
+          Exception ex, @NonNull @Valid BookCollectionCreate collection, @NonNull User currentUser) {
+    logger.warning("Échec après plusieurs tentatives lors de la création de la collection: " + collection.title() + ", erreur: " + ex.getMessage());
+    throw new RuntimeException("Impossible de créer la collection: " + ex.getMessage(), ex);
+  }
+
+  @Recover
+  public BookCollectionShow recoverFromConcurrentModificationFailureUpdate(
+          ConcurrentModificationException ex, @NonNull Long id, @NonNull @Valid BookCollectionUpdate collection) {
+    logger.warning("Concurrent modification detected while updating collection with ID: " + id);
+    throw new ConcurrentModificationException("The collection has been modified by someone else. Please try again.", ex);
+  }
+
+  @Recover
+  public void recoverFromResourceNotFound(
+          ResourceNotFoundException ex,
+          @NonNull Long collectionId,
+          @NonNull Long bookId) {
+    logger.warning("Collection not found while processing book ID: " + bookId + " for collection ID: " + collectionId);
+    throw ex; // Re-throw the original exception
+  }
+
+
 }

@@ -15,6 +15,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -65,18 +66,18 @@ public class AuthController {
 
   @PostMapping("/logout")
   public ResponseEntity<ApiResponse<Void>> logout(
-          HttpServletRequest request,
-          HttpServletResponse response,
-          Authentication authentication) {
+          @NonNull HttpServletRequest request,
+          @NonNull HttpServletResponse response,
+          @NonNull Authentication authentication) {
 
     // Get tokens from cookies
-    var refreshToken = getCookieValue(request, REFRESH_TOKEN_COOKIE_NAME);
+    var refreshToken = getCookieValue(request);
 
     // Revoke refresh token if present (which invalidates its entire family)
     refreshToken.ifPresent(jwtService::revokeToken);
 
     // Invalidate user sessions if authenticated
-    if (authentication != null && authentication.isAuthenticated()) {
+    if (authentication.isAuthenticated()) {
       User user = (User) authentication.getPrincipal();
       authService.invalidateUserSessions(user.getId());
     }
@@ -89,7 +90,7 @@ public class AuthController {
   }
 
   @GetMapping("/me")
-  public ResponseEntity<ApiResponse<UserMeDto>> me(Authentication authentication) {
+  public ResponseEntity<ApiResponse<UserMeDto>> me(@NonNull Authentication authentication) {
     UserMeDto userMeDto = authService.getCurrentUser(authentication);
     return ResponseEntity.ok(
             ApiResponse.success("Current user data", userMeDto));
@@ -100,10 +101,10 @@ public class AuthController {
    */
   @PostMapping("/refresh")
   public ResponseEntity<ApiResponse<Void>> refreshToken(
-          HttpServletRequest request,
-          HttpServletResponse response) {
+          @NonNull HttpServletRequest request,
+          @NonNull HttpServletResponse response) {
 
-    Optional<String> refreshToken = getCookieValue(request, REFRESH_TOKEN_COOKIE_NAME);
+    Optional<String> refreshToken = getCookieValue(request);
 
     if (refreshToken.isEmpty()) {
       return ResponseEntity
@@ -141,12 +142,12 @@ public class AuthController {
     response.addCookie(cookie);
   }
 
-  private Optional<String> getCookieValue(HttpServletRequest request, String cookieName) {
+  private Optional<String> getCookieValue(HttpServletRequest request) {
     if (request.getCookies() == null) {
       return Optional.empty();
     }
     for (Cookie cookie : request.getCookies()) {
-      if (cookieName.equals(cookie.getName())) {
+      if (AuthController.REFRESH_TOKEN_COOKIE_NAME.equals(cookie.getName())) {
         return Optional.of(cookie.getValue());
       }
     }

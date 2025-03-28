@@ -178,7 +178,6 @@ class CommentService {
                 parentId: commentData.parentId || null
             };
 
-            console.log("CommentService: Envoi de la requête de création avec payload:", payload);
 
             const response = await axios.post<ApiResponse<CommentDTO>>(
                 `${API_URL}`,

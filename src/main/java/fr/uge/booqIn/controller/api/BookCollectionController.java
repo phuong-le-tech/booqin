@@ -1,9 +1,13 @@
 package fr.uge.booqIn.controller.api;
 
-import fr.uge.booqIn.dto.bookCollection.*;
+import fr.uge.booqIn.dto.bookCollection.BookCollectionCreate;
+import fr.uge.booqIn.dto.bookCollection.BookCollectionIndex;
+import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
+import fr.uge.booqIn.dto.bookCollection.BookCollectionUpdate;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.factory.ApiResponse;
 import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -13,8 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/collections")
@@ -43,7 +45,10 @@ public class BookCollectionController {
 
     Pageable pageable = PageRequest.of(page, size, sort);
 
-    Page<BookCollectionIndex> collections = bookCollectionService.findBookCollections(title, description, isPublic, pageable);
+    Page<BookCollectionIndex> collections = bookCollectionService.findBookCollections(title,
+            description,
+            isPublic,
+            pageable);
     return ResponseEntity.ok(ApiResponse.success("Collections found", collections));
   }
 
@@ -51,10 +56,8 @@ public class BookCollectionController {
   public ResponseEntity<ApiResponse<BookCollectionShow>> createCollection(
           @Valid @RequestBody BookCollectionCreate bookCollectionCreateDto,
           @AuthenticationPrincipal User currentUser) {
-    
-
+    System.out.println("Creating collection" + bookCollectionCreateDto + " " + currentUser);
     BookCollectionShow collectionShow = bookCollectionService.createBookCollection(bookCollectionCreateDto, currentUser);
-    System.out.println("Collection created successfully" + collectionShow);
     return ResponseEntity.status(HttpStatus.CREATED)
             .body(ApiResponse.success("Collection created successfully", collectionShow));
   }

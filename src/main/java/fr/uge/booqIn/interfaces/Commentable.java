@@ -1,4 +1,4 @@
-package fr.uge.booqIn.model;
+package fr.uge.booqIn.interfaces;
 
 public interface Commentable extends PolymorphicEntity{
 }

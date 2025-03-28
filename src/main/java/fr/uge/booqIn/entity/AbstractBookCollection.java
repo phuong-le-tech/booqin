@@ -1,8 +1,9 @@
 package fr.uge.booqIn.entity;
 
-import fr.uge.booqIn.model.BookCollection;
-import fr.uge.booqIn.model.Commentable;
-import fr.uge.booqIn.model.Votable;
+import fr.uge.booqIn.exception.DuplicateResourceException;
+import fr.uge.booqIn.interfaces.BookCollection;
+import fr.uge.booqIn.interfaces.Commentable;
+import fr.uge.booqIn.interfaces.Votable;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -174,10 +175,9 @@ public abstract class AbstractBookCollection implements BookCollection, Votable,
   @Override
   public void addBook(Book book) {
     if (books.contains(book)) {
-      throw new IllegalArgumentException("Book already in collection");
+      throw new DuplicateResourceException("Collection", "book", book.getId());
     }
     books.add(book);
-    this.setUpdatedAt(LocalDateTime.now());
   }
 
   @Override
@@ -185,7 +185,6 @@ public abstract class AbstractBookCollection implements BookCollection, Votable,
     if (!books.remove(book)) {
       return;
     }
-    this.setUpdatedAt(LocalDateTime.now());
   }
 
   @Override

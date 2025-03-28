@@ -1,15 +1,13 @@
 package fr.uge.booqIn.entity;
 
-import fr.uge.booqIn.model.Commentable;
-import fr.uge.booqIn.model.Followable;
-import fr.uge.booqIn.model.PolymorphicEntity;
-import fr.uge.booqIn.model.Votable;
+import fr.uge.booqIn.interfaces.Commentable;
+import fr.uge.booqIn.interfaces.Followable;
+import fr.uge.booqIn.interfaces.PolymorphicEntity;
+import fr.uge.booqIn.interfaces.Votable;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-import org.hibernate.validator.constraints.ISBN;
 import org.hibernate.validator.constraints.Length;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.HashSet;

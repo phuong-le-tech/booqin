@@ -12,11 +12,11 @@ import fr.uge.booqIn.event.publishable.BookAvailableEvent;
 import fr.uge.booqIn.event.publishable.BookNotAvailableEvent;
 import fr.uge.booqIn.event.publishable.BookReturnedEvent;
 import fr.uge.booqIn.mapper.BookLendingMapper;
-import fr.uge.booqIn.pdf.PdfCreator;
+import fr.uge.booqIn.service.PdfCreator;
 import fr.uge.booqIn.repository.*;
 import fr.uge.booqIn.service.interfaces.BookLendingInterface;
 
-import fr.uge.booqIn.service.interfaces.BookWaitingQueueServiceInterface;
+import org.springframework.lang.NonNull;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -64,7 +64,7 @@ public class BookLendingServiceImpl implements BookLendingInterface {
           retryFor = {ConcurrentModificationException.class,
                   ObjectOptimisticLockingFailureException.class},
           backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
-  public boolean confirmLoan(Long lendingId) {
+  public boolean confirmLoan(@NonNull Long lendingId) {
     Optional<BookLending> optionalLending = bookLendingRepository.findById(lendingId);
 
     if (optionalLending.isEmpty()) {
@@ -88,9 +88,11 @@ public class BookLendingServiceImpl implements BookLendingInterface {
 
 
   @Transactional
-  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {ConcurrentModificationException.class,
-          ObjectOptimisticLockingFailureException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
-  public boolean returnBook(Long lendingId) {
+  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}",
+          retryFor = {ConcurrentModificationException.class,
+                  ObjectOptimisticLockingFailureException.class},
+          backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
+  public boolean returnBook(@NonNull Long lendingId) {
     Optional<BookLending> optionalLending = bookLendingRepository.findById(lendingId);
 
     if (optionalLending.isEmpty()) {
@@ -114,9 +116,11 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   }
 
   @Transactional
-  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {ConcurrentModificationException.class,
-          ObjectOptimisticLockingFailureException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
-  public boolean reserveBook(Long bookId, Long borrowerId) {
+  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}",
+          retryFor = {ConcurrentModificationException.class,
+          ObjectOptimisticLockingFailureException.class},
+          backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
+  public boolean reserveBook(@NonNull Long bookId, @NonNull Long borrowerId) {
     Optional<Book> optionalBook = bookRepository.findById(bookId);
     Optional<User> optionalUser = Optional.ofNullable(userService.findUserById(borrowerId));
     if (optionalBook.isEmpty() || optionalUser.isEmpty()) {
@@ -127,7 +131,6 @@ public class BookLendingServiceImpl implements BookLendingInterface {
 
     var bookLending = findBookLendingByBookId(bookId);
     if (bookLending.isEmpty()) {
-      System.out.println("Book already reserved");
       eventPublisher.publishEvent(new BookNotAvailableEvent(bookId, borrowerId));
       return false;
     }
@@ -138,15 +141,16 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     selectedLending.setStatus(BookStatus.RESERVED);
     bookLendingRepository.save(selectedLending);
     User lender = selectedLending.getLender();
-    System.out.println("Book reserved from lender " + lender.getFullName() + " with " + lender.getLendingPoints() + " points");
 
     return true;
   }
 
   @Transactional
-  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {ConcurrentModificationException.class,
-          ObjectOptimisticLockingFailureException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
-  public boolean cancelBook(Long bookId, Long userId) {
+  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}",
+          retryFor = {ConcurrentModificationException.class,
+          ObjectOptimisticLockingFailureException.class},
+          backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
+  public boolean cancelBook(@NonNull Long bookId, @NonNull Long userId) {
     User user = userService.findUserById(userId);
     Optional<Book> optBook = bookRepository.findById(bookId);
     if (optBook.isEmpty()) {
@@ -162,9 +166,11 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   }
 
   @Transactional
-  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {ConcurrentModificationException.class,
-          ObjectOptimisticLockingFailureException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
-  public boolean markAsShipped(Long lendingId) {
+  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}",
+          retryFor = {ConcurrentModificationException.class,
+          ObjectOptimisticLockingFailureException.class},
+          backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
+  public boolean markAsShipped(@NonNull Long lendingId) {
     Optional<BookLending> optionalLending = bookLendingRepository.findById(lendingId);
 
     if (optionalLending.isEmpty()) {
@@ -184,9 +190,11 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   }
 
   @Transactional
-  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {ConcurrentModificationException.class,
-          ObjectOptimisticLockingFailureException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
-  public void markAsPending(Long bookId, Long userId) {
+  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}",
+          retryFor = {ConcurrentModificationException.class,
+          ObjectOptimisticLockingFailureException.class},
+          backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
+  public void markAsPending(@NonNull Long bookId, @NonNull Long userId) {
     Optional<Book> optBook = bookRepository.findById(bookId);
     User user = userService.findUserById(userId);
     if (optBook.isEmpty()) {
@@ -208,9 +216,11 @@ public class BookLendingServiceImpl implements BookLendingInterface {
   }
 
   @Transactional
-  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {ConcurrentModificationException.class,
-          ObjectOptimisticLockingFailureException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
-  public boolean markAsReturn(Long bookId, Long userId) {
+  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}",
+          retryFor = {ConcurrentModificationException.class,
+          ObjectOptimisticLockingFailureException.class},
+          backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
+  public boolean markAsReturn(@NonNull Long bookId, @NonNull Long userId) {
     Optional<Book> optBook = bookRepository.findById(bookId);
     User user = userService.findUserById(userId);
     if (optBook.isEmpty()) {
@@ -230,15 +240,20 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     return false;
   }
 
-  public List<BookLending> findUserLendings(Long userId) {
+  @Override
+  @Transactional(readOnly = true)
+  public List<BookLending> findUserLendings(@NonNull Long userId) {
     User user = userService.findUserById(userId);
     return bookLendingRepository.findByBorrower(user);
   }
 
+  @Override
   @Transactional
-  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}", retryFor = {ConcurrentModificationException.class,
-          ObjectOptimisticLockingFailureException.class}, backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
-  public void ListClearBookstoLend(List<BookLending> bookLendings) {
+  @Retryable(maxAttemptsExpression = "${spring.retry.max-attempts}",
+          retryFor = {ConcurrentModificationException.class,
+          ObjectOptimisticLockingFailureException.class},
+          backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
+  public void ListClearBookstoLend(@NonNull List<BookLending> bookLendings) {
     for (BookLending bookLending : bookLendings) {
       bookLending.setBorrower(null);
       bookLending.setStatus(BookStatus.AVAILABLE);
@@ -246,11 +261,11 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     }
   }
 
-  @Transactional
-  public List<BookLendingShow> findBorrowedLendingsAsDTO(Long userId) {
+  @Override
+  @Transactional(readOnly = true)
+  public List<BookLendingShow> findBorrowedLendingsAsDTO(@NonNull Long userId) {
     User user = userService.findUserById(userId);
     List<BookLending> borrows = bookLendingRepository.findByBorrower(user);
-    System.out.println(borrows);
     for (BookLending borrow : borrows) {
       initializeBookLendingLazyRelations(borrow);
     }
@@ -259,12 +274,11 @@ public class BookLendingServiceImpl implements BookLendingInterface {
             .collect(Collectors.toList());
   }
 
-  @Transactional
-  public List<BookLendingShow> findLentBooksAsDTO(Long userId) {
-    System.out.println("Finding lent books ================================= ");
+  @Override
+  @Transactional(readOnly = true)
+  public List<BookLendingShow> findLentBooksAsDTO(@NonNull Long userId) {
     User user = userService.findUserById(userId);
     List<BookLending> lendings = bookLendingRepository.findBookLendingsByLender(user);
-    System.out.println(lendings);
 
     for (BookLending lending : lendings) {
       initializeBookLendingLazyRelations(lending);
@@ -275,8 +289,9 @@ public class BookLendingServiceImpl implements BookLendingInterface {
             .collect(Collectors.toList());
   }
 
-  @Transactional
-  public LendingResponseDTO findAllUserLendingsAsDTO(Long userId, LendStatus type) {
+  @Override
+  @Transactional(readOnly = true)
+  public LendingResponseDTO findAllUserLendingsAsDTO(@NonNull Long userId, @NonNull LendStatus type) {
     boolean containsAll = type == LendStatus.ALL;
 
     List<BookLendingShow> borrowedBooks = containsAll || type == LendStatus.BORROWED
@@ -290,23 +305,89 @@ public class BookLendingServiceImpl implements BookLendingInterface {
     return new LendingResponseDTO(borrowedBooks, lentBooks, containsAll);
   }
 
-  public List<BookLending> findUserOwnedLendings(Long userId) {
-    User user = userService.findUserById(userId);
-    return bookLendingRepository.findBookLendingsByLender(user);
-  }
-
-  public Map<String, List<BookLending>> findAllUserLendings(Long userId) {
-    User user = userService.findUserById(userId);
-    Map<String, List<BookLending>> result = new HashMap<>();
-
-    result.put("borrowed", bookLendingRepository.findByBorrower(user));
-    result.put("lent", bookLendingRepository.findBookLendingsByLender(user));
-
-    return result;
-  }
-
+  @Override
   @Transactional
-  public void initializeBookLendingLazyRelations(BookLending bookLending) {
+  public boolean loanable(@NonNull Long bookId, @NonNull Long userId) {
+    Optional<Book> bookOpt = bookRepository.findById(bookId);
+    if (bookOpt.isEmpty()) {
+      return false;
+    }
+    Book book = bookOpt.get();
+
+    User user = userService.findUserById(userId);
+    if (user == null) {
+      return false;
+    }
+
+    boolean alreadyLoanable = user.getLentBooks().stream()
+            .anyMatch(toL -> toL.getBook().getId().equals(bookId));
+
+    if (alreadyLoanable) {
+      return false;
+    }
+
+    var booklend = new BookLending(book, user);
+    bookLendingRepository.save(booklend);
+    user.addLentBook(booklend);
+    userRepository.save(user);
+
+    eventPublisher.publishEvent(new BookAvailableEvent(user.getId(), book.getTitle(), book.getId()));
+    return true;
+  }
+
+  @Override
+  @Transactional
+  public boolean isNoMoreLoanable(@NonNull Long bookId, @NonNull Long userId) {
+    Optional<Book> bookOpt = bookRepository.findById(bookId);
+    if (bookOpt.isEmpty()) {
+      return false;
+    }
+    Book book = bookOpt.get();
+
+    User user = userService.findUserById(userId);
+    if (user == null) {
+      return false;
+    }
+    Optional<BookLending> bookLending = userRepository.findById(userId).get().getLentBooks().stream()
+            .filter(toL -> toL.getBook().getId().equals(bookId))
+            .findFirst();
+
+    if (bookLending.isEmpty()) {
+      return false;
+    }
+
+    user.removeLentBook(bookLending.get());
+    bookLendingRepository.delete(bookLending.get());
+    userRepository.save(user);
+    return true;
+  }
+
+  @Override
+  @Transactional
+  public byte[] getShippingTicketBytes(@NonNull Long lendingId) {
+    Optional<BookLending> lendingOpt = bookLendingRepository.findById(lendingId);
+    if (lendingOpt.isEmpty()) {
+      return null;
+    }
+
+    BookLending lending = lendingOpt.get();
+    return lending.getShippingTicketPDF();
+  }
+
+  @Override
+  @Transactional
+  public Optional<BookLending> findBookLendingByBookId(@NonNull Long bookId) {
+    return Optional
+            .ofNullable(bookLendingRepository.findByBookIdAndBorrowerIsNullAndStatus(bookId, BookStatus.AVAILABLE));
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Optional<BookLending> findByBookIdAndBorrowerIsNullAndStatus(@NonNull Long bookId) {
+    return Optional.ofNullable(bookLendingRepository.findByBookIdAndBorrowerIsNullAndStatus(bookId, BookStatus.AVAILABLE));
+  }
+
+  private void initializeBookLendingLazyRelations(BookLending bookLending) {
 
     if (bookLending.getBook() != null) {
       Long bookId = bookLending.getBook().getId();
@@ -320,6 +401,7 @@ public class BookLendingServiceImpl implements BookLendingInterface {
       bookLending.getBook().setCategories(completeBook.getCategories());
       bookLending.getBook().setIsbns(completeBook.getIsbns());
     }
+
   }
 
   @Recover
@@ -362,101 +444,6 @@ public class BookLendingServiceImpl implements BookLendingInterface {
                                                                  Long bookId, Long userId) {
     throw new ConcurrentModificationException("The book lending has been modified by someone else. Please try again.",
             ex);
-  }
-
-  @Override
-  @Transactional
-  public Optional<BookLending> findBookLendingByBookId(Long bookId) {
-    return Optional
-            .ofNullable(bookLendingRepository.findByBookIdAndBorrowerIsNullAndStatus(bookId, BookStatus.AVAILABLE));
-  }
-
-  @Override
-  @Transactional
-  public boolean loanable(Long bookId, Long userId) {
-
-    Optional<Book> bookOpt = bookRepository.findById(bookId);
-    if (bookOpt.isEmpty()) {
-      return false;
-    }
-    Book book = bookOpt.get();
-
-
-    User user = userService.findUserById(userId);
-    if (user == null) {
-      return false;
-    }
-
-    boolean alreadyLoanable = user.getLentBooks().stream()
-            .anyMatch(toL -> toL.getBook().getId().equals(bookId));
-
-    if (alreadyLoanable) {
-      return false;
-    }
-
-    var booklend = new BookLending(book, user);
-    bookLendingRepository.save(booklend);
-    user.addLentBook(booklend);
-    userRepository.save(user);
-
-    eventPublisher.publishEvent(new BookAvailableEvent(user.getId(), book.getTitle(), book.getId()));
-    return true;
-  }
-
-  @Override
-  @Transactional
-  public boolean isNoMoreLoanable(Long bookId, Long userId) {
-    Optional<Book> bookOpt = bookRepository.findById(bookId);
-    if (bookOpt.isEmpty()) {
-      System.out.println("Book not found");
-      return false;
-    }
-    Book book = bookOpt.get();
-
-    User user = userService.findUserById(userId);
-    if (user == null) {
-      System.out.println("User not found");
-      return false;
-    }
-    Optional<BookLending> bookLending = userRepository.findById(userId).get().getLentBooks().stream()
-            .filter(toL -> toL.getBook().getId().equals(bookId))
-            .findFirst();
-
-    if (bookLending.isEmpty()) {
-      return false;
-    }
-
-    user.removeLentBook(bookLending.get());
-    bookLendingRepository.delete(bookLending.get());
-    userRepository.save(user);
-    return true;
-  }
-
-  @Override
-  @Transactional
-  public byte[] getShippingTicketBytes(Long lendingId) {
-    Optional<BookLending> lendingOpt = bookLendingRepository.findById(lendingId);
-    if (lendingOpt.isEmpty()) {
-      System.out.println("Prêt non trouvé: " + lendingId);
-      return null;
-    }
-
-    BookLending lending = lendingOpt.get();
-    byte[] pdfBytes = lending.getShippingTicketPDF();
-    if (pdfBytes == null) {
-      System.out.println("PDF null pour le prêt: " + lendingId);
-      return null;
-    }
-    System.out.println("Taille du PDF pour le prêt " + lendingId + ": " + pdfBytes.length + " octets");
-    return pdfBytes;
-  }
-
-  public List<BookLending> findAllLateLendings() {
-    return bookLendingRepository.findByStatusAndDueDateBefore(BookStatus.BORROWED, LocalDateTime.now());
-  }
-
-  public Optional<BookLending> findByBookIdAndBorrowerIsNullAndStatus(Long bookId) {
-    return Optional.ofNullable(bookLendingRepository.findByBookIdAndBorrowerIsNullAndStatus(bookId, BookStatus.AVAILABLE));
   }
 
   @Recover

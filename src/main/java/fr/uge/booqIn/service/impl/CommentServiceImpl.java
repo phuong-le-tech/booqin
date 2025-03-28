@@ -39,8 +39,10 @@ public class CommentServiceImpl implements CommentServiceInterface {
     private final EntityStrategyContext strategyContext;
     private final CommentMapper commentMapper;
 
-    public CommentServiceImpl(CommentRepository commentRepository, UserRepository userRepository,
-                              EntityStrategyContext strategyContext, CommentMapper commentMapper) {
+    public CommentServiceImpl(@NonNull CommentRepository commentRepository,
+                              @NonNull UserRepository userRepository,
+                              @NonNull EntityStrategyContext strategyContext,
+                              @NonNull CommentMapper commentMapper) {
         this.commentRepository = commentRepository;
         this.userRepository = userRepository;
         this.strategyContext = strategyContext;
@@ -49,10 +51,7 @@ public class CommentServiceImpl implements CommentServiceInterface {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<CommentDTO> findComments(String content, Long userId, String entityType, Long entityId, Pageable pageable) {
-        logger.info("Finding comments with filters: content={}, userId={}, entityType={}, entityId={}",
-                content, userId, entityType, entityId);
-
+    public Page<CommentDTO> findComments(String content, Long userId, String entityType, Long entityId, @NonNull Pageable pageable) {
         Specification<Comment> spec = Specification.where(null);
 
         if (content != null && !content.isEmpty()) {
@@ -78,8 +77,6 @@ public class CommentServiceImpl implements CommentServiceInterface {
     @Override
     @Transactional(readOnly = true)
     public CommentDTO getById(@NonNull Long commentId) {
-        logger.info("Finding comment with id: {}", commentId);
-
         Comment comment = findCommentById(commentId);
         return commentMapper.toDTO(comment);
     }
@@ -92,8 +89,6 @@ public class CommentServiceImpl implements CommentServiceInterface {
             backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
     )
     public CommentDTO create(@NonNull CommentCreateDTO createDTO) {
-        logger.info("Creating a new comment");
-
         // Validate parent comment first if provided
         Comment parentComment = null;
         if (createDTO.parentId() != null) {
@@ -131,12 +126,7 @@ public class CommentServiceImpl implements CommentServiceInterface {
             retryFor = {ConcurrentModificationException.class, ObjectOptimisticLockingFailureException.class},
             backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
     )
-    public Comment createComment(@NonNull @Validated Comment comment) {
-        logger.info("Creating a new comment from entity");
-
-        Objects.requireNonNull(comment, "Comment to save cannot be null");
-        Objects.requireNonNull(comment.getUser(), "Comment user cannot be null");
-
+    public Comment createComment(@NonNull Comment comment) {
         if (!userRepository.existsById(comment.getUser().getId())) {
             throw new ResourceNotFoundException("User", "id", comment.getUser().getId());
         }
@@ -156,8 +146,6 @@ public class CommentServiceImpl implements CommentServiceInterface {
             backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
     )
     public CommentDTO update(@NonNull Long commentId, @NonNull Long userId, @NonNull CommentUpdateDTO updateDTO) {
-        logger.info("Updating comment with id: {}", commentId);
-
         Comment comment = findCommentById(commentId);
 
         if (!comment.getUser().getId().equals(userId)) {
@@ -178,9 +166,7 @@ public class CommentServiceImpl implements CommentServiceInterface {
             retryFor = {ConcurrentModificationException.class, ObjectOptimisticLockingFailureException.class},
             backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
     )
-    public Comment updateComment(@NonNull @Validated Comment comment) {
-        logger.info("Updating comment from entity with id: {}", comment.getId());
-
+    public Comment updateComment(@NonNull Comment comment) {
         if (!commentRepository.existsById(comment.getId())) {
             throw new ResourceNotFoundException("Comment", "id", comment.getId());
         }
@@ -197,8 +183,6 @@ public class CommentServiceImpl implements CommentServiceInterface {
             backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
     )
     public void delete(@NonNull Long commentId, @NonNull Long userId) {
-        logger.info("Deleting comment with id: {}", commentId);
-
         Comment comment = findCommentById(commentId);
 
         if (!comment.getUser().getId().equals(userId)) {
@@ -211,8 +195,6 @@ public class CommentServiceImpl implements CommentServiceInterface {
     @Override
     @Transactional(readOnly = true)
     public List<CommentDTO> getByEntity(@NonNull Long entityId, @NonNull String entityType) {
-        logger.info("Finding root comments for entity of type {} with id: {}", entityType, entityId);
-
         strategyContext.findByTypeAndId(entityType, entityId);
 
         var comments = commentRepository.findRootCommentsByEntity(entityId, entityType);
@@ -223,8 +205,6 @@ public class CommentServiceImpl implements CommentServiceInterface {
     @Override
     @Transactional(readOnly = true)
     public List<CommentDTO> getRepliesByCommentId(@NonNull Long commentId) {
-        logger.info("Finding replies to comment with id: {}", commentId);
-
         if (!commentRepository.existsById(commentId)) {
             throw new ResourceNotFoundException("Comment", "id", commentId);
         }
@@ -235,8 +215,6 @@ public class CommentServiceImpl implements CommentServiceInterface {
     @Override
     @Transactional(readOnly = true)
     public List<CommentDTO> getByUser(@NonNull Long userId) {
-        logger.info("Finding comments by user with id: {}", userId);
-
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
         var comments = commentRepository.findByUserOrderByCreatedAtDesc(user);
@@ -246,8 +224,6 @@ public class CommentServiceImpl implements CommentServiceInterface {
     @Override
     @Transactional(readOnly = true)
     public Long countByEntity(@NonNull Long entityId, @NonNull String entityType) {
-        logger.info("Counting comments for entity of type {} with id: {}", entityType, entityId);
-
         strategyContext.findByTypeAndId(entityType, entityId);
         return commentRepository.countByEntity(entityId, entityType);
     }
@@ -255,8 +231,6 @@ public class CommentServiceImpl implements CommentServiceInterface {
     @Override
     @Transactional(readOnly = true)
     public List<CommentDTO> getCommentTreeByEntity(@NonNull Long entityId, @NonNull String entityType) {
-        logger.info("Finding comment tree for entity of type {} with id: {}", entityType, entityId);
-
         strategyContext.findByTypeAndId(entityType, entityId);
         var rootComments = commentRepository.findRootCommentsWithRepliesByEntity(entityId, entityType);
         return commentMapper.toTreeDTOList(rootComments);
@@ -265,7 +239,6 @@ public class CommentServiceImpl implements CommentServiceInterface {
     @Override
     @Transactional(readOnly = true)
     public List<Comment> findAll() {
-        logger.info("Finding all comments");
         return commentRepository.findAll();
     }
 
@@ -281,7 +254,7 @@ public class CommentServiceImpl implements CommentServiceInterface {
     }
 
     @Recover
-    public Comment recoverFromOptimisticLockingFailureOnCreateComment(ObjectOptimisticLockingFailureException ex, @NonNull @Validated Comment comment) {
+    public Comment recoverFromOptimisticLockingFailureOnCreateComment(ObjectOptimisticLockingFailureException ex, @NonNull Comment comment) {
         logger.error("Optimistic locking failure during comment creation: {}", ex.getMessage());
         throw new ConcurrentModificationException("The comment could not be created due to concurrent modifications. Please try again.", ex);
     }
@@ -293,7 +266,7 @@ public class CommentServiceImpl implements CommentServiceInterface {
     }
 
     @Recover
-    public Comment recoverFromOptimisticLockingFailureOnUpdateComment(ObjectOptimisticLockingFailureException ex, @NonNull @Validated Comment comment) {
+    public Comment recoverFromOptimisticLockingFailureOnUpdateComment(ObjectOptimisticLockingFailureException ex, @NonNull Comment comment) {
         logger.error("Optimistic locking failure during comment update: {}", ex.getMessage());
         throw new ConcurrentModificationException("The comment has been modified by someone else. Please try again.", ex);
     }

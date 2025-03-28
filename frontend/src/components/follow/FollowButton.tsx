@@ -105,7 +105,7 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
             <div className={`flex items-center ${className}`}>
                 <span className="flex items-center text-gray-600">
                     <Users size={iconSize[size]} className="mr-1" />
-                    {followersCount} {followersCount === 1 ? "Follower" : "Followers"}
+                    {followersCount} {followersCount === 1 ? " Follower" : " Followers"}
                 </span>
             </div>
         ) : null;

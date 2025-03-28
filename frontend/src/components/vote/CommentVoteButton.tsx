@@ -42,7 +42,6 @@ const CommentVoteButton: React.FC<CommentVoteButtonsProps> = ({
                         setUserVote(null);
                     }
                 } catch (error) {
-                    console.log('User has not voted yet');
                     setUserVote(null);
                 }
             }

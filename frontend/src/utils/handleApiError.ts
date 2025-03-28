@@ -29,8 +29,6 @@ export const handleApiError = async (
 
     // Handle authentication errors (401/403)
     if (status === 401 || status === 403) {
-        console.log(`Handling ${status} error in utility`);
-
         try {
             // Try to recover with auto-login
             const loginSuccess = await AuthService.handleAuthError(status);

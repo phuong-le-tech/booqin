@@ -1,75 +1,35 @@
 package fr.uge.booqIn.dto.book;
 
+import jakarta.validation.constraints.*;
+import org.hibernate.validator.constraints.ISBN;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-/**
- * DTO spécifique pour la création d'un livre via le formulaire
- */
-public class BookCreate {
-    private String title;
-    private List<String> authors = new ArrayList<>(); // Format: "Prénom Nom" ou simplement "Nom"
-    private String description;
+public record BookCreate(
+        @NotBlank(message = "Book title cannot be empty")
+        @Size(min = 1, max = 255, message = "Title must be between 1 and 255 characters")
+        String title,
 
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
-    private Date publicationDate;
+        @NotEmpty(message = "At least one author is required")
+        @Size(max = 10, message = "Maximum of 10 authors allowed")
+        List<@NotBlank(message = "Author name cannot be empty") String> authors,
 
-    private List<String> isbn = new ArrayList<>();
+        @Size(max = 5000, message = "Description must be less than 5000 characters")
+        String description,
 
-    // Constructeur par défaut nécessaire pour le binding Spring
+        @Past(message = "Publication date must be in the past")
+        @DateTimeFormat(pattern = "yyyy-MM-dd")
+        LocalDateTime publicationDate,
+
+        @Size(max = 5, message = "Maximum of 5 ISBN numbers allowed")
+        List<String> isbn
+) {
+
     public BookCreate() {
-    }
-
-    // Constructeur complet
-    public BookCreate(String title, List<String> authors, String description, Date publicationDate, List<String> isbn) {
-        this.title = title;
-        this.authors = authors != null ? authors : new ArrayList<>();
-        this.description = description;
-        this.publicationDate = publicationDate;
-        this.isbn = isbn != null ? isbn : new ArrayList<>();
-    }
-
-    // Getters et setters
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public List<String> getAuthors() {
-        return authors;
-    }
-
-    public void setAuthors(List<String> authors) {
-        this.authors = authors;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Date getPublicationDate() {
-        return publicationDate;
-    }
-
-    public void setPublicationDate(Date publicationDate) {
-        this.publicationDate = publicationDate;
-    }
-
-    public List<String> getIsbn() {
-        return isbn;
-    }
-
-    public void setIsbn(List<String> isbn) {
-        this.isbn = isbn;
+        this("", new ArrayList<>(), "", null, new ArrayList<>());
     }
 }

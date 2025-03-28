@@ -53,10 +53,7 @@ public class BookController {
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String author,
             @RequestParam(required = false) String isbn) {
-        
-        logger.info("🔍 Recherche paginée des livres (page={}, size={}, sort={}, direction={})",
-                page, size, sortField, sortDirection);
-        
+
         Sort sort = sortDirection.equalsIgnoreCase("desc") ?
                 Sort.by(sortField).descending() :
                 Sort.by(sortField).ascending();
@@ -70,29 +67,23 @@ public class BookController {
     
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<BookShow>> getBookById(@PathVariable Long id) {
-        logger.info("🔍 Recherche livre avec id: {}", id);
-        
         BookShow bookShow = bookService.findById(id);
         return ResponseEntity.ok(ApiResponse.success("Book found", bookShow));
     }
-
+    
     @PostMapping("")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<Book>> create(@RequestBody BookCreate bookCreate) {
-        logger.info("🆕 Création d'un nouveau livre depuis BookCreate DTO");
         Book book = bookService.createFromDto(bookCreate);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Book created successfully", book));
     }
-
-
+    
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Book>> updateBook(
             @PathVariable Long id,
             @RequestBody Book book) {
-        logger.info("🔄 Mise à jour du livre avec id: {}", id);
-        
         book.setId(id);
         Book updatedBook = bookService.updateBook(book);
         return ResponseEntity.ok(
@@ -102,8 +93,6 @@ public class BookController {
     @PatchMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<BookShow>> patchBook(@PathVariable Long id, @RequestBody BookUpdate bookUpdate) {
-        logger.info("🔄 Mise à jour partielle du livre avec id: {}", id);
-        
         BookShow updatedBook = bookService.patchBook(id, bookUpdate);
         
         return ResponseEntity.ok(
@@ -113,8 +102,6 @@ public class BookController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteBook(@PathVariable Long id) {
-        logger.info("🗑️ Suppression du livre avec id: {}", id);
-        
         bookService.deleteBook(id);
         return ResponseEntity.ok(
                 ApiResponse.success("Book deleted successfully"));
@@ -125,8 +112,6 @@ public class BookController {
     public ResponseEntity<ApiResponse<BookShow>> uploadCover(
             @PathVariable Long id,
             @RequestParam("file") MultipartFile file) {
-
-        logger.info("📸 Upload d'une couverture pour le livre avec id: {}", id);
 
         try {
             var book = bookService.findBookById(id);
@@ -148,8 +133,6 @@ public class BookController {
 
     @GetMapping("/images/{*path}")
     public ResponseEntity<Resource> serveImage(@PathVariable String path) {
-        logger.info("Serving image: {}", path);
-
         try {
             var imagePath = Paths.get(uploadDir, path).normalize();
             var uploadDirPath = Paths.get(uploadDir).normalize();
@@ -164,19 +147,15 @@ public class BookController {
             if (resource.exists()) {
                 var headers = new HttpHeaders();
                 headers.setCacheControl("max-age=86400"); // 24 hours cache
-
                 var contentType = Files.probeContentType(imagePath);
                 if (contentType == null) {
                     var fileName = imagePath.getFileName().toString().toLowerCase();
-                    if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) {
-                        contentType = "image/jpeg";
-                    } else if (fileName.endsWith(".png")) {
-                        contentType = "image/png";
-                    } else if (fileName.endsWith(".gif")) {
-                        contentType = "image/gif";
-                    } else {
-                        contentType = "application/octet-stream";
-                    }
+                  contentType = switch (fileName.substring(fileName.lastIndexOf('.') + 1)) {
+                    case "jpg", "jpeg" -> "image/jpeg";
+                    case "png" -> "image/png";
+                    case "gif" -> "image/gif";
+                    default -> "application/octet-stream";
+                  };
                 }
 
                 return ResponseEntity.ok()

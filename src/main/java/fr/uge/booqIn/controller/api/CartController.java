@@ -1,11 +1,11 @@
 package fr.uge.booqIn.controller.api;
 
 import fr.uge.booqIn.dto.book.BookShow;
+import fr.uge.booqIn.dto.cart.CartDto;
 import fr.uge.booqIn.dto.cart.ShopCartDto;
 import fr.uge.booqIn.dto.user.UserIndex;
 import fr.uge.booqIn.entity.BookLending;
 import fr.uge.booqIn.factory.ApiResponse;
-import fr.uge.booqIn.dto.cart.CartDto;
 import fr.uge.booqIn.service.interfaces.BookLendingInterface;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
 import fr.uge.booqIn.service.interfaces.CartServiceInterface;
@@ -50,6 +50,7 @@ public class CartController {
     
     @PostMapping("/add-book")
     public ResponseEntity<ApiResponse<Boolean>> addBookToCart(@RequestBody CartDto request) {
+        System.out.println(request);
         Optional<UserIndex> userOptional = Optional.ofNullable(userService.findUserByIdToIndex(request.userId()));
         
         Optional<BookShow> bookOptional = Optional.ofNullable(bookService.findById(request.bookId()));

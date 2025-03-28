@@ -1,4 +1,3 @@
-/*
 package fr.uge.booqIn.service;
 
 import fr.uge.booqIn.dto.bookCollection.BookCollectionCreate;
@@ -7,8 +6,8 @@ import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionUpdate;
 import fr.uge.booqIn.entity.*;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
+import fr.uge.booqIn.interfaces.BookCollection;
 import fr.uge.booqIn.mapper.BookCollectionMapper;
-import fr.uge.booqIn.model.BookCollection;
 import fr.uge.booqIn.repository.BookCollectionRepository;
 import fr.uge.booqIn.repository.BookRepository;
 import fr.uge.booqIn.service.impl.BookCollectionServiceImpl;
@@ -121,7 +120,7 @@ class BookCollectionServiceTest {
             testCollection.isPublic(),
             Collections.emptyList(),
             null,
-            "NORMAL",
+            BookCollection.CollectionType.NORMAL,
             LocalDateTime.now(),
             LocalDateTime.now()
     );
@@ -183,7 +182,7 @@ class BookCollectionServiceTest {
             createDTO.isPublic(),
             Collections.emptyList(),
             null,
-            "NORMAL",
+            BookCollection.CollectionType.NORMAL,
             LocalDateTime.now(),
             LocalDateTime.now()
     );
@@ -240,7 +239,7 @@ class BookCollectionServiceTest {
             createDTO.isPublic(),
             Collections.emptyList(),
             null,
-            "SMART",
+            BookCollection.CollectionType.SMART,
             LocalDateTime.now(),
             LocalDateTime.now()
     );
@@ -293,7 +292,7 @@ class BookCollectionServiceTest {
             updatedPublic,
             Collections.emptyList(),
             null,
-            "NORMAL",
+            BookCollection.CollectionType.NORMAL,
             LocalDateTime.now(),
             LocalDateTime.now()
     );
@@ -430,14 +429,17 @@ class BookCollectionServiceTest {
             .build();
     collection.setId(collectionId);
 
-    when(bookCollectionRepository.findById(eq(collectionId))).thenReturn(Optional.of(collection));
-    when(bookRepository.findById(eq(bookId))).thenReturn(Optional.of(testBook));
+    when(bookCollectionRepository.findByIdWithBooks(eq(collectionId)))
+            .thenReturn(Optional.of(collection));
+
+    when(bookRepository.findById(eq(bookId)))
+            .thenReturn(Optional.of(testBook));
 
     // When
     bookCollectionService.addBookToCollection(collectionId, bookId);
 
     // Then
-    verify(bookCollectionRepository).findById(eq(collectionId));
+    verify(bookCollectionRepository).findByIdWithBooks(eq(collectionId));
     verify(bookRepository).findById(eq(bookId));
 
     // Verify that the book was added to the collection
@@ -459,15 +461,17 @@ class BookCollectionServiceTest {
             .build();
     collection.setId(collectionId);
 
-    when(bookCollectionRepository.findById(eq(collectionId))).thenReturn(Optional.of(collection));
-    when(bookRepository.findById(eq(bookId))).thenReturn(Optional.empty());
+    when(bookCollectionRepository.findByIdWithBooks(eq(collectionId)))
+            .thenReturn(Optional.of(collection));
+
+    when(bookRepository.findById(eq(999L))).thenReturn(Optional.empty());
 
     // When & Then
     assertThrows(ResourceNotFoundException.class, () ->
             bookCollectionService.addBookToCollection(collectionId, bookId)
     );
 
-    verify(bookCollectionRepository).findById(eq(collectionId));
+    verify(bookCollectionRepository).findByIdWithBooks(eq(collectionId));
     verify(bookRepository).findById(eq(bookId));
   }
 
@@ -489,14 +493,16 @@ class BookCollectionServiceTest {
     // Add the book to the collection first
     collection.addBook(testBook);
 
-    when(bookCollectionRepository.findById(eq(collectionId))).thenReturn(Optional.of(collection));
+    when(bookCollectionRepository.findByIdWithBooks(eq(collectionId)))
+            .thenReturn(Optional.of(collection));
+
     when(bookRepository.findById(eq(bookId))).thenReturn(Optional.of(testBook));
 
     // When
     bookCollectionService.removeBookFromCollection(collectionId, bookId);
 
     // Then
-    verify(bookCollectionRepository).findById(eq(collectionId));
+    verify(bookCollectionRepository).findByIdWithBooks(eq(collectionId));
     verify(bookRepository).findById(eq(bookId));
 
     // Verify that the book was removed from the collection
@@ -518,7 +524,7 @@ class BookCollectionServiceTest {
             testCollection.isPublic(),
             Collections.emptyList(),
             null,
-            "NORMAL",
+            BookCollection.CollectionType.NORMAL,
             LocalDateTime.now(),
             LocalDateTime.now()
     );
@@ -607,4 +613,4 @@ class BookCollectionServiceTest {
     verify(bookCollectionRepository).findPrivateCollectionsByOwner(eq(testUser), eq(pageable));
     verify(bookCollectionMapper).toBookCollectionIndex(eq(testCollection));
   }
-}*/
+}

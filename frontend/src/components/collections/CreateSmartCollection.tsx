@@ -50,14 +50,11 @@ const CreateSmartCollection: React.FC = () => {
     try {
       // Créer une collection avec les informations de l'utilisateur
       const data = {
-        title: title + " (Smart)",  // Ajout de "(Smart)" pour identifier dans la liste
+        title: title + " (Smart)",
         description,
         isPublic,
-        userId: user.id,  // Explicitement définir l'ID de l'utilisateur
-        criteria: {
-          type: criteriaType,
-          value: criteriaValue
-        }
+        userId: user.id,
+        criteria: `${criteriaType}:${criteriaValue}`  // Convertir en chaîne au format "TYPE:VALEUR"
       };
 
       // Créer la collection
@@ -132,7 +129,7 @@ const CreateSmartCollection: React.FC = () => {
                   <textarea
                       id="description"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      placeholder="Describe what this collection is about"
+                      placeholder="Describe what this collection is about "
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       rows={3}

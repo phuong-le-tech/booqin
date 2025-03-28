@@ -1,11 +1,11 @@
 // src/components/BookGrid.tsx
-import React, { useState, useEffect } from 'react';
-import { BookCard } from './BookCard.tsx';
-import { BookIndex } from '../../model/Book.ts';
+import React, {useState, useEffect} from 'react';
+import {BookCard} from './BookCard.tsx';
+import {BookIndex} from '../../model/Book.ts';
 import axiosInstance from "../../services/AxiosInstance.ts";
-import { useAuth } from "../../context/AuthContext.tsx";
-import { LendStatus } from "../../model/LendStatus";
-import { toast } from "react-toastify";
+import {useAuth} from "../../context/AuthContext.tsx";
+import {LendStatus} from "../../model/LendStatus";
+import {toast} from "react-toastify";
 
 interface LoanInfo {
     bookId: number;
@@ -15,6 +15,7 @@ interface LoanInfo {
 interface Collection {
     id: number;
     title: string;
+    type: string;
 }
 
 interface BookGridProps {
@@ -23,21 +24,18 @@ interface BookGridProps {
     userId?: number;
 }
 
-export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading }) => {
+export const BookGrid: React.FC<BookGridProps> = ({books, isLoading}) => {
     const [lentBooks, setLentBooks] = useState<number[]>([]);
     const [borrowedBooks, setBorrowedBooks] = useState<number[]>([]);
     const [loanStates, setLoanStates] = useState<LoanInfo[]>([]);
     const [userCollections, setUserCollections] = useState<Collection[]>([]);
-    const { user } = useAuth();
+    const {user} = useAuth();
     const userIds = user?.id;
 
     useEffect(() => {
         if (userIds) {
             fetchUserBooks();
             fetchUserCollections();
-            console.log("Utilisateur connecté, ID:", userIds);
-        } else {
-            console.log("Aucun utilisateur connecté");
         }
     }, [userIds]);
 
@@ -81,7 +79,7 @@ export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading }) => {
                         }
 
                         if (bookId !== null && state !== null) {
-                            return { bookId, state };
+                            return {bookId, state};
                         }
                         return null;
                     }).filter((info: any) => info !== null) as LoanInfo[];
@@ -111,7 +109,6 @@ export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading }) => {
         if (!userIds) return;
 
         try {
-            console.log("Fetching collections for user ID:", userIds);
 
             const publicResponse = await axiosInstance.get(`/v1/collections/user/public`, {
                 params: {
@@ -126,9 +123,6 @@ export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading }) => {
                     size: 100
                 }
             });
-
-            console.log("Public collections response:", publicResponse);
-            console.log("Private collections response:", privateResponse);
 
             // Extraire et combiner les collections
             let publicCollections: Collection[] = [];
@@ -145,16 +139,11 @@ export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading }) => {
             // Combiner les deux ensembles de collections
             const allCollections = [...publicCollections, ...privateCollections];
 
-            console.log(`${allCollections.length} collections trouvées:`, allCollections);
-            setUserCollections(allCollections);
+            setUserCollections(allCollections.filter(collection => collection.type !== 'LIKED'
+                && collection.type !== 'FOLLOWED'));
 
-            if (allCollections.length === 0) {
-
-                console.log("Aucune collection trouvée - Utilisation de collections de test");
-            }
         } catch (err: any) {
             console.error("Error fetching user collections:", err);
-            console.log("Erreur API - Utilisation de collections de test");
         }
     };
 
@@ -184,8 +173,6 @@ export const BookGrid: React.FC<BookGridProps> = ({ books, isLoading }) => {
         );
     }
 
-    // Afficher les collections avant de rendre le composant
-    console.log("Rendering BookGrid with collections:", userCollections);
 
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">

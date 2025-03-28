@@ -2,11 +2,8 @@ package fr.uge.booqIn.controller.api;
 
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
-
 import fr.uge.booqIn.factory.ApiResponse;
 import fr.uge.booqIn.service.StripeService;
-import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

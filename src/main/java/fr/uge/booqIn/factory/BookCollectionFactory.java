@@ -15,7 +15,6 @@ import java.util.logging.Logger;
 public class BookCollectionFactory {
     private static final Logger logger = Logger.getLogger(BookCollectionFactory.class.getName());
     private static final CriteriaStrategyFactory criteriaFactory = new CriteriaStrategyFactory();
-
     /**
      * Creates a normal book collection.
      *
@@ -66,56 +65,19 @@ public class BookCollectionFactory {
         return collection;
     }
 
-    /**
-     * Creates a global book collection.
-     *
-     * @param title       The title of the collection
-     * @param description The description of the collection
-     * @param owner       The owner of the collection (typically admin)
-     * @return A new global book collection
-     */
-    public static GlobalBookCollection createGlobalCollection(String title, String description, User owner) {
-        return new GlobalBookCollection.Builder()
-                .title(title)
-                .description(description)
-                .owner(owner)
-                .build();
+    public static RecentBookCollection createRecentBookCollection(User owner) {
+        return new RecentBookCollection(owner);
     }
 
-    /**
-     * Creates a global book collection with criteria.
-     *
-     * @param title          The title of the collection
-     * @param description    The description of the collection
-     * @param owner          The owner of the collection (typically admin)
-     * @param criteriaString The criteria string for filtering books
-     * @param allBooks       All books to filter against criteria
-     * @return A new global book collection
-     */
-    public static GlobalBookCollection createGlobalCollection(
-            String title, String description, User owner,
-            String criteriaString, List<Book> allBooks) {
+    public static AuthorBookCollection createAuthorBookCollection( User owner, String authorFullName) {
+        return new AuthorBookCollection(owner, authorFullName);
+    }
 
-        GlobalBookCollection collection = new GlobalBookCollection.Builder()
-                .title(title)
-                .description(description)
-                .owner(owner)
-                .criteria(criteriaString)
-                .build();
+    public static LikedBookCollection createLikedBookCollection(User owner, boolean isPublic) {
+        return new LikedBookCollection(owner, isPublic);
+    }
 
-        if (criteriaString != null && !criteriaString.isEmpty()) {
-            collection.initializeCriteriaStrategy(criteriaFactory);
-
-            if (allBooks != null) {
-                collection.updateBooks(allBooks);
-            }
-        }
-
-        logger.info("Created global collection: " + collection.getTitle());
-        if (criteriaString != null && !criteriaString.isEmpty()) {
-            logger.info("Criteria: " + collection.getCriteriaString());
-        }
-
-        return collection;
+    public static FollowedBookCollection createFollowedBookCollection(User owner) {
+        return new FollowedBookCollection(owner);
     }
 }

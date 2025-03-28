@@ -1,11 +1,12 @@
 
 package fr.uge.booqIn.controller.web;
+
 import fr.uge.booqIn.dto.book.BookCreate;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.dto.bookCollection.LiteCollection;
 import fr.uge.booqIn.dto.lending.LendingResponseDTO;
-import fr.uge.booqIn.dto.comment.CommentDTO;
+import fr.uge.booqIn.dto.notification.BookNotificationDTO;
 import fr.uge.booqIn.dto.vote.VoteCount;
 import fr.uge.booqIn.dto.vote.VoteCreate;
 import fr.uge.booqIn.entity.Author;
@@ -15,10 +16,9 @@ import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.BookStatus;
 import fr.uge.booqIn.enums.LendStatus;
 import fr.uge.booqIn.enums.VoteType;
-import fr.uge.booqIn.model.BookCollection;
+import fr.uge.booqIn.interfaces.BookCollection;
 import fr.uge.booqIn.service.impl.UserVoteService;
 import fr.uge.booqIn.service.interfaces.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -31,9 +31,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.*;
-import java.util.stream.Collectors;
-import fr.uge.booqIn.dto.notification.BookNotificationDTO;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/books")
@@ -44,28 +43,30 @@ public class BookWebController {
     private final BookServiceInterface bookService;
     private final VoteServiceInterface voteServiceInterface;
     private final UserServiceInterface userService;
-    private final BookCollectionServiceInterface bookCollectionService;
     private final CommentServiceInterface commentService;
+    private final FollowServiceInterface followService;
     private final HomeWebController homeWebController;
     private final UserVoteService userVoteService;
     private final BookLendingInterface bookLendingInterface;
     private final BookWaitingQueueServiceInterface bookWaitingQueueService;
+    private static final String BOOK_TYPE="BOOK";
+    private static final String TITLE="title";
 
-    @Autowired
+
     public BookWebController(BookServiceInterface bookService,
                              VoteServiceInterface voteServiceInterface,
-                             BookCollectionServiceInterface bookCollectionService,
                              UserServiceInterface userService,
                              CommentServiceInterface commentService,
+                              FollowServiceInterface followService,
                              HomeWebController homeWebController,
                              UserVoteService userVoteService,
                              BookLendingInterface bookLendingInterface,
                              BookWaitingQueueServiceInterface bookWaitingQueueService) {
         this.bookService = bookService;
         this.voteServiceInterface = voteServiceInterface;
-        this.bookCollectionService = bookCollectionService;
         this.userService = userService;
         this.commentService = commentService;
+        this.followService = followService;
         this.homeWebController = homeWebController;
         this.userVoteService = userVoteService;
         this.bookLendingInterface = bookLendingInterface;
@@ -78,7 +79,9 @@ public class BookWebController {
                               @RequestParam(value = "size", defaultValue = "20") int size,
                               @RequestParam(value = "sort", defaultValue = "title") String sort,
                               @RequestParam(value = "direction", defaultValue = "asc") String direction,
-                              @RequestParam(value = "query", required = false) String query,
+                              @RequestParam(value = "title", required = false) String title,
+                              @RequestParam(value = "author", required = false) String author,
+                              @RequestParam(value = "isbn", required = false) String isbn,
                               @AuthenticationPrincipal User currentUser,
                               Principal principal) {
 
@@ -93,8 +96,8 @@ public class BookWebController {
 
         // Unified search if query provided, otherwise regular search
         Page<BookIndex> booksPage;
-        if (query != null && !query.trim().isEmpty()) {
-            booksPage = bookService.findBooks(query, query, query, pageable);
+        if (isnotNullAndNotEmpty(title) ||  isnotNullAndNotEmpty(author) ||  isnotNullAndNotEmpty(isbn)) {
+            booksPage = bookService.findBooks(title, author, isbn, pageable);
         } else {
             booksPage = bookService.findBooks(null, null, null, pageable);
         }
@@ -102,30 +105,19 @@ public class BookWebController {
         model.addAttribute("books", booksPage.getContent());
         model.addAttribute("totalPages", booksPage.getTotalPages());
         model.addAttribute("currentPage", page);
-        model.addAttribute("query", query);
         model.addAttribute("sort", sort);
         model.addAttribute("direction", direction);
 
         if(currentUser != null) {
             model.addAttribute("userId", currentUser.getId());
             var user = userService.findUserById(currentUser.getId());
-            List<LiteCollection> collectionShows = user.getCollections().stream()
-                    .filter(collection -> collection.getCollectionType() != BookCollection.CollectionType.GLOBAL)
-                    .map(c -> new LiteCollection(c.getId(), c.getTitle()))
-                    .toList();
-
-            model.addAttribute("bookCollections", collectionShows);
+            model.addAttribute("bookCollections", getLiteCollections(user));
 
             try {
                 // Track available books
                 List<Long> availableBooks = new ArrayList<>();
                 // Track books in the waiting queue and their positions
                 Map<Long, Integer> bookQueuePositions = new HashMap<>();
-
-                // Prepare list of book IDs
-                List<Long> bookIds = booksPage.getContent().stream()
-                        .map(BookIndex::id)
-                        .toList();
 
                 // Check availability for all displayed books
                 for (BookIndex book : booksPage.getContent()) {
@@ -146,14 +138,8 @@ public class BookWebController {
 
                 // Get lending information
                 LendingResponseDTO lendingData = bookLendingInterface.findAllUserLendingsAsDTO(currentUser.getId(), LendStatus.ALL);
-                List<Long> lentBooks = lendingData.lentBooks().stream()
-                        .filter(lending -> lending.status() == BookStatus.AVAILABLE)
-                        .map(lending -> lending.book().id())
-                        .toList();
-                List<Long> borrowedBooks = lendingData.lentBooks().stream()
-                        .filter(lending -> lending.status() == BookStatus.BORROWED)
-                        .map(lending -> lending.book().id())
-                        .toList();
+                List<Long> lentBooks = getLentBooks(lendingData, BookStatus.AVAILABLE);
+                List<Long> borrowedBooks = getLentBooks(lendingData, BookStatus.BORROWED);
                 model.addAttribute("lentBooks", lentBooks);
                 model.addAttribute("borrowedBooks", borrowedBooks);
 
@@ -169,11 +155,6 @@ public class BookWebController {
                                 (existing, replacement) -> existing // Keep first in case of duplicates
                         ));
                 model.addAttribute("notificationIdsByBook", notificationIdsByBook);
-
-                logger.info("Lending info added to model: lentBooks=" + lentBooks.size() +
-                        ", borrowedBooks=" + borrowedBooks.size() +
-                        ", queuePositions=" + bookQueuePositions.size() +
-                        ", activeQueues=" + activeQueues.size());
             } catch (Exception e) {
                 logger.warning("Error loading lending data: " + e.getMessage());
                 model.addAttribute("lentBooks", Collections.emptyList());
@@ -185,10 +166,33 @@ public class BookWebController {
         }
 
         // Set title and content template
-        model.addAttribute("title", "BooqIn - Books");
+        model.addAttribute("TITLE", "BooqIn - Books");
         model.addAttribute("content", "pages/book/list");
 
         return "layout";
+    }
+
+    private boolean isnotNullAndNotEmpty(String str) {
+        return str != null && !str.trim().isEmpty();
+    }
+
+    private List<LiteCollection> getLiteCollections(User user) {
+        List<LiteCollection> test = user.getCollections().stream()
+                .filter(collection -> collection.getCollectionType() != BookCollection.CollectionType.GLOBAL
+                        && collection.getCollectionType() != BookCollection.CollectionType.SMART
+                        && collection.getCollectionType() != BookCollection.CollectionType.FOLLOWED
+                        && collection.getCollectionType() != BookCollection.CollectionType.LIKED)
+                .map(c -> new LiteCollection(c.getId(), c.getTitle()))
+                .toList();
+        System.out.println("Collections LITE: " + test);
+        return test;
+    }
+
+    private List<Long> getLentBooks(LendingResponseDTO lendingData, BookStatus available) {
+        return lendingData.lentBooks().stream()
+            .filter(lending -> lending.status() == available)
+            .map(lending -> lending.book().id())
+            .toList();
     }
 
     @GetMapping("/{id}")
@@ -201,26 +205,31 @@ public class BookWebController {
 
         BookShow book = bookService.findById(id);
         model.addAttribute("book", book);
-        VoteCount count = voteServiceInterface.getVoteCounts(id, "BOOK");
-        var totalComments = commentService.countByEntity(id,"BOOK");
-        var comments = commentService.getCommentTreeByEntity(id,"BOOK");
+        VoteCount count = voteServiceInterface.getVoteCounts(id, BOOK_TYPE);
+        var totalComments = commentService.countByEntity(id,BOOK_TYPE);
+        var comments = commentService.getCommentTreeByEntity(id,BOOK_TYPE);
 
         model.addAttribute("votes", count);
         model.addAttribute("comments", comments);
         model.addAttribute("commentCount", totalComments);
-        model.addAttribute("entityType", "BOOK"); // Added for comment form
+        model.addAttribute("entityType", BOOK_TYPE); // Added for comment form
         model.addAttribute("entityId", id); // Added for comment form
 
         if (currentUser != null) {
-            List<CommentDTO> list = commentService.getCommentTreeByEntity(id, "BOOK");
-            Map<Long, VoteType> commentVotes = userVoteService.collectCommentVotes(currentUser.getId(), list);
+            boolean isFollowing = followService.isFollowing(currentUser.getId(), id, "BOOK");
+            model.addAttribute("isFollowing", isFollowing);
+
+            // Get followers count
+            long followersCount = followService.countFollowers(id, "BOOK");
+            model.addAttribute("followersCount", followersCount);
+
+            Map<Long, VoteType> commentVotes = userVoteService.collectCommentVotes(currentUser.getId(), comments);
             model.addAttribute("userCommentVotes", commentVotes);
-            var voteUser = voteServiceInterface.getUserVoteType(currentUser.getId(),id,"BOOK");
+            var voteUser = voteServiceInterface.getUserVoteType(currentUser.getId(),id,BOOK_TYPE);
             if(voteUser != null) {
                 model.addAttribute("userVote",voteUser.toString());
             }
             model.addAttribute("user", currentUser);
-
             // Check book availability
             boolean isBookAvailable = false;
             Optional<BookLending> availableBook = bookLendingInterface.findByBookIdAndBorrowerIsNullAndStatus(id);
@@ -237,7 +246,7 @@ public class BookWebController {
             if (queuePosition > 0) {
                 List<BookNotificationDTO> activeQueues = bookWaitingQueueService.getUserActiveQueues(currentUser.getId());
                 Optional<BookNotificationDTO> notification = activeQueues.stream()
-                        .filter(queue -> queue.bookId() == id)
+                        .filter(queue -> Objects.equals(queue.bookId(), id))
                         .findFirst();
 
                 notification.ifPresent(n -> model.addAttribute("notificationId", n.id()));
@@ -245,7 +254,7 @@ public class BookWebController {
         }
 
         // Set title and content template
-        model.addAttribute("title", "BooqIn - " + book.title());
+        model.addAttribute(TITLE, "BooqIn - " + book.title());
         model.addAttribute("content", "pages/book/bookDetails");
 
         return "layout";
@@ -259,7 +268,7 @@ public class BookWebController {
         model.addAttribute("book", new BookCreate());
 
         // Définir le titre et le template de contenu
-        model.addAttribute("title", "BooqIn - Add Book");
+        model.addAttribute(TITLE, "BooqIn - Add Book");
         model.addAttribute("content", "pages/book/bookCreate");
 
         return "layout";
@@ -273,23 +282,9 @@ public class BookWebController {
             @RequestParam("publicationDate") @DateTimeFormat(pattern = "yyyy-MM-dd") Date publicationDate,
             @RequestParam("description") String description) {
 
-        Set<Author> authorSet = authors.stream()
-                .filter(a -> a != null && !a.trim().isEmpty())
-                .map(a -> a.split(" "))
-                .map(author -> {
-                    if (author.length > 1) {
-                        return new Author(author[0], author[1]);
-                    } else {
-                        return new Author(author[0], "");
-                    }
-                })
-                .collect(Collectors.toSet());
-
+        Set<Author> authorSet = getAuthors(authors);
         // Conversion en Set pour les ISBN et filtrage des valeurs vides
-        Set<String> isbnSet = isbns.stream()
-                .filter(isbn -> isbn != null && !isbn.trim().isEmpty())
-                .collect(Collectors.toSet());
-
+        Set<String> isbnSet = getIsbnSet(isbns);
         // Construction du livre
         Book book = new Book.Builder()
                 .isbns(isbnSet)
@@ -303,12 +298,26 @@ public class BookWebController {
         return "redirect:/books";
     }
 
+    private Set<String> getIsbnSet(List<String> isbns) {
+        return isbns.stream()
+            .filter(isbn -> isbn != null && !isbn.trim().isEmpty())
+            .collect(Collectors.toSet());
+    }
+
+    private Set<Author> getAuthors(List<String> authors) {
+        return authors.stream()
+            .filter(a -> a != null && !a.trim().isEmpty())
+            .map(a -> a.split(" ", 2))
+            .map(author -> new Author(author[0], author.length > 1 ? author[1] : ""))
+            .collect(Collectors.toSet());
+    }
+
     @PostMapping("/vote")
     public String vote(@RequestParam("bookId") Long bookId,
                        @RequestParam("voteType") VoteType voteType,
                        @AuthenticationPrincipal User currentUser) {
         if (currentUser != null) {
-            VoteCreate voteCreate = new VoteCreate(currentUser.getId(), bookId, "BOOK", voteType);
+            VoteCreate voteCreate = new VoteCreate(currentUser.getId(), bookId, BOOK_TYPE, voteType);
             voteServiceInterface.castVote(voteCreate);
         }
         return "redirect:/books/" + bookId;

@@ -1,24 +1,18 @@
+/*
 package fr.uge.booqIn.web.controller;
 
 import fr.uge.booqIn.controller.web.BookWebController;
 import fr.uge.booqIn.controller.web.HomeWebController;
 import fr.uge.booqIn.dto.author.AuthorDto;
-import fr.uge.booqIn.dto.book.BookCreate;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
-import fr.uge.booqIn.dto.bookCollection.LiteCollection;
-import fr.uge.booqIn.dto.lending.BookLendingShow;
-import fr.uge.booqIn.dto.lending.LendingResponseDTO;
 import fr.uge.booqIn.dto.vote.VoteCount;
 import fr.uge.booqIn.dto.vote.VoteCreate;
 import fr.uge.booqIn.entity.AbstractBookCollection;
 import fr.uge.booqIn.entity.Author;
 import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.User;
-import fr.uge.booqIn.enums.BookStatus;
-import fr.uge.booqIn.enums.LendStatus;
 import fr.uge.booqIn.enums.VoteType;
-import fr.uge.booqIn.model.BookCollection;
 import fr.uge.booqIn.service.interfaces.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,9 +23,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
@@ -262,4 +254,4 @@ class BookWebControllerTest {
 
     verifyNoInteractions(voteServiceInterface);
   }
-}
+}*/

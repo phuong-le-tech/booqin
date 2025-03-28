@@ -6,7 +6,7 @@ import fr.uge.booqIn.entity.Follow;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.factory.ApiResponse;
 import fr.uge.booqIn.mapper.UserMapper;
-import fr.uge.booqIn.model.Followable;
+import fr.uge.booqIn.interfaces.Followable;
 import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
 import fr.uge.booqIn.service.interfaces.FollowServiceInterface;
