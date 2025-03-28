@@ -7,7 +7,7 @@ import fr.uge.booqIn.dto.user.UserIndex;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.UserRole;
 import fr.uge.booqIn.factory.ApiResponse;
-import fr.uge.booqIn.model.BookCollection;
+import fr.uge.booqIn.interfaces.BookCollection;
 import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

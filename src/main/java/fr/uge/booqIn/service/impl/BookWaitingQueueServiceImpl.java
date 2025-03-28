@@ -18,12 +18,17 @@ import fr.uge.booqIn.repository.BookRepository;
 import fr.uge.booqIn.repository.UserRepository;
 import fr.uge.booqIn.service.interfaces.BookLendingInterface;
 import fr.uge.booqIn.service.interfaces.BookWaitingQueueServiceInterface;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.lang.NonNull;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -55,7 +60,12 @@ public class BookWaitingQueueServiceImpl implements BookWaitingQueueServiceInter
 
   @Override
   @Transactional
-  public boolean addToWaitingQueue(Long bookId, Long userId) {
+  @Retryable(
+          maxAttemptsExpression = "${spring.retry.max-attempts}",
+          retryFor = {ObjectOptimisticLockingFailureException.class},
+          backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
+  )
+  public boolean addToWaitingQueue(@NonNull Long bookId, @NonNull Long userId) {
     List<QueueStatus> activeStatuses = Arrays.asList(
             QueueStatus.WAITING,
             QueueStatus.NOTIFIED);
@@ -72,24 +82,33 @@ public class BookWaitingQueueServiceImpl implements BookWaitingQueueServiceInter
 
     var available = bookLendingService.findBookLendingByBookId(bookId);
 
+    // If book is already available, notify user immediately instead of adding to queue
     if (available.isPresent()) {
       eventPublisher.publishEvent(new BookAvailableEvent(userId, book.getTitle(), book.getId()));
       return true;
     }
 
+    // Calculate position in queue
     int position = bookWaitingQueueRepository.findMaxPositionByBookId(bookId)
             .orElse(0) + 1;
 
+    // Create and save queue entry
     BookWaitingQueue queueEntry = new BookWaitingQueue(book, user, position);
     bookWaitingQueueRepository.save(queueEntry);
 
+    // Publish queue joined event
     eventPublisher.publishEvent(new BookQueueJoinedEvent(userId, book.getTitle(), position));
     return true;
   }
 
   @Override
   @Transactional
-  public void processNextInQueue(Long bookId) {
+  @Retryable(
+          maxAttemptsExpression = "${spring.retry.max-attempts}",
+          retryFor = {ObjectOptimisticLockingFailureException.class},
+          backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
+  )
+  public void processNextInQueue(@NonNull Long bookId) {
     var available = bookLendingService.findBookLendingByBookId(bookId);
     if (available.isEmpty()) {
       return;
@@ -104,54 +123,70 @@ public class BookWaitingQueueServiceImpl implements BookWaitingQueueServiceInter
       BookWaitingQueue queueEntry = nextInQueue.get();
       User user = queueEntry.getUser();
 
+      // Update queue entry status to NOTIFIED
       queueEntry.setStatus(QueueStatus.NOTIFIED);
       queueEntry.setNotifiedAt(LocalDateTime.now());
-      queueEntry.setReservationExpiresAt(LocalDateTime.now().plusHours(1));
+      queueEntry.setReservationExpiresAt(LocalDateTime.now().plusHours(1)); // 1-hour reservation window
       bookWaitingQueueRepository.save(queueEntry);
 
+      // Notify user about book availability
       eventPublisher.publishEvent(new BookAvailableEvent(user.getId(), book.getTitle(), book.getId()));
     }
   }
 
   @Override
-  @Scheduled(fixedRate = 5 * 60 * 1000)
   @Transactional
+  @Retryable(
+          maxAttemptsExpression = "${spring.retry.max-attempts}",
+          retryFor = {ObjectOptimisticLockingFailureException.class},
+          backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
+  )
   public void processExpiredNotifications() {
     List<BookWaitingQueue> expiredNotifications = bookWaitingQueueRepository
             .findExpiredNotifications(LocalDateTime.now());
 
     for (BookWaitingQueue entry : expiredNotifications) {
+      // Mark notification as expired
       entry.setStatus(QueueStatus.EXPIRED);
       bookWaitingQueueRepository.save(entry);
       Book book = entry.getBook();
       User user = entry.getUser();
 
+      // Notify user about expiration
       eventPublisher.publishEvent(new BookQueueExpirationEvent(user.getId(), book.getTitle()));
 
+      // Process next person in queue
       processNextInQueue(book.getId());
     }
   }
 
-
   @Override
   @Transactional
-  public boolean reserveBookFromQueue(Long queueId, Long userId) {
+  @Retryable(
+          maxAttemptsExpression = "${spring.retry.max-attempts}",
+          retryFor = {ObjectOptimisticLockingFailureException.class},
+          backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
+  )
+  public boolean reserveBookFromQueue(@NonNull Long queueId, @NonNull Long userId) {
     Optional<BookWaitingQueue> optEntry = bookWaitingQueueRepository.findById(queueId);
 
     if (optEntry.isEmpty()) {
-      return false;
+      return false; // Queue entry not found
     }
 
     BookWaitingQueue queue = optEntry.get();
 
+    // Verify the queue entry belongs to the user
     if (!queue.getUser().getId().equals(userId)) {
       return false;
     }
 
+    // Verify the queue entry is in NOTIFIED status
     if (queue.getStatus() != QueueStatus.NOTIFIED) {
       return false;
     }
 
+    // Check if reservation window has expired
     if (queue.getReservationExpiresAt().isBefore(LocalDateTime.now())) {
       queue.setStatus(QueueStatus.EXPIRED);
       bookWaitingQueueRepository.save(queue);
@@ -159,6 +194,7 @@ public class BookWaitingQueueServiceImpl implements BookWaitingQueueServiceInter
       return false;
     }
 
+    // Attempt to reserve the book
     boolean reserved = bookLendingService.reserveBook(queue.getBook().getId(), userId);
     if (reserved) {
       queue.setStatus(QueueStatus.RESERVED);
@@ -171,11 +207,16 @@ public class BookWaitingQueueServiceImpl implements BookWaitingQueueServiceInter
 
   @Override
   @Transactional
-  public boolean cancelQueueEntry(Long queueId, Long userId) {
+  @Retryable(
+          maxAttemptsExpression = "${spring.retry.max-attempts}",
+          retryFor = {ObjectOptimisticLockingFailureException.class},
+          backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
+  )
+  public boolean cancelQueueEntry(@NonNull Long queueId, @NonNull Long userId) {
     Optional<BookWaitingQueue> optEntry = bookWaitingQueueRepository.findById(queueId);
 
     if (optEntry.isEmpty()) {
-      return false;
+      return false; // Queue entry not found
     }
 
     BookWaitingQueue entry = optEntry.get();
@@ -203,15 +244,15 @@ public class BookWaitingQueueServiceImpl implements BookWaitingQueueServiceInter
       processNextInQueue(bookId);
     }
 
+    // Notify user of cancellation
     eventPublisher.publishEvent(new BookQueueCancellationEvent(userId, bookTitle));
 
     return true;
   }
 
-
   @Override
   @Transactional(readOnly = true)
-  public List<BookNotificationDTO> getUserActiveQueues(Long userId) {
+  public List<BookNotificationDTO> getUserActiveQueues(@NonNull Long userId) {
     List<QueueStatus> activeStatuses = Arrays.asList(
             QueueStatus.WAITING,
             QueueStatus.NOTIFIED);
@@ -226,7 +267,7 @@ public class BookWaitingQueueServiceImpl implements BookWaitingQueueServiceInter
 
   @Override
   @Transactional(readOnly = true)
-  public int getUserQueuePosition(Long bookId, Long userId) {
+  public int getUserQueuePosition(@NonNull Long bookId, @NonNull Long userId) {
     List<QueueStatus> activeStatuses = Arrays.asList(
             QueueStatus.WAITING,
             QueueStatus.NOTIFIED);
@@ -241,5 +282,32 @@ public class BookWaitingQueueServiceImpl implements BookWaitingQueueServiceInter
     }
 
     return -1;
+  }
+
+  /* Recovery methods for handling optimistic locking failures */
+
+  @Recover
+  public boolean recoverAddToWaitingQueue(ObjectOptimisticLockingFailureException ex, Long bookId, Long userId) {
+    throw new ConcurrentModificationException("Concurrent modification detected when adding to waiting queue. Please try again.", ex);
+  }
+
+  @Recover
+  public void recoverProcessNextInQueue(ObjectOptimisticLockingFailureException ex, Long bookId) {
+    throw new ConcurrentModificationException("Concurrent modification detected when processing next in queue. Please try again.", ex);
+  }
+
+  @Recover
+  public void recoverProcessExpiredNotifications(ObjectOptimisticLockingFailureException ex) {
+    throw new ConcurrentModificationException("Concurrent modification detected when processing expired notifications. Please try again.", ex);
+  }
+
+  @Recover
+  public boolean recoverReserveBookFromQueue(ObjectOptimisticLockingFailureException ex, Long queueId, Long userId) {
+    throw new ConcurrentModificationException("Concurrent modification detected when reserving book from queue. Please try again.", ex);
+  }
+
+  @Recover
+  public boolean recoverCancelQueueEntry(ObjectOptimisticLockingFailureException ex, Long queueId, Long userId) {
+    throw new ConcurrentModificationException("Concurrent modification detected when canceling queue entry. Please try again.", ex);
   }
 }

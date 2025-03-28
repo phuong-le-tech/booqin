@@ -9,7 +9,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -56,8 +55,8 @@ public interface BookCollectionRepository extends JpaRepository<AbstractBookColl
    * Find all public collections by owner without pagination
    * Used for selecting a random collection when a user follows another user
    */
-  @Query("SELECT c FROM AbstractBookCollection c WHERE c.owner = :owner AND c.isPublic = true")
-  List<AbstractBookCollection> findPublicCollectionsByOwner(@Param("owner") User owner);
+  @Query("SELECT c FROM AbstractBookCollection c WHERE c.owner.id = :ownerId AND c.isPublic = true")
+  List<AbstractBookCollection> findPublicCollectionsByOwnerId(Long ownerId);
 
   @Query("SELECT c FROM LikedBookCollection c WHERE c.owner.id = :ownerId")
   Optional<AbstractBookCollection> findLikedCollectionByOwnerId(Long ownerId);

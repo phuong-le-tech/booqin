@@ -1,12 +1,11 @@
 package fr.uge.booqIn.entity;
 
-import fr.uge.booqIn.model.PolymorphicAssociation;
-import fr.uge.booqIn.model.PolymorphicEntity;
-import fr.uge.booqIn.model.Votable;
+import fr.uge.booqIn.interfaces.PolymorphicAssociation;
+import fr.uge.booqIn.interfaces.PolymorphicEntity;
+import fr.uge.booqIn.interfaces.Votable;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import org.hibernate.validator.constraints.Length;
 
 import java.time.LocalDateTime;

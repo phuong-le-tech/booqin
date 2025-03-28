@@ -3,8 +3,7 @@ package fr.uge.booqIn.mapper;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionIndex;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionShow;
 import fr.uge.booqIn.dto.user.UserIndex;
-import fr.uge.booqIn.entity.*;
-import fr.uge.booqIn.model.BookCollection;
+import fr.uge.booqIn.interfaces.BookCollection;
 import org.springframework.stereotype.Component;
 
 /**

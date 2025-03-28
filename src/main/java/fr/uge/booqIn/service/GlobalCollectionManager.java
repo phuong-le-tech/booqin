@@ -62,11 +62,9 @@ public class GlobalCollectionManager {
           backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay:1000}")
   )
   public void initializeGlobalCollections() {
-    logger.info("Initializing global collections...");
     try {
       User adminUser = getOrCreateAdminUser();
       createOrUpdateRecentBooksCollection(adminUser);
-      logger.info("Global collections initialized successfully.");
     } catch (IllegalStateException e) {
       logger.log(Level.SEVERE, "Failed to initialize global collections: no admin user available", e);
       throw e;
@@ -87,14 +85,11 @@ public class GlobalCollectionManager {
   )
   public void createOrUpdateRecentBooksCollection(User owner) {
     Objects.requireNonNull(owner, "Owner cannot be null");
-    logger.info("Creating or updating recent books collection");
     try {
       Optional<AbstractBookCollection> existingCollection =
               collectionRepository.findFirstRecentBookCollection();
 
       if (existingCollection.isPresent()) {
-        logger.info("Recent books collection already exists. Updating...");
-
         if (existingCollection.get() instanceof RecentBookCollection recentCollection) {
           updateRecentBooksCollection(recentCollection);
         } else {
@@ -113,8 +108,6 @@ public class GlobalCollectionManager {
   }
 
   private void createNewRecentBooksCollection(User owner) {
-    logger.info("Creating new recent books collection");
-
     LocalDateTime cutoffDate = LocalDateTime.now().minusDays(RECENT_DAYS_RANGE);
     List<Book> recentBooks = bookRepository.findByCreatedAtAfter(cutoffDate);
 
@@ -123,7 +116,6 @@ public class GlobalCollectionManager {
     recentBooks.forEach(recentBooksCollection::addBook);
 
     collectionRepository.save(recentBooksCollection);
-    logger.info("Recent books collection created with " + recentBooksCollection.getBooks().size() + " books.");
   }
 
   @Transactional(isolation = Isolation.READ_COMMITTED)
@@ -137,9 +129,6 @@ public class GlobalCollectionManager {
   )
   public void updateRecentBooksCollection(RecentBookCollection recentBooksCollection) {
     Objects.requireNonNull(recentBooksCollection, "Collection cannot be null");
-
-    logger.info("Updating recent books collection with ID: " + recentBooksCollection.getId());
-
     LocalDateTime cutoffDate = LocalDateTime.now().minusDays(recentBooksCollection.getDaysRange());
     List<Book> recentBooks = bookRepository.findByCreatedAtAfter(cutoffDate);
 
@@ -148,7 +137,6 @@ public class GlobalCollectionManager {
     recentBooksCollection.setUpdatedAt(LocalDateTime.now());
 
     collectionRepository.save(recentBooksCollection);
-    logger.info("Recent books collection updated with " + recentBooksCollection.getBooks().size() + " books.");
   }
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -162,10 +150,7 @@ public class GlobalCollectionManager {
   )
   public void updateAuthorCollectionsForNewBook(Book book) {
     Objects.requireNonNull(book, "Book cannot be null");
-    logger.info("Updating author collections for book: " + book.getTitle());
-
     if (book.getAuthors() == null || book.getAuthors().isEmpty()) {
-      logger.info("Book has no authors, skipping collection update");
       return;
     }
 
@@ -198,7 +183,6 @@ public class GlobalCollectionManager {
           if (!authorCollection.getBooks().contains(book)) {
             authorCollection.addBook(book);
             collectionRepository.save(authorCollection);
-            logger.info("Added new book to author collection: " + authorCollection.getTitle());
           } else {
             logger.fine("Book already in author collection, skipping");
           }
@@ -226,8 +210,6 @@ public class GlobalCollectionManager {
     authorBooks.forEach(newCollection::addBook);
 
     collectionRepository.save(newCollection);
-    logger.info("Created new author collection for: " + author.getFullName() +
-            " with ID: " + newCollection.getId());
   }
 
   private List<Book> findBooksByAuthor(Author author) {
@@ -255,8 +237,6 @@ public class GlobalCollectionManager {
   )
   public void refreshRecentBooksCollection() {
     try {
-      logger.info("Scheduled refresh of recent books collection...");
-
       Optional<AbstractBookCollection> collectionOpt =
               collectionRepository.findFirstRecentBookCollection();
 
@@ -283,7 +263,6 @@ public class GlobalCollectionManager {
   private User getOrCreateAdminUser() {
     Optional<User> adminUser = userRepository.findByRole(UserRole.ADMIN).stream().findFirst();
     if (adminUser.isEmpty()) {
-      logger.info("No admin user found. Using first available user.");
       adminUser = userRepository.findAll().stream().findFirst();
 
       if (adminUser.isEmpty()) {

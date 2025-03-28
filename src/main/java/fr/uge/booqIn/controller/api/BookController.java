@@ -52,10 +52,7 @@ public class BookController {
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String author,
             @RequestParam(required = false) String isbn) {
-        
-        logger.info("🔍 Recherche paginée des livres (page={}, size={}, sort={}, direction={})",
-                page, size, sortField, sortDirection);
-        
+
         Sort sort = sortDirection.equalsIgnoreCase("desc") ?
                 Sort.by(sortField).descending() :
                 Sort.by(sortField).ascending();
@@ -69,8 +66,6 @@ public class BookController {
     
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<BookShow>> getBookById(@PathVariable Long id) {
-        logger.info("🔍 Recherche livre avec id: {}", id);
-        
         BookShow bookShow = bookService.findById(id);
         return ResponseEntity.ok(ApiResponse.success("Book found", bookShow));
     }
@@ -78,8 +73,6 @@ public class BookController {
     @PostMapping("")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<Book>> createBook(@RequestBody Book book) {
-        logger.info("🆕 Création d'un nouveau livre");
-        
         Book createdBook = bookService.createBook(book);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -91,8 +84,6 @@ public class BookController {
     public ResponseEntity<ApiResponse<Book>> updateBook(
             @PathVariable Long id,
             @RequestBody Book book) {
-        logger.info("🔄 Mise à jour du livre avec id: {}", id);
-        
         book.setId(id);
         Book updatedBook = bookService.updateBook(book);
         return ResponseEntity.ok(
@@ -102,8 +93,6 @@ public class BookController {
     @PatchMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<BookShow>> patchBook(@PathVariable Long id, @RequestBody BookUpdate bookUpdate) {
-        logger.info("🔄 Mise à jour partielle du livre avec id: {}", id);
-        
         BookShow updatedBook = bookService.patchBook(id, bookUpdate);
         
         return ResponseEntity.ok(
@@ -113,8 +102,6 @@ public class BookController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteBook(@PathVariable Long id) {
-        logger.info("🗑️ Suppression du livre avec id: {}", id);
-        
         bookService.deleteBook(id);
         return ResponseEntity.ok(
                 ApiResponse.success("Book deleted successfully"));
@@ -125,8 +112,6 @@ public class BookController {
     public ResponseEntity<ApiResponse<BookShow>> uploadCover(
             @PathVariable Long id,
             @RequestParam("file") MultipartFile file) {
-
-        logger.info("📸 Upload d'une couverture pour le livre avec id: {}", id);
 
         try {
             var book = bookService.findBookById(id);
@@ -148,8 +133,6 @@ public class BookController {
 
     @GetMapping("/images/{*path}")
     public ResponseEntity<Resource> serveImage(@PathVariable String path) {
-        logger.info("Serving image: {}", path);
-
         try {
             var imagePath = Paths.get(uploadDir, path).normalize();
             var uploadDirPath = Paths.get(uploadDir).normalize();

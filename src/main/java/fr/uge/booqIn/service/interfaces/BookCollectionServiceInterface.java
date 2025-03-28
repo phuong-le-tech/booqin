@@ -1,106 +1,117 @@
 package fr.uge.booqIn.service.interfaces;
 
 import fr.uge.booqIn.dto.bookCollection.*;
+import fr.uge.booqIn.entity.AbstractBookCollection;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
-import fr.uge.booqIn.model.BookCollection;
+import fr.uge.booqIn.interfaces.BookCollection;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
 
-/**
- * Interface commune pour tous les services de gestion de collections de livres.
- * Définit les opérations CRUD et les fonctionnalités de base communes à tous les types de collections.
- */
+import java.util.List;
+
 public interface BookCollectionServiceInterface {
 
   /**
-   * Recherche des collections selon des critères spécifiques.
+   * Search for collections based on specific criteria.
    *
-   * @param title       Le titre à rechercher (optionnel)
-   * @param description La description à rechercher (optionnel)
-   * @param pageable    Les informations de pagination
-   * @return Une page de collections correspondant aux critères
+   * @param title       The title to search for (optional)
+   * @param description The description to search for (optional)
+   * @param pageable    The pagination information
+   * @return A page of collections matching the criteria
    */
-  Page<BookCollectionIndex> findBookCollections(String title, String description, boolean isPublic, Pageable pageable);
+  Page<BookCollectionIndex> findBookCollections(String title,
+                                                String description,
+                                                boolean isPublic,
+                                                @NonNull Pageable pageable);
 
   /**
-   * Trouve une collection par son ID.
+   * Find a collection by its ID.
    *
-   * @param id L'ID de la collection à trouver
-   * @return La collection trouvée
-   * @throws ResourceNotFoundException Si la collection n'existe pas
+   * @param id The ID of the collection to find
+   * @return The found collection
+   * @throws ResourceNotFoundException If the collection doesn't exist
    */
-  BookCollectionShow findBookCollectionById(@NotNull Long id) throws ResourceNotFoundException;
+  BookCollectionShow findBookCollectionById(@NonNull Long id) throws ResourceNotFoundException;
 
   /**
-   * Crée une nouvelle collection.
+   * Create a new collection.
    *
-   * @param collection  La collection à créer
-   * @return La collection créée
+   * @param collection The collection to create
+   * @return The created collection
    */
-  BookCollectionShow createBookCollection(@NotNull @Valid BookCollectionCreate collection, User currentUser);
+  BookCollectionShow createBookCollection(@NonNull @Valid BookCollectionCreate collection, User currentUser);
 
   /**
-   * Met à jour une collection existante.
+   * Update an existing collection.
    *
-   * @param id          L'ID de la collection à mettre à jour
-   * @param collection  Les données de mise à jour
-   * @return La collection mise à jour
+   * @param id         The ID of the collection to update
+   * @param collection The update data
+   * @return The updated collection
    */
-  BookCollectionShow updateBookCollection(@NotNull Long id, @NotNull @Valid BookCollectionUpdate collection);
+  BookCollectionShow updateBookCollection(@NonNull Long id, @NonNull @Valid BookCollectionUpdate collection);
 
   /**
-   * Supprime une collection.
+   * Delete a collection.
    *
-   * @param id          L'ID de la collection à supprimer
+   * @param id The ID of the collection to delete
    */
-  void deleteBookCollection(@NotNull Long id);
+  void deleteBookCollection(@NonNull Long id);
 
   /**
-   * Récupère toutes les collections publiques avec pagination.
+   * Retrieve all public collections with pagination.
    *
-   * @param pageable Les informations de pagination
-   * @return Une page des collections publiques
+   * @param pageable The pagination information
+   * @return A page of public collections
    */
-  Page<BookCollectionIndex> getPublicCollections(Pageable pageable);
+  Page<BookCollectionIndex> getPublicCollections(@NonNull Pageable pageable);
 
   /**
-   * Ajoute un livre à une collection.
+   * Add a book to a collection.
    */
-  void addBookToCollection(Long id, Long bookId);
+  void addBookToCollection(@NonNull Long id, @NonNull Long bookId);
 
   /**
-   * Supprime un livre d'une collection.
+   * Remove a book from a collection.
    */
-  void removeBookFromCollection(Long id, Long bookId);
+  void removeBookFromCollection(@NonNull Long id, @NonNull Long bookId);
 
   /**
-   * Récupère les collections d'un utilisateur avec leurs livres (avec pagination).
+   * Retrieve a user's collections with their books (with pagination).
    *
-   * @param user L'utilisateur dont on veut les collections
-   * @param pageable Les informations de pagination
-   * @return Une page des collections de l'utilisateur avec leurs livres
+   * @param user     The user whose collections we want
+   * @param pageable The pagination information
+   * @return A page of the user's collections with their books
    */
-  Page<BookCollectionShow> getUserCollectionsWithBooks(User user, Pageable pageable);
+  Page<BookCollectionShow> getUserCollectionsWithBooks(@NonNull User user, @NonNull Pageable pageable);
 
   /**
-   * Trouve une collection par son ID.
+   * Find a collection by its ID.
    */
-  BookCollection findCollectionById(Long id);
+  BookCollection findCollectionById(@NonNull Long id);
 
   /**
-   * Récupère les collections publiques d'un utilisateur spécifique avec pagination.
+   * Retrieve the public collections of a specific user with pagination.
    *
-   * @param owner Le propriétaire des collections
-   * @param pageable Les informations de pagination
-   * @return Une page des collections publiques du propriétaire
+   * @param owner    The owner of the collections
+   * @param pageable The pagination information
+   * @return A page of the owner's public collections
    */
-  Page<BookCollectionIndex> getPublicUserCollection(User owner, Pageable pageable);
-  Page<BookCollectionIndex> getPrivateUserCollection(User owner, Pageable pageable);
+  Page<BookCollectionIndex> getPublicUserCollection(@NonNull User owner, @NonNull Pageable pageable);
+
+  /**
+   * Retrieve the private collections of a specific user with pagination.
+   *
+   * @param owner    The owner of the collections
+   * @param pageable The pagination information
+   * @return A page of the owner's private collections
+   */
+  Page<BookCollectionIndex> getPrivateUserCollection(@NonNull User owner, @NonNull Pageable pageable);
 
 
+  List<AbstractBookCollection> findPublicCollectionsByOwnerId(@NonNull Long ownerId);
 
-
+  AbstractBookCollection findLikedCollectionByOwnerId(@NonNull Long ownerId);
 }
