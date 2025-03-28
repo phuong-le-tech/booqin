@@ -79,7 +79,9 @@ public class BookWebController {
                               @RequestParam(value = "size", defaultValue = "20") int size,
                               @RequestParam(value = "sort", defaultValue = "title") String sort,
                               @RequestParam(value = "direction", defaultValue = "asc") String direction,
-                              @RequestParam(value = "query", required = false) String query,
+                              @RequestParam(value = "title", required = false) String title,
+                              @RequestParam(value = "author", required = false) String author,
+                              @RequestParam(value = "isbn", required = false) String isbn,
                               @AuthenticationPrincipal User currentUser,
                               Principal principal) {
 
@@ -94,8 +96,8 @@ public class BookWebController {
 
         // Unified search if query provided, otherwise regular search
         Page<BookIndex> booksPage;
-        if (query != null && !query.trim().isEmpty()) {
-            booksPage = bookService.findBooks(query, query, query, pageable);
+        if (author != null || title !=  null || isbn != null) {
+            booksPage = bookService.findBooks(title, author, isbn, pageable);
         } else {
             booksPage = bookService.findBooks(null, null, null, pageable);
         }
@@ -103,7 +105,6 @@ public class BookWebController {
         model.addAttribute("books", booksPage.getContent());
         model.addAttribute("totalPages", booksPage.getTotalPages());
         model.addAttribute("currentPage", page);
-        model.addAttribute("query", query);
         model.addAttribute("sort", sort);
         model.addAttribute("direction", direction);
 
