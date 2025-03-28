@@ -114,4 +114,6 @@ public interface BookCollectionServiceInterface {
   List<AbstractBookCollection> findPublicCollectionsByOwnerId(@NonNull Long ownerId);
 
   AbstractBookCollection findLikedCollectionByOwnerId(@NonNull Long ownerId);
+  
+   <T> Page<T> createPaginatedResult(List<T> list, Pageable pageable);
 }
