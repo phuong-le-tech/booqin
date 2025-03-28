@@ -67,6 +67,20 @@ const notifyListeners = () => {
     listeners.forEach(listener => listener(authState));
 };
 
+// Convert from frontend RegisterForm to backend RegisterDto format if needed
+const transformRegisterData = (userData: any) => {
+    // Create a copy of userData to avoid mutating the original
+    const transformedData = { ...userData };
+
+    // If userData has 'email' but backend expects 'login', map it
+    // Note: This depends on your actual backend DTO structure
+    if (transformedData.email && !transformedData.login) {
+        transformedData.login = transformedData.email;
+    }
+
+    return transformedData;
+};
+
 const AuthService = {
     /**
      * Login with credentials
@@ -74,10 +88,14 @@ const AuthService = {
      */
     login: async (credentials: Credentials): Promise<User> => {
         try {
+            console.log("Login attempt with:", credentials);
+
             const response = await axiosInstance.post<ApiResponse<any>>(
                 "/v1/auth/login",
                 credentials
             );
+
+            console.log("Login response:", response);
 
             // Fetch user details after successful login
             const userData = await AuthService.fetchCurrentUser();
@@ -86,14 +104,7 @@ const AuthService = {
                 throw new Error("Login successful but failed to fetch user data");
             }
 
-            // Handle redirect after login if needed
-            const redirectPath = localStorage.getItem('redirectAfterLogin');
-            if (redirectPath) {
-                localStorage.removeItem('redirectAfterLogin');
-                setTimeout(() => {
-                    window.location.href = redirectPath;
-                }, 100);
-            }
+            console.log("User data fetched successfully:", userData);
 
             return userData;
         } catch (error: any) {
@@ -111,30 +122,62 @@ const AuthService = {
     /**
      * Register a new user
      */
-    register: async (userData: Partial<User>): Promise<void> => {
+    register: async (userData: any): Promise<void> => {
         try {
-            const response = await axiosInstance.post<ApiResponse<null>>(
+            // Create registration dto
+            const registerDto = {
+                firstName: userData.firstName,
+                lastName: userData.lastName,
+                email: userData.email,
+                password: userData.password,
+                address: {
+                    streetNumber: userData.address.streetNumber,
+                    streetName: userData.address.streetName,
+                    city: userData.address.city,
+                    postalCode: userData.address.postalCode
+                }
+            };
+
+            console.log("Sending registration data:", registerDto);
+
+            const response = await axiosInstance.post<ApiResponse<User>>(
                 "/v1/auth/register",
-                userData
+                registerDto,
+                {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }
             );
 
-            if (!response.data.success) {
-                throw new Error(response.data.message || "Registration failed");
+            console.log("Registration response:", response);
+
+            // Successful registration (Spring returns 201 Created)
+            if (response.status === 201 || (response.data && response.data.success)) {
+                console.log("Registration successful!");
+                return;
+            } else {
+                console.error("Unexpected response:", response);
+                throw new Error("Registration failed with unexpected response");
             }
         } catch (error: any) {
+            console.error("Registration error:", error);
+
             if (error.response) {
+                console.error("Response status:", error.response.status);
+                console.error("Response data:", error.response.data);
+
                 if (error.response.status === 409) {
-                    const serverMessage =
-                        error.response.data?.message || "Conflict: user already exists";
-                    throw new Error(serverMessage);
+                    throw new Error(error.response.data?.message || "User already exists");
+                } else if (error.response.status === 400) {
+                    throw new Error(error.response.data?.message || "Invalid registration data");
+                } else {
+                    throw new Error(error.response.data?.message || `Server error (${error.response.status})`);
                 }
-                throw new Error(
-                    error.response.data?.message || "Server error"
-                );
             } else if (error.request) {
                 throw new Error("No response from server. Please try again later.");
             } else {
-                throw new Error("Error setting up the request.");
+                throw new Error(`Error processing request: ${error.message}`);
             }
         }
     },
