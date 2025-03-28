@@ -1,6 +1,7 @@
 package fr.uge.booqIn.service;
 
 import fr.uge.booqIn.dto.author.AuthorDto;
+import fr.uge.booqIn.dto.book.BookCreate;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.dto.book.BookUpdate;
@@ -168,61 +169,73 @@ class BookServiceTest {
   @DisplayName("createBook - Should create and return new book")
   void createBook_WithValidBook_ShouldCreateAndReturnBook() {
     // Given
-    Book newBook = new Book();
-    newBook.setTitle("New Book");
-    newBook.setDescription("A new test book");
-    newBook.setAuthors(new HashSet<>(Collections.singleton(new Author("John", "Doe"))));
-    newBook.setIsbns(new HashSet<>(Collections.singleton("1234567890")));
-    newBook.setCategories(new HashSet<>(Collections.singleton("Fiction")));
-    newBook.setPublicationDate(new Date());
+    // Mock the authorRepository to handle author lookup and creation
+    when(authorRepository.findByFirstNameAndLastName(anyString(), anyString()))
+            .thenReturn(Optional.empty());
+    when(authorRepository.save(any(Author.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+    BookCreate newBook = new BookCreate(
+            "New Book",
+            new ArrayList<>(Collections.singletonList("John Doe")),
+            "A new test book",
+            new Date(),
+            new ArrayList<>(Collections.singletonList("9890789776"))
+    );
 
     when(bookRepository.findBookByIsbnInSet(anyString())).thenReturn(Optional.empty());
-    when(bookRepository.save(any(Book.class))).thenReturn(newBook);
+    when(bookRepository.save(any(Book.class)))
+            .thenAnswer(invocation -> {
+              Book savedBook = invocation.getArgument(0);
+              // Simulate the ID being assigned by the database
+              if (savedBook.getId() == null) {
+                savedBook.setId(1L);
+              }
+              return savedBook;
+            });
 
     // When
-    Book result = bookService.createBook(newBook);
+    Book result = bookService.createFromDto(newBook);
 
     // Then
     assertNotNull(result);
-    assertEquals(newBook.getTitle(), result.getTitle());
+    assertEquals(newBook.title(), result.getTitle());
+    assertEquals(newBook.description(), result.getDescription());
+    assertTrue(result.getIsbns().contains("9890789776"));
+    assertFalse(result.getAuthors().isEmpty(), "Authors should not be empty");
 
     verify(bookRepository).save(any(Book.class));
     ArgumentCaptor<Book> bookCaptor = ArgumentCaptor.forClass(Book.class);
     verify(bookRepository).save(bookCaptor.capture());
     Book capturedBook = bookCaptor.getValue();
-    assertEquals(newBook.getTitle(), capturedBook.getTitle());
+    assertEquals(newBook.title(), capturedBook.getTitle());
     assertNotNull(capturedBook.getCreatedAt());
     assertNotNull(capturedBook.getUpdatedAt());
   }
 
   @Test
-  @DisplayName("createBook - Should save new authors first")
-  void createBook_WithNewAuthors_ShouldSaveAuthorsFirst() {
+  @DisplayName("createBook - Should handle authors properly")
+  void createBook_WithAuthors_ShouldHandleThemProperly() {
     // Given
-    Author authorWithId = new Author("Victor", "Hugo");
-    authorWithId.setId(1L);
+    when(authorRepository.findByFirstNameAndLastName(anyString(), anyString()))
+            .thenReturn(Optional.empty());
 
-    Author authorWithoutId = new Author("Jane", "Austen");
-    // No ID set for this author
-
-    Set<Author> authors = new HashSet<>();
-    authors.add(authorWithId);
-    authors.add(authorWithoutId);
-
-    Book newBook = new Book();
-    newBook.setTitle("Mixed Authors Book");
-    newBook.setAuthors(authors);
-    newBook.setIsbns(new HashSet<>(Collections.singleton("1234567890")));
+    BookCreate newBook = new BookCreate(
+            "Mixed Authors Book",
+            new ArrayList<>(Arrays.asList("Victor Hugo", "Jane Austen")),
+            "A book with mixed authors",
+            new Date(),
+            new ArrayList<>(Collections.singleton("1234567890"))
+    );
 
     when(bookRepository.findBookByIsbnInSet(anyString())).thenReturn(Optional.empty());
-    when(bookRepository.save(any(Book.class))).thenReturn(newBook);
 
     // When
-    Book result = bookService.createBook(newBook);
+    Book result = bookService.createFromDto(newBook);
 
     // Then
-    verify(authorRepository).save(eq(authorWithoutId));
-    verify(authorRepository, never()).save(eq(authorWithId));
+    verify(authorRepository, times(2)).findByFirstNameAndLastName(anyString(), anyString());
+    verify(authorRepository, times(2)).save(any(Author.class));
     verify(bookRepository).save(any(Book.class));
   }
 
@@ -235,15 +248,19 @@ class BookServiceTest {
     existingBook.setId(2L);
     existingBook.setTitle("Existing Book");
 
-    Book newBook = new Book();
-    newBook.setTitle("New Book");
-    newBook.setIsbns(new HashSet<>(Collections.singleton(duplicateIsbn)));
+    BookCreate newBook = new BookCreate(
+            "New Book",
+            new ArrayList<>(Collections.singleton("John Doe")),
+            "A new test book",
+            new Date(),
+            new ArrayList<>(Collections.singleton(duplicateIsbn))
+    );
 
     when(bookRepository.findBookByIsbnInSet(eq(duplicateIsbn))).thenReturn(Optional.of(existingBook));
 
     // When & Then
     DuplicateResourceException exception = assertThrows(DuplicateResourceException.class, () ->
-            bookService.createBook(newBook)
+            bookService.createFromDto(newBook)
     );
 
     verify(bookRepository).findBookByIsbnInSet(eq(duplicateIsbn));

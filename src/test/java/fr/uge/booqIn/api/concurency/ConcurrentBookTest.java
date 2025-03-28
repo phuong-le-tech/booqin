@@ -1,5 +1,6 @@
 package fr.uge.booqIn.api.concurency;
 
+import fr.uge.booqIn.dto.book.BookCreate;
 import fr.uge.booqIn.dto.book.BookUpdate;
 import fr.uge.booqIn.entity.Address;
 import fr.uge.booqIn.entity.Author;
@@ -50,17 +51,17 @@ public class ConcurrentBookTest {
 
     @Autowired
     private BookRepository bookRepository;
-    
+
     @Autowired
     private AuthorRepository authorRepository;
-    
+
     @Autowired
     private UserRepository userRepository;
 
     private final List<Long> createdBookIds = new ArrayList<>();
     private final List<Long> createdAuthorIds = new ArrayList<>();
     private final List<Long> createdUserIds = new ArrayList<>();
-    
+
     private User testUser;
     private Author testAuthor;
 
@@ -77,21 +78,21 @@ public class ConcurrentBookTest {
         );
         testUser = userRepository.saveAndFlush(user);
         createdUserIds.add(testUser.getId());
-        
+
         // Set up security context with the test user
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(testUser, null, testUser.getAuthorities())
         );
-        
+
         // Create test author
         Author author = new Author("Test", "AuthorMain");
         testAuthor = authorRepository.saveAndFlush(author);
         createdAuthorIds.add(testAuthor.getId());
-        
+
         // Create a test book
         Set<Author> authors = new HashSet<>();
         authors.add(testAuthor);
-        
+
         Book book = new Book.Builder()
                 .title("Test Book")
                 .authors(authors)
@@ -100,10 +101,10 @@ public class ConcurrentBookTest {
                 .build();
         book.addIsbn("9781234567890");
         book.addCategory("Test");
-        
+
         Book testBook = bookRepository.saveAndFlush(book);
         createdBookIds.add(testBook.getId());
-        
+
         logger.info("Created test book with ID: {}", testBook.getId());
         logger.info("Created test author with ID: {}", testAuthor.getId());
         logger.info("Created test user with ID: {}", testUser.getId());
@@ -113,7 +114,7 @@ public class ConcurrentBookTest {
     public void cleanup() {
         // Clear security context
         SecurityContextHolder.clearContext();
-        
+
         // Delete test books
         for (Long id : createdBookIds) {
             try {
@@ -124,7 +125,7 @@ public class ConcurrentBookTest {
             }
         }
         createdBookIds.clear();
-        
+
         // Delete test authors
         for (Long id : createdAuthorIds) {
             try {
@@ -135,7 +136,7 @@ public class ConcurrentBookTest {
             }
         }
         createdAuthorIds.clear();
-        
+
         // Delete test users
         for (Long id : createdUserIds) {
             try {
@@ -168,7 +169,7 @@ public class ConcurrentBookTest {
                     SecurityContextHolder.getContext().setAuthentication(
                             new UsernamePasswordAuthenticationToken(testUser, null, testUser.getAuthorities())
                     );
-                    
+
                     BookUpdate bookUpdate = new BookUpdate(
                             Optional.of("Updated Book Title " + threadNum),
                             Optional.empty(),
@@ -176,7 +177,7 @@ public class ConcurrentBookTest {
                             Optional.empty(),
                             Optional.empty()
                     );
-                    
+
                     bookService.patchBook(testBookId, bookUpdate);
                     successCount.incrementAndGet();
                     logger.info("Thread {} successfully updated book", threadNum);
@@ -236,30 +237,30 @@ public class ConcurrentBookTest {
                     SecurityContextHolder.getContext().setAuthentication(
                             new UsernamePasswordAuthenticationToken(testUser, null, testUser.getAuthorities())
                     );
-                    
+
                     // Create a new author for thread
                     Author author = new Author("Concurrent", "Author" + threadNum);
                     author = authorRepository.save(author);
-                    
-                    Set<Author> authors = new HashSet<>();
-                    authors.add(author);
-                    
-                    // Create book with the same ISBN
-                    Book book = new Book.Builder()
-                            .title("Concurrent Book " + threadNum)
-                            .authors(authors)
-                            .description("Description for Book " + threadNum)
-                            .publicationDate(new Date())
-                            .build();
-                    
-                    // All threads use the same ISBN
-                    book.addIsbn(isbn);
-                    book.addCategory("Category" + threadNum);
-                    
-                    Book savedBook = bookService.createBook(book);
+
+                    // Create BookCreate DTO with the same ISBN
+                    List<String> authors = new ArrayList<>();
+                    authors.add(author.getFirstName() + " " + author.getLastName());
+
+                    List<String> isbns = new ArrayList<>();
+                    isbns.add(isbn);
+
+                    BookCreate bookCreateDto = new BookCreate(
+                            "Concurrent Book " + threadNum,
+                            authors,
+                            "Description for Book " + threadNum,
+                            new Date(),
+                            isbns
+                    );
+
+                    Book savedBook = bookService.createFromDto(bookCreateDto);
                     successCount.incrementAndGet();
                     createdBookId.set(savedBook.getId());
-                    
+
                     // Add to cleanup list
                     synchronized (createdBookIds) {
                         createdBookIds.add(savedBook.getId());
@@ -267,7 +268,7 @@ public class ConcurrentBookTest {
                     synchronized (createdAuthorIds) {
                         createdAuthorIds.add(author.getId());
                     }
-                    
+
                     logger.info("Thread {} successfully created book with ID: {}", threadNum, savedBook.getId());
                 } catch (DuplicateResourceException e) {
                     failureCount.incrementAndGet();

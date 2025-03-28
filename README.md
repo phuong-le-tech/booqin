@@ -39,7 +39,6 @@ Comment obtenir les clés nécessaires :
 - **Clés Stripe** : Pour les tests et le développement, créez un compte sur [Stripe](https://stripe.com) et récupérez les clés dans le tableau de bord Stripe :
     1. Créez ou connectez-vous à votre compte Stripe
     2. Accédez à [Dashboard > Developers > API keys](https://dashboard.stripe.com/test/apikeys)
-    3. Utilisez les clés de test pour le développement (commençant par "pk_test_" et "sk_test_")
 
 - **STRIPE_WEBHOOK_SECRET** : Dans le tableau de bord Stripe, allez dans [Developers > Webhooks](https://dashboard.stripe.com/test/webhooks) :
     1. Cliquez sur "Add endpoint"
