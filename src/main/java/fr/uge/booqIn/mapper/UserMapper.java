@@ -36,8 +36,6 @@ public class UserMapper {
    * Note: the collections must be initialized before calling this method
    */
   public UserShow toUserShow(User user) {
-    System.out.println("UserMapper.toUserShow");
-    System.out.println("USER: " + user);
     List<BookCollectionIndex> collectionShowList = user.getCollections().stream()
             .map(bookCollectionMapper::toBookCollectionIndex)
             .toList();

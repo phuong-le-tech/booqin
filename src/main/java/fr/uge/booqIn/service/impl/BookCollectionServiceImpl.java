@@ -121,7 +121,6 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
       existingCollection.setDescription(collection.description().get());
     }
     existingCollection.setPublic(collection.isPublic());
-    System.out.println("ICICI");
     AbstractBookCollection updatedCollection = bookCollectionRepository.save(existingCollection);
     return bookCollectionMapper.toBookCollectionShow(updatedCollection);
   }
@@ -183,12 +182,8 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
   @Override
   @Transactional(readOnly = true)
   public Page<BookCollectionShow> getUserCollectionsWithBooks(User user, Pageable pageable) {
-    // Note: This implementation may need to be adjusted based on your repository method
-    // If getUserCollectionsWithBooks is a custom method, it may need pagination support
     List<AbstractBookCollection> collections = bookCollectionRepository.findByOwnerWithBooks(user);
-    System.out.println("ALL USER CL IN SERVICE:\n" + collections);
 
-    // Apply pagination manually if necessary
     int start = (int) pageable.getOffset();
     int end = Math.min((start + pageable.getPageSize()), collections.size());
 
@@ -203,8 +198,9 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
   @Override
   @Transactional(readOnly = true)
   public BookCollection findCollectionById(Long id) {
-    return bookCollectionRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("BookCollection", "id", id));
+    var collection = findById(id);
+    collection.getOwner().getFullName(); // un peu de triche pour charger l'utilisateur
+    return findById(id);
   }
 
   @Override
@@ -225,14 +221,16 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
    * Helper methods
    */
   private BookCollection findById(Long id) {
-    return bookCollectionRepository.findById(id)
+    return bookCollectionRepository.findByIdWithBooks(id)
             .orElseThrow(() -> new ResourceNotFoundException("BookCollection", "id", id));
   }
 
   // Recovery methods for retryable operations
   @Recover
   public BookCollectionShow recoverFromOptimisticLockingFailureCreate(
-          ObjectOptimisticLockingFailureException ex, @NonNull @Validated BookCollectionCreate collection, @NonNull User currentUser) {
+          ObjectOptimisticLockingFailureException ex,
+          BookCollectionCreate collection,
+          User currentUser) {
     logger.warning("Concurrent modification detected while creating collection: " + collection.title());
     throw new ConcurrentModificationException("The collection has been modified by someone else. Please try again.", ex);
   }
@@ -264,4 +262,20 @@ public class BookCollectionServiceImpl implements BookCollectionServiceInterface
     logger.warning("Concurrent modification detected while removing book ID: " + bookId + " from collection ID: " + collectionId);
     throw new ConcurrentModificationException("The collection has been modified by someone else. Please try again.", ex);
   }
+  
+  @Recover
+  public BookCollectionShow recoverFromConcurrentModificationFailureCreate(
+          ConcurrentModificationException ex,
+          BookCollectionCreate collection,
+          User currentUser) {
+    logger.warning("Concurrent modification detected while creating collection: " + collection.title());
+    throw new ConcurrentModificationException("The collection has been modified by someone else. Please try again.", ex);
+  }
+  @Recover
+  public BookCollectionShow recoverFromAllExceptions(
+          Exception ex, @NonNull @Validated BookCollectionCreate collection, @NonNull User currentUser) {
+    logger.warning("Échec après plusieurs tentatives lors de la création de la collection: " + collection.title() + ", erreur: " + ex.getMessage());
+    throw new RuntimeException("Impossible de créer la collection: " + ex.getMessage(), ex);
+  }
+  
 }

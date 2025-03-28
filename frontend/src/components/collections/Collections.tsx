@@ -9,6 +9,7 @@ import DeleteConfirmModal from "../modal/DeleteConfirmModal.tsx";
 import FollowButton from "../../components/follow/FollowButton.tsx";
 import { Pagination } from "../Pagination.tsx";
 import { PageInfo } from "../../model/Pagination";
+
 // Type for available tabs
 type TabType = "ALL" | "PRIVATE" | "PUBLIC" | "SMART" | "GLOBAL";
 
@@ -42,10 +43,10 @@ const Collections: React.FC = () => {
 
     // Function to determine collection type
     const getCollectionType = (collection: BookCollectionIndex): "SMART" | "GLOBAL" | "NORMAL" => {
-        if (collection.type === "SMART") {
+        if (collection.type === "SMART" || collection.type === "LIKED" || collection.type === "FOLLOWED") {
             return "SMART";
         }
-        if (collection.type === "GLOBAL") {
+        if (collection.type === "GLOBAL" || collection.type === "RECENT" || collection.type === "AUTHOR") {
             return "GLOBAL";
         }
         if (collection.type === "NORMAL") {
@@ -145,19 +146,29 @@ const Collections: React.FC = () => {
 
         switch (activeTab) {
             case "PRIVATE":
-                // Private tab: show only normal private collections
-                filtered = privateCollections.filter(collection => {
-                    return getCollectionType(collection) === "NORMAL";
+                // Private tab: show normal private collections and specialized collections that are private
+                filtered = allCollections.filter(collection => {
+                    // Include private collections of any type (NORMAL, SMART, RECENT, AUTHOR)
+                    return !collection.isPublic &&
+                        // But exclude GLOBAL type as they are system collections
+                        (collection.type !== "GLOBAL" ||
+                            collection.type === "RECENT" ||
+                            collection.type === "AUTHOR");
                 });
-                console.log(`[DEBUG] PRIVATE tab showing ${filtered.length} normal private collections`);
+                console.log(`[DEBUG] PRIVATE tab showing ${filtered.length} private collections`);
                 break;
 
             case "PUBLIC":
-                console.log(publicCollections);
-                filtered = publicCollections.filter(collection => {
-                    return getCollectionType(collection) === "NORMAL";
+                // Public tab: show public collections of all types
+                filtered = allCollections.filter(collection => {
+                    // Include public collections of any type (NORMAL, SMART, RECENT, AUTHOR)
+                    return collection.isPublic &&
+                        // But exclude GLOBAL type as they are system collections
+                        (collection.type !== "GLOBAL" ||
+                            collection.type === "RECENT" ||
+                            collection.type === "AUTHOR");
                 });
-                console.log(`[DEBUG] PUBLIC tab showing ${filtered.length} normal public collections`);
+                console.log(`[DEBUG] PUBLIC tab showing ${filtered.length} public collections`);
                 break;
 
             case "SMART":
@@ -169,9 +180,11 @@ const Collections: React.FC = () => {
                 break;
 
             case "GLOBAL":
-                // Global tab: show all global collections
+                // Global tab: show all global collections (including RECENT and AUTHOR)
                 filtered = allCollections.filter(collection => {
-                    return getCollectionType(collection) === "GLOBAL";
+                    return getCollectionType(collection) === "GLOBAL" ||
+                        collection.type === "RECENT" ||
+                        collection.type === "AUTHOR";
                 });
                 console.log(`[DEBUG] GLOBAL tab showing ${filtered.length} global collections`);
                 break;
@@ -309,6 +322,30 @@ const Collections: React.FC = () => {
 
     // Determine collection type badge
     const renderCollectionBadge = (collection: BookCollectionIndex) => {
+        // Special case checks for RECENT and AUTHOR collections that are part of the GLOBAL type
+        if (collection.type === "RECENT") {
+            return (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    <svg className="mr-1.5 h-2 w-2 text-blue-800" fill="currentColor" viewBox="0 0 8 8">
+                        <circle cx="4" cy="4" r="3" />
+                    </svg>
+                    Recent Books
+                </span>
+            );
+        }
+
+        if (collection.type === "AUTHOR") {
+            return (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                    <svg className="mr-1.5 h-2 w-2 text-indigo-800" fill="currentColor" viewBox="0 0 8 8">
+                        <circle cx="4" cy="4" r="3" />
+                    </svg>
+                    Author Collection
+                </span>
+            );
+        }
+
+        // Standard type checks
         const type = getCollectionType(collection);
 
         switch (type) {
@@ -332,8 +369,8 @@ const Collections: React.FC = () => {
                 );
             default:
                 return (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        <svg className="mr-1.5 h-2 w-2 text-blue-800" fill="currentColor" viewBox="0 0 8 8">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        <svg className="mr-1.5 h-2 w-2 text-gray-800" fill="currentColor" viewBox="0 0 8 8">
                             <circle cx="4" cy="4" r="3" />
                         </svg>
                         User Collection
@@ -344,6 +381,16 @@ const Collections: React.FC = () => {
 
     // Check if user can edit a collection
     const canEditCollection = (collection: BookCollectionIndex): boolean => {
+        // Users cannot edit RECENT, AUTHOR, or GLOBAL collections
+        if (collection.type === "RECENT" || collection.type === "AUTHOR" || collection.type === "GLOBAL") {
+            return false;
+        }
+
+        const type = getCollectionType(collection);
+        if (type === "GLOBAL") {
+            return false;
+        }
+
         if (!user) return false;
         return collection.userId === user.id;
     };

@@ -20,10 +20,7 @@ import fr.uge.booqIn.mapper.BookMapper;
 import fr.uge.booqIn.model.BookCollection;
 import fr.uge.booqIn.service.impl.BookServiceImpl;
 import fr.uge.booqIn.service.impl.UserVoteService;
-import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
-import fr.uge.booqIn.service.interfaces.BookLendingInterface;
-import fr.uge.booqIn.service.interfaces.CommentServiceInterface;
-import fr.uge.booqIn.service.interfaces.VoteServiceInterface;
+import fr.uge.booqIn.service.interfaces.*;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -48,7 +45,8 @@ public class BookCollectionWebController {
   private final BookCollectionServiceInterface bookCollectionService;
   private final VoteServiceInterface voteService;
   private final CommentServiceInterface commentServiceInterface;
-  private final BookServiceImpl bookService;
+  private final BookServiceInterface bookService;
+  private final FollowServiceInterface followService;
   private final BookMapper bookMapper = new BookMapper();
   private final BookCollectionMapper bookCollectionMapper = new BookCollectionMapper();
   private final Logger logger = Logger.getLogger(BookCollectionWebController.class.getName());
@@ -58,14 +56,20 @@ public class BookCollectionWebController {
   private final CommentServiceInterface commentService;
 
   @Autowired
-  public BookCollectionWebController(BookCollectionServiceInterface bookCollectionService, VoteServiceInterface voteService, CommentServiceInterface commentServiceInterface,
-                                     BookServiceImpl bookService,
+  public BookCollectionWebController(BookCollectionServiceInterface bookCollectionService,
+                                     VoteServiceInterface voteService,
+                                     CommentServiceInterface commentServiceInterface,
+                                     BookServiceInterface bookService,
+                                     FollowServiceInterface followService,
                                      HomeWebController homeWebController,
-                                     BookLendingInterface bookLendingInterface, UserVoteService userVoteService, CommentServiceInterface commentService) {
+                                     BookLendingInterface bookLendingInterface,
+                                     UserVoteService userVoteService,
+                                     CommentServiceInterface commentService) {
     this.bookCollectionService = bookCollectionService;
     this.voteService = voteService;
     this.commentServiceInterface = commentServiceInterface;
     this.bookService = bookService;
+    this.followService = followService;
     this.homeWebController = homeWebController;
     this.bookLendingInterface = bookLendingInterface;
     this.userVoteService = userVoteService;
@@ -122,16 +126,19 @@ public class BookCollectionWebController {
       homeWebController.prepareModel(model, principal, "collection-details");
 
       BookCollectionShow collection = bookCollectionService.findBookCollectionById(id);
-      System.out.println("BookCollection was found !");
       model.addAttribute("collection", collection);
       model.addAttribute("currentUser", currentUser);
       boolean isOwner = (currentUser != null && Objects.equals(collection.user().id(), currentUser.getId()));
       model.addAttribute("isOwner", isOwner);
       if (currentUser != null) {
+        boolean isFollowing = followService.isFollowing(currentUser.getId(), id, "COLLECTION");
+        model.addAttribute("isFollowing", isFollowing);
+        long followersCount = followService.countFollowers(id, "COLLECTION");
+        model.addAttribute("followersCount", followersCount);
+
         try {
           LendingResponseDTO lendingData = bookLendingInterface.findAllUserLendingsAsDTO(currentUser.getId(), LendStatus.ALL);
           StringBuilder logMsg = new StringBuilder();
-          System.out.println("Lending data fetched: " + lendingData.lentBooks().size() + " lent books");
           List<Long> lentBooks = lendingData.lentBooks().stream()
                   .filter(lending -> lending.status() == BookStatus.AVAILABLE)
                   .map(lending -> lending.book().id())
@@ -152,10 +159,10 @@ public class BookCollectionWebController {
 
       model.addAttribute("title", "BooqIn - " + collection.title());
       model.addAttribute("content", "pages/collections/details");
-      model.addAttribute("votes",voteService.getVoteCounts(id,"COLLECTION"));
-      var totalComments = commentServiceInterface.countByEntity(id,"COLLECTION");
-      var comments = commentServiceInterface.getCommentTreeByEntity(id,"COLLECTION");
-      if(currentUser!=null) {
+      model.addAttribute("votes", voteService.getVoteCounts(id, "COLLECTION"));
+      var totalComments = commentServiceInterface.countByEntity(id, "COLLECTION");
+      var comments = commentServiceInterface.getCommentTreeByEntity(id, "COLLECTION");
+      if (currentUser != null) {
         model.addAttribute("user", currentUser);
         List<CommentDTO> list = commentService.getCommentTreeByEntity(id, "COLLECTION");
         Map<Long, VoteType> commentVotes = userVoteService.collectCommentVotes(currentUser.getId(), list);
@@ -165,7 +172,6 @@ public class BookCollectionWebController {
       model.addAttribute("commentCount", totalComments);
       return "layout";
     } catch (ResourceNotFoundException e) {
-      System.out.println("Collection not found: " + e.getMessage());
       return "redirect:/collections";
     }
   }
@@ -188,7 +194,6 @@ public class BookCollectionWebController {
 
       return "layout";
     } catch (ResourceNotFoundException e) {
-      System.out.println("Collection not found or empty");
       return "redirect:/collections";
     }
   }
@@ -204,7 +209,7 @@ public class BookCollectionWebController {
     logger.info("Adding book with ID " + bookId + " to collection with ID " + collectionId);
     try {
       BookCollectionShow collectionOpt = bookCollectionService.findBookCollectionById(collectionId);
-      logger.info("Collection found: " +  collectionOpt.title());
+      logger.info("Collection found: " + collectionOpt.title());
       BookShow bookShow = bookService.findById(bookId);
       Set<Author> authors = bookShow.authors().stream().map(bookMapper::toAuthor).collect(Collectors.toSet());
       Book book = new Book.Builder().id(bookShow.id())
@@ -227,6 +232,8 @@ public class BookCollectionWebController {
       return "layout";
     }
   }
+  
+  
 
   @GetMapping("/{collectionId}/books/{bookId}/remove")
   public String removeBookFromCollection(
@@ -276,7 +283,6 @@ public class BookCollectionWebController {
 //      bookCollection.setOwner(currentUser);
 //      bookCollection.setPublic(isPublic != null && isPublic);
       BookCollectionShow createdCollection = bookCollectionService.createBookCollection(bookCollection, currentUser);
-      System.out.println("Collection created: " + createdCollection);
       return "redirect:/collections";
     } catch (ResourceNotFoundException e) {
       // Préparer le modèle commun même en cas d'erreur
@@ -309,7 +315,6 @@ public class BookCollectionWebController {
       return "layout";
     } catch (ResourceNotFoundException e) {
       model.addAttribute("error", e.getMessage());
-      System.out.println("ERROR WHEN FORM EDIT");
       return "redirect:/collections?error=notFound";
     }
   }
@@ -324,7 +329,6 @@ public class BookCollectionWebController {
           Model model,
           Principal principal) {
     if (bindingResult.hasErrors()) {
-      System.out.println("BINDING ERRORS: " + bindingResult.getAllErrors());
       return "redirect:/collections?error=notFound";
     }
     try {
@@ -333,7 +337,6 @@ public class BookCollectionWebController {
         return "redirect:/pages/collections?error=notOwner";
       }
 
-      System.out.println("isPublic: " + isPublic);
       // Update only allowed fields
       bookCollection.setId(id);
       bookCollection.setOwner(currentUser);
@@ -377,15 +380,51 @@ public class BookCollectionWebController {
 
   @PostMapping("/vote")
   public String vote(@RequestParam("id") Long collectionId, @RequestParam("voteType") VoteType voteType, @AuthenticationPrincipal User currentUser, Model model) {
-    if(currentUser == null) {
+    if (currentUser == null) {
       return "redirect:/";
     }
-    voteService.castVote(new VoteCreate(currentUser.getId(),collectionId,"COLLECTION",voteType));
+    voteService.castVote(new VoteCreate(currentUser.getId(), collectionId, "COLLECTION", voteType));
     // return to the same collection
     return "redirect:/collections/" + collectionId;
   }
 
   private boolean verifyIsSameUser(User currentUser, BookCollectionShow collection) {
     return Objects.equals(collection.user().id(), currentUser.getId());
+  }
+  
+  
+  @GetMapping("/smart/new")
+  public String showCreatSmartCollectionForm(Model model, Principal principal) {
+    // Préparer le modèle commun
+    homeWebController.prepareModel(model, principal, "collection-create");
+    
+    model.addAttribute("bookCollection", new BookCollectionCreate("", "", false, Optional.empty()));
+    
+    // Définir le titre et le contenu
+    model.addAttribute("title", "BooqIn - Create Collection");
+    model.addAttribute("content", "pages/collections/createSmart");
+    
+    return "layout";
+  }
+  
+  @PostMapping("/smart/new")
+  public String createCollectionSmart(
+          @Valid @ModelAttribute("bookCollection") BookCollectionCreate bookCollection,
+          Model model,
+          Principal principal,
+          @AuthenticationPrincipal User currentUser
+  ) {
+    try {
+      BookCollectionShow createdCollection = bookCollectionService.createBookCollection(bookCollection, currentUser);
+      return "redirect:/collections";
+    } catch (ResourceNotFoundException e) {
+      homeWebController.prepareModel(model, principal, "collection-create");
+      
+      model.addAttribute("error", e.getMessage());
+      model.addAttribute("title", "BooqIn - Error");
+      model.addAttribute("content", "pages/collections/createSmart");
+      
+      return "layout";
+    }
   }
 }

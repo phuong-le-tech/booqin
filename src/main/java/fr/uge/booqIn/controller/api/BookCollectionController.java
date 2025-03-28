@@ -51,10 +51,8 @@ public class BookCollectionController {
   public ResponseEntity<ApiResponse<BookCollectionShow>> createCollection(
           @Valid @RequestBody BookCollectionCreate bookCollectionCreateDto,
           @AuthenticationPrincipal User currentUser) {
-    
-
+    System.out.println("Creating collection" + bookCollectionCreateDto  + " " + currentUser);
     BookCollectionShow collectionShow = bookCollectionService.createBookCollection(bookCollectionCreateDto, currentUser);
-    System.out.println("Collection created successfully" + collectionShow);
     return ResponseEntity.status(HttpStatus.CREATED)
             .body(ApiResponse.success("Collection created successfully", collectionShow));
   }
