@@ -6,6 +6,7 @@ import com.stripe.Stripe;
 import com.stripe.model.Event;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.param.checkout.SessionCreateParams;
+import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.Cart;
 import com.stripe.net.Webhook;
 import fr.uge.booqIn.entity.User;
@@ -23,6 +24,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.stripe.model.checkout.Session;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -136,8 +138,8 @@ public class StripeService {
     ObjectMapper mapper = new ObjectMapper();
     return mapper.readTree(rawJson);
   }
-
-
+  
+  
   private void updateCartPaymentStatus(String sessionId) {
     try {
       Cart cart = cartRepository.findByPaymentIntentId(sessionId)
@@ -145,23 +147,27 @@ public class StripeService {
                       HttpStatus.NOT_FOUND,
                       "Cart not found for Stripe session ID: " + sessionId
               ));
-
+      
       cart.setStatut(StatusPayment.CONFIRMED);
       cartRepository.save(cart);
-      User user = userRepository.findById(cart.getId())
+      User user = userRepository.findByCartId(cart.getId())
               .orElseThrow(() -> new ResponseStatusException(
                       HttpStatus.NOT_FOUND,
                       "User not found for cart ID: " + cart.getId()
               ));
 
-      for (var book : cart.getBooks()) {
-        bookLendingService.markAsPending(book.getId(), user.getId());
-      }
+      List<Book> books = new ArrayList<>(cart.getBooks());
+      System.out.println(books.size() + " books" + books);
+      
+      for (Book book : books) {
 
+          System.out.println("Processing book id " + book.getId() + " for user id " + user.getId());
+          bookLendingService.markAsPending(book.getId(), user.getId());
+          System.out.println("Book id " + book.getId() + " successfully processed");
+      }
+      
     } catch (ResponseStatusException e) {
       logger.warning(e.getMessage());
-    } catch (Exception e) {
-      logger.warning("⚠️ Error updating cart status: " + e.getMessage());
     }
   }
 
