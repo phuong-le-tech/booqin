@@ -41,7 +41,7 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right font-medium">
                         <form th:action="@{/cart/remove-book}" method="post">
-                            <input type="hidden" name="userId" th:value="${cart.userId}">
+                            <input type="hidden" name="userId" th:value="${userId}">
                             <input type="hidden" name="bookId" th:value="${book.id}">
                             <button type="submit" class="text-red-600 hover:text-red-900 flex items-center justify-end w-full">
                                 <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -65,7 +65,7 @@
 
                 <div class="flex mt-4 space-x-4">
                     <form th:action="@{/cart/clear-cart}" method="post">
-                        <input type="hidden" name="userId" th:value="${cart.userId}">
+                        <input type="hidden" name="userId" th:value="${userId}">
                         <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center">
                             <span>🗑️</span>
                             <span class="ml-1">Empty cart</span>

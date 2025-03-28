@@ -60,6 +60,7 @@ public class CartWebController {
       double total = size * 6;
 
       model.addAttribute("cart", cart);
+      model.addAttribute("userId", currentUser.getId());
       model.addAttribute("subtotal", subtotal);
       model.addAttribute("total", total);
     }
