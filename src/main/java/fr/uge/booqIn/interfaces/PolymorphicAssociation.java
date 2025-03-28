@@ -1,4 +1,4 @@
-package fr.uge.booqIn.model;
+package fr.uge.booqIn.interfaces;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;

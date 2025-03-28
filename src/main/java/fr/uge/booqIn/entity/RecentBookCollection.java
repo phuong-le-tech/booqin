@@ -1,6 +1,6 @@
 package fr.uge.booqIn.entity;
 
-import fr.uge.booqIn.model.BookCollection;
+import fr.uge.booqIn.interfaces.BookCollection;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;

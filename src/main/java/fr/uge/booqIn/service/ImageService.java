@@ -32,12 +32,9 @@ public class ImageService {
     public ImageService(@Value("${file.upload-dir}") String uploadDir,
                         @Value("${app.image-base-url}") String imageBaseUrl) {
         this.uploadDir = uploadDir;
-        logger.info("ImageService initialized with uploadDir: {}, imageBaseUrl: {}", uploadDir, imageBaseUrl);
-
         try {
             Files.createDirectories(Paths.get(uploadDir, "books", "covers"));
             Files.createDirectories(Paths.get(uploadDir, "books", "thumbnails"));
-            logger.info("Created image directories in: {}", uploadDir);
         } catch (IOException e) {
             logger.error("Failed to create image directories: {}", e.getMessage(), e);
         }
@@ -52,8 +49,6 @@ public class ImageService {
     }
 
     public String saveBookCover(MultipartFile file, Long bookId) throws IOException {
-        logger.info("Saving book cover for book ID: {}, original filename: {}", bookId, file.getOriginalFilename());
-
         if (file.isEmpty()) {
             logger.error("Cannot save empty file for book ID: {}", bookId);
             throw new IllegalArgumentException("File is empty");
@@ -70,11 +65,8 @@ public class ImageService {
         logger.debug("Saving file to: {}", targetPath);
 
         Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
-        logger.info("File saved successfully: {}", targetPath);
-
         try {
             var thumbnailPath = createThumbnail(targetPath, bookId);
-            logger.info("Thumbnail created: {}", thumbnailPath);
         } catch (Exception e) {
             logger.error("Failed to create thumbnail for book ID: {}, error: {}", bookId, e.getMessage(), e);
         }
@@ -135,14 +127,11 @@ public class ImageService {
                     throw new IOException("Could not save thumbnail in any supported format");
                 }
             }
-            logger.info("Thumbnail created successfully");
         }
         return "books/thumbnails/" + thumbFileName;
     }
 
     public String downloadBookCoverFromUrl(String imageUrl, Long bookId) {
-        logger.info("Downloading book cover from URL: {} for book ID: {}", imageUrl, bookId);
-
         try {
             if (imageUrl.startsWith("http:")) {
                 imageUrl = "https:" + imageUrl.substring(5);
@@ -196,8 +185,6 @@ public class ImageService {
 
             try (InputStream in = connection.getInputStream()) {
                 Files.copy(in, targetPath, StandardCopyOption.REPLACE_EXISTING);
-                logger.info("Image downloaded successfully to: {}", targetPath);
-
                 if (!Files.exists(targetPath)) {
                     logger.error("File does not exist after download: {}", targetPath);
                     throw new IOException("File does not exist after download");
@@ -214,7 +201,6 @@ public class ImageService {
 
             try {
                 var thumbnailPath = createThumbnail(targetPath, bookId);
-                logger.info("Thumbnail created for downloaded image: {}", thumbnailPath);
             } catch (Exception e) {
                 logger.error("Failed to create thumbnail for downloaded image: {}", e.getMessage(), e);
                 // Continuer même si la création de la miniature échoue

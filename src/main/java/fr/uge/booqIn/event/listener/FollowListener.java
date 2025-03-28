@@ -5,8 +5,7 @@ import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.event.publishable.AddFollowedUserBooks;
 import fr.uge.booqIn.event.publishable.RemoveFollowedUserBooks;
-import fr.uge.booqIn.repository.BookCollectionRepository;
-import org.springframework.context.event.EventListener;
+import fr.uge.booqIn.service.interfaces.BookCollectionServiceInterface;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,11 +18,11 @@ import java.util.logging.Logger;
 @Component
 public class FollowListener {
   private static final Logger logger = Logger.getLogger(FollowListener.class.getName());
-  private final BookCollectionRepository bookCollectionRepository;
+  private final BookCollectionServiceInterface bookCollectionService;
   private final Random random = new Random();
 
-  public FollowListener(BookCollectionRepository bookCollectionRepository) {
-    this.bookCollectionRepository = bookCollectionRepository;
+  public FollowListener(BookCollectionServiceInterface bookCollectionService) {
+    this.bookCollectionService = bookCollectionService;
   }
 
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -36,22 +35,23 @@ public class FollowListener {
             follower.getFullName(), followed.getFullName()));
 
     var followerFollowedCollection = follower.getFollowedUsersCollection();
-    var followedPublicCollection = bookCollectionRepository.findPublicCollectionsByOwner(followed);
+    var followedPublicCollections = bookCollectionService.findPublicCollectionsByOwnerId(followed.getId());
 
-    if (followedPublicCollection.isEmpty()) {
+    if (followedPublicCollections.isEmpty()) {
       logger.info("No public collections found for user " + followed.getId());
       return;
     }
 
     AbstractBookCollection randomCollection =
-            followedPublicCollection.get(random.nextInt(followedPublicCollection.size()));
+            followedPublicCollections.get(random.nextInt(followedPublicCollections.size()));
 
     logger.info(String.format("Selected random collection: %s from user %s",
             randomCollection.getTitle(), followed.getFullName()));
 
     int addedBooks = 0;
+    logger.info("Adding books from collection to user's followed books collection " + randomCollection.getBooks().size());
     for (Book book : randomCollection.getBooks()) {
-      followerFollowedCollection.addBook(book);
+      bookCollectionService.addBookToCollection(followerFollowedCollection.getId(), book.getId());
       logger.fine("Added book: " + book.getTitle() + " to followed users collection");
     }
 
@@ -69,17 +69,18 @@ public class FollowListener {
             follower.getFullName(), followed.getFullName()));
 
     var followerFollowedCollection = follower.getFollowedUsersCollection();
-    var followedPublicCollections = bookCollectionRepository.findPublicCollectionsByOwner(followed);
+    var followedPublicCollections = bookCollectionService.findPublicCollectionsByOwnerId(followed.getId());
 
     if (followedPublicCollections.isEmpty()) {
       logger.info("No public collections found for user " + followed.getId());
       return;
     }
 
+    // Oui c'est dégueulasse
     int removedBooks = 0;
     for (AbstractBookCollection collection : followedPublicCollections) {
       for (Book book : collection.getBooks()) {
-        followerFollowedCollection.removeBook(book);
+        bookCollectionService.removeBookFromCollection(followerFollowedCollection.getId(), book.getId());
         removedBooks++;
         logger.fine("Removed book: " + book.getTitle() + " from followed users collection");
       }

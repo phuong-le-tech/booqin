@@ -1,7 +1,7 @@
 package fr.uge.booqIn.entity;
 
-import fr.uge.booqIn.model.PolymorphicAssociation;
-import fr.uge.booqIn.model.Followable;
+import fr.uge.booqIn.interfaces.PolymorphicAssociation;
+import fr.uge.booqIn.interfaces.Followable;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 

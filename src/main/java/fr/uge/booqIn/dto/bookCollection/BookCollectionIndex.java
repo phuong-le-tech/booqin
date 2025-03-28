@@ -1,6 +1,6 @@
 package fr.uge.booqIn.dto.bookCollection;
 
-import fr.uge.booqIn.model.BookCollection;
+import fr.uge.booqIn.interfaces.BookCollection;
 
 public record BookCollectionIndex(
         Long id,

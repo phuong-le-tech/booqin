@@ -8,14 +8,13 @@ import fr.uge.booqIn.entity.Cart;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.UserRole;
 import fr.uge.booqIn.exception.DuplicateResourceException;
-import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.mapper.AuthMapper;
 import fr.uge.booqIn.repository.CartRepository;
 import fr.uge.booqIn.repository.UserRepository;
 import fr.uge.booqIn.service.interfaces.AuthServiceInterface;
 import fr.uge.booqIn.service.JwtService;
+import org.springframework.lang.NonNull;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
@@ -28,7 +27,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ConcurrentModificationException;
 import java.util.Date;
-import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class AuthServiceImpl implements AuthServiceInterface {
@@ -62,7 +60,7 @@ public class AuthServiceImpl implements AuthServiceInterface {
           retryFor = {ObjectOptimisticLockingFailureException.class},
           backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
   )
-  public User register(RegisterDto registerDto) {
+  public User register(@NonNull RegisterDto registerDto) {
     userRepository.findByEmail(registerDto.email()).ifPresent(u -> {
       throw new DuplicateResourceException("User", "email", registerDto.email());
     });
@@ -94,7 +92,7 @@ public class AuthServiceImpl implements AuthServiceInterface {
           retryFor = {ObjectOptimisticLockingFailureException.class},
           backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
   )
-  public AuthResponse login(LoginDto signInDto) {
+  public AuthResponse login(@NonNull LoginDto signInDto) {
     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
             signInDto.login(),
             signInDto.password());
@@ -113,8 +111,8 @@ public class AuthServiceImpl implements AuthServiceInterface {
 
   @Override
   @Transactional
-  public UserMeDto getCurrentUser(Authentication authentication) {
-    if (authentication == null || !authentication.isAuthenticated()) {
+  public UserMeDto getCurrentUser(@NonNull Authentication authentication) {
+    if (!authentication.isAuthenticated()) {
       throw new IllegalStateException("User is not authenticated");
     }
 
@@ -132,7 +130,7 @@ public class AuthServiceImpl implements AuthServiceInterface {
           retryFor = {ObjectOptimisticLockingFailureException.class},
           backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
   )
-  public void invalidateUserSessions(Long userId) {
+  public void invalidateUserSessions(@NonNull Long userId) {
     User user = userRepository.findById(userId)
             .orElseThrow(() -> new IllegalStateException("User not found"));
 

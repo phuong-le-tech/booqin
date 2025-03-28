@@ -1,6 +1,6 @@
 package fr.uge.booqIn.strategy.handlers;
 
-import fr.uge.booqIn.model.PolymorphicEntity;
+import fr.uge.booqIn.interfaces.PolymorphicEntity;
 
 import java.util.Optional;
 
