@@ -1,5 +1,6 @@
 package fr.uge.booqIn.controller.web;
 
+import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionCreate;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionIndex;
@@ -83,6 +84,7 @@ public class BookCollectionWebController {
 
     Page<BookCollectionIndex> collections = bookCollectionService.getPublicCollections(PageRequest.of(page, size));
     model.addAttribute("publicCollections", collections);
+    model.addAttribute("pageSize", size);
     model.addAttribute("title", "BooqIn - Public Collections");
     model.addAttribute("content", "pages/collections/public");
     return "layout";
@@ -108,6 +110,7 @@ public class BookCollectionWebController {
     Page<BookCollectionIndex> userPrivateCollections = bookCollectionService.getPrivateUserCollection(currentUser, pageable);
 
     model.addAttribute("collections", collections);
+    model.addAttribute("pageSize", size);
     model.addAttribute("userPublicCollections", userPublicCollections);
     model.addAttribute("userPrivateCollections", userPrivateCollections);
 
@@ -119,13 +122,31 @@ public class BookCollectionWebController {
   }
 
   @GetMapping("/{id}")
-  public String showCollectionDetails(@PathVariable Long id, Model model, Principal principal, @AuthenticationPrincipal User currentUser) {
+  public String showCollectionDetails(
+          @PathVariable Long id, Model model, Principal principal, @AuthenticationPrincipal User currentUser,
+          @RequestParam(defaultValue = "0") int page,
+          @RequestParam(defaultValue = "12") int size
+  ) {
     try {
       homeWebController.prepareModel(model, principal, "collection-details");
 
       BookCollectionShow collection = bookCollectionService.findBookCollectionById(id);
       model.addAttribute("collection", collection);
       model.addAttribute("currentUser", currentUser);
+
+      // Pagination des livres
+      int totalBooks = collection.books().size();
+      int totalPages = (int) Math.ceil((double) totalBooks / size);
+      int start = page * size;
+      int end = Math.min(start + size, totalBooks);
+      List<BookIndex> paginatedBooks = totalBooks > 0 ? collection.books().subList(start, end) : Collections.emptyList();
+
+      model.addAttribute("paginatedBooks", paginatedBooks);
+      model.addAttribute("currentPage", page);
+      model.addAttribute("pageSize", size);
+      model.addAttribute("totalBooks", totalBooks);
+      model.addAttribute("totalPages", totalPages);
+
       boolean isOwner = (currentUser != null && Objects.equals(collection.user().id(), currentUser.getId()));
       model.addAttribute("isOwner", isOwner);
       if (currentUser != null) {

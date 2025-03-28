@@ -21,7 +21,7 @@
                         Downvotes: <span class="font-medium" th:text="${votes.downvoteCount}">0</span>
                     </button>
                     <span class="text-sm text-gray-600 bg-gray-200 px-2 py-1 rounded">
-            Score: <span class="font-medium" th:text="${votes.score}">0</span>
+                        Score: <span class="font-medium" th:text="${votes.score}">0</span>
                     </span>
                 </div>
             </form>
@@ -30,9 +30,30 @@
             </p>
         </div>
 
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Books in This Collection</h2>
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-semibold text-gray-800">Books in This Collection</h2>
+
+            <!-- Pagination -->
+            <div class="flex items-center space-x-2">
+                <span class="text-sm text-gray-600">Books per page:</span>
+                <form th:action="@{/collections/{id}(id=${collection.id})}" method="get" class="inline-block">
+                    <input type="hidden" name="page" value="0">
+                    <select name="size" onchange="this.form.submit()" class="border rounded p-1 text-sm">
+                        <option value="9" th:selected="${pageSize == 9}">9</option>
+                        <option value="12" th:selected="${pageSize == 12}">12</option>
+                        <option value="15" th:selected="${pageSize == 15}">15</option>
+                        <option value="21" th:selected="${pageSize == 21}">21</option>
+                        <option value="24" th:selected="${pageSize == 24}">24</option>
+                        <option value="27" th:selected="${pageSize == 27}">27</option>
+                        <option value="30" th:selected="${pageSize == 30}">30</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+
+
         <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <div th:each="book : ${collection.books}" class="bg-gray-50 shadow-md rounded-lg overflow-hidden transition-transform transform hover:scale-105 relative">
+            <div th:each="book : ${paginatedBooks}" class="bg-gray-50 shadow-md rounded-lg overflow-hidden transition-transform transform hover:scale-105 relative">
                 <!-- Badge pour les livres empruntés -->
                 <div th:if="${borrowedBooks != null && borrowedBooks.contains(book.id)}" class="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full z-10">
                     Prêté
@@ -51,6 +72,12 @@
 
                     <!-- Boutons d'action -->
                     <div class="flex space-x-2 mt-4">
+                        <!-- Bouton pour voir les détails du livre -->
+                        <a th:href="@{/books/{bookId}(bookId=${book.id}, returnUrl=@{/collections/{collectionId}(collectionId=${collection.id}, page=${currentPage}, size=${pageSize})})}"
+                           class="px-3 py-1 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600 transition-colors">
+                            View Details
+                        </a>
+
                         <!-- Supprimer le livre (seulement pour le propriétaire) -->
                         <a th:if="${isOwner}"
                            th:href="@{/collections/{collectionId}/books/{bookId}/remove(collectionId=${collection.id},bookId=${book.id})}"
@@ -88,6 +115,61 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- Composant de pagination -->
+        <div class="flex items-center justify-center gap-2 my-6" th:if="${totalPages > 1}"
+             th:with="visiblePages=5,
+          startPage=${(currentPage - 2 < 0) ? 0 : ((currentPage + 2 >= totalPages) ? (totalPages - visiblePages < 0 ? 0 : totalPages - visiblePages) : currentPage - 2)},
+          endPage=${(startPage + visiblePages - 1 >= totalPages) ? (totalPages - 1) : (startPage + visiblePages - 1)}">
+
+            <!-- Bouton précédent -->
+            <a th:if="${currentPage > 0}"
+               th:href="@{/collections/{id}(id=${collection.id}, page=${currentPage - 1}, size=${pageSize})}"
+               class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-blue-600 transition hover:bg-blue-600 hover:text-white">
+                <span class="nav-icon">&#8592;</span>
+            </a>
+            <span th:unless="${currentPage > 0}" class="w-10 h-10 rounded-full bg-gray-100 opacity-50 border border-gray-200 flex items-center justify-center text-gray-400">
+                <span class="nav-icon">&#8592;</span>
+            </span>
+
+            <!-- Premier numéro de page avec ellipsis si nécessaire -->
+            <a th:if="${startPage > 0}"
+               th:href="@{/collections/{id}(id=${collection.id}, page=0, size=${pageSize})}"
+               class="min-w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer transition text-sm text-gray-800 hover:bg-gray-200 px-3">
+                <span>1</span>
+            </a>
+
+            <div class="flex items-center justify-center text-sm text-gray-500 tracking-wider" th:if="${startPage > 1}">...</div>
+
+            <!-- Pages visibles dans la fenêtre coulissante -->
+            <div class="flex items-center gap-1">
+                <a th:each="i : ${#numbers.sequence(startPage, endPage)}"
+                   th:href="@{/collections/{id}(id=${collection.id}, page=${i}, size=${pageSize})}"
+                   class="min-w-9 h-9 rounded-full flex items-center justify-center cursor-pointer transition text-sm px-3"
+                   th:classappend="${currentPage == i} ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'">
+                    <span th:text="${i + 1}"></span>
+                </a>
+            </div>
+
+            <!-- Dernier numéro de page avec ellipsis si nécessaire -->
+            <div class="flex items-center justify-center text-sm text-gray-500 tracking-wider" th:if="${endPage < totalPages - 2}">...</div>
+
+            <a th:if="${endPage < totalPages - 1}"
+               th:href="@{/collections/{id}(id=${collection.id}, page=${totalPages - 1}, size=${pageSize})}"
+               class="min-w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center cursor-pointer transition text-sm text-gray-800 hover:bg-gray-200 px-3">
+                <span th:text="${totalPages}"></span>
+            </a>
+
+            <!-- Bouton suivant -->
+            <a th:if="${currentPage < totalPages - 1}"
+               th:href="@{/collections/{id}(id=${collection.id}, page=${currentPage + 1}, size=${pageSize})}"
+               class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-blue-600 transition hover:bg-blue-600 hover:text-white">
+                <span class="nav-icon">&#8594;</span>
+            </a>
+            <span th:unless="${currentPage < totalPages - 1}" class="w-10 h-10 rounded-full bg-gray-100 opacity-50 border border-gray-200 flex items-center justify-center text-gray-400">
+        <span class="nav-icon">&#8594;</span>
+    </span>
         </div>
 
         <!-- Bouton pour ajouter un livre (seulement pour le propriétaire) -->

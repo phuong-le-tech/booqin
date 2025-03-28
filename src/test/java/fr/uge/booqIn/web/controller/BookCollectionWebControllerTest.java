@@ -246,7 +246,7 @@ class BookCollectionWebControllerTest {
     when(bookLendingInterface.findAllUserLendingsAsDTO(eq(1L), eq(LendStatus.ALL))).thenReturn(lendingResponseDTO);
 
     // When
-    String viewName = bookCollectionWebController.showCollectionDetails(collectionId, model, principal, currentUser);
+    String viewName = bookCollectionWebController.showCollectionDetails(collectionId, model, principal, currentUser, 0, 10);
 
     // Then
     assertEquals("layout", viewName);
@@ -273,7 +273,7 @@ class BookCollectionWebControllerTest {
             .thenThrow(new ResourceNotFoundException("Collection not found"));
 
     // When
-    String viewName = bookCollectionWebController.showCollectionDetails(collectionId, model, principal, currentUser);
+    String viewName = bookCollectionWebController.showCollectionDetails(collectionId, model, principal, currentUser, 0, 10);
 
     // Then
     assertEquals("redirect:/collections", viewName);

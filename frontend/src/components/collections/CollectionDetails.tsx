@@ -11,6 +11,8 @@ import FollowButton from "../../components/follow/FollowButton.tsx";
 import {LendStatus} from "../../model/LendStatus.ts";
 import { VoteSection } from "../../components/vote/VoteSection";
 import { CommentSection } from "../../components/comment/CommentSection";
+import {PageInfo} from "../../model/Pagination.ts";
+import {Pagination} from "../Pagination.tsx";
 
 const CollectionDetails: React.FC = () => {
     const navigate = useNavigate();
@@ -27,22 +29,37 @@ const CollectionDetails: React.FC = () => {
     const [availableBooks, setAvailableBooks] = useState<any[]>([]);
     const [loadingBooks, setLoadingBooks] = useState(false);
 
-    // Nouveaux états pour les livres prêtés/empruntés
+    // États pour les livres prêtés/empruntés
     const [lentBooks, setLentBooks] = useState<number[]>([]);
     const [borrowedBooks, setBorrowedBooks] = useState<number[]>([]);
     const [lendingLoading, setLendingLoading] = useState<number | null>(null);
+
+    // Pagination
+    const [displayedBooks, setDisplayedBooks] = useState<any[]>([]);
+    const [pageInfo, setPageInfo] = useState<PageInfo>({
+        number: 0,
+        size: 10,
+        totalElements: 0,
+        totalPages: 0
+    });
 
     // Fetch collection data
     useEffect(() => {
         fetchCollection();
     }, [id]);
 
-    // Nouveau useEffect pour charger les informations de prêt
+    // useEffect pour charger les informations de prêt
     useEffect(() => {
         if (user) {
             fetchUserBooks();
         }
     }, [user]);
+
+    useEffect(() => {
+        if (collection && collection.books) {
+            updateBookPagination();
+        }
+    }, [collection, pageInfo.number, pageInfo.size]);
 
     const fetchCollection = async () => {
         try {
@@ -59,6 +76,11 @@ const CollectionDetails: React.FC = () => {
             const collectionsData = await BookCollectionService.getBookCollectionById(numericId);
             if (collectionsData) {
                 setCollection(collectionsData);
+                setPageInfo(prev => ({
+                    ...prev,
+                    totalElements: collectionsData.books.length,
+                    totalPages: Math.max(1, Math.ceil(collectionsData.books.length / prev.size))
+                }));
             } else {
                 console.error("Unexpected data format:", collectionsData);
                 setError("No public collections found");
@@ -70,7 +92,25 @@ const CollectionDetails: React.FC = () => {
         }
     };
 
-    // Nouvelle fonction pour charger les informations de prêt
+    const updateBookPagination = () => {
+        if (!collection || !collection.books) return;
+
+        const startIndex = pageInfo.number * pageInfo.size;
+        const endIndex = Math.min(startIndex + pageInfo.size, collection.books.length);
+        const paginatedBooks = collection.books.slice(startIndex, endIndex);
+
+        setDisplayedBooks(paginatedBooks);
+    };
+
+    const handlePageChange = (page: number) => {
+        console.log(`[DEBUG] Page changed to ${page}`);
+        setPageInfo(prev => ({
+            ...prev,
+            number: page
+        }));
+    };
+
+    // Fonction pour charger les informations de prêt
     const fetchUserBooks = async () => {
         if (!user?.id) {
             console.warn("userId is undefined, skipping lending fetch");
@@ -226,6 +266,17 @@ const CollectionDetails: React.FC = () => {
         }
     };
 
+    const handlePageSizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newSize = parseInt(e.target.value, 10);
+        console.log(`[DEBUG] Page size changed to ${newSize}`);
+        setPageInfo(prev => ({
+            ...prev,
+            size: newSize,
+            number: 0, // After changing page size, return to first page
+            totalPages: Math.max(1, Math.ceil((collection?.books.length || 0) / newSize))
+        }));
+    };
+
     if (loading) return <div className="text-center py-8">Loading...</div>;
 
     if (!collection) return <div className="text-center py-8">Collection not found.</div>;
@@ -280,74 +331,106 @@ const CollectionDetails: React.FC = () => {
                                 <p className="text-gray-700">{collection?.description}</p>
                             </div>
 
-                            <h2 className="text-2xl font-semibold mb-4">Books in this Collection:</h2>
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-2xl font-semibold">Books in this Collection:</h2>
+
+                                {/* Options de pagination */}
+                                <div className="flex items-center space-x-2">
+                                    <span className="text-sm text-gray-600">Books per page:</span>
+                                    <select
+                                        value={pageInfo.size}
+                                        onChange={handlePageSizeChange}
+                                        className="border rounded p-1 text-sm"
+                                    >
+                                        <option value="5">5</option>
+                                        <option value="10">10</option>
+                                        <option value="20">20</option>
+                                        <option value="50">50</option>
+                                    </select>
+                                </div>
+                            </div>
+
                             {collection.books.length > 0 ? (
-                                <ul className="space-y-4">
-                                    {collection.books.map((book) => (
-                                        <li key={book.id} className="p-4 border rounded-lg bg-white relative">
-                                            {/* Badge pour indiquer un livre emprunté */}
-                                            {borrowedBooks.includes(book.id) && (
-                                                <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full z-10">
-                                                    Prêté
-                                                </div>
-                                            )}
-                                            {/* Structure du livre avec les informations en haut et les boutons en bas */}
-                                            <div>
+                                <div>
+                                    <ul className="space-y-4">
+                                        {/*{collection.books.map((book) => (*/}
+                                        {displayedBooks.map((book) => (
+                                            <li key={book.id} className="p-4 border rounded-lg bg-white relative">
+                                                {/* Badge pour indiquer un livre emprunté */}
+                                                {borrowedBooks.includes(book.id) && (
+                                                    <div
+                                                        className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full z-10">
+                                                        Prêté
+                                                    </div>
+                                                )}
+                                                {/* Structure du livre avec les informations en haut et les boutons en bas */}
                                                 <div>
-                                                    <h3 className="text-lg font-bold">{book.title}</h3>
-                                                    <p className="text-sm text-gray-600">{book.description}</p>
-                                                    <p className="text-sm text-gray-500">Published: {book.publicationDate}</p>
-                                                    {book.authorNames.length > 0 && (
-                                                        <p className="text-sm text-gray-500">
-                                                            Authors: {book.authorNames.map((author) => `${author}`).join(", ")}
-                                                        </p>
-                                                    )}
-                                                </div>
+                                                    <div>
+                                                        <h3 className="text-lg font-bold">{book.title}</h3>
+                                                        <p className="text-sm text-gray-600">{book.description}</p>
+                                                        <p className="text-sm text-gray-500">Published: {book.publicationDate}</p>
+                                                        {book.authorNames.length > 0 && (
+                                                            <p className="text-sm text-gray-500">
+                                                                Authors: {book.authorNames.map((author) => `${author}`).join(", ")}
+                                                            </p>
+                                                        )}
+                                                    </div>
 
-                                                {/* Boutons placés en bas */}
-                                                <div className="flex space-x-2 mt-4">
-                                                    {/* View book details button */}
-                                                    <Link
-                                                        to={`/books/${book.id}`}
-                                                        className="px-3 py-1 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600 transition-colors"
-                                                    >
-                                                        View Details
-                                                    </Link>
-
-                                                    {user && !borrowedBooks.includes(book.id) && (
-                                                        lentBooks.includes(book.id) ? (
-                                                            <button
-                                                                onClick={() => removeFromLoanable(book.id)}
-                                                                className="px-3 py-1 text-white text-sm rounded-md transition-colors bg-yellow-500 hover:bg-yellow-600"
-                                                                disabled={lendingLoading === book.id}
-                                                            >
-                                                                {lendingLoading === book.id ? "Processing..." : "Remove from lending"}
-                                                            </button>
-                                                        ) : (
-                                                            <button
-                                                                onClick={() => addToLoanable(book.id)}
-                                                                className="px-3 py-1 text-white text-sm rounded-md transition-colors bg-green-500 hover:bg-green-600"
-                                                                disabled={lendingLoading === book.id}
-                                                            >
-                                                                {lendingLoading === book.id ? "Processing..." : "Add to lending"}
-                                                            </button>
-                                                        )
-                                                    )}
-
-                                                    {/* Remove book button - only for collection owner */}
-                                                    {isOwner && (
-                                                        <button
-                                                            onClick={() => handleRemoveBook(book.id)}
-                                                            className="px-3 py-1 bg-red-500 text-white text-sm rounded-md hover:bg-red-600 transition-colors"
+                                                    {/* Boutons placés en bas */}
+                                                    <div className="flex space-x-2 mt-4">
+                                                        {/* View book details button */}
+                                                        <Link
+                                                            to={`/books/${book.id}`}
+                                                            className="px-3 py-1 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600 transition-colors"
                                                         >
-                                                            Remove
-                                                        </button>
-                                                    )}
+                                                            View Details
+                                                        </Link>
+
+                                                        {user && !borrowedBooks.includes(book.id) && (
+                                                            lentBooks.includes(book.id) ? (
+                                                                <button
+                                                                    onClick={() => removeFromLoanable(book.id)}
+                                                                    className="px-3 py-1 text-white text-sm rounded-md transition-colors bg-yellow-500 hover:bg-yellow-600"
+                                                                    disabled={lendingLoading === book.id}
+                                                                >
+                                                                    {lendingLoading === book.id ? "Processing..." : "Remove from lending"}
+                                                                </button>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={() => addToLoanable(book.id)}
+                                                                    className="px-3 py-1 text-white text-sm rounded-md transition-colors bg-green-500 hover:bg-green-600"
+                                                                    disabled={lendingLoading === book.id}
+                                                                >
+                                                                    {lendingLoading === book.id ? "Processing..." : "Add to lending"}
+                                                                </button>
+                                                            )
+                                                        )}
+
+                                                        {/* Remove book button - only for collection owner */}
+                                                        {isOwner && (
+                                                            <button
+                                                                onClick={() => handleRemoveBook(book.id)}
+                                                                className="px-3 py-1 bg-red-500 text-white text-sm rounded-md hover:bg-red-600 transition-colors"
+                                                            >
+                                                                Remove
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
+                                            </li>
+                                        ))}
+                                    </ul>
+
+                                    {/* Pagination component - only show if there's more than one page */}
+                                    {pageInfo.totalPages > 1 && (
+                                        <div className="mt-6 flex justify-center">
+                                            <Pagination
+                                                pageInfo={pageInfo}
+                                                onPageChange={handlePageChange}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
                             ) : (
                                 <p className="text-gray-500">No books available in this collection.</p>
                             )}

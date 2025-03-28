@@ -253,7 +253,7 @@ class NotificationServiceTest {
     when(notificationQueueRepository.save(any(BookWaitingQueue.class))).thenReturn(testNotification);
 
     // When
-    boolean result = notificationService.reserveNotifiedBook(notificationId, userId);
+    boolean result = notificationServiceull.reserveNotifiedBook(notificationId, userId);
 
     // Then
     assertTrue(result);

@@ -23,10 +23,6 @@ public record RegisterDto(
 
         @NotBlank(message = "Password is required")
         @Size(min = 8, max = 100, message = "Password must be between 8 and 100 characters")
-        @Pattern(
-                regexp = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{8,}$",
-                message = "Password must contain at least one letter, one number, and one special character"
-        )
         String password,
 
         @Valid
