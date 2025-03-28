@@ -2,6 +2,7 @@ package fr.uge.booqIn.api.controller;
 
 import fr.uge.booqIn.controller.api.BookController;
 import fr.uge.booqIn.dto.author.AuthorDto;
+import fr.uge.booqIn.dto.book.BookCreate;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.dto.book.BookUpdate;
@@ -11,6 +12,7 @@ import fr.uge.booqIn.entity.AbstractBookCollection;
 import fr.uge.booqIn.exception.DuplicateResourceException;
 import fr.uge.booqIn.exception.ResourceNotFoundException;
 import fr.uge.booqIn.factory.ApiResponse;
+import fr.uge.booqIn.mapper.BookMapper;
 import fr.uge.booqIn.service.ImageService;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,12 +47,14 @@ class BookControllerTest {
     private ImageService imageService;
     private BookController bookController;
     private Book testBook;
+    private BookMapper bookMapper;
 
     @BeforeEach
     void setUp() {
         bookService = Mockito.mock(BookServiceInterface.class);
         bookController = new BookController(bookService, imageService);
         testBook = createTestBook();
+        bookMapper = new BookMapper();
     }
 
     // Helper method for common test book creation
@@ -204,68 +208,98 @@ class BookControllerTest {
     }
 
     @Test
-    @DisplayName("POST /books - Should create and return new book")
+    @DisplayName("POST /books - Should create and return new book as BookShow DTO")
     void createBook_ShouldReturnCreatedBook() {
         // Given
-        Set<String> isbns = new HashSet<>(Collections.singleton("1234567890"));
-        Set<Author> authors = new HashSet<>(Collections.singleton(new Author("John", "Doe")));
-        Set<String> categories = new HashSet<>(Collections.singleton("Fiction"));
+        List<String> isbns = List.of("1234567890");
+        List<String> authorNames = List.of("John Doe");
+        Date publicationDate = new Date();
 
-        Book book = new Book.Builder()
-                .title("New Book")
-                .description("A new test book")
-                .authors(authors)
-                .isbns(isbns)
-                .categories(categories)
-                .publicationDate(new Date())
-                .build();
+        BookCreate bookCreateDto = new BookCreate(
+                "New Book",
+                authorNames,
+                "A new test book",
+                publicationDate,
+                isbns
+        );
+
+        Author authorEntity = new Author("John", "Doe");
+        authorEntity.setId(42L); // simulate existing author in DB
 
         Book createdBook = new Book.Builder()
                 .id(1L)
                 .title("New Book")
                 .description("A new test book")
-                .authors(authors)
-                .isbns(isbns)
-                .categories(categories)
-                .publicationDate(new Date())
+                .authors(Set.of(authorEntity))
+                .isbns(Set.copyOf(isbns))
+                .categories(Set.of("Fiction"))
+                .publicationDate(publicationDate)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .coverImagePath("https://example.com/covers/1.jpg")
+                .thumbnailPath("https://example.com/thumbnails/1.jpg")
                 .build();
 
-        when(bookService.createBook(any(Book.class))).thenReturn(createdBook);
+        AuthorDto authorDto = new AuthorDto(42L, "John", "Doe");
+
+        BookShow bookShowDto = new BookShow(
+                createdBook.getId(),
+                createdBook.getIsbns(),
+                createdBook.getTitle(),
+                Set.of(authorDto),
+                createdBook.getDescription(),
+                createdBook.getPublicationDate(),
+                createdBook.getCreatedAt(),
+                createdBook.getUpdatedAt(),
+                createdBook.getCategories(),
+                createdBook.getCoverImagePath(),
+                createdBook.getThumbnailPath()
+        );
+
+        when(bookService.createFromDto(any(BookCreate.class))).thenReturn(createdBook);
+        when(bookMapper.toBookShow(createdBook)).thenReturn(bookShowDto);
 
         // When
-        ResponseEntity<ApiResponse<Book>> response = bookController.createBook(book);
+        ResponseEntity<ApiResponse<BookShow>> response = bookController.create(bookCreateDto);
 
         // Then
         assertNotNull(response);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        ApiResponse<Book> apiResponse = response.getBody();
-        assertNotNull(apiResponse);
-        assertTrue(apiResponse.success());
-        assertEquals("Book created successfully", apiResponse.message());
-        assertEquals(createdBook, apiResponse.data());
-        verify(bookService).createBook(eq(book));
+
+        ApiResponse<BookShow> body = response.getBody();
+        assertNotNull(body);
+        assertTrue(body.success());
+        assertEquals("Book created successfully", body.message());
+        assertEquals(bookShowDto, body.data());
+
+        verify(bookService).createFromDto(any(BookCreate.class));
+        verify(bookMapper).toBookShow(createdBook);
     }
+
 
     @Test
     @DisplayName("POST /books - With duplicate ISBN should throw DuplicateResourceException")
     void createBook_WithDuplicateIsbn_ShouldThrowException() {
         // Given
-        Set<String> isbns = new HashSet<>(Collections.singleton("1234567890"));
-        Set<Author> authors = new HashSet<>(Collections.singleton(new Author("John", "Doe")));
-        Book book = new Book.Builder()
-                .title("Duplicate Book")
-                .description("A book with duplicate ISBN")
-                .authors(authors)
-                .isbns(isbns)
-                .build();
-        when(bookService.createBook(any(Book.class)))
+        List<String> isbns = new ArrayList<>(Collections.singletonList("1234567890"));
+        List<String> authorNames = new ArrayList<>(Collections.singletonList("John Doe"));
+
+        BookCreate bookCreateDto = new BookCreate(
+                "Duplicate Book",
+                authorNames,
+                "A book with duplicate ISBN",
+                new Date(),
+                isbns
+        );
+
+        when(bookService.createFromDto(any(BookCreate.class)))
                 .thenThrow(new DuplicateResourceException("Book", "ISBN", "1234567890"));
 
         // When & Then
-        DuplicateResourceException exception = assertThrows(DuplicateResourceException.class, () ->
-                bookController.createBook(book)
+        assertThrows(DuplicateResourceException.class, () ->
+                bookController.create(bookCreateDto)
         );
-        verify(bookService).createBook(eq(book));
+        verify(bookService).createFromDto(any(BookCreate.class));
     }
 
     @Test

@@ -1,4 +1,3 @@
-/*
 package fr.uge.booqIn.web.controller;
 
 import fr.uge.booqIn.controller.web.HomeWebController;
@@ -73,30 +72,4 @@ class HomeWebControllerTest {
             .andExpect(model().attributeExists("title"))
             .andExpect(model().attribute("title", "BooqIn - Home"));
   }
-
-  @Test
-  @DisplayName("prepareModel - Should set correct attributes for anonymous user")
-  void prepareModel_ShouldSetCorrectAttributes_ForAnonymousUser() {
-    // When
-    homeWebController.prepareModel(model, null, "home");
-
-    // Then
-    verify(model).addAttribute(eq("isAuthenticated"), eq(false));
-    verify(model).addAttribute(eq("currentPage"), eq("home"));
-    verify(model).addAttribute(eq("content"), eq("pages/home"));
-  }
-
-  @Test
-  @DisplayName("prepareModel - Should set correct attributes for authenticated user")
-  void prepareModel_ShouldSetCorrectAttributes_ForAuthenticatedUser() {
-    // When
-    homeWebController.prepareModel(model, principal, "home");
-
-    // Then
-    verify(model).addAttribute(eq("isAuthenticated"), eq(true));
-    verify(model).addAttribute(eq("username"), eq("testuser"));
-    verify(model).addAttribute(eq("currentPage"), eq("home"));
-    verify(model).addAttribute(eq("content"), eq("pages/home"));
-    verify(model).addAttribute(eq("isAdmin"), eq(true));
-  }
-}*/
+}

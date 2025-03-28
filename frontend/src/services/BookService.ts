@@ -56,7 +56,7 @@ class BookService {
     }
 
     /**
-     * Crée un nouveau livre (réservé aux administrateurs)
+     * Crée un nouveau livre
      */
     async createBook(bookData: any) {
         try {

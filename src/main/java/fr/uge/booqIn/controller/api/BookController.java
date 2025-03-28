@@ -1,5 +1,6 @@
 package fr.uge.booqIn.controller.api;
 
+import fr.uge.booqIn.dto.book.BookCreate;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.dto.book.BookUpdate;
@@ -7,14 +8,14 @@ import fr.uge.booqIn.entity.Book;
 import fr.uge.booqIn.factory.ApiResponse;
 import fr.uge.booqIn.mapper.BookMapper;
 import fr.uge.booqIn.service.ImageService;
-import fr.uge.booqIn.service.interfaces.BookServiceInterface;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import fr.uge.booqIn.service.interfaces.BookServiceInterface;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
@@ -69,16 +70,16 @@ public class BookController {
         BookShow bookShow = bookService.findById(id);
         return ResponseEntity.ok(ApiResponse.success("Book found", bookShow));
     }
-    
+
     @PostMapping("")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<ApiResponse<Book>> createBook(@RequestBody Book book) {
-        Book createdBook = bookService.createBook(book);
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Book created successfully", createdBook));
+    public ResponseEntity<ApiResponse<BookShow>> create(@RequestBody BookCreate bookCreate) {
+        Book book = bookService.createFromDto(bookCreate);
+        BookShow bookShow = bookMapper.toBookShow(book);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Book created successfully", bookShow));
     }
-    
+
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Book>> updateBook(
