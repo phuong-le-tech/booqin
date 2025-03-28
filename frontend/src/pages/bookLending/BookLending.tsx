@@ -54,18 +54,13 @@ export const BookLending: () => JSX.Element = () => {
 
         const fetchLendings = async () => {
             try {
-                console.log("📚 Fetching loans for userId:", user.id);
                 const response = await axiosInstance.get(`/v1/loans/user/${user.id}?type=${activeTab}`);
-
-                console.log("📚 Loans response:", response.data);
-
                 if (response.data?.success && response.data?.data) {
                     setLendingData(response.data.data);
                 } else {
                     throw new Error("Unexpected response format");
                 }
             } catch (err: any) {
-                console.error("❌ Detailed Axios error:", err);
                 setError(err.response?.data?.message || "Error loading loans.");
             } finally {
                 setLoading(false);
@@ -214,10 +209,8 @@ export const BookLending: () => JSX.Element = () => {
     };
     const handleDownloadTicket = async (lendingId: number) => {
         try {
-            console.log(`Téléchargement du ticket pour le prêt ${lendingId}`);
             const token = localStorage.getItem('token');
             const url = `${axiosInstance.defaults.baseURL}/v1/loans/ticket-download/${lendingId}`;
-            console.log(`URL de téléchargement: ${url}`);
 
             const response = await fetch(url, {
                 method: 'GET',
@@ -225,17 +218,11 @@ export const BookLending: () => JSX.Element = () => {
                     'Authorization': `Bearer ${token}`
                 }
             });
-
-            console.log(`Statut de la réponse: ${response.status} ${response.statusText}`);
-            console.log(`Type de contenu: ${response.headers.get('Content-Type')}`);
-
             if (!response.ok) {
                  throw new Error(`Erreur HTTP: ${response.status}`);
             }
 
             const blob = await response.blob();
-            console.log(`Taille du blob: ${blob.size} octets, type: ${blob.type}`);
-
             const blobUrl = window.URL.createObjectURL(blob);
 
 
@@ -251,7 +238,6 @@ export const BookLending: () => JSX.Element = () => {
             }, 100);
 
         } catch (error) {
-            console.error("Erreur lors du téléchargement du ticket:", error);
             toast.error("Unable to download shipping ticket.");
         }
     };
@@ -481,7 +467,7 @@ export const BookLending: () => JSX.Element = () => {
                                                                                 onClick={() => handleDownloadTicket(lending.id)}
                                                                                 className="bg-light-blue hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors mr-2"
                                                                             >
-                                                                                Télécharger l'étiquette d'expédition
+                                                                                Download shipping label
                                                                             </button>
 
                                                                             {lending.status === "PENDING_SHIPMENT" && (
@@ -489,7 +475,7 @@ export const BookLending: () => JSX.Element = () => {
                                                                                     onClick={() => handleShipBook(lending.id)}
                                                                                     className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
                                                                                 >
-                                                                                    Marquer comme expédié
+                                                                                    Mark as shipped
                                                                                 </button>
                                                                             )}
                                                                         </div>

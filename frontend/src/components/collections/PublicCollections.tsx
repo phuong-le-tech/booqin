@@ -34,7 +34,6 @@ const PublicCollections: React.FC = () => {
                 field,
                 direction
             );
-            console.log(response);
             // Update collections and pagination info
             setCollections(response.content);
             setPageInfo({
