@@ -6,6 +6,7 @@ import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.dto.book.BookUpdate;
 import fr.uge.booqIn.entity.Book;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
@@ -56,7 +57,7 @@ public interface BookServiceInterface {
    */
   Book createBook(@NonNull @Valid Book book);
 
-  Book createFromDto(@NotNull @Valid BookCreate dto);
+  Book createFromDto(@NonNull @Valid BookCreate dto);
 
 
   /**

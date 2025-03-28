@@ -1,14 +1,22 @@
 import React, { useState, useEffect } from "react";
 
+interface BookCreateData {
+    title: string;
+    authors: string[];
+    description: string;
+    publicationDate: string;
+    isbn: string[];
+}
+
 interface BookAddModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (bookData: any) => void;
+    onSubmit: (bookData: BookCreateData) => void;
     error?: string | null;
 }
 
 const BookAddModal: React.FC<BookAddModalProps> = ({ isOpen, onClose, onSubmit, error }) => {
-    const [newBook, setNewBook] = useState({
+    const [newBook, setNewBook] = useState<BookCreateData>({
         title: "",
         authors: [""],
         description: "",
@@ -17,6 +25,7 @@ const BookAddModal: React.FC<BookAddModalProps> = ({ isOpen, onClose, onSubmit, 
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [validationError, setValidationError] = useState<string | null>(null);
 
     useEffect(() => {
         if (!isOpen) {
@@ -28,6 +37,7 @@ const BookAddModal: React.FC<BookAddModalProps> = ({ isOpen, onClose, onSubmit, 
                 isbn: [""]
             });
             setIsSubmitting(false);
+            setValidationError(null);
         }
     }, [isOpen]);
 
@@ -89,12 +99,56 @@ const BookAddModal: React.FC<BookAddModalProps> = ({ isOpen, onClose, onSubmit, 
         });
     };
 
+    const validateForm = (): string | null => {
+        if (!newBook.title.trim()) {
+            return "Le titre est obligatoire";
+        }
+
+        const validAuthors = newBook.authors.filter(author => author.trim() !== "");
+        if (validAuthors.length === 0) {
+            return "Au moins un auteur est requis";
+        }
+
+        if (newBook.publicationDate) {
+            const publishDate = new Date(newBook.publicationDate);
+            const today = new Date();
+            if (publishDate > today) {
+                return "La date de publication doit être dans le passé";
+            }
+        }
+
+        const isbnRegex = /^(?:\d{10}|\d{13})$/;
+        const invalidIsbns = newBook.isbn
+            .filter(isbn => isbn.trim() !== "")
+            .filter(isbn => !isbnRegex.test(isbn.trim().replace(/-/g, "")));
+
+        if (invalidIsbns.length > 0) {
+            return "Format d'ISBN invalide. Les ISBN doivent avoir 10 ou 13 chiffres";
+        }
+
+        return null;
+    };
+
     const handleAddBook = (e: React.FormEvent) => {
         e.preventDefault();
+
+        const error = validateForm();
+        if (error) {
+            setValidationError(error);
+            return;
+        }
+
+        setValidationError(null);
         setIsSubmitting(true);
 
         try {
-            onSubmit(newBook);
+            const formattedData = {
+                ...newBook,
+                authors: newBook.authors.filter(author => author.trim() !== ""),
+                isbn: newBook.isbn.filter(isbn => isbn.trim() !== "")
+            };
+
+            onSubmit(formattedData);
         } catch (error) {
             setIsSubmitting(false);
         }
@@ -122,6 +176,12 @@ const BookAddModal: React.FC<BookAddModalProps> = ({ isOpen, onClose, onSubmit, 
                 {error && (
                     <div className="mx-6 mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
                         {error}
+                    </div>
+                )}
+
+                {validationError && (
+                    <div className="mx-6 mt-4 p-3 bg-orange-100 border border-orange-400 text-orange-700 rounded">
+                        {validationError}
                     </div>
                 )}
 
@@ -213,6 +273,7 @@ const BookAddModal: React.FC<BookAddModalProps> = ({ isOpen, onClose, onSubmit, 
                             name="publicationDate"
                             value={newBook.publicationDate}
                             onChange={handleInputChange}
+                            max={new Date().toISOString().split('T')[0]} // Limite la date à aujourd'hui
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             disabled={isSubmitting}
                         />
@@ -251,13 +312,16 @@ const BookAddModal: React.FC<BookAddModalProps> = ({ isOpen, onClose, onSubmit, 
                             type="button"
                             onClick={addIsbnField}
                             className="mt-2 text-sm text-blue-600 hover:text-blue-800 focus:outline-none flex items-center disabled:text-gray-400"
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || newBook.isbn.length >= 5} // Limite à 5 ISBNs max
                         >
                             <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                             </svg>
                             Add another ISBN
                         </button>
+                        <p className="mt-1 text-xs text-gray-500">
+                            Maximum 5 ISBNs. Format: 10 ou 13 chiffres.
+                        </p>
                     </div>
 
                     {/* Submit Button */}

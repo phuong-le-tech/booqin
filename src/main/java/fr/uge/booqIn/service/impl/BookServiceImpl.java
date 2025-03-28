@@ -119,7 +119,7 @@ public class BookServiceImpl implements BookServiceInterface {
   @Override
   @Transactional
   public Book createFromDto(BookCreate dto) {
-    Set<Author> authors = dto.getAuthors().stream()
+    Set<Author> authors = dto.authors().stream()
             .map(name -> {
               String[] parts = name.trim().split("\\s+", 2);
               String firstName = parts.length > 1 ? parts[0] : "";
@@ -130,10 +130,10 @@ public class BookServiceImpl implements BookServiceInterface {
             .collect(Collectors.toSet());
 
     Book book = new Book();
-    book.setTitle(dto.getTitle());
-    book.setDescription(dto.getDescription());
-    book.setIsbns(Set.copyOf(dto.getIsbn()));
-    book.setPublicationDate(dto.getPublicationDate());
+    book.setTitle(dto.title());
+    book.setDescription(dto.description());
+    book.setIsbns(Set.copyOf(dto.isbn()));
+    book.setPublicationDate(dto.publicationDate());
     book.setAuthors(authors);
     book.setCreatedAt(LocalDateTime.now());
     book.setUpdatedAt(LocalDateTime.now());
