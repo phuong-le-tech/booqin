@@ -188,9 +188,11 @@ class UserServiceTest {
     anotherUser.setEmail("another@example.com");
 
     User userToUpdate = new User();
-    userToUpdate.setId(testUser.getId());
-    userToUpdate.setEmail("another@example.com"); // Already used by another user
+    userToUpdate.setId(testUser.getId()); // testUser has id 1
+    userToUpdate.setEmail("another@example.com"); // Email already used by another user
 
+    // Stub existsById to simulate that the user exists.
+    when(userRepository.existsById(eq(userToUpdate.getId()))).thenReturn(true);
     when(userRepository.findByEmail(eq(userToUpdate.getEmail()))).thenReturn(Optional.of(anotherUser));
 
     // When & Then
@@ -198,9 +200,11 @@ class UserServiceTest {
             userService.updateUser(userToUpdate)
     );
 
+    verify(userRepository).existsById(eq(userToUpdate.getId()));
     verify(userRepository).findByEmail(eq(userToUpdate.getEmail()));
     verifyNoMoreInteractions(userRepository);
   }
+
 
   @Test
   @DisplayName("patchUser - Should partially update and return updated user")

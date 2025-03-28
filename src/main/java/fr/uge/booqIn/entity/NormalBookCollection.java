@@ -49,9 +49,7 @@ public final class NormalBookCollection extends AbstractBookCollection {
         }
 
         public NormalBookCollection build() {
-            NormalBookCollection collection = new NormalBookCollection(title, description, isPublic, owner);
-            collection.setPublic(isPublic);
-            return collection;
+          return new NormalBookCollection(title, description, isPublic, owner);
         }
     }
 }
