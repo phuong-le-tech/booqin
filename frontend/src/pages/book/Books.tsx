@@ -43,19 +43,25 @@ export const Books: React.FC = () => {
                 title: bookData.title,
                 description: bookData.description || "",
                 publicationDate: bookData.publicationDate || null,
-                isbns: bookData.isbn.filter((isbn: string) => isbn.trim() !== ""),
-                authorNames: bookData.authors.filter((author: string) => author.trim() !== "")
+                isbn: bookData.isbn.filter((isbn: string) => isbn.trim() !== ""),
+                authors: bookData.authors.filter((author: string) => author.trim() !== "")
             };
+
             await BookService.createBook(formattedData);
             toggleAddBookModal();
             await refreshBooks();
 
         } catch (error: any) {
             console.error("Erreur lors de l'ajout du livre:", error);
-            setAddBookError(
-                error.response?.data?.message ||
-                "Une erreur est survenue lors de l'ajout du livre."
-            );
+
+            if (error.response?.data?.message && error.response.data.message.includes("author")) {
+                setAddBookError("Problème avec les auteurs: " + error.response.data.message);
+            } else {
+                setAddBookError(
+                    error.response?.data?.message ||
+                    "Une erreur est survenue lors de l'ajout du livre."
+                );
+            }
         } finally {
             setIsAddingBook(false);
         }

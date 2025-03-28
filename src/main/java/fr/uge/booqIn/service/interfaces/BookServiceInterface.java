@@ -1,10 +1,12 @@
 package fr.uge.booqIn.service.interfaces;
 
+import fr.uge.booqIn.dto.book.BookCreate;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.dto.book.BookUpdate;
 import fr.uge.booqIn.entity.Book;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
@@ -54,6 +56,9 @@ public interface BookServiceInterface {
    * @throws jakarta.validation.ValidationException if validation fails
    */
   Book createBook(@NonNull @Valid Book book);
+
+  Book createFromDto(@NonNull @Valid BookCreate dto);
+
 
   /**
    * Saves a book retrieved from external API into the system.

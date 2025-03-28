@@ -1,10 +1,8 @@
 package fr.uge.booqIn.dto.book;
 
 import jakarta.validation.constraints.*;
-import org.hibernate.validator.constraints.ISBN;
 import org.springframework.format.annotation.DateTimeFormat;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -23,7 +21,7 @@ public record BookCreate(
 
         @Past(message = "Publication date must be in the past")
         @DateTimeFormat(pattern = "yyyy-MM-dd")
-        LocalDateTime publicationDate,
+        Date publicationDate,
 
         @Size(max = 5, message = "Maximum of 5 ISBN numbers allowed")
         List<String> isbn
