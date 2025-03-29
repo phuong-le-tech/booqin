@@ -35,7 +35,8 @@ public class StripeController {
 
     @PostMapping("/checkout")
     public ResponseEntity<ApiResponse<String>> createCheckoutSession(
-            @RequestParam Long cartId, HttpServletRequest request)  {
+            @RequestParam Long cartId, HttpServletRequest request,
+            @RequestParam(required = false) String returnUrl)  {
         Optional<Cart> cartOptional = Optional.ofNullable(cartService.getCart(cartId));
 
         if (cartOptional.isEmpty() || cartOptional.get().getBooks().isEmpty()) {
@@ -44,7 +45,7 @@ public class StripeController {
         }
 
         String host = request.getHeader("Host");
-        String successUrl = appProperties.getClientUrls().getOrDefault(host, appProperties.getDefaultUrl());
+        String successUrl = returnUrl != null ? returnUrl : appProperties.getClientUrls().getOrDefault(host, appProperties.getDefaultUrl());
 
         Session session = stripeService.createCheckoutSession(cartOptional.get(), successUrl);
 
