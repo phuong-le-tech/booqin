@@ -119,6 +119,14 @@ public class BookController {
             var imagePath = imageService.saveBookCover(file, id);
             book.setCoverImagePath(imagePath);
 
+            var originalPath = Paths.get(uploadDir, imagePath);
+            try {
+                var thumbnailPath = imageService.createThumbnail(originalPath, id);
+                book.setThumbnailPath(thumbnailPath);
+            } catch (Exception e) {
+                logger.warn("Failed to create thumbnail for uploaded cover: {}", e.getMessage());
+            }
+
             var updatedBook = bookService.updateBook(book);
             var bookShow = bookMapper.toBookShow(updatedBook);
 
