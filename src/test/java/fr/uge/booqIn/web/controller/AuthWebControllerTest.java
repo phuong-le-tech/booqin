@@ -3,6 +3,7 @@ package fr.uge.booqIn.web.controller;
 import fr.uge.booqIn.controller.web.AuthWebController;
 import fr.uge.booqIn.controller.web.HomeWebController;
 import fr.uge.booqIn.dto.auth.RegisterDto;
+import fr.uge.booqIn.dto.user.UserIndex;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.service.interfaces.AuthServiceInterface;
 import org.junit.jupiter.api.BeforeEach;
@@ -88,7 +89,7 @@ class AuthWebControllerTest {
   @DisplayName("POST /auth/register - Should redirect to home on successful registration")
   void processRegisterForm_ShouldRedirectToHome_OnSuccess() throws Exception {
     // Given
-    when(authService.register(any(RegisterDto.class))).thenReturn(new User());
+    when(authService.register(any(RegisterDto.class))).thenReturn(new UserIndex());
 
     // When & Then
     mockMvc.perform(post("/auth/register")

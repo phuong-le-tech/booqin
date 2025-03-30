@@ -7,4 +7,7 @@ public record UserIndex(
         Long id, String firstName, String lastName,
         String email, Address address, UserRole role
 ) {
+  public UserIndex() {
+    this(0L, "", "", "", null, UserRole.USER);
+  }
 }

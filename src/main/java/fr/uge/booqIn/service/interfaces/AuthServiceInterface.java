@@ -4,6 +4,7 @@ import fr.uge.booqIn.dto.auth.AuthResponse;
 import fr.uge.booqIn.dto.auth.LoginDto;
 import fr.uge.booqIn.dto.auth.RegisterDto;
 import fr.uge.booqIn.dto.auth.UserMeDto;
+import fr.uge.booqIn.dto.user.UserIndex;
 import fr.uge.booqIn.entity.User;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
@@ -18,7 +19,7 @@ public interface AuthServiceInterface {
    * @return the created user
    * @throws fr.uge.booqIn.exception.DuplicateResourceException if email already exists
    */
-  User register(@NonNull RegisterDto registerDto);
+  UserIndex register(@NonNull RegisterDto registerDto);
 
   /**
    * Authenticates a user and returns JWT tokens

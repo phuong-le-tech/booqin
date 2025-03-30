@@ -4,11 +4,13 @@ import fr.uge.booqIn.dto.auth.AuthResponse;
 import fr.uge.booqIn.dto.auth.LoginDto;
 import fr.uge.booqIn.dto.auth.RegisterDto;
 import fr.uge.booqIn.dto.auth.UserMeDto;
+import fr.uge.booqIn.dto.user.UserIndex;
 import fr.uge.booqIn.entity.Cart;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.UserRole;
 import fr.uge.booqIn.exception.DuplicateResourceException;
 import fr.uge.booqIn.mapper.AuthMapper;
+import fr.uge.booqIn.mapper.UserMapper;
 import fr.uge.booqIn.repository.CartRepository;
 import fr.uge.booqIn.repository.UserRepository;
 import fr.uge.booqIn.service.interfaces.AuthServiceInterface;
@@ -37,6 +39,7 @@ public class AuthServiceImpl implements AuthServiceInterface {
   private final JwtService jwtService;
   private final AuthMapper authMapper;
   private final CartRepository cartRepository;
+  private final UserMapper userMapper;
 
   public AuthServiceImpl(
           UserRepository userRepository,
@@ -44,13 +47,14 @@ public class AuthServiceImpl implements AuthServiceInterface {
           AuthenticationManager authenticationManager,
           JwtService jwtService,
           AuthMapper authMapper,
-          CartRepository cartRepository) {
+          CartRepository cartRepository, UserMapper userMapper) {
     this.userRepository = userRepository;
     this.passwordEncoder = passwordEncoder;
     this.authenticationManager = authenticationManager;
     this.jwtService = jwtService;
     this.authMapper = authMapper;
     this.cartRepository = cartRepository;
+    this.userMapper = userMapper;
   }
 
   @Override
@@ -60,7 +64,7 @@ public class AuthServiceImpl implements AuthServiceInterface {
           retryFor = {ObjectOptimisticLockingFailureException.class},
           backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}")
   )
-  public User register(@NonNull RegisterDto registerDto) {
+  public UserIndex register(@NonNull RegisterDto registerDto) {
     userRepository.findByEmail(registerDto.email()).ifPresent(u -> {
       throw new DuplicateResourceException("User", "email", registerDto.email());
     });
@@ -79,10 +83,7 @@ public class AuthServiceImpl implements AuthServiceInterface {
             cart
     );
 
-    user.setCreatedAt(new Date());
-    user.setUpdatedAt(new Date());
-
-    return userRepository.save(user);
+    return userMapper.toUserIndex(userRepository.save(user));
   }
 
   @Override

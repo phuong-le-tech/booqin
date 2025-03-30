@@ -3,6 +3,7 @@ package fr.uge.booqIn.api.concurency;
 import fr.uge.booqIn.dto.auth.AuthResponse;
 import fr.uge.booqIn.dto.auth.LoginDto;
 import fr.uge.booqIn.dto.auth.RegisterDto;
+import fr.uge.booqIn.dto.user.UserIndex;
 import fr.uge.booqIn.entity.Address;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.UserRole;
@@ -64,9 +65,9 @@ public class ConcurrentAuthTest {
                 UserRole.USER
         );
         try {
-            User testUser = authService.register(registerDto);
-            createdUserEmails.add(testUser.getEmail());
-            logger.info("Created test user with email: {}", testUser.getEmail());
+            UserIndex testUser = authService.register(registerDto);
+            createdUserEmails.add(testUser.email());
+            logger.info("Created test user with email: {}", testUser.email());
         } catch (Exception e) {
             logger.warn("Error setting up test user: {}", e.getMessage());
         }
@@ -116,8 +117,8 @@ public class ConcurrentAuthTest {
             var thread = new Thread(() -> {
                 try {
                     RegisterDto registerDto = createRegisterDto("ConcurrentUser" + threadNum, "Test" + threadNum, email);
-                    User user = authService.register(registerDto);
-                    if (user != null && user.getId() != null) {
+                    UserIndex user = authService.register(registerDto);
+                    if (user != null && user.id() != null) {
                         successCount.incrementAndGet();
                         createdUserEmails.add(email);
                         logger.info("Thread {} successfully registered user", threadNum);
@@ -262,17 +263,17 @@ public class ConcurrentAuthTest {
     @DisplayName("Concurrent Logout: Toutes les opérations de logout doivent réussir")
     public void testConcurrentLogout() throws Exception {
         // Given: création de plusieurs utilisateurs pour tester le logout
-        List<User> testUsers = new ArrayList<>();
+        List<UserIndex> testUsers = new ArrayList<>();
         List<String> tokens = new ArrayList<>();
 
         for (int i = 0; i < 3; i++) {
             RegisterDto registerDto = createRegisterDto("LogoutUser" + i, "Test" + i, "logout.test" + i + "@example.com");
-            User user = authService.register(registerDto);
+            UserIndex user = authService.register(registerDto);
             testUsers.add(user);
-            createdUserEmails.add(user.getEmail());
+            createdUserEmails.add(user.email());
 
             // Connexion pour obtenir le token
-            LoginDto loginDto = new LoginDto(user.getEmail(), "Password123");
+            LoginDto loginDto = new LoginDto(user.email(), "Password123");
             AuthResponse response = authService.login(loginDto);
             tokens.add(response.accessToken());
         }
@@ -287,7 +288,7 @@ public class ConcurrentAuthTest {
         for (int i = 0; i < numThreads; i++) {
             final int threadNum = i;
             final int userIndex = threadNum % testUsers.size(); // alterner entre utilisateurs
-            final Long userId = testUsers.get(userIndex).getId();
+            final Long userId = testUsers.get(userIndex).id();
             final String token = tokens.get(userIndex);
             var thread = new Thread(() -> {
                 try {

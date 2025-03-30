@@ -5,6 +5,7 @@ import fr.uge.booqIn.dto.auth.AuthResponse;
 import fr.uge.booqIn.dto.auth.LoginDto;
 import fr.uge.booqIn.dto.auth.RegisterDto;
 import fr.uge.booqIn.dto.auth.UserMeDto;
+import fr.uge.booqIn.dto.user.UserIndex;
 import fr.uge.booqIn.entity.Address;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.UserRole;
@@ -90,26 +91,34 @@ class AuthControllerTest {
   }
 
   @Test
-  @DisplayName("POST /register - Should register user and return created user")
+  @DisplayName("POST /register - Should register user and return user index")
   void register_ShouldCreateAndReturnUser() {
     // Given
     RegisterDto registerDto = new RegisterDto("John", "Doe", "john.doe@example.com", "Password123", null, UserRole.USER);
-    User createdUser = new User("John", "Doe", "john.doe@example.com", "Password123", null, UserRole.USER);
-    createdUser.setId(1L);
 
-    when(authService.register(any(RegisterDto.class))).thenReturn(createdUser);
+    // Remplacer User par UserIndex
+    UserIndex userIndex = new UserIndex(
+            1L,
+            "John",
+            "Doe",
+            "john.doe@example.com",
+            null,  // Address
+            UserRole.USER
+    );
+
+    when(authService.register(any(RegisterDto.class))).thenReturn(userIndex);
 
     // When
-    ResponseEntity<ApiResponse<User>> responseEntity = authController.signUp(registerDto);
+    ResponseEntity<ApiResponse<UserIndex>> responseEntity = authController.signUp(registerDto);
 
     // Then
     assertNotNull(responseEntity);
     assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
-    ApiResponse<User> apiResponse = responseEntity.getBody();
+    ApiResponse<UserIndex> apiResponse = responseEntity.getBody();
     assertNotNull(apiResponse);
     assertTrue(apiResponse.success());
     assertEquals("User registered successfully", apiResponse.message());
-    assertEquals(createdUser, apiResponse.data());
+    assertEquals(userIndex, apiResponse.data());
 
     // Verify service was called
     verify(authService).register(eq(registerDto));

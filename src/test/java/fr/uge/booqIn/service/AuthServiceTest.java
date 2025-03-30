@@ -4,6 +4,7 @@ import fr.uge.booqIn.dto.auth.AuthResponse;
 import fr.uge.booqIn.dto.auth.LoginDto;
 import fr.uge.booqIn.dto.auth.RegisterDto;
 import fr.uge.booqIn.dto.auth.UserMeDto;
+import fr.uge.booqIn.dto.user.UserIndex;
 import fr.uge.booqIn.entity.Address;
 import fr.uge.booqIn.entity.Cart;
 import fr.uge.booqIn.entity.User;
@@ -11,6 +12,7 @@ import fr.uge.booqIn.enums.UserRole;
 import fr.uge.booqIn.exception.DuplicateResourceException;
 import fr.uge.booqIn.factory.fixture.AddressFactory;
 import fr.uge.booqIn.mapper.AuthMapper;
+import fr.uge.booqIn.mapper.UserMapper;
 import fr.uge.booqIn.repository.CartRepository;
 import fr.uge.booqIn.repository.UserRepository;
 import fr.uge.booqIn.service.impl.AuthServiceImpl;
@@ -45,6 +47,7 @@ class AuthServiceTest {
   private User testUser;
   private Cart testCart;
   private Address testAddress;
+  private UserMapper userMapper;
 
   @BeforeEach
   void setUp() {
@@ -54,14 +57,15 @@ class AuthServiceTest {
     jwtService = Mockito.mock(JwtService.class);
     authMapper = Mockito.mock(AuthMapper.class);
     cartRepository = Mockito.mock(CartRepository.class);
-
+    userMapper = Mockito.mock(UserMapper.class);
     authService = new AuthServiceImpl(
             userRepository,
             passwordEncoder,
             authenticationManager,
             jwtService,
             authMapper,
-            cartRepository
+            cartRepository,
+            userMapper
     );
 
     // Setup test data
@@ -102,7 +106,7 @@ class AuthServiceTest {
     when(userRepository.save(any(User.class))).thenReturn(testUser);
 
     // When
-    User result = authService.register(registerDto);
+    UserIndex result = authService.register(registerDto);
 
     // Then
     assertNotNull(result);

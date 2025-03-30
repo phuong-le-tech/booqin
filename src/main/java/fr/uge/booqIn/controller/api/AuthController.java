@@ -4,6 +4,8 @@ import fr.uge.booqIn.dto.auth.AuthResponse;
 import fr.uge.booqIn.dto.auth.LoginDto;
 import fr.uge.booqIn.dto.auth.RegisterDto;
 import fr.uge.booqIn.dto.auth.UserMeDto;
+import fr.uge.booqIn.dto.user.UserIndex;
+import fr.uge.booqIn.dto.user.UserShow;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.factory.ApiResponse;
 import fr.uge.booqIn.service.JwtService;
@@ -56,8 +58,8 @@ public class AuthController {
   }
 
   @PostMapping("/register")
-  public ResponseEntity<ApiResponse<User>> signUp(@RequestBody @Valid RegisterDto registerDto) {
-    User user = authService.register(registerDto);
+  public ResponseEntity<ApiResponse<UserIndex>> signUp(@RequestBody @Valid RegisterDto registerDto) {
+    UserIndex user = authService.register(registerDto);
 
     return ResponseEntity
             .status(HttpStatus.CREATED)
