@@ -1,12 +1,10 @@
-import React, { useState, useRef, useEffect } from "react";
+import React from "react";
 import { Bell } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNotifications } from "../../context/NotificationContext";
+import { Dropdown } from "../Dropdown";
 
 export const NotificationsMenu: React.FC = () => {
-    const [isOpen, setIsOpen] = useState(false);
-    const menuRef = useRef<HTMLDivElement>(null);
-
     const {
         notifications,
         unreadCount,
@@ -16,111 +14,72 @@ export const NotificationsMenu: React.FC = () => {
         clearAllNotifications
     } = useNotifications();
 
-    const handleToggle = () => {
-        setIsOpen(!isOpen);
-    };
-
-    const handleMarkAsRead = async (id: number) => {
-        await markAsRead(id);
-    };
-
-    const handleMarkAllAsRead = async () => {
-        await markAllAsRead();
-    };
-
     const handleClearAll = async () => {
-        if (confirm("Are you sure you want to clear all notifications? This cannot be undone.")) {
+        if (confirm("Clear all notifications? This cannot be undone.")) {
             await clearAllNotifications();
         }
     };
 
-    // Close the menu when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
-            }
-        };
-
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
-    }, []);
+    const trigger = (
+        <button
+            className="relative flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-sunk"
+            aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"}
+        >
+            <Bell className="h-5 w-5" />
+            {unreadCount > 0 && (
+                <span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-paper" />
+            )}
+        </button>
+    );
 
     return (
-        <div className="relative" ref={menuRef}>
-            <button
-                className="flex items-center text-white hover:text-blue-400 focus:outline-none"
-                onClick={handleToggle}
-            >
-                <Bell className="h-5 w-5 sm:h-6 sm:w-6" />
-                {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-            {unreadCount}
-          </span>
-                )}
-            </button>
-
-            {isOpen && (
-                <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white rounded-md shadow-lg z-50 max-h-96 overflow-y-auto overflow-x-hidden">
-                    <div className="px-4 py-2 border-b">
-                        <div className="flex justify-between items-center mb-2">
-                            <h3 className="text-lg font-semibold text-gray-700">Notifications</h3>
-                            <button
-                                onClick={handleClearAll}
-                                className="text-sm text-red-600 hover:text-red-800"
-                                disabled={notifications.length === 0}
-                            >
-                                Clear all
-                            </button>
-                        </div>
-                        {unreadCount > 0 && (
-                            <div className="flex justify-end">
-                                <button
-                                    onClick={handleMarkAllAsRead}
-                                    className="text-sm text-blue-600 hover:text-blue-800"
-                                >
-                                    Mark all as read
-                                </button>
-                            </div>
-                        )}
-                    </div>
-
-                    {loading && (
-                        <div className="p-4 text-center text-gray-500">
-                            Loading notifications...
-                        </div>
+        <Dropdown trigger={trigger} panelClassName="w-80">
+            <div className="flex items-center justify-between px-3 pb-2 pt-1">
+                <h3 className="font-serif text-lg font-semibold text-ink">Notifications</h3>
+                <div className="flex gap-3 text-[13px]">
+                    {unreadCount > 0 && (
+                        <button onClick={markAllAsRead} className="text-accent underline underline-offset-2 hover:text-accent-hover">
+                            Mark all read
+                        </button>
                     )}
-
-                    {!loading && notifications.length === 0 && (
-                        <div className="p-4 text-center text-gray-500">
-                            No notifications
-                        </div>
-                    )}
-
-                    {!loading &&
-                        notifications.map((notification) => (
-                            <div
-                                key={notification.id}
-                                className={`px-4 py-3 border-b hover:bg-gray-50 transition-colors duration-150 cursor-pointer ${
-                                    !notification.read ? "bg-blue-50" : ""
-                                }`}
-                                onClick={() => handleMarkAsRead(notification.id)}
-                            >
-                                <div className="flex justify-between items-start">
-                                    <p className="text-sm text-gray-800">{notification.message}</p>
-                                    {!notification.read && (
-                                        <span className="inline-block w-2 h-2 bg-blue-600 rounded-full"></span>
-                                    )}
-                                </div>
-                                <p className="text-xs text-gray-500 mt-1">
-                                    {formatDistanceToNow(notification.createdAt, { addSuffix: true })}
-                                </p>
-                            </div>
-                        ))}
+                    <button
+                        onClick={handleClearAll}
+                        disabled={notifications.length === 0}
+                        className="text-ink-2 underline underline-offset-2 hover:text-ink disabled:no-underline disabled:opacity-50"
+                    >
+                        Clear all
+                    </button>
                 </div>
-            )}
-        </div>
+            </div>
+
+            <div className="border-t border-line">
+                {loading && <p className="px-3 py-6 text-center text-sm text-ink-2">Loading...</p>}
+
+                {!loading && notifications.length === 0 && (
+                    <p className="px-3 py-8 text-center text-sm text-ink-2">Nothing new. We'll tell you when a book you wait for is free.</p>
+                )}
+
+                {!loading && notifications.map((notification) => (
+                    <button
+                        key={notification.id}
+                        onClick={() => markAsRead(notification.id)}
+                        className="flex w-full items-start gap-3 rounded-control px-3 py-3 text-left hover:bg-sunk"
+                    >
+                        <span
+                            className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${notification.read ? "bg-transparent" : "bg-accent"}`}
+                            aria-hidden="true"
+                        />
+                        <span className="min-w-0">
+                            <span className={`block text-sm ${notification.read ? "text-ink-2" : "text-ink"}`}>
+                                {notification.message}
+                            </span>
+                            <span className="mt-0.5 block text-[13px] text-ink-3">
+                                {formatDistanceToNow(notification.createdAt, { addSuffix: true })}
+                            </span>
+                        </span>
+                    </button>
+                ))}
+            </div>
+        </Dropdown>
     );
 };

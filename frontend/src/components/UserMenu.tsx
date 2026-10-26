@@ -1,5 +1,5 @@
 import type React from "react"
-import { User, LogOut } from "lucide-react"
+import { LayoutDashboard, Library, LogOut, Settings, User } from "lucide-react"
 import { Link } from "react-router-dom"
 import { Dropdown } from "./Dropdown"
 import { User as UserApp } from "../model/User"
@@ -9,30 +9,53 @@ interface UserMenuProps {
     onLogout: () => void
 }
 
+const itemClass =
+    "flex w-full items-center gap-3 rounded-control px-3 py-2.5 text-left text-sm text-ink hover:bg-sunk"
+
 export const UserMenu: React.FC<UserMenuProps> = ({ user, onLogout }) => {
+    const initials = `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}`.toUpperCase()
+
     const trigger = (
-        <button className="flex items-center gap-1 sm:gap-2 text-white hover:text-blue-400 focus:outline-none">
-            <User className="h-5 w-5 sm:h-6 sm:w-6" />
-            <span className="hidden sm:inline">{user.firstName}</span>
+        <button
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-ink text-sm font-semibold text-paper hover:bg-ink-2"
+            aria-label="Open account menu"
+            aria-haspopup="menu"
+        >
+            {initials || <User className="h-5 w-5" />}
         </button>
     )
 
     return (
         <Dropdown trigger={trigger}>
-            <div className="py-1">
-                <div className="px-4 py-2 text-sm text-secondary border-b">
-                    <div className="font-medium truncate">{`${user.firstName} ${user.lastName}`}</div>
-                    <div className="text-xs text-secondary truncate">{user.email}</div>
+            {(close) => (
+                <div role="menu">
+                    <div className="px-3 pb-3 pt-2">
+                        <div className="truncate font-medium text-ink">{`${user.firstName} ${user.lastName}`}</div>
+                        <div className="truncate text-[13px] text-ink-2">{user.email}</div>
+                    </div>
+                    <div className="border-t border-line pt-2">
+                        <Link to="/dashboard" onClick={close} className={itemClass} role="menuitem">
+                            <LayoutDashboard className="h-4 w-4 text-ink-2" /> My lendings
+                        </Link>
+                        <Link to="/collections/user" onClick={close} className={itemClass} role="menuitem">
+                            <Library className="h-4 w-4 text-ink-2" /> My collections
+                        </Link>
+                        <Link to="/profile" onClick={close} className={itemClass} role="menuitem">
+                            <User className="h-4 w-4 text-ink-2" /> Profile
+                        </Link>
+                        {user.role === "ADMIN" && (
+                            <Link to="/admin" onClick={close} className={itemClass} role="menuitem">
+                                <Settings className="h-4 w-4 text-ink-2" /> Admin
+                            </Link>
+                        )}
+                    </div>
+                    <div className="mt-2 border-t border-line pt-2">
+                        <button onClick={() => { close(); onLogout() }} className={itemClass} role="menuitem">
+                            <LogOut className="h-4 w-4 text-ink-2" /> Log out
+                        </button>
+                    </div>
                 </div>
-                <Link to="/profile" className="block px-4 py-2 text-sm text-secondary hover:bg-gray-500">
-                    <User className="inline-block w-4 h-4 mr-2" />
-                    Profile
-                </Link>
-                <button onClick={onLogout} className="block w-full text-left px-4 py-2 text-sm text-secondary hover:bg-gray-500">
-                    <LogOut className="inline-block w-4 h-4 mr-2" />
-                    Logout
-                </button>
-            </div>
+            )}
         </Dropdown>
     )
 }

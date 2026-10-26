@@ -1,139 +1,63 @@
 // src/components/Pagination.tsx
 import React from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { PageInfo } from "../model/Pagination";
 
-// This adapter component works with the existing Books.tsx
 interface PaginationProps {
     pageInfo: PageInfo;
     onPageChange: (page: number) => void;
 }
 
-export const Pagination: React.FC<PaginationProps> = ({
-                                                          pageInfo,
-                                                          onPageChange,
-                                                      }) => {
-    // Safely extract and validate page numbers to prevent NaN issues
-    const currentPage = typeof pageInfo.number === 'number' && !isNaN(pageInfo.number)
-        ? pageInfo.number
-        : 0;
+/** Page numbers to show: first, last, and a window around the current page. */
+const visiblePages = (current: number, total: number): (number | "gap")[] => {
+    const wanted = new Set([0, total - 1, current - 1, current, current + 1]);
+    const pages = [...wanted].filter(p => p >= 0 && p < total).sort((a, b) => a - b);
+    const result: (number | "gap")[] = [];
+    pages.forEach((page, index) => {
+        if (index > 0 && page - pages[index - 1] > 1) result.push("gap");
+        result.push(page);
+    });
+    return result;
+};
 
+export const Pagination: React.FC<PaginationProps> = ({ pageInfo, onPageChange }) => {
+    const currentPage = typeof pageInfo.number === "number" && !isNaN(pageInfo.number) ? pageInfo.number : 0;
     const totalPages = pageInfo.totalPages > 0 ? pageInfo.totalPages : 1;
 
-    // Don't render if there's only one page
     if (totalPages <= 1) {
         return null;
     }
 
-    const pageNumbers = [];
-
-    // Logic to determine which page numbers to show
-    let startPage = Math.max(0, currentPage - 2);
-    let endPage = Math.min(totalPages - 1, currentPage + 2);
-
-    // Ensure we always show 5 pages if possible
-    if (endPage - startPage < 4) {
-        if (startPage === 0) {
-            endPage = Math.min(4, totalPages - 1);
-        } else if (endPage === totalPages - 1) {
-            startPage = Math.max(0, totalPages - 5);
-        }
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-        pageNumbers.push(i);
-    }
-
-    // Safe page change handler to prevent NaN values
-    const handlePageChange = (page: number) => {
-        // Validate the page number before passing it to the parent component
-        const validPage = !isNaN(page) ? Math.max(0, Math.min(page, totalPages - 1)) : 0;
-        onPageChange(validPage);
-    };
+    const goTo = (page: number) => onPageChange(Math.max(0, Math.min(page, totalPages - 1)));
+    const arrow =
+        "flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-sunk disabled:cursor-not-allowed disabled:text-ink-3 disabled:opacity-50 disabled:hover:bg-transparent";
 
     return (
-        <div className="flex justify-center mt-8">
-            <nav className="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                {/* Previous Page Button */}
-                <button
-                    onClick={() => handlePageChange(Math.max(0, currentPage - 1))}
-                    disabled={currentPage === 0}
-                    className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
-                        currentPage === 0
-                            ? 'text-gray-300 cursor-not-allowed'
-                            : 'text-gray-500 hover:bg-gray-50 cursor-pointer'
-                    }`}
-                >
-                    <span className="sr-only">Previous</span>
-                    <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                </button>
+        <nav className="mt-14 flex items-center justify-center gap-1" aria-label="Pagination">
+            <button onClick={() => goTo(currentPage - 1)} disabled={currentPage === 0} className={arrow} aria-label="Previous page">
+                <ChevronLeft className="h-5 w-5" />
+            </button>
 
-                {/* First Page */}
-                {startPage > 0 && (
-                    <>
-                        <button
-                            onClick={() => handlePageChange(0)}
-                            className="relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
-                        >
-                            1
-                        </button>
-                        {startPage > 1 && (
-                            <span className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
-                ...
-              </span>
-                        )}
-                    </>
-                )}
-
-                {/* Page Numbers */}
-                {pageNumbers.map(number => (
+            {visiblePages(currentPage, totalPages).map((page, index) =>
+                page === "gap" ? (
+                    <span key={`gap-${index}`} className="px-1 text-ink-3" aria-hidden="true">...</span>
+                ) : (
                     <button
-                        key={number}
-                        onClick={() => handlePageChange(number)}
-                        className={`relative inline-flex items-center px-4 py-2 border ${
-                            currentPage === number
-                                ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                                : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                        } text-sm font-medium`}
+                        key={page}
+                        onClick={() => goTo(page)}
+                        aria-current={page === currentPage ? "page" : undefined}
+                        className={`h-10 min-w-10 rounded-full px-3 text-sm font-medium ${
+                            page === currentPage ? "bg-ink text-paper" : "text-ink hover:bg-sunk"
+                        }`}
                     >
-                        {number + 1}
+                        {page + 1}
                     </button>
-                ))}
+                )
+            )}
 
-                {/* Last Page Button */}
-                {endPage < totalPages - 1 && (
-                    <>
-                        {endPage < totalPages - 2 && (
-                            <span className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
-                ...
-              </span>
-                        )}
-                        <button
-                            onClick={() => handlePageChange(totalPages - 1)}
-                            className="relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
-                        >
-                            {totalPages}
-                        </button>
-                    </>
-                )}
-
-                {/* Next Page Button */}
-                <button
-                    onClick={() => handlePageChange(Math.min(totalPages - 1, currentPage + 1))}
-                    disabled={currentPage === totalPages - 1}
-                    className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
-                        currentPage === totalPages - 1
-                            ? 'text-gray-300 cursor-not-allowed'
-                            : 'text-gray-500 hover:bg-gray-50 cursor-pointer'
-                    }`}
-                >
-                    <span className="sr-only">Next</span>
-                    <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                    </svg>
-                </button>
-            </nav>
-        </div>
+            <button onClick={() => goTo(currentPage + 1)} disabled={currentPage === totalPages - 1} className={arrow} aria-label="Next page">
+                <ChevronRight className="h-5 w-5" />
+            </button>
+        </nav>
     );
 };

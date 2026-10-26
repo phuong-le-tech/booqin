@@ -1,73 +1,135 @@
 import type React from "react"
-import { Link } from "react-router-dom"
 import type { ReactNode } from "react"
-import { SidebarNav } from "./SidebarNav.tsx"
-import { Navbar } from "./Navbar.tsx"
-import { BookOpen, Menu, X } from "lucide-react"
-import { useState, useEffect } from "react"
+import { Link, NavLink, useLocation } from "react-router-dom"
+import { BookOpen, Library, ShoppingBag, User, Users } from "lucide-react"
+import { useAuth } from "../context/AuthContext"
+import { useCart } from "../hooks/useCart"
+import { NotificationsMenu } from "../components/notifications/NotificationsMenu"
+import { UserMenu } from "../components/UserMenu"
 
 interface LayoutProps {
     children: ReactNode
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children }) => {
-    const [sidebarOpen, setSidebarOpen] = useState(false)
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+const navLinkClass = (active: boolean) =>
+    `relative flex h-[72px] items-center px-1 text-[15px] font-medium transition-colors ${
+        active ? "text-ink" : "text-ink-2 hover:text-ink"
+    }`
 
-    useEffect(() => {
-        const handleResize = () => {
-            setIsMobile(window.innerWidth < 768)
-            if (window.innerWidth >= 768) {
-                setSidebarOpen(false)
-            }
+const TopBar: React.FC = () => {
+    const { user, isAuthenticated, logout } = useAuth()
+    const location = useLocation()
+    const { count: cartCount } = useCart()
+
+    const onBooks = location.pathname.startsWith("/books")
+    const onCollections = location.pathname.startsWith("/collections")
+    const onFollowing = location.pathname.startsWith("/following")
+
+    const handleLogout = async () => {
+        try {
+            await logout()
+        } catch (error) {
+            console.error("Logout failed:", error)
         }
+    }
 
-        window.addEventListener('resize', handleResize)
-        return () => window.removeEventListener('resize', handleResize)
-    }, [])
+    const underline = (active: boolean) =>
+        active ? <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-accent" /> : null
 
     return (
-        <div className="flex flex-col h-screen">
-            <div className="flex">
-                <div className="bg-navbar w-full md:w-64 h-16 flex items-center justify-between md:justify-center border-b md:border-r">
+        <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur-sm">
+            <div className="mx-auto flex h-[72px] w-full max-w-[1200px] items-center gap-8 px-4 sm:px-8">
+                <Link to="/" className="font-serif text-[22px] font-semibold tracking-tight text-ink">
+                    BooqIn
+                </Link>
+
+                <nav className="hidden items-center gap-6 md:flex" aria-label="Main">
+                    <NavLink to="/books" className={navLinkClass(onBooks)}>
+                        Books{underline(onBooks)}
+                    </NavLink>
+                    <NavLink to="/collections/public" className={navLinkClass(onCollections)}>
+                        Collections{underline(onCollections)}
+                    </NavLink>
+                    {isAuthenticated && (
+                        <NavLink to="/following" className={navLinkClass(onFollowing)}>
+                            Following{underline(onFollowing)}
+                        </NavLink>
+                    )}
+                </nav>
+
+                <div className="ml-auto flex items-center gap-1 sm:gap-2">
                     <Link
-                        to="/"
-                        className="text-3xl md:text-4xl font-extrabold text-white hover:text-light-blue transition-colors duration-300 ml-4 md:ml-0"
+                        to="/cart"
+                        data-cart-target
+                        className="relative flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-sunk"
+                        aria-label={cartCount > 0 ? `Cart, ${cartCount} books` : "Cart"}
                     >
-                        <BookOpen className="inline-block h-6 w-6 md:h-8 md:w-8 mr-2"/>
-                        BooqIn
+                        <ShoppingBag className="h-5 w-5" />
+                        {cartCount > 0 && (
+                            <span
+                                key={cartCount}
+                                className="badge-pop absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1 text-[13px] font-semibold leading-none text-white"
+                            >
+                                {cartCount}
+                            </span>
+                        )}
                     </Link>
-                    <button
-                        className="md:hidden mr-4 text-white focus:outline-none"
-                        onClick={() => setSidebarOpen(!sidebarOpen)}
-                    >
-                        {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-                    </button>
-                </div>
-                <div className="hidden md:block md:flex-1">
-                    <Navbar />
+
+                    {isAuthenticated && user != null ? (
+                        <>
+                            <NotificationsMenu />
+                            <UserMenu user={user} onLogout={handleLogout} />
+                        </>
+                    ) : (
+                        <>
+                            <Link to="/login" className="hidden h-10 items-center rounded-control px-3 text-sm font-medium text-ink hover:bg-sunk sm:flex">
+                                Log in
+                            </Link>
+                            <Link to="/register" className="btn-outline">
+                                Sign up
+                            </Link>
+                        </>
+                    )}
                 </div>
             </div>
-            <div className="md:hidden">
-                <Navbar />
-            </div>
-            <div className="flex flex-1 overflow-hidden">
-                {/* Mobile sidebar (overlay) */}
-                {isMobile && sidebarOpen && (
-                    <div
-                        className="fixed inset-0 bg-black bg-opacity-50 z-40"
-                        onClick={() => setSidebarOpen(false)}
-                    />
-                )}
-                <div
-                    className={`fixed md:relative z-50 md:z-auto h-screen w-64 transform transition-transform duration-300 ease-in-out md:transform-none ${
-                        sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-                    }`}
-                >
-                    <SidebarNav onCloseSidebar={() => setSidebarOpen(false)} />
-                </div>
-                <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100">{children}</main>
-            </div>
+        </header>
+    )
+}
+
+const MobileTabBar: React.FC = () => {
+    const { isAuthenticated } = useAuth()
+
+    const tab = ({ isActive }: { isActive: boolean }) =>
+        `flex flex-1 flex-col items-center justify-center gap-0.5 text-[13px] font-medium ${
+            isActive ? "text-accent" : "text-ink-2"
+        }`
+
+    return (
+        <nav className="fixed inset-x-0 bottom-0 z-40 flex h-16 border-t border-line bg-paper md:hidden" aria-label="Main">
+            <NavLink to="/books" className={tab}>
+                <BookOpen className="h-5 w-5" /> Browse
+            </NavLink>
+            <NavLink to="/collections/public" className={tab}>
+                <Library className="h-5 w-5" /> Collections
+            </NavLink>
+            {isAuthenticated && (
+                <NavLink to="/following" className={tab}>
+                    <Users className="h-5 w-5" /> Following
+                </NavLink>
+            )}
+            <NavLink to={isAuthenticated ? "/profile" : "/login"} className={tab}>
+                <User className="h-5 w-5" /> {isAuthenticated ? "Me" : "Log in"}
+            </NavLink>
+        </nav>
+    )
+}
+
+export const Layout: React.FC<LayoutProps> = ({ children }) => {
+    return (
+        <div className="flex min-h-screen flex-col bg-paper">
+            <TopBar />
+            <main className="w-full flex-1 pb-20 md:pb-0">{children}</main>
+            <MobileTabBar />
         </div>
     )
 }

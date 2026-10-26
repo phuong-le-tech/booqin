@@ -5,6 +5,8 @@ import axiosInstance from "../../services/AxiosInstance.ts";
 import { LendStatus } from "../../model/LendStatus";
 import { toast } from "react-toastify";
 import { useAuth } from "../../context/AuthContext";
+import { BookCover } from "./BookCover";
+import { useBookBorrowing } from "../../hooks/useBookBorrowing";
 
 // Type for loan information
 interface LoanInfo {
@@ -16,14 +18,6 @@ interface LoanInfo {
 interface Collection {
     id: number;
     title: string;
-}
-
-// Type for book notification information
-interface BookNotification {
-    id: number;
-    bookId: number;
-    position: number;
-    status: string;
 }
 
 interface BookCardProps {
@@ -49,14 +43,12 @@ export const BookCard: React.FC<BookCardProps> = ({
     const [isLoanable, setIsLoanable] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(false);
     const [isBorrowed, setIsBorrowed] = useState<boolean>(false);
-    const [imageError, setImageError] = useState<boolean>(false);
-    const [isBookAvailable, setIsBookAvailable] = useState<boolean>(true);
     const [showCollectionDropdown, setShowCollectionDropdown] = useState<boolean>(false);
     const [showCollectionModal, setShowCollectionModal] = useState<boolean>(false);
-    const [queuePosition, setQueuePosition] = useState<number>(-1);
-    const [notificationId, setNotificationId] = useState<number | null>(null);
-    const [, setUserNotifications] = useState<BookNotification[]>([]);
-    const cardRef = useRef<HTMLDivElement>(null);
+    const cardRef = useRef<HTMLElement>(null);
+    const coverRef = useRef<HTMLDivElement>(null);
+    const borrowing = useBookBorrowing(id);
+    const { isAvailable: isBookAvailable, queuePosition, isInQueue } = borrowing;
 
     const isBookBorrowed = loanStates.some(loan => {
         const bookIdMatches = loan.bookId === id;
@@ -64,20 +56,9 @@ export const BookCard: React.FC<BookCardProps> = ({
         return bookIdMatches && stateIsBorrowed;
     });
 
-    const isInQueue = queuePosition > 0;
-
     useEffect(() => {
         setIsBorrowed(borrowedBooks.includes(id));
         setIsLoanable(lentBooks.includes(id));
-
-        // Check book availability when component loads
-        checkBookAvailability();
-
-        // Check if user is in queue for this book
-        if (userId) {
-            checkQueuePosition();
-            fetchUserNotifications();
-        }
 
         // Add event listener for closing the dropdown/modal when clicking outside
         const handleClickOutside = (event: MouseEvent) => {
@@ -92,81 +73,6 @@ export const BookCard: React.FC<BookCardProps> = ({
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [borrowedBooks, lentBooks, id, userId]);
-
-    // Check if user is in queue for this book
-    const checkQueuePosition = async () => {
-        if (!userId) return;
-
-        try {
-            const response = await axiosInstance.get(`/v1/book-queue/check`, {
-                params: {
-                    bookId: id,
-                    userId: userId
-                }
-            });
-
-            if (response.data?.success) {
-                setQueuePosition(response.data.data);
-            }
-        } catch (error) {
-            console.error("Error checking queue position:", error);
-        }
-    };
-
-    // Fetch user's active notifications
-    const fetchUserNotifications = async () => {
-        if (!userId) return;
-
-        try {
-            const response = await axiosInstance.get(`/v1/book-queue/active`, {
-                params: {
-                    userId: userId
-                }
-            });
-
-            if (response.data?.success) {
-                setUserNotifications(response.data.data);
-
-                // Find notification for this book
-                const bookNotification = response.data.data.find(
-                    (notification: BookNotification) => notification.bookId === id
-                );
-
-                if (bookNotification) {
-                    setNotificationId(bookNotification.id);
-                }
-            }
-        } catch (error) {
-            console.error("Error fetching notifications:", error);
-        }
-    };
-
-    // Check book availability using the existing endpoint
-    const checkBookAvailability = async () => {
-        try {
-            const response = await axiosInstance.get(`/v1/carts/check-book-availability/${id}`);
-            if (response.data?.data !== undefined) {
-                setIsBookAvailable(response.data.data);
-            }
-        } catch (error) {
-            console.error("Error checking book availability:", error);
-            setIsBookAvailable(false);
-        }
-    };
-
-    const getBookCoverColor = (bookId: number) => {
-        const colors = [
-            '#1e3a8a', // dark blue
-            '#1e40af',
-            '#1d4ed8',
-            '#2563eb', // medium blue
-            '#3b82f6',
-            '#60a5fa', // light blue
-            '#93c5fd'
-        ];
-        const colorIndex = bookId % colors.length;
-        return colors[colorIndex];
-    };
 
     const addToLoanable = async () => {
         if (!userId) return;
@@ -223,113 +129,6 @@ export const BookCard: React.FC<BookCardProps> = ({
         }
     };
 
-    const addToCart = async () => {
-        if (!userId) return;
-
-        setLoading(true);
-        try {
-            const response = await axiosInstance.post("/v1/carts/add-book", {
-                userId,
-                bookId: id
-            });
-
-            if (response.status === 200 && response.data?.success) {
-                toast.success("Book has been added to cart");
-                // Update availability after adding to cart
-                checkBookAvailability();
-            } else {
-                toast.error(response.data?.message || "Failed to add to cart");
-            }
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || "Error adding book to cart");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const notifyBookAvailability = async () => {
-        if (!userId) return;
-
-        setLoading(true);
-        try {
-            const params = new URLSearchParams();
-            params.append('bookId', id.toString());
-            params.append('userId', userId.toString());
-
-            const response = await axiosInstance.post(
-                "/v1/book-queue/join",
-                params
-            );
-
-            if (response.status === 200 && response.data?.success) {
-                toast.success("You will be notified when the book is available");
-                // Update queue position and notifications after joining
-                checkQueuePosition();
-                fetchUserNotifications();
-            } else {
-                toast.error(response.data?.message || "You are already subscribed to notifications");
-            }
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || "Error subscribing to notifications");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const cancelNotification = async () => {
-        if (!userId || !notificationId) return;
-
-        setLoading(true);
-        try {
-            const response = await axiosInstance.post(
-                "/v1/book-queue/cancel",
-                null,
-                {
-                    params: {
-                        notificationId: notificationId,
-                        userId: userId
-                    }
-                }
-            );
-
-            if (response.status === 200 && response.data?.success) {
-                toast.success("Notification cancelled successfully");
-                setQueuePosition(-1);
-                setNotificationId(null);
-                // Refresh notifications
-                fetchUserNotifications();
-            } else {
-                toast.error(response.data?.message || "Failed to cancel notification");
-            }
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || "Error cancelling notification");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const formatDate = (dateString: string) => {
-        try {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long'
-            });
-        } catch (e) {
-            return dateString;
-        }
-    };
-
-    const getThumbnailUrl = () => {
-        if (!book.thumbnailPath || imageError) return null;
-        return `/api/v1/books/images/${book.thumbnailPath}`;
-    };
-
-    const handleImageError = () => {
-        console.error(`Failed to load image for book: ${book.id}, path: ${book.thumbnailPath}`);
-        setImageError(true);
-    };
-
     const handleContextMenu = (e: React.MouseEvent) => {
         e.preventDefault();
         setShowCollectionDropdown(true);
@@ -367,182 +166,140 @@ export const BookCard: React.FC<BookCardProps> = ({
         }
     };
 
+    const authors = book.authorNames ?? [];
+    const thumbnail = book.thumbnailPath ? `/api/v1/books/images/${book.thumbnailPath}` : null;
+
+    let status = { label: "Unavailable", tone: "status-off" };
+    if (isBorrowed) {
+        status = { label: "With you", tone: "status-off" };
+    } else if (isBookBorrowed) {
+        status = { label: "On loan", tone: "status-off" };
+    } else if (isBookAvailable) {
+        status = { label: "Available", tone: "status-ok" };
+    } else if (isInQueue) {
+        status = { label: `Waiting list #${queuePosition}`, tone: "status-wait" };
+    }
+
+    let action: { label: string; onClick: () => void } | null = null;
+    if (isBorrowed) {
+        action = null;
+    } else if (isBookAvailable && !isBookBorrowed) {
+        action = { label: "Borrow", onClick: () => borrowing.addToCart(coverRef.current) };
+    } else if (!isBookAvailable && isInQueue) {
+        action = { label: "Leave waiting list", onClick: borrowing.leaveQueue };
+    } else if (!isBookAvailable) {
+        action = { label: "Notify me", onClick: borrowing.joinQueue };
+    }
+
     return (
-        <div
+        <article
             ref={cardRef}
-            className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col h-full relative"
+            className="book-card relative flex flex-col"
             onContextMenu={handleContextMenu}
         >
-            {isBookBorrowed && (
-                <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full z-10">
-                    Lent
-                </div>
-            )}
+            <div className="relative">
+                <Link to={`/books/${book.id}`} className="block rounded-cover" aria-label={book.title}>
+                    <div ref={coverRef} className="cover-lift rounded-cover shadow-1">
+                        <BookCover title={book.title} authors={authors} src={thumbnail} />
+                    </div>
+                </Link>
 
-            {isInQueue && (
-                <div className="absolute top-2 left-2 bg-purple-500 text-white text-xs px-2 py-1 rounded-full z-10">
-                    Queue: {queuePosition}
-                </div>
-            )}
+                {action && (
+                    <button
+                        onClick={action.onClick}
+                        disabled={loading || borrowing.loading}
+                        className="cover-action absolute inset-x-2 bottom-2 z-10 h-10 rounded-full bg-ink text-sm font-medium text-paper hover:bg-ink-2 disabled:opacity-60"
+                    >
+                        {loading || borrowing.loading ? "Working..." : action.label}
+                    </button>
+                )}
+            </div>
 
-            {/* Context Menu Dropdown */}
+            <div className="mt-3 flex flex-1 flex-col">
+                <Link
+                    to={`/books/${book.id}`}
+                    className="font-serif text-[15px] font-semibold leading-5 text-ink line-clamp-2 hover:text-accent"
+                >
+                    {book.title}
+                </Link>
+                <p className="mt-0.5 text-[13px] leading-[18px] text-ink-2 line-clamp-1">
+                    {authors.length > 0 ? authors.join(", ") : "Unknown author"}
+                </p>
+
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className={`status ${status.tone}`}>{status.label}</span>
+                </div>
+
+                {!isBookBorrowed && user && (
+                    <button
+                        onClick={isLoanable ? removeFromLoanable : addToLoanable}
+                        disabled={loading}
+                        className="mt-2 self-start text-[13px] text-ink-2 underline underline-offset-2 hover:text-ink disabled:opacity-60"
+                    >
+                        {isLoanable ? "Stop lending this book" : "Lend this book"}
+                    </button>
+                )}
+            </div>
+
             {showCollectionDropdown && (
-                <div className="absolute right-0 mt-8 bg-white shadow-lg rounded-md p-2 z-50">
-                    <a
-                        href="#"
-                        className="block px-4 py-2 text-gray-800 hover:bg-gray-200 rounded-md"
+                <div className="absolute right-0 top-8 z-30 w-56 rounded-surface bg-card p-2 shadow-2">
+                    <button
+                        className="block w-full rounded-control px-3 py-2 text-left text-sm text-ink hover:bg-sunk"
                         onClick={handleOpenCollectionModal}
                     >
-                        Ajouter à une collection
-                    </a>
+                        Add to a collection
+                    </button>
                 </div>
             )}
 
-            {/* Collection Modal */}
             {showCollectionModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                    <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden transform transition-all">
-                        <div className="bg-blue-600 px-4 py-3 flex justify-between items-center">
-                            <h3 className="text-lg font-medium text-white">Add to Collection</h3>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4">
+                    <div role="dialog" aria-modal="true" aria-label="Add to collection"
+                         className="w-full max-w-md overflow-hidden rounded-surface bg-card shadow-2">
+                        <div className="flex items-center justify-between px-6 pb-2 pt-6">
+                            <h3 className="font-serif text-xl font-semibold text-ink">Add to a collection</h3>
                             <button
                                 onClick={() => setShowCollectionModal(false)}
-                                className="text-white hover:text-gray-200 focus:outline-none"
+                                className="rounded-full p-2 text-ink-2 hover:bg-sunk hover:text-ink"
+                                aria-label="Close"
                             >
-                                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
                         </div>
-                        <div className="p-4 max-h-96 overflow-y-auto">
-                            {/* Debug information */}
-                            <div className="text-xs text-gray-500 mb-2">
-                                {userCollections ? `${userCollections.length} collections disponibles` : 'Aucune collection chargée'}
-                            </div>
-
-                            {userCollections && userCollections.length > 0 ? (
-                                <div className="space-y-2">
+                        <div className="max-h-96 overflow-y-auto px-4 pb-2">
+                            {userCollections.length > 0 ? (
+                                <ul className="space-y-1">
                                     {userCollections.map(collection => (
-                                        <div
-                                            key={collection.id}
-                                            className="hover:bg-gray-100 p-2 rounded-md cursor-pointer flex items-center"
-                                            onClick={() => addToCollection(collection.id)}
-                                        >
-                                            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white mr-3">
-                                                {collection.title.charAt(0).toUpperCase()}
-                                            </div>
-                                            <div className="font-medium">{collection.title}</div>
-                                        </div>
+                                        <li key={collection.id}>
+                                            <button
+                                                className="flex w-full items-center gap-3 rounded-control p-2 text-left hover:bg-sunk"
+                                                onClick={() => addToCollection(collection.id)}
+                                            >
+                                                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-sunk font-serif font-semibold text-ink">
+                                                    {collection.title.charAt(0).toUpperCase()}
+                                                </span>
+                                                <span className="font-medium text-ink">{collection.title}</span>
+                                            </button>
+                                        </li>
                                     ))}
-                                </div>
+                                </ul>
                             ) : (
-                                <div className="text-center py-8">
-                                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                                    </svg>
-                                    <p className="mt-2 text-gray-500">No collections available</p>
-                                    <p className="text-sm text-gray-400 mt-1">Create a collection first to add books</p>
+                                <div className="px-4 py-8 text-center">
+                                    <p className="text-ink">No collections yet</p>
+                                    <p className="mt-1 text-[13px] text-ink-2">Create a collection first, then add books to it.</p>
                                 </div>
                             )}
                         </div>
-                        <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                            <button
-                                onClick={() => setShowCollectionModal(false)}
-                                className="w-full sm:w-auto px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 focus:outline-none"
-                            >
+                        <div className="flex justify-end px-6 py-4">
+                            <button onClick={() => setShowCollectionModal(false)} className="btn-quiet">
                                 Cancel
                             </button>
                         </div>
                     </div>
                 </div>
             )}
-
-            <Link to={`/books/${book.id}`} className="block flex-grow">
-                <div
-                    className="w-full h-48 flex items-center justify-center flex-shrink-0"
-                    style={{
-                        backgroundColor: getThumbnailUrl() ? 'transparent' : getBookCoverColor(book.id),
-                        opacity: isBorrowed ? 0.6 : 1
-                    }}
-                >
-                    {getThumbnailUrl() ? (
-                        <img
-                            src={getThumbnailUrl()!}
-                            alt={`Cover for ${book.title}`}
-                            className="h-full w-full object-contain"
-                            onError={handleImageError}
-                        />
-                    ) : (
-                        <span className="text-white text-5xl font-bold">
-                            {book.title.charAt(0).toUpperCase()}
-                        </span>
-                    )}
-                </div>
-
-                <div className="p-4 flex flex-col flex-grow">
-                    <h3 className="text-lg font-semibold text-gray-800 line-clamp-2 mb-2 h-14">
-                        {book.title}
-                    </h3>
-
-                    <p className="text-sm text-gray-600 line-clamp-1 mb-2 h-5">
-                        {book.authorNames && book.authorNames.length > 0
-                            ? book.authorNames.join(', ')
-                            : 'Unknown author'}
-                    </p>
-
-                    <div className="mt-auto">
-                        {book.publicationDate && (
-                            <p className="text-xs text-gray-500">
-                                Published: {formatDate(book.publicationDate.toString())}
-                            </p>
-                        )}
-                    </div>
-                </div>
-            </Link>
-
-            {/* Action buttons */}
-            <div className="p-3 space-y-2">
-                {/* Conditionally display Borrow, Notify, or Cancel Notification button */}
-                {isBookAvailable ? (
-                    <button
-                        onClick={addToCart}
-                        className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
-                        disabled={loading || isBookBorrowed}
-                    >
-                        {loading ? "Processing..." : "Borrow"}
-                    </button>
-                ) : isInQueue ? (
-                    <button
-                        onClick={cancelNotification}
-                        className="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
-                        disabled={loading}
-                    >
-                        {loading ? "Processing..." : "Cancel Notification"}
-                    </button>
-                ) : (
-                    <button
-                        onClick={notifyBookAvailability}
-                        className="w-full bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
-                        disabled={loading}
-                    >
-                        {loading ? "Processing..." : "Notify"}
-                    </button>
-                )}
-
-                {/* Lending button - hidden if book has BORROWED status */}
-                {!isBookBorrowed && user && (
-                    <button
-                        onClick={isLoanable ? removeFromLoanable : addToLoanable}
-                        className={`w-full px-4 py-2 rounded-lg transition ${
-                            isLoanable
-                                ? "bg-yellow-500 hover:bg-yellow-600 text-white"
-                                : "bg-green-500 hover:bg-green-600 text-white"
-                        }`}
-                        disabled={loading}
-                    >
-                        {loading ? "Processing..." : (isLoanable ? "Remove from lending" : "Add to lending")}
-                    </button>
-                )}
-            </div>
-        </div>
+        </article>
     );
 };

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Plus, Search } from "lucide-react";
 import { BookGrid } from "../../components/book/BookGrid.tsx";
 import { Pagination } from "../../components/Pagination";
 import { Layout } from "../Layout";
@@ -68,108 +69,95 @@ export const Books: React.FC = () => {
     };
 
     const hasActiveFilters = Object.values(activeFilters).some(value => value !== undefined && value !== "");
+    const activeTerm = activeFilters.title ?? activeFilters.author ?? activeFilters.isbn;
+
+    const searchTypes: { value: string; label: string }[] = [
+        { value: "title", label: "Title" },
+        { value: "author", label: "Author" },
+        { value: "isbn", label: "ISBN" }
+    ];
 
     return (
         <Layout>
-            <div className="container mx-auto px-4 py-8">
-                <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-3xl font-bold">Books</h1>
-                    <button
-                        onClick={toggleAddBookModal}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-                        </svg>
-                        Add Book
+            <div className="mx-auto w-full max-w-[1200px] px-4 py-8 sm:px-8 sm:py-10">
+                <div className="mb-6 flex flex-wrap items-baseline justify-between gap-4">
+                    <div className="flex items-baseline gap-3">
+                        <h1 className="page-title">Books</h1>
+                        {pageInfo.totalElements > 0 && (
+                            <span className="text-[15px] text-ink-3">
+                                {pageInfo.totalElements.toLocaleString()} {hasActiveFilters ? "results" : "books"}
+                            </span>
+                        )}
+                    </div>
+                    <button onClick={toggleAddBookModal} className="btn-outline">
+                        <Plus className="h-4 w-4" aria-hidden="true" />
+                        Add a book
                     </button>
                 </div>
 
-                {/* Search Form */}
-                <form onSubmit={handleSearch} className="mb-8">
-                    <div className="flex flex-col md:flex-row gap-3">
-                        <div className="flex-grow">
-                            <input
-                                type="text"
-                                placeholder="Search for books..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                        </div>
-                        <div className="w-full md:w-48">
-                            <select
-                                value={searchType}
-                                onChange={(e) => setSearchType(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="title">By Title</option>
-                                <option value="author">By Author</option>
-                                <option value="isbn">By ISBN</option>
-                            </select>
-                        </div>
-                        <div className="flex gap-2">
+                <form onSubmit={handleSearch} role="search" className="mb-8 space-y-4">
+                    <div className="relative">
+                        <Search className="pointer-events-none absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-2" aria-hidden="true" />
+                        <input
+                            type="search"
+                            placeholder={`Search by ${searchType}`}
+                            aria-label="Search the catalogue"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="h-12 w-full rounded-full bg-card pr-28 text-[15px] text-ink shadow-1 outline-none ring-1 ring-line placeholder:text-ink-3 hover:ring-ink-3 focus:ring-2 focus:ring-accent"
+                            style={{ paddingLeft: 52 }}
+                        />
+                        <button
+                            type="submit"
+                            className="absolute right-1.5 top-1/2 h-9 -translate-y-1/2 rounded-full bg-accent px-5 text-sm font-medium text-white hover:bg-accent-hover"
+                        >
+                            Search
+                        </button>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Search by">
+                        {searchTypes.map(type => (
                             <button
-                                type="submit"
-                                className="w-full md:w-auto px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                key={type.value}
+                                type="button"
+                                onClick={() => setSearchType(type.value)}
+                                aria-pressed={searchType === type.value}
+                                className="chip"
                             >
-                                Search
+                                {type.label}
                             </button>
-                            {hasActiveFilters && (
-                                <button
-                                    type="button"
-                                    onClick={handleResetSearch}
-                                    className="w-full md:w-auto px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                                >
-                                    Clear
-                                </button>
-                            )}
-                        </div>
+                        ))}
+                        {hasActiveFilters && (
+                            <button type="button" onClick={handleResetSearch} className="ml-2 text-sm text-ink-2 underline underline-offset-2 hover:text-ink">
+                                Clear search
+                            </button>
+                        )}
                     </div>
                 </form>
 
-                {/* Active filter indicator */}
-                {hasActiveFilters && (
-                    <div className="mb-4 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
-                        <p className="text-blue-700">
-                            {activeFilters.title && (
-                                <span>Filtering by title: <strong>{activeFilters.title}</strong></span>
-                            )}
-                            {activeFilters.author && (
-                                <span>Filtering by author: <strong>{activeFilters.author}</strong></span>
-                            )}
-                            {activeFilters.isbn && (
-                                <span>Filtering by ISBN: <strong>{activeFilters.isbn}</strong></span>
-                            )}
-                            {pageInfo.totalElements > 0 && (
-                                <span> • {pageInfo.totalElements} results found</span>
-                            )}
-                        </p>
-                    </div>
-                )}
-
-                {/* Error message */}
                 {error && (
-                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                        {error}
+                    <div role="alert" className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-control bg-bad-tint px-4 py-3 text-sm text-bad">
+                        <span>{error}</span>
+                        <button onClick={refreshBooks} className="font-medium underline underline-offset-2">Try again</button>
                     </div>
                 )}
 
-                {/* Books grid */}
                 <BookGrid books={books} isLoading={isLoading} />
 
-                {/* Empty state */}
-                {!isLoading && books.length === 0 && (
-                    <div className="text-center py-12 bg-gray-50 rounded-lg">
-                        <p className="text-gray-600">
-                            {hasActiveFilters
-                                ? "No books found matching your search criteria."
-                                : "No books available."}
+                {!isLoading && !error && books.length === 0 && (
+                    <div className="py-20 text-center">
+                        <p className="font-serif text-xl font-semibold text-ink">
+                            {hasActiveFilters ? `No books match "${activeTerm}"` : "No books yet"}
                         </p>
+                        <p className="mt-2 text-ink-2">
+                            {hasActiveFilters ? "Check the spelling, or search by another field." : "Add the first book to the catalogue."}
+                        </p>
+                        {hasActiveFilters && (
+                            <button onClick={handleResetSearch} className="btn-outline mt-6">Clear search</button>
+                        )}
                     </div>
                 )}
 
-                {/* Pagination - display if more than one page */}
                 {pageInfo && pageInfo.totalPages > 1 && (
                     <Pagination
                         pageInfo={pageInfo}
@@ -178,7 +166,6 @@ export const Books: React.FC = () => {
                 )}
             </div>
 
-            {/* Add Book Modal */}
             <BookAddModal
                 isOpen={showAddBookModal}
                 onClose={toggleAddBookModal}

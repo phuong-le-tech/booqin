@@ -24,7 +24,7 @@ interface BooksContextType {
 }
 
 const defaultPageInfo: PageInfo = {
-    size: 10,
+    size: 12,
     number: 0,
     totalElements: 0,
     totalPages: 1
