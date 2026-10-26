@@ -104,13 +104,15 @@ class AuthServiceTest {
     when(cartRepository.save(any(Cart.class))).thenReturn(testCart);
     when(passwordEncoder.encode(eq(registerDto.password()))).thenReturn("encodedPassword");
     when(userRepository.save(any(User.class))).thenReturn(testUser);
+    UserIndex expected = new UserIndex(testUser.getId(), testUser.getFirstName(), testUser.getLastName(),
+            testUser.getEmail(), testUser.getAddress(), testUser.getRole());
+    when(userMapper.toUserIndex(testUser)).thenReturn(expected);
 
     // When
     UserIndex result = authService.register(registerDto);
 
     // Then
-    assertNotNull(result);
-    assertEquals(testUser, result);
+    assertEquals(expected, result);
 
     verify(userRepository).findByEmail(eq(registerDto.email()));
     verify(cartRepository).save(any(Cart.class));
