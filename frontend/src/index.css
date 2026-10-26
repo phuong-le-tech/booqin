@@ -1,222 +1,484 @@
+@import "@fontsource-variable/schibsted-grotesk";
+@import "@fontsource-variable/literata";
 @import "tailwindcss";
 
-/* Custom colors */
-:root {
-  --primary: #2563eb; /* Bleu principal */
-  --secondary: #6b7280; /* Gris secondaire */
-  --light-blue: #60a5fa; /* Bleu clair */
-  --beige-300: #f5f5f4; /* Beige clair */
-  --footer-color: #f3f4f6; /* Couleur de fond du footer */
-  --navbar: #ffffff; /* Couleur de fond de la navbar */
-}
-
-/* Custom components */
-@layer components {
-  .btn {
-    @apply rounded-md font-medium transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2;
-  }
-
-  .btn-primary {
-    @apply bg-secondary text-white hover:bg-gray-500 focus:ring-gray-500;
-  }
-
-  .btn-secondary {
-    @apply bg-primary text-secondary hover:bg-light-blue focus:ring-blue-500;
-  }
-
-  /* Navbar styles */
-  .bg-navbar {
-    @apply bg-[var(--navbar)] shadow-sm;
-  }
-
-  /* Footer styles */
-  .bg-footer-color {
-    @apply bg-[var(--footer-color)];
-  }
-
-  /* Sidebar styles */
-  .sidebar-nav-item {
-    @apply flex items-center w-full px-4 py-2 text-left transition-colors duration-200 rounded-lg hover:bg-[var(--beige-300)] focus:outline-none focus:ring-2 focus:ring-blue-500;
-  }
-
-  /* Home page card */
-  .home-card {
-    @apply bg-white py-6 px-4 sm:py-8 sm:px-6 md:py-12 md:px-8 shadow-lg rounded-lg sm:rounded-2xl transition-all duration-300 hover:shadow-xl border;
-  }
-
-  /* Text colors */
-  .text-primary {
-    @apply text-[var(--primary)];
-  }
-
-  .text-secondary {
-    @apply text-[var(--secondary)];
-  }
-
-  .text-light-blue {
-    @apply text-[var(--light-blue)];
-  }
-
-  /* Responsive utilities */
-  .container-responsive {
-    @apply w-full px-4 sm:px-6 lg:px-8 mx-auto;
-  }
-
-  /* Form elements */
-  .form-input {
-    @apply block w-full border border-blue-200 rounded-md shadow-sm py-2 px-3
-    text-primary placeholder-gray-400
-    focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm;
-  }
-
-  .form-label {
-    @apply block text-sm font-medium text-primary mb-1;
-  }
-
-  .form-button {
-    @apply w-full flex justify-center py-2 px-4 border border-transparent
-    rounded-md shadow-sm text-sm font-medium text-white
-    bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400
-    focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
-  }
-
-  /* Mobile menu */
-  .mobile-menu-overlay {
-    @apply fixed inset-0 bg-black z-40;
-  }
-
-  .mobile-menu {
-    @apply fixed z-50 h-screen w-64 transform transition-transform duration-300 ease-in-out;
-  }
-
-  /* Card styles for consistent layout */
-  .content-card {
-    @apply bg-white p-4 sm:p-6 rounded-lg shadow-md transition-shadow duration-300 hover:shadow-lg;
-  }
-
-  /* Responsive typography */
-  .responsive-heading-1 {
-    @apply text-2xl sm:text-3xl md:text-4xl font-extrabold;
-  }
-
-  .responsive-heading-2 {
-    @apply text-xl sm:text-2xl md:text-3xl font-bold;
-  }
-
-  .responsive-heading-3 {
-    @apply text-lg sm:text-xl font-semibold;
-  }
-
-  .responsive-body {
-    @apply text-sm sm:text-base;
-  }
-
-  /* Responsive spacing */
-  .section-spacing {
-    @apply py-6 sm:py-8 md:py-12;
-  }
-
-  .element-spacing {
-    @apply mb-4 sm:mb-6;
-  }
-}
-
+/*
+ * BooqIn design tokens. Source of truth: docs/design/DESIGN.md
+ * Warm paper surfaces, one accent (terracotta), two typefaces, two shadows.
+ */
 @theme {
-  --primary: oklch(55% 0.12 240);
-  --primary-hover: oklch(50% 0.12 240);
-  --background: oklch(1 0 89.876);
-  --border: oklch(85% 0.005 240);
-  --accent: oklch(65% 0.12 240);
-  --footer: oklch(0.323 0.048 258.286);
+  /* Surfaces */
+  --color-paper: #faf9f4;
+  --color-card: #ffffff;
+  --color-sunk: #f1efe7;
+  --color-line: #e7e3d8;
 
-  /* Color scheme */
-  --color-navbar: oklch(0.323 0.048 258.286);
-  --color-text: oklch(45% 0.02 240);
-  --color-primary: oklch(1 0 89.876);
-  --color-secondary: oklch(0.323 0.048 258.286);
-  --color-light-blue:oklch(65% 0.12 240);
+  /* Text (3 greys) */
+  --color-ink: #2b2722;
+  --color-ink-2: #5e584d;
+  --color-ink-3: #726c60;
+
+  /* The one accent */
+  --color-accent: #b93a0b;
+  --color-accent-hover: #9e3009;
+  --color-accent-tint: #f8e6dd;
+
+  /* Status (text on tint) */
+  --color-ok: #1f6b45;
+  --color-ok-tint: #e3f1e8;
+  --color-wait: #7a4f00;
+  --color-wait-tint: #f8ebcb;
+  --color-bad: #a8231c;
+  --color-bad-tint: #fbe4e1;
+
+  /* Type */
+  --font-sans: "Schibsted Grotesk Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Literata Variable", Georgia, "Times New Roman", serif;
+
+  /* Radii */
+  --radius-cover: 4px;
+  --radius-control: 10px;
+  --radius-surface: 16px;
+
+  /* Shadows (only two) */
+  --shadow-1: 0 1px 2px rgba(43, 39, 34, 0.06), 0 2px 8px rgba(43, 39, 34, 0.06);
+  --shadow-2: 0 4px 12px rgba(43, 39, 34, 0.1), 0 12px 32px rgba(43, 39, 34, 0.1);
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+
+  /*
+   * Palette remap: pages not yet redesigned still use Tailwind blue/gray/slate/purple.
+   * Point them at the new system so nothing renders in the old blue/navy look.
+   */
+  --color-blue-50: #fbf1ec;
+  --color-blue-100: #f8e6dd;
+  --color-blue-200: #f0cdbb;
+  --color-blue-300: #e4a98c;
+  --color-blue-400: #d27a52;
+  --color-blue-500: #c8501f;
+  --color-blue-600: #b93a0b;
+  --color-blue-700: #9e3009;
+  --color-blue-800: #7f2807;
+  --color-blue-900: #5e1d05;
+  --color-indigo-50: #fbf1ec;
+  --color-indigo-100: #f8e6dd;
+  --color-indigo-500: #c8501f;
+  --color-indigo-600: #b93a0b;
+  --color-indigo-700: #9e3009;
+  --color-purple-50: #fbf1ec;
+  --color-purple-100: #f8e6dd;
+  --color-purple-300: #e4a98c;
+  --color-purple-500: #c8501f;
+  --color-purple-600: #b93a0b;
+  --color-purple-700: #9e3009;
+  --color-gray-50: #faf9f4;
+  --color-gray-100: #f1efe7;
+  --color-gray-200: #e7e3d8;
+  --color-gray-300: #d3cec0;
+  --color-gray-400: #a8a294;
+  --color-gray-500: #726c60;
+  --color-gray-600: #5e584d;
+  --color-gray-700: #4a453c;
+  --color-gray-800: #3a362f;
+  --color-gray-900: #2b2722;
+  --color-slate-50: #faf9f4;
+  --color-slate-100: #f1efe7;
+  --color-slate-200: #e7e3d8;
+  --color-slate-300: #d3cec0;
+  --color-slate-400: #a8a294;
+  --color-slate-500: #726c60;
+  --color-slate-600: #5e584d;
+  --color-slate-700: #4a453c;
+  --color-slate-800: #3a362f;
+  --color-slate-900: #2b2722;
+  --color-red-600: #a8231c;
+  --color-red-700: #8c1c16;
 }
 
-/* Base styles */
+/* Base */
 :root {
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
-  sans-serif;
-  line-height: 1.5;
+  font-family: var(--font-sans);
+  line-height: 1.6;
   font-weight: 400;
-  color: var(--color-primary);
-  background-color: var(--background);
+  color: var(--color-ink);
+  background-color: var(--color-paper);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+html {
+  font-size: 16px; /* keep rem utilities on the standard scale */
+}
+
 html,
 body {
-  @apply bg-white text-gray-900;
+  background-color: var(--color-paper);
+  color: var(--color-ink);
   max-width: 100%;
-  max-height: 100%;
   min-width: 100%;
   min-height: 100%;
   overflow-x: hidden;
 }
 
-/* Enhanced for mobile */
-@media (max-width: 640px) {
-  body {
-    font-size: 14px; /* Slightly smaller base font size on mobile */
-  }
-
-  .btn {
-    @apply py-2 px-3 text-sm; /* Smaller buttons on mobile */
-  }
-}
-
-footer {
-  background-color: var(--footer);
-  padding: 1rem;
-  text-align: center;
-}
-
-a {
-  @apply transition-colors duration-300;
+body {
+  font-size: 15px; /* body text per DESIGN.md */
 }
 
 #root {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  min-height: 100vh;
   width: 100%;
 }
 
-/* Responsive grid layouts */
-.responsive-grid {
-  @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6;
+a {
+  color: inherit;
+  transition: color 120ms var(--ease-out);
 }
 
-/* Better responsive tables */
-.responsive-table {
-  @apply w-full overflow-x-auto;
-}
-
-.responsive-table table {
-  @apply min-w-full divide-y divide-gray-200;
-}
-
-/* Improved focus styles for accessibility */
+/* One visible focus treatment everywhere */
 :focus-visible {
-  @apply outline-none ring-2 ring-blue-500;
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .dark-mode-support {
-    --primary: #3b82f6;
-    --secondary: #9ca3af;
-    --light-blue: #93c5fd;
-    --beige-300: #1f2937;
-    --navbar: #111827;
-    --footer-color: #1f2937;
-    color-scheme: dark;
+::selection {
+  background: var(--color-accent-tint);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
+}
+
+/* Reusable design-system classes */
+@layer components {
+  .font-display {
+    font-family: var(--font-serif);
+    letter-spacing: -0.015em;
+  }
+
+  .page-title {
+    font-family: var(--font-serif);
+    font-size: 28px;
+    line-height: 34px;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+  }
+
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 font-medium whitespace-nowrap select-none;
+    height: 40px;
+    padding: 0 16px;
+    font-size: 14px;
+    border-radius: var(--radius-control);
+    transition: background-color 120ms var(--ease-out), color 120ms var(--ease-out),
+      transform 120ms var(--ease-out), border-color 120ms var(--ease-out);
+  }
+  .btn:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+  .btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  /* primary: terracotta, one per view */
+  .btn-accent,
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 font-medium whitespace-nowrap;
+    height: 44px;
+    padding: 0 20px;
+    font-size: 14px;
+    border-radius: var(--radius-control);
+    background: var(--color-accent);
+    color: #fff;
+    transition: background-color 120ms var(--ease-out), transform 120ms var(--ease-out);
+  }
+  .btn-accent:hover:not(:disabled),
+  .btn-primary:hover:not(:disabled) {
+    background: var(--color-accent-hover);
+  }
+
+  /* secondary: ink outline */
+  .btn-outline,
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 font-medium whitespace-nowrap;
+    height: 40px;
+    padding: 0 16px;
+    font-size: 14px;
+    border-radius: var(--radius-control);
+    background: transparent;
+    color: var(--color-ink);
+    border: 1px solid var(--color-ink);
+    transition: background-color 120ms var(--ease-out);
+  }
+  .btn-outline:hover:not(:disabled),
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--color-sunk);
+  }
+
+  /* quiet: sunk fill */
+  .btn-quiet {
+    @apply inline-flex items-center justify-center gap-2 font-medium whitespace-nowrap;
+    height: 40px;
+    padding: 0 16px;
+    font-size: 14px;
+    border-radius: var(--radius-control);
+    background: var(--color-sunk);
+    color: var(--color-ink);
+    transition: background-color 120ms var(--ease-out);
+  }
+  .btn-quiet:hover:not(:disabled) {
+    background: var(--color-line);
+  }
+
+  /* Inputs */
+  .form-input,
+  .input {
+    @apply block w-full;
+    height: 44px;
+    padding: 0 14px;
+    font-size: 15px;
+    color: var(--color-ink);
+    background: var(--color-card);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-control);
+    transition: border-color 120ms var(--ease-out);
+  }
+  .form-input::placeholder,
+  .input::placeholder {
+    color: var(--color-ink-3);
+  }
+  .form-input:hover,
+  .input:hover {
+    border-color: var(--color-ink-3);
+  }
+  .form-input:focus,
+  .input:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+    border-color: var(--color-accent);
+  }
+
+  .form-label {
+    @apply block mb-1;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-ink);
+  }
+
+  .form-button {
+    @apply w-full flex items-center justify-center font-medium text-white;
+    height: 44px;
+    border-radius: var(--radius-control);
+    background: var(--color-accent);
+    transition: background-color 120ms var(--ease-out);
+  }
+  .form-button:hover:not(:disabled) {
+    background: var(--color-accent-hover);
+  }
+  .form-button:disabled {
+    opacity: 0.55;
+  }
+
+  /* Chips and status */
+  .chip {
+    @apply inline-flex items-center whitespace-nowrap;
+    height: 32px;
+    padding: 0 14px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 999px;
+    background: var(--color-sunk);
+    color: var(--color-ink);
+    transition: background-color 120ms var(--ease-out), color 120ms var(--ease-out);
+  }
+  .chip:hover {
+    background: var(--color-line);
+  }
+  .chip[aria-pressed="true"],
+  .chip[aria-current="true"] {
+    background: var(--color-ink);
+    color: var(--color-paper);
+  }
+
+  .status {
+    @apply inline-flex items-center whitespace-nowrap;
+    height: 24px;
+    padding: 0 10px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1;
+    border-radius: 999px;
+    letter-spacing: 0.005em;
+  }
+  .status-ok {
+    background: var(--color-ok-tint);
+    color: var(--color-ok);
+  }
+  .status-wait {
+    background: var(--color-wait-tint);
+    color: var(--color-wait);
+  }
+  .status-bad {
+    background: var(--color-bad-tint);
+    color: var(--color-bad);
+  }
+  .status-off {
+    background: var(--color-sunk);
+    color: var(--color-ink-2);
+  }
+
+  /* Surfaces */
+  .surface,
+  .content-card,
+  .home-card {
+    background: var(--color-card);
+    border-radius: var(--radius-surface);
+    box-shadow: var(--shadow-1);
+    padding: 24px;
+  }
+
+  /* Legacy helpers kept so older pages still render */
+  .bg-navbar {
+    background: var(--color-paper);
+    border-bottom: 1px solid var(--color-line);
+  }
+  .bg-footer-color {
+    background: var(--color-sunk);
+  }
+  .text-primary {
+    color: var(--color-accent);
+  }
+  .text-secondary {
+    color: var(--color-ink-2);
+  }
+  .text-light-blue {
+    color: var(--color-accent);
+  }
+  .container-responsive {
+    @apply w-full px-4 sm:px-6 lg:px-8 mx-auto;
+  }
+  .responsive-heading-1 {
+    font-family: var(--font-serif);
+    @apply text-3xl md:text-4xl font-semibold;
+    letter-spacing: -0.02em;
+  }
+  .responsive-heading-2 {
+    font-family: var(--font-serif);
+    @apply text-2xl md:text-3xl font-semibold;
+  }
+  .responsive-heading-3 {
+    @apply text-lg sm:text-xl font-semibold;
+  }
+  .responsive-body {
+    @apply text-sm sm:text-base;
+  }
+  .section-spacing {
+    @apply py-6 sm:py-8 md:py-12;
+  }
+  .element-spacing {
+    @apply mb-4 sm:mb-6;
+  }
+  .responsive-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6;
+  }
+  .responsive-table {
+    @apply w-full overflow-x-auto;
+  }
+  .sidebar-nav-item {
+    @apply flex items-center w-full px-4 py-2 text-left rounded-lg;
+    transition: background-color 120ms var(--ease-out);
+  }
+  .sidebar-nav-item:hover {
+    background: var(--color-sunk);
+  }
+  .mobile-menu-overlay {
+    @apply fixed inset-0 z-40;
+    background: rgba(43, 39, 34, 0.4);
+  }
+  .mobile-menu {
+    @apply fixed z-50 h-screen w-64 transform transition-transform duration-300 ease-in-out;
+  }
+}
+
+/* Book covers: lift on hover, shadow swap by opacity (compositor-only) */
+.cover-lift {
+  position: relative;
+  transition: transform 200ms var(--ease-out);
+}
+.cover-lift::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-cover);
+  box-shadow: var(--shadow-2);
+  opacity: 0;
+  transition: opacity 200ms var(--ease-out);
+  pointer-events: none;
+}
+.book-card:hover .cover-lift,
+.book-card:focus-within .cover-lift {
+  transform: translateY(-4px);
+}
+.book-card:hover .cover-lift::after,
+.book-card:focus-within .cover-lift::after {
+  opacity: 1;
+}
+
+/* Primary action sits on the cover: revealed on hover or keyboard focus, always shown on touch */
+.cover-action {
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 200ms var(--ease-out), transform 200ms var(--ease-out);
+}
+.book-card:hover .cover-action,
+.book-card:focus-within .cover-action {
+  opacity: 1;
+  transform: none;
+}
+@media (hover: none) {
+  .cover-action {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.skeleton {
+  background: var(--color-sunk);
+  animation: skeleton-pulse 1.4s var(--ease-out) infinite alternate;
+}
+@keyframes skeleton-pulse {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.5;
+  }
+}
+
+@keyframes badge-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.35);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.badge-pop {
+  animation: badge-pop 450ms cubic-bezier(0.3, 1.6, 0.5, 1);
 }
