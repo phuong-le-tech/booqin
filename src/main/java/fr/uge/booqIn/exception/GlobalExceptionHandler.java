@@ -83,6 +83,24 @@ public class GlobalExceptionHandler {
             .body(ApiResponse.error("Illegal argument provided.", errorResponse));
   }
 
+  @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
+  public ResponseEntity<ApiResponse<ErrorResponse>> handleAuthenticationException(
+          org.springframework.security.core.AuthenticationException ex,
+          HttpServletRequest request
+  ) {
+    HttpStatus status = HttpStatus.UNAUTHORIZED;
+    ErrorResponse errorResponse = new ErrorResponse(
+            status.value(),
+            "Invalid email or password",
+            request.getRequestURI(),
+            Instant.now()
+    );
+
+    return ResponseEntity
+            .status(status)
+            .body(ApiResponse.error("Invalid email or password", errorResponse));
+  }
+
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ApiResponse<ErrorResponse>> handleGenericException(
           Exception ex,

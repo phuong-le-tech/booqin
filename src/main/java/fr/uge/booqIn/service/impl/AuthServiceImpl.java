@@ -146,6 +146,12 @@ public class AuthServiceImpl implements AuthServiceInterface {
   }
 
   @Recover
+  public AuthResponse recoverFromAuthenticationFailure(org.springframework.security.core.AuthenticationException ex, LoginDto loginDto) {
+    // Wrong credentials are not retryable: let the exception handler answer 401
+    throw ex;
+  }
+
+  @Recover
   public AuthResponse recoverFromOptimisticLockingFailure(ObjectOptimisticLockingFailureException ex, LoginDto loginDto) {
     throw new ConcurrentModificationException("Concurrent user modification detected. Please try again.", ex);
   }

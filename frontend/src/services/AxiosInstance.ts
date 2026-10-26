@@ -67,6 +67,11 @@ axiosInstance.interceptors.response.use(
             _retryCount?: number;
         };
 
+        // A 401 from login/register/refresh is the real answer (bad credentials), not an expired session
+        if (/\/v1\/auth\/(login|register|refresh)/.test(originalRequest.url ?? "")) {
+            return Promise.reject(error);
+        }
+
         // Initialize retry count
         if (originalRequest._retryCount === undefined) {
             originalRequest._retryCount = 0;
