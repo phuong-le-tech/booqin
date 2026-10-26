@@ -6,6 +6,7 @@ import axiosInstance from "../../services/AxiosInstance.ts";
 import { useAuth } from "../../context/AuthContext.tsx";
 import { BookCover } from "../../components/book/BookCover";
 import { notifyCartChanged } from "../../utils/cartEvents";
+import { DEMO_TEST_CARD, IS_DEMO } from "../../utils/demo";
 
 type CartBook = {
     id: number | string;
@@ -243,6 +244,13 @@ export const ShoppingCart: () => JSX.Element = () => {
                         {paying ? "Opening secure payment..." : "Pay now"}
                     </button>
                     <p className="mt-3 text-center text-[13px] text-ink-3">Payment is handled securely by Stripe.</p>
+                    {IS_DEMO && (
+                        <p className="mt-4 rounded-control bg-sunk p-3 text-[13px] text-ink-2">
+                            <strong className="font-semibold text-ink">Demo:</strong> pay with the test card{" "}
+                            <span className="whitespace-nowrap font-medium tabular-nums text-ink">{DEMO_TEST_CARD}</span>, any
+                            future date and any CVC. No real money moves.
+                        </p>
+                    )}
                 </aside>
             </div>
         </>

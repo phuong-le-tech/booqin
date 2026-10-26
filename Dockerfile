@@ -5,6 +5,8 @@ WORKDIR /frontend
 COPY frontend/package.json frontend/package-lock.json* ./
 RUN npm install
 COPY frontend/ ./
+# Shows the demo notice and demo logins in the UI
+ENV VITE_DEMO=true
 RUN npm run build
 
 FROM maven:3.9-eclipse-temurin-21 AS backend

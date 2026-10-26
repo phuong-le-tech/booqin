@@ -4,6 +4,7 @@ import { toast } from "react-toastify"
 import { useAuth } from "../../context/AuthContext"
 import { Layout } from "../Layout.tsx"
 import { AuthField } from "../../components/auth/AuthField"
+import { DEMO_ACCOUNTS, IS_DEMO } from "../../utils/demo"
 import type { LoginForm } from "../../model/AuthModel.ts"
 
 export const Login = () => {
@@ -82,6 +83,7 @@ export const Login = () => {
                         label="Email"
                         autoComplete="email"
                         required
+                        value={formData.login}
                         onChange={handleChange}
                     />
                     <AuthField
@@ -91,6 +93,7 @@ export const Login = () => {
                         label="Password"
                         autoComplete="current-password"
                         required
+                        value={formData.password}
                         onChange={handleChange}
                     />
 
@@ -102,6 +105,30 @@ export const Login = () => {
                         {isLoading ? "Logging in..." : "Log in"}
                     </button>
                 </form>
+
+                {IS_DEMO && (
+                    <section className="mt-8 rounded-surface bg-sunk p-5" aria-label="Demo accounts">
+                        <h2 className="text-sm font-semibold text-ink">This is a demo</h2>
+                        <p className="mt-1 text-[13px] text-ink-2">Use one of these accounts. Payments are in Stripe test mode.</p>
+                        <ul className="mt-3 space-y-2">
+                            {DEMO_ACCOUNTS.map(account => (
+                                <li key={account.email} className="flex items-center justify-between gap-3">
+                                    <span className="min-w-0 text-[13px] text-ink-2">
+                                        <span className="block font-medium text-ink">{account.label}</span>
+                                        <span className="block truncate">{account.email} / {account.password}</span>
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ login: account.email, password: account.password })}
+                                        className="btn-outline h-9 shrink-0 px-3"
+                                    >
+                                        Fill in
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+                )}
 
                 <p className="mt-6 text-center text-sm text-ink-2">
                     New to BooqIn?{" "}

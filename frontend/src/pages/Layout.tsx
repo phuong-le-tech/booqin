@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext"
 import { useCart } from "../hooks/useCart"
 import { NotificationsMenu } from "../components/notifications/NotificationsMenu"
 import { UserMenu } from "../components/UserMenu"
+import { DemoBanner } from "../components/demo/DemoBanner"
 
 interface LayoutProps {
     children: ReactNode
@@ -127,6 +128,7 @@ const MobileTabBar: React.FC = () => {
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
     return (
         <div className="flex min-h-screen flex-col bg-paper">
+            <DemoBanner />
             <TopBar />
             <main className="w-full flex-1 pb-20 md:pb-0">{children}</main>
             <MobileTabBar />
