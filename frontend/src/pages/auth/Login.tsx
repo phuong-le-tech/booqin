@@ -3,12 +3,12 @@ import { useNavigate, Link, useLocation } from "react-router-dom"
 import { toast } from "react-toastify"
 import { useAuth } from "../../context/AuthContext"
 import { Layout } from "../Layout.tsx"
-import { Eye, EyeOff } from "lucide-react"
+import { AuthField } from "../../components/auth/AuthField"
 import type { LoginForm } from "../../model/AuthModel.ts"
 
 export const Login = () => {
     const [formData, setFormData] = useState<LoginForm>({ login: "", password: "" })
-    const [showPassword, setShowPassword] = useState<boolean>(false)
+    const [error, setError] = useState<string | null>(null)
     const [isLoading, setIsLoading] = useState<boolean>(false)
     const navigate = useNavigate()
     const location = useLocation()
@@ -50,6 +50,7 @@ export const Login = () => {
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
+        setError(null)
 
         try {
 
@@ -61,7 +62,7 @@ export const Login = () => {
             // Redirect is handled by the useEffect above
         } catch (error: any) {
             console.error("Login error in component:", error)
-            toast.error(error.message || "Login failed. Please check your credentials.")
+            setError(error.message || "Login failed. Please check your credentials.")
         } finally {
             setIsLoading(false)
         }
@@ -69,77 +70,45 @@ export const Login = () => {
 
     return (
         <Layout>
-            <div className="flex items-center justify-center min-h-screen bg-white px-4 py-6 sm:py-12">
-                <div className="w-full max-w-md">
-                    <div className="bg-secondary py-6 px-4 sm:py-8 sm:px-6 md:px-10 shadow rounded-lg">
-                        <h2 className="text-2xl sm:text-3xl font-extrabold text-primary text-center mb-4 sm:mb-6">Login</h2>
-                        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-                            <div>
-                                <label htmlFor="login" className="block text-sm font-medium text-primary mb-1">
-                                    Email
-                                </label>
-                                <input
-                                    type="email"
-                                    name="login"
-                                    id="login"
-                                    autoComplete="email"
-                                    required
-                                    className="block w-full border border-blue-200 rounded-md shadow-sm py-2 px-3
-                                           text-primary placeholder-primary
-                                           focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                    onChange={handleChange}
-                                />
-                            </div>
-                            <div>
-                                <label htmlFor="password" className="block text-sm font-medium text-primary mb-1">
-                                    Password
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        type={showPassword ? "text" : "password"}
-                                        name="password"
-                                        id="password"
-                                        autoComplete="current-password"
-                                        required
-                                        className="block w-full border border-blue-200 rounded-md shadow-sm py-2 px-3 pr-10
-                                               text-primary placeholder-white
-                                               focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                                        onChange={handleChange}
-                                    />
-                                    <button
-                                        type="button"
-                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 focus:outline-none"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                    >
-                                        {showPassword ? (
-                                            <EyeOff className="h-5 w-5" />
-                                        ) : (
-                                            <Eye className="h-5 w-5" />
-                                        )}
-                                    </button>
-                                </div>
-                            </div>
-                            <div>
-                                <button
-                                    type="submit"
-                                    disabled={isLoading}
-                                    className="w-full flex justify-center py-2 px-4 border border-transparent
-                                           rounded-md shadow-sm text-sm font-medium text-white
-                                           bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400
-                                           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                                >
-                                    {isLoading ? "Logging in..." : "Login"}
-                                </button>
-                            </div>
-                            <div className="mt-4 text-center text-sm">
-                                <span className="text-primary">Don't have an account? </span>
-                                <Link to="/register" className="text-blue-600 hover:text-blue-800 font-medium">
-                                    Register
-                                </Link>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+            <div className="mx-auto w-full max-w-[440px] px-4 py-12 sm:py-20">
+                <h1 className="page-title">Welcome back</h1>
+                <p className="mt-2 text-ink-2">Log in to borrow, lend and follow books.</p>
+
+                <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+                    <AuthField
+                        id="login"
+                        name="login"
+                        type="email"
+                        label="Email"
+                        autoComplete="email"
+                        required
+                        onChange={handleChange}
+                    />
+                    <AuthField
+                        id="password"
+                        name="password"
+                        type="password"
+                        label="Password"
+                        autoComplete="current-password"
+                        required
+                        onChange={handleChange}
+                    />
+
+                    {error && (
+                        <p role="alert" className="rounded-control bg-bad-tint px-4 py-3 text-sm text-bad">{error}</p>
+                    )}
+
+                    <button type="submit" disabled={isLoading} className="btn-accent w-full">
+                        {isLoading ? "Logging in..." : "Log in"}
+                    </button>
+                </form>
+
+                <p className="mt-6 text-center text-sm text-ink-2">
+                    New to BooqIn?{" "}
+                    <Link to="/register" className="font-medium text-accent underline underline-offset-2 hover:text-accent-hover">
+                        Create an account
+                    </Link>
+                </p>
             </div>
         </Layout>
     )

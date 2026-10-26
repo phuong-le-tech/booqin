@@ -1,306 +1,251 @@
-import {JSX, useEffect, useState} from "react";
+import { JSX, useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
 import { Layout } from "../Layout";
 import axiosInstance from "../../services/AxiosInstance.ts";
 import { useAuth } from "../../context/AuthContext.tsx";
-import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
+import { BookCover } from "../../components/book/BookCover";
+import { notifyCartChanged } from "../../utils/cartEvents";
 
-type Book = {
-    id: string;
+type CartBook = {
+    id: number | string;
     title: string;
-    author: string;
-    price: number;
+    authorNames?: string[];
+    thumbnailPath?: string | null;
+    price?: number;
 };
 
 type CartDto = {
     id: number;
     userId: number;
-    books: Book[];
+    books: CartBook[];
 };
+
+const DELIVERY_FEE_PER_BOOK = 6;
+const euro = (amount: number) => `${amount.toFixed(2)} €`;
 
 export const ShoppingCart: () => JSX.Element = () => {
     const [cart, setCart] = useState<CartDto | null>(null);
     const [loading, setLoading] = useState(true);
+    const [paying, setPaying] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const navigate = useNavigate();
-    const {user} = useAuth();
+    const { user, isLoading: authLoading } = useAuth();
+    const userId = user?.id;
 
-    // Function to process and clean the cart
-    const processCart = (cart: CartDto | null) => {
-        if (!cart || !cart.books) return cart;
-
-        // Remove duplicates while preserving order
-        const uniqueBooks = cart.books.filter(
-            (book, index, self) =>
-                index === self.findIndex((t) => t.id === book.id)
-        );
-
-        return {
-            ...cart,
-            books: uniqueBooks
-        };
-    };
-
-    // Load cart from localStorage
-    useEffect(() => {
-        const savedCart = localStorage.getItem("cart");
-        if (savedCart) {
-            try {
-                const parsedCart = JSON.parse(savedCart);
-                const processedCart = processCart(parsedCart);
-
-                // Log de diagnostic
-                if (!(processedCart) || parsedCart.books.length !== processedCart.books.length) {
-                    if (processedCart) {
-                        console.warn('Doublons détectés et supprimés', {
-                            originaux: parsedCart.books.length,
-                            traités: processedCart.books.length
-                        });
-                    }
-                }
-
-                setCart(processedCart);
-                localStorage.setItem("cart", JSON.stringify(processedCart));
-            } catch (error) {
-                console.error("Error parsing localStorage", error);
-                localStorage.removeItem("cart");
-            }
-        }
-    }, []);
-
-    // Fetch cart from API
-    useEffect(() => {
-        if (!user?.id || cart) return;
-
-        const fetchCart = async () => {
-            try {
-                const response = await axiosInstance.get(`/v1/carts/user-cart/${user.id}`);
-
-                if (response.data?.success && response.data?.data) {
-
-                    const booksArray = Array.isArray(response.data.data.books)
-                        ? response.data.data.books
-                        : [];
-
-                    const newCart = processCart({
-                        ...response.data.data,
-                        books: booksArray
-                    });
-
-
-                    setCart(newCart);
-                    localStorage.setItem("cart", JSON.stringify(newCart));
-                } else {
-                    throw new Error("Unexpected response format");
-                }
-            } catch (err: any) {
-                console.error("❌ Detailed Axios error:", err);
-                setError(err.response?.data?.message || "Error loading cart.");
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchCart();
-    }, [user?.id]);
-
-
-
-    const removeFromCart = async (bookId: string) => {
-        if (!cart || !user) {
-            console.warn("⚠️ Cannot remove: `cart` or `user` is `null`", { cart, user: user });
-            return;
-        }
-
+    // The server is the only source of truth for the cart (no local copy to go stale).
+    const loadCart = useCallback(async () => {
+        if (!userId) return;
         try {
-            const response = await axiosInstance.delete("/v1/carts/remove-book", {
-                params: { userId: user.id, bookId: bookId },
-            });
-
-            if (response.status === 200) {
-                setCart((prevCart) => {
-                    if (!prevCart) return null;
-
-                    const updatedCart = processCart({
-                        ...prevCart,
-                        books: prevCart.books.filter((book) => book.id !== bookId),
-                    });
-
-                    localStorage.setItem("cart", JSON.stringify(updatedCart));
-                    return updatedCart;
-                });
-
-                // Notification de succès
-                toast.success("Le livre a été supprimé du panier");
+            setError(null);
+            const response = await axiosInstance.get(`/v1/carts/user-cart/${userId}`);
+            if (response.data?.success && response.data?.data) {
+                const books: CartBook[] = Array.isArray(response.data.data.books) ? response.data.data.books : [];
+                // A book can only be in a cart once
+                const unique = books.filter((book, index) => books.findIndex(other => other.id === book.id) === index);
+                setCart({ ...response.data.data, books: unique });
             } else {
-                toast.error("Impossible de supprimer le livre du panier");
+                throw new Error("Unexpected response format");
             }
-        } catch (error: any) {
-            console.error("❌ Erreur lors de la suppression du livre du panier", error);
-            toast.error("Erreur lors de la suppression du livre");
+        } catch (err: any) {
+            console.error("Error loading cart:", err);
+            setError(err.response?.data?.message || "We could not load your cart.");
+        } finally {
+            setLoading(false);
+        }
+    }, [userId]);
+
+    useEffect(() => {
+        loadCart();
+    }, [loadCart]);
+
+    const removeFromCart = async (bookId: number | string) => {
+        if (!userId) return;
+        try {
+            const response = await axiosInstance.delete("/v1/carts/remove-book", { params: { userId, bookId } });
+            if (response.status === 200) {
+                setCart(prev => (prev ? { ...prev, books: prev.books.filter(book => book.id !== bookId) } : prev));
+                notifyCartChanged();
+                toast.success("Removed from your cart");
+            } else {
+                toast.error("Could not remove the book");
+            }
+        } catch (err) {
+            console.error("Error removing book from cart:", err);
+            toast.error("Could not remove the book");
         }
     };
 
     const clearCart = async () => {
-        if (!cart || !user) {
-            console.warn("⚠️ Cannot clear cart: `cart` or `user` is `null`", { cart, user: user });
-            return;
-        }
-
+        if (!userId || !confirm("Remove every book from your cart?")) return;
         try {
-            const response = await axiosInstance.delete(`/v1/carts/clear-cart/${user.id}`);
-
+            const response = await axiosInstance.delete(`/v1/carts/clear-cart/${userId}`);
             if (response.status === 200) {
-                setCart(null);
-                localStorage.removeItem("cart");
-                toast.success("Votre panier a été vidé !");
+                setCart(prev => (prev ? { ...prev, books: [] } : prev));
+                notifyCartChanged();
+                toast.success("Your cart is empty");
             } else {
-                toast.error("Impossible de vider le panier");
+                toast.error("Could not empty the cart");
             }
-        } catch (error: any) {
-            console.error("❌ Erreur lors du vidage du panier", error);
-            toast.error("Une erreur est survenue lors du vidage du panier");
+        } catch (err) {
+            console.error("Error clearing cart:", err);
+            toast.error("Could not empty the cart");
         }
-    };
-
-    const calculateSubtotal = () => {
-        if (!cart || !cart.books) return 0;
-        return cart.books.reduce((sum, book) => sum + (book.price || 0), 0);
     };
 
     const handlePayment = async () => {
-        if (!cart || !user) return;
-
+        if (!cart || !userId) return;
+        setPaying(true);
         try {
             const response = await axiosInstance.post(`v1/payment/checkout?cartId=${cart.id}`);
-            if (response.data && response.data.success) {
-                toast.info("Redirection vers la page de paiement...");
+            if (response.data?.success) {
                 window.location.href = response.data.data;
             } else {
-                console.error("Erreur lors de la création de la session Stripe", response);
-                toast.error("Erreur lors de la préparation du paiement");
+                toast.error("We could not start the payment. Please try again.");
+                setPaying(false);
             }
-        } catch (error) {
-            console.error("Erreur Axios lors du paiement :", error);
-            toast.error("Impossible de traiter le paiement pour le moment");
+        } catch (err) {
+            console.error("Error creating checkout session:", err);
+            toast.error("We could not start the payment. Please try again.");
+            setPaying(false);
         }
     };
 
-    const subtotal = calculateSubtotal();
-    const deliveryFee = 6 * (cart?.books?.length ?? 0);
-    const total = subtotal + deliveryFee;
+    const books = cart?.books ?? [];
+    const subtotal = books.reduce((sum, book) => sum + (book.price ?? 0), 0);
+    const delivery = DELIVERY_FEE_PER_BOOK * books.length;
+    const total = subtotal + delivery;
 
-    return (
+    const shell = (content: React.ReactNode) => (
         <Layout>
-            <div className="container mx-auto px-4 py-12 flex flex-col items-center min-h-screen">
-                <h2 className="text-4xl font-bold mb-8 text-light-blue">
-                    Your Cart
-                </h2>
-
-                {loading ? (
-                    <div className="w-full max-w-4xl flex justify-center p-12">
-                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-light-blue"></div>
-                    </div>
-                ) : error ? (
-                    <div className="w-full max-w-4xl bg-red-100 border border-red-300 rounded-lg p-6 text-center">
-                        <p className="text-red-600 text-lg font-medium">{error}</p>
-                    </div>
-                ) : !cart?.books?.length ? (
-                    <div className="w-full max-w-4xl bg-gray-50 rounded-lg p-12 text-center border border-gray-200 shadow-md">
-                        <svg className="w-24 h-24 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                        </svg>
-                        <p className="text-gray-700 text-xl font-medium">Your cart is empty</p>
-                        <p className="text-gray-500 mt-2 mb-6">Add books to your cart to start shopping</p>
-                        <button
-                            onClick={() => navigate("/books")}
-                            className="bg-light-blue hover:bg-blue-500 text-white font-semibold px-6 py-3 rounded-lg transition duration-300 transform hover:scale-105"
-                        >
-                            Browse Store
-                        </button>
-                    </div>
-                ) : (
-                    <div className="w-full max-w-6xl flex flex-col lg:flex-row gap-8">
-                        <div className="flex-1">
-                            <div className="bg-navbar rounded-xl overflow-hidden shadow-xl">
-                                <div className="p-6 border-b border-gray-700">
-                                    <h3 className="text-xl font-semibold text-white">Items ({cart.books.length})</h3>
-                                </div>
-                                <div className="divide-y divide-gray-700">
-                                    {cart.books.map((book) => (
-                                        <div
-                                            key={book.id}
-                                            className="p-6 flex flex-col sm:flex-row gap-6 items-center hover:bg-gray-800 transition-colors"
-                                        >
-                                            <div className="h-32 w-24 bg-gradient-to-br from-blue-900 to-purple-900 rounded-lg flex items-center justify-center flex-shrink-0">
-                                                <svg className="w-12 h-12 text-blue-300/70" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                                                </svg>
-                                            </div>
-                                            <div className="flex-1 text-center sm:text-left">
-                                                <h3 className="text-xl font-bold text-white">{book.title}</h3>
-                                                <p className="text-gray-300 text-sm">{book.author}</p>
-                                                <div className="mt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                                                    <p className="text-light-blue font-semibold text-xl">{(book.price ?? 0).toFixed(2)} €</p>
-                                                    <button
-                                                        onClick={() => removeFromCart(book.id)}
-                                                        className="mt-3 sm:mt-0 text-sm group flex items-center text-red-400 hover:text-red-300 transition-colors"
-                                                    >
-                                                        <svg className="w-5 h-5 mr-1 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                                        </svg>
-                                                        Remove
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="lg:w-80 w-full">
-                            <div className="bg-navbar rounded-xl overflow-hidden shadow-xl sticky top-24">
-                                <div className="p-6 border-b border-gray-700">
-                                    <h3 className="text-xl font-semibold text-white">Summary</h3>
-                                </div>
-                                <div className="p-6 space-y-4">
-                                    <div className="flex justify-between text-gray-300">
-                                        <span>Subtotal</span>
-                                        <span className="font-medium">{subtotal.toFixed(2)} €</span>
-                                    </div>
-                                    <div className="flex justify-between text-gray-300">
-                                        <span>Shipping</span>
-                                        <span className="font-medium">{deliveryFee.toFixed(2)} €</span>
-                                    </div>
-                                    <div className="pt-4 border-t border-gray-700">
-                                        <div className="flex justify-between text-xl">
-                                            <span className="font-semibold text-white">Total</span>
-                                            <span className="font-bold text-light-blue">{total.toFixed(2)} €</span>
-                                        </div>
-                                    </div>
-                                    <button
-                                        onClick={handlePayment}
-                                        className="mt-6 w-full bg-light-blue text-white py-4 rounded-lg font-semibold text-lg shadow-lg hover:bg-blue-500 transition-all duration-300 transform hover:scale-105"
-                                    >
-                                        Pay now
-                                    </button>
-                                    <button
-                                        onClick={clearCart}
-                                        className="mt-4 w-full bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition text-lg font-semibold"
-                                    >
-                                        🗑️ Clear cart
-                                    </button>
-
-                                    <p className="text-center text-gray-400 text-sm mt-4">
-                                        100% secure payment
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
+            <div className="mx-auto w-full max-w-[1000px] px-4 py-8 sm:px-8 sm:py-10">{content}</div>
         </Layout>
+    );
+
+    if (!authLoading && !user) {
+        return shell(
+            <div className="py-20 text-center">
+                <h1 className="page-title">Your cart</h1>
+                <p className="mt-3 text-ink-2">Log in to see the books you are borrowing.</p>
+                <Link to="/login" onClick={() => localStorage.setItem("redirectAfterLogin", "/cart")} className="btn-accent mt-6">
+                    Log in
+                </Link>
+            </div>
+        );
+    }
+
+    if (loading || authLoading) {
+        return shell(
+            <div aria-busy="true" aria-label="Loading your cart">
+                <div className="skeleton mb-8 h-8 w-40 rounded-full"></div>
+                <div className="grid gap-10 lg:grid-cols-[1fr_320px]">
+                    <div className="space-y-6">
+                        {[0, 1].map(i => (
+                            <div key={i} className="flex gap-5">
+                                <div className="skeleton h-[132px] w-[88px] rounded-cover"></div>
+                                <div className="flex-1 space-y-3 pt-2">
+                                    <div className="skeleton h-5 w-2/3 rounded-full"></div>
+                                    <div className="skeleton h-4 w-1/3 rounded-full"></div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="skeleton h-64 rounded-surface"></div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return shell(
+            <div role="alert" className="max-w-xl rounded-surface bg-bad-tint p-6 text-bad">
+                <p className="font-serif text-xl font-semibold">{error}</p>
+                <button onClick={() => { setLoading(true); loadCart(); }} className="mt-3 text-sm font-medium underline underline-offset-2">
+                    Try again
+                </button>
+            </div>
+        );
+    }
+
+    if (books.length === 0) {
+        return shell(
+            <div className="py-20 text-center">
+                <h1 className="page-title">Your cart is empty</h1>
+                <p className="mt-3 text-ink-2">Borrow a book and it will wait for you here.</p>
+                <Link to="/books" className="btn-accent mt-6">Browse books</Link>
+            </div>
+        );
+    }
+
+    return shell(
+        <>
+            <div className="mb-8 flex items-baseline gap-3">
+                <h1 className="page-title">Your cart</h1>
+                <span className="text-[15px] text-ink-3">{books.length} {books.length === 1 ? "book" : "books"}</span>
+            </div>
+
+            <div className="grid items-start gap-10 lg:grid-cols-[1fr_320px] lg:gap-14">
+                <section aria-label="Books in your cart">
+                    <ul className="divide-y divide-line">
+                        {books.map(book => (
+                            <li key={book.id} className="flex gap-5 py-6 first:pt-0">
+                                <Link to={`/books/${book.id}`} className="block w-[88px] shrink-0 rounded-cover shadow-1" aria-label={book.title}>
+                                    <BookCover
+                                        compact
+                                        title={book.title}
+                                        authors={book.authorNames}
+                                        src={book.thumbnailPath ? `/api/v1/books/images/${book.thumbnailPath}` : null}
+                                    />
+                                </Link>
+                                <div className="flex min-w-0 flex-1 flex-col">
+                                    <Link to={`/books/${book.id}`} className="font-serif text-lg font-semibold leading-snug text-ink hover:text-accent">
+                                        {book.title}
+                                    </Link>
+                                    {book.authorNames && book.authorNames.length > 0 && (
+                                        <p className="mt-0.5 text-sm text-ink-2">{book.authorNames.join(", ")}</p>
+                                    )}
+                                    <div className="mt-auto flex items-end justify-between gap-4 pt-4">
+                                        <button
+                                            onClick={() => removeFromCart(book.id)}
+                                            className="text-[13px] text-ink-2 underline underline-offset-2 hover:text-ink"
+                                        >
+                                            Remove
+                                        </button>
+                                        <p className="text-[15px] font-medium tabular-nums text-ink">
+                                            {book.price ? euro(book.price) : "Free to borrow"}
+                                        </p>
+                                    </div>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                    <button onClick={clearCart} className="mt-2 text-[13px] text-ink-2 underline underline-offset-2 hover:text-ink">
+                        Empty cart
+                    </button>
+                </section>
+
+                <aside className="rounded-surface bg-card p-6 shadow-1 lg:sticky lg:top-24" aria-label="Order summary">
+                    <h2 className="font-serif text-xl font-semibold text-ink">Summary</h2>
+                    <dl className="mt-5 space-y-3 text-[15px]">
+                        <div className="flex justify-between">
+                            <dt className="text-ink-2">Books</dt>
+                            <dd className="tabular-nums text-ink">{subtotal > 0 ? euro(subtotal) : "Free"}</dd>
+                        </div>
+                        <div className="flex justify-between">
+                            <dt className="text-ink-2">Delivery ({books.length} × {euro(DELIVERY_FEE_PER_BOOK)})</dt>
+                            <dd className="tabular-nums text-ink">{euro(delivery)}</dd>
+                        </div>
+                        <div className="flex justify-between border-t border-line pt-4 text-lg font-semibold">
+                            <dt>Total</dt>
+                            <dd className="tabular-nums">{euro(total)}</dd>
+                        </div>
+                    </dl>
+                    <button onClick={handlePayment} disabled={paying} className="btn-accent mt-6 w-full">
+                        {paying ? "Opening secure payment..." : "Pay now"}
+                    </button>
+                    <p className="mt-3 text-center text-[13px] text-ink-3">Payment is handled securely by Stripe.</p>
+                </aside>
+            </div>
+        </>
     );
 };
 

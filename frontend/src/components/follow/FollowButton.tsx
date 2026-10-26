@@ -118,12 +118,11 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
                 disabled={isLoading}
                 className={`
                     ${isFollowing
-                    ? "bg-red-100 text-red-700 hover:bg-red-200 focus:ring-red-500"
-                    : "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500"}
+                    ? "bg-sunk text-ink hover:bg-line"
+                    : "border border-ink text-ink hover:bg-sunk"}
                     ${sizeClasses[size]}
-                    flex items-center justify-center rounded-md
+                    flex items-center justify-center rounded-control
                     font-medium transition-colors
-                    focus:outline-none focus:ring-2 focus:ring-offset-2
                     disabled:opacity-50
                 `}
             >

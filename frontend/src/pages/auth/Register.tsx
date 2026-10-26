@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom"
 import { toast } from "react-toastify"
 import { useAuth } from "../../context/AuthContext"
 import AuthService from "../../services/AuthService.ts"
-import { Eye, EyeOff } from "lucide-react"
+import { AuthField } from "../../components/auth/AuthField"
 import type { Address } from "../../model/Address.ts"
 import { Layout } from "../Layout.tsx"
 
@@ -42,7 +42,6 @@ export const Register = () => {
         },
     })
     const [errors, setErrors] = useState<ValidationErrors>({})
-    const [showPassword, setShowPassword] = useState<boolean>(false)
     const [isLoading, setIsLoading] = useState<boolean>(false)
     const [touched, setTouched] = useState<Record<string, boolean>>({})
     const navigate = useNavigate()
@@ -236,242 +235,60 @@ export const Register = () => {
         return touched[`address.${fieldName}`] === true
     }
 
+    const err = (name: keyof Omit<ValidationErrors, "address">) =>
+        shouldShowError(name) ? errors[name] : undefined
+    const addrErr = (name: keyof NonNullable<ValidationErrors["address"]>) =>
+        shouldShowAddressError(name) ? errors.address?.[name] : undefined
+
     return (
         <Layout>
-            <div className="flex items-center justify-center min-h-screen bg-white px-4 py-6 sm:py-12">
-                <div className="w-full max-w-lg">
-                    <div className="bg-secondary py-6 px-4 sm:py-8 sm:px-6 md:px-10 shadow rounded-lg mb-6">
-                        <h2 className="text-2xl sm:text-3xl font-extrabold text-primary text-center mb-4 sm:mb-6">Register</h2>
-                        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                                <div>
-                                    <label htmlFor="firstName" className="block text-sm font-medium text-primary mb-1">
-                                        First Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        id="firstName"
-                                        name="firstName"
-                                        value={formData.firstName}
-                                        onChange={handleChange}
-                                        required
-                                        className={`block w-full border ${
-                                            shouldShowError('firstName') && errors.firstName
-                                                ? 'border-red-500'
-                                                : 'border-blue-200'
-                                        } rounded-md shadow-sm py-2 px-3
-                                                   text-primary placeholder-gray-400
-                                                   focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                                    />
-                                    {shouldShowError('firstName') && errors.firstName && (
-                                        <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>
-                                    )}
-                                </div>
-                                <div>
-                                    <label htmlFor="lastName" className="block text-sm font-medium text-primary mb-1">
-                                        Last Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        id="lastName"
-                                        name="lastName"
-                                        value={formData.lastName}
-                                        onChange={handleChange}
-                                        required
-                                        className={`block w-full border ${
-                                            shouldShowError('lastName') && errors.lastName
-                                                ? 'border-red-500'
-                                                : 'border-blue-200'
-                                        } rounded-md shadow-sm py-2 px-3
-                                                   text-primary placeholder-gray-400
-                                                   focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                                    />
-                                    {shouldShowError('lastName') && errors.lastName && (
-                                        <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>
-                                    )}
-                                </div>
-                            </div>
-                            <div>
-                                <label htmlFor="email" className="block text-sm font-medium text-primary mb-1">
-                                    Email
-                                </label>
-                                <input
-                                    type="email"
-                                    id="email"
-                                    name="email"
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    required
-                                    className={`block w-full border ${
-                                        shouldShowError('email') && errors.email
-                                            ? 'border-red-500'
-                                            : 'border-blue-200'
-                                    } rounded-md shadow-sm py-2 px-3
-                                               text-primary placeholder-gray-400
-                                               focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                                />
-                                {shouldShowError('email') && errors.email && (
-                                    <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-                                )}
-                            </div>
-                            <div>
-                                <label htmlFor="password" className="block text-sm font-medium text-primary mb-1">
-                                    Password
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        type={showPassword ? "text" : "password"}
-                                        id="password"
-                                        name="password"
-                                        value={formData.password}
-                                        onChange={handleChange}
-                                        required
-                                        className={`block w-full border ${
-                                            shouldShowError('password') && errors.password
-                                                ? 'border-red-500'
-                                                : 'border-blue-200'
-                                        } rounded-md shadow-sm py-2 px-3 pr-10
-                                                   text-primary placeholder-gray-400
-                                                   focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                                    />
-                                    <button
-                                        type="button"
-                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 focus:outline-none"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                    >
-                                        {showPassword ? (
-                                            <EyeOff className="h-5 w-5" />
-                                        ) : (
-                                            <Eye className="h-5 w-5" />
-                                        )}
-                                    </button>
-                                </div>
-                                {shouldShowError('password') && errors.password && (
-                                    <p className="mt-1 text-sm text-red-600">{errors.password}</p>
-                                )}
-                            </div>
+            <div className="mx-auto w-full max-w-[520px] px-4 py-12 sm:py-16">
+                <h1 className="page-title">Create your account</h1>
+                <p className="mt-2 text-ink-2">Borrow books from other readers, and lend yours.</p>
 
-                            <div className="border-t border-gray-300 pt-4 mt-4">
-                                <h3 className="text-lg font-medium text-primary mb-3">Address Information</h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                                    <div>
-                                        <label htmlFor="streetNumber" className="block text-sm font-medium text-primary mb-1">
-                                            Street Number
-                                        </label>
-                                        <input
-                                            type="text"
-                                            id="streetNumber"
-                                            name="streetNumber"
-                                            value={formData.address.streetNumber}
-                                            onChange={handleChange}
-                                            required
-                                            className={`block w-full border ${
-                                                shouldShowAddressError('streetNumber') && errors.address?.streetNumber
-                                                    ? 'border-red-500'
-                                                    : 'border-blue-200'
-                                            } rounded-md shadow-sm py-2 px-3
-                                                       text-primary placeholder-gray-400
-                                                       focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                                        />
-                                        {shouldShowAddressError('streetNumber') && errors.address?.streetNumber && (
-                                            <p className="mt-1 text-sm text-red-600">{errors.address.streetNumber}</p>
-                                        )}
-                                    </div>
-                                    <div>
-                                        <label htmlFor="streetName" className="block text-sm font-medium text-primary mb-1">
-                                            Street Name
-                                        </label>
-                                        <input
-                                            type="text"
-                                            id="streetName"
-                                            name="streetName"
-                                            value={formData.address.streetName}
-                                            onChange={handleChange}
-                                            required
-                                            className={`block w-full border ${
-                                                shouldShowAddressError('streetName') && errors.address?.streetName
-                                                    ? 'border-red-500'
-                                                    : 'border-blue-200'
-                                            } rounded-md shadow-sm py-2 px-3
-                                                       text-primary placeholder-gray-400
-                                                       focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                                        />
-                                        {shouldShowAddressError('streetName') && errors.address?.streetName && (
-                                            <p className="mt-1 text-sm text-red-600">{errors.address.streetName}</p>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mt-4">
-                                    <div>
-                                        <label htmlFor="city" className="block text-sm font-medium text-primary mb-1">
-                                            City
-                                        </label>
-                                        <input
-                                            type="text"
-                                            id="city"
-                                            name="city"
-                                            value={formData.address.city}
-                                            onChange={handleChange}
-                                            required
-                                            className={`block w-full border ${
-                                                shouldShowAddressError('city') && errors.address?.city
-                                                    ? 'border-red-500'
-                                                    : 'border-blue-200'
-                                            } rounded-md shadow-sm py-2 px-3
-                                                       text-primary placeholder-gray-400
-                                                       focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                                        />
-                                        {shouldShowAddressError('city') && errors.address?.city && (
-                                            <p className="mt-1 text-sm text-red-600">{errors.address.city}</p>
-                                        )}
-                                    </div>
-                                    <div>
-                                        <label htmlFor="postalCode" className="block text-sm font-medium text-primary mb-1">
-                                            Postal Code
-                                        </label>
-                                        <input
-                                            type="text"
-                                            id="postalCode"
-                                            name="postalCode"
-                                            value={formData.address.postalCode}
-                                            onChange={handleChange}
-                                            required
-                                            className={`block w-full border ${
-                                                shouldShowAddressError('postalCode') && errors.address?.postalCode
-                                                    ? 'border-red-500'
-                                                    : 'border-blue-200'
-                                            } rounded-md shadow-sm py-2 px-3
-                                                       text-primary placeholder-gray-400
-                                                       focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                                            placeholder="12345 or 12345-6789"
-                                        />
-                                        {shouldShowAddressError('postalCode') && errors.address?.postalCode && (
-                                            <p className="mt-1 text-sm text-red-600">{errors.address.postalCode}</p>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="pt-4">
-                                <button
-                                    type="submit"
-                                    disabled={isLoading}
-                                    className="w-full flex justify-center py-2 px-4 border border-transparent
-                                               rounded-md shadow-sm text-sm font-medium text-white
-                                               bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400
-                                               focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                                >
-                                    {isLoading ? "Registering..." : "Register"}
-                                </button>
-                            </div>
-                            <div className="mt-4 text-center text-sm">
-                                <span className="text-primary">Already have an account? </span>
-                                <Link to="/login" className="text-blue-600 hover:text-blue-800 font-medium">
-                                    Login
-                                </Link>
-                            </div>
-                        </form>
+                <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                        <AuthField id="firstName" name="firstName" label="First name" autoComplete="given-name"
+                                   value={formData.firstName} onChange={handleChange} required error={err("firstName")} />
+                        <AuthField id="lastName" name="lastName" label="Last name" autoComplete="family-name"
+                                   value={formData.lastName} onChange={handleChange} required error={err("lastName")} />
                     </div>
-                </div>
+                    <AuthField id="email" name="email" type="email" label="Email" autoComplete="email"
+                               value={formData.email} onChange={handleChange} required error={err("email")} />
+                    <AuthField id="password" name="password" type="password" label="Password" autoComplete="new-password"
+                               value={formData.password} onChange={handleChange} required error={err("password")}
+                               hint="At least 8 characters." />
+
+                    <fieldset className="space-y-5 border-t border-line pt-6">
+                        <legend className="mb-1 pr-3 font-serif text-lg font-semibold text-ink">Delivery address</legend>
+                        <div className="grid grid-cols-[110px_1fr] gap-5">
+                            <AuthField id="streetNumber" name="streetNumber" label="Number" autoComplete="off"
+                                       value={formData.address.streetNumber} onChange={handleChange} required
+                                       error={addrErr("streetNumber")} />
+                            <AuthField id="streetName" name="streetName" label="Street" autoComplete="address-line1"
+                                       value={formData.address.streetName} onChange={handleChange} required
+                                       error={addrErr("streetName")} />
+                        </div>
+                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                            <AuthField id="city" name="city" label="City" autoComplete="address-level2"
+                                       value={formData.address.city} onChange={handleChange} required error={addrErr("city")} />
+                            <AuthField id="postalCode" name="postalCode" label="Postal code" autoComplete="postal-code"
+                                       value={formData.address.postalCode} onChange={handleChange} required
+                                       error={addrErr("postalCode")} />
+                        </div>
+                    </fieldset>
+
+                    <button type="submit" disabled={isLoading} className="btn-accent w-full">
+                        {isLoading ? "Creating your account..." : "Create account"}
+                    </button>
+                </form>
+
+                <p className="mt-6 text-center text-sm text-ink-2">
+                    Already have an account?{" "}
+                    <Link to="/login" className="font-medium text-accent underline underline-offset-2 hover:text-accent-hover">
+                        Log in
+                    </Link>
+                </p>
             </div>
         </Layout>
     )

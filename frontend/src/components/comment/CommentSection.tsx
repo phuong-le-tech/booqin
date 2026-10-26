@@ -173,12 +173,12 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ entityId, entity
     const isAuthenticated = !!currentUser;
 
     return (
-        <div className="mt-8 pt-6 border-t border-gray-200">
+        <div className="mt-0">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-                <h2 className="text-2xl font-semibold text-gray-800 flex items-center">
+                <h2 className="font-serif text-2xl font-semibold text-ink flex items-center">
                     Discussion
                     {commentCount > 0 && (
-                        <span className="ml-3 px-2 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
+                        <span className="status status-off ml-3">
                             {commentCount}
                         </span>
                     )}
@@ -188,7 +188,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ entityId, entity
                     {commentCount > 1 && (
                         <button
                             onClick={toggleSortOrder}
-                            className="flex items-center text-sm text-blue-600 hover:text-blue-800 font-medium bg-blue-50 px-3 py-1 rounded-md transition-colors duration-200"
+                            className="btn-quiet"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                                 <path d="M5 12a1 1 0 102 0V6.414l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L5 6.414V12zM15 8a1 1 0 10-2 0v5.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L15 13.586V8z" />
@@ -200,7 +200,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ entityId, entity
                     {isAuthenticated && (
                         <button
                             onClick={() => setFormActive(!formActive)}
-                            className="flex items-center text-sm bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition-colors duration-200"
+                            className="btn-outline"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
@@ -212,7 +212,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ entityId, entity
             </div>
 
             {error && (
-                <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded">
+                <div className="bg-bad-tint text-bad p-4 mb-4 rounded-control">
                     <div className="flex">
                         <div className="flex-shrink-0">
                             <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
@@ -227,7 +227,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ entityId, entity
             )}
 
             {!isAuthenticated ? (
-                <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 mb-6 rounded">
+                <div className="bg-sunk text-ink-2 p-4 mb-6 rounded-control">
                     <div className="flex">
                         <div className="flex-shrink-0">
                             <svg className="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
@@ -236,7 +236,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ entityId, entity
                         </div>
                         <div className="ml-3">
                             <p className="text-sm">
-                                Please <a href="/login" className="font-medium text-blue-600 underline hover:text-blue-800">log in</a> to join the conversation.
+                                Please <a href="/login" className="font-medium text-accent underline hover:text-accent-hover">log in</a> to join the conversation.
                             </p>
                         </div>
                     </div>
