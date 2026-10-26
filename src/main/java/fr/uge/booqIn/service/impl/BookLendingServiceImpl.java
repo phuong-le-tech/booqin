@@ -157,12 +157,20 @@ public class BookLendingServiceImpl implements BookLendingInterface {
       return false;
     }
     Optional<BookLending> optLendings = bookLendingRepository.findByBookAndBorrower(optBook.get(), user);
-    if (optLendings.isPresent()) {
-      BookLending bookLending = optLendings.get();
-      bookLendingRepository.delete(bookLending);
+    // Only a reservation (book still in the cart) can be given back; a paid or shipped loan cannot
+    if (optLendings.isPresent() && optLendings.get().getStatus() == BookStatus.RESERVED) {
+      releaseReservation(optLendings.get());
       return true;
     }
     return false;
+  }
+
+  /** Puts a reserved book back on offer: the lender's lending stays, only the borrower is removed. */
+  private void releaseReservation(BookLending bookLending) {
+    bookLending.setBorrower(null);
+    bookLending.setReservedAt(null);
+    bookLending.setStatus(BookStatus.AVAILABLE);
+    bookLendingRepository.save(bookLending);
   }
 
   @Transactional
@@ -255,9 +263,10 @@ public class BookLendingServiceImpl implements BookLendingInterface {
           backoff = @Backoff(delayExpression = "${spring.retry.backoff.delay}"))
   public void ListClearBookstoLend(@NonNull List<BookLending> bookLendings) {
     for (BookLending bookLending : bookLendings) {
-      bookLending.setBorrower(null);
-      bookLending.setStatus(BookStatus.AVAILABLE);
-      bookLendingRepository.save(bookLending);
+      // Emptying the cart must not free books that are already paid, shipped or borrowed
+      if (bookLending.getStatus() == BookStatus.RESERVED) {
+        releaseReservation(bookLending);
+      }
     }
   }
 

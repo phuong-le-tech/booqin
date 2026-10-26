@@ -199,27 +199,49 @@ class BookLendingServiceTest {
   }
 
   @Test
-  @DisplayName("cancelBook - Should cancel book reservation")
-  void cancelBook_WithValidBookAndUser_ShouldCancelReservation() {
+  @DisplayName("cancelBook - Should release a reserved book so it can be borrowed again")
+  void cancelBook_WithReservedBook_ShouldReleaseItInsteadOfDeletingTheOffer() {
     // Given
+    Long bookId = testBook.getId();
+    Long userId = testUser.getId();
+    testLending.setStatus(BookStatus.RESERVED);
+
+    when(userService.findUserById(eq(userId))).thenReturn(testUser);
+    when(bookRepository.findById(eq(bookId))).thenReturn(Optional.of(testBook));
+    when(bookLendingRepository.findByBookAndBorrower(eq(testBook), eq(testUser))).thenReturn(Optional.of(testLending));
+
+    // When
+    boolean result = bookLendingService.cancelBook(bookId, userId);
+
+    // Then: the lender's offer survives and is available again
+    assertTrue(result);
+    assertNull(testLending.getBorrower());
+    assertNull(testLending.getReservedAt());
+    assertEquals(BookStatus.AVAILABLE, testLending.getStatus());
+    verify(bookLendingRepository).save(eq(testLending));
+    verify(bookLendingRepository, never()).delete(any(BookLending.class));
+  }
+
+  @Test
+  @DisplayName("cancelBook - Should not touch a loan that is already paid or shipped")
+  void cancelBook_WithShippedBook_ShouldLeaveTheLoanAlone() {
+    // Given (testLending is SHIPPED)
     Long bookId = testBook.getId();
     Long userId = testUser.getId();
 
     when(userService.findUserById(eq(userId))).thenReturn(testUser);
     when(bookRepository.findById(eq(bookId))).thenReturn(Optional.of(testBook));
     when(bookLendingRepository.findByBookAndBorrower(eq(testBook), eq(testUser))).thenReturn(Optional.of(testLending));
-    doNothing().when(bookLendingRepository).delete(any(BookLending.class));
 
     // When
     boolean result = bookLendingService.cancelBook(bookId, userId);
 
     // Then
-    assertTrue(result);
-
-    verify(userService).findUserById(eq(userId));
-    verify(bookRepository).findById(eq(bookId));
-    verify(bookLendingRepository).findByBookAndBorrower(eq(testBook), eq(testUser));
-    verify(bookLendingRepository).delete(eq(testLending));
+    assertFalse(result);
+    assertEquals(testUser, testLending.getBorrower());
+    assertEquals(BookStatus.SHIPPED, testLending.getStatus());
+    verify(bookLendingRepository, never()).save(any(BookLending.class));
+    verify(bookLendingRepository, never()).delete(any(BookLending.class));
   }
 
   @Test
@@ -320,20 +342,29 @@ class BookLendingServiceTest {
   }
 
   @Test
-  @DisplayName("ListClearBookstoLend - Should clear books to lend")
-  void ListClearBookstoLend_ShouldClearBooksToLend() {
-    // Given
-    List<BookLending> lendings = Arrays.asList(testLending);
-    when(bookLendingRepository.save(any(BookLending.class))).thenReturn(testLending);
+  @DisplayName("ListClearBookstoLend - Should release reserved books but keep paid ones")
+  void ListClearBookstoLend_ShouldReleaseOnlyReservedBooks() {
+    // Given: one book still in the cart, one already shipped (testLending)
+    BookLending inCart = new BookLending();
+    inCart.setId(2L);
+    inCart.setBook(testBook);
+    inCart.setBorrower(testUser);
+    inCart.setLender(testLender);
+    inCart.setStatus(BookStatus.RESERVED);
+    inCart.setReservedAt(LocalDateTime.now());
+    List<BookLending> lendings = Arrays.asList(inCart, testLending);
 
     // When
     bookLendingService.ListClearBookstoLend(lendings);
 
     // Then
-    assertNull(testLending.getBorrower());
-    assertEquals(BookStatus.AVAILABLE, testLending.getStatus());
+    assertNull(inCart.getBorrower());
+    assertEquals(BookStatus.AVAILABLE, inCart.getStatus());
+    assertEquals(testUser, testLending.getBorrower());
+    assertEquals(BookStatus.SHIPPED, testLending.getStatus());
 
-    verify(bookLendingRepository).save(eq(testLending));
+    verify(bookLendingRepository).save(eq(inCart));
+    verify(bookLendingRepository, never()).save(eq(testLending));
   }
 
   @Test
