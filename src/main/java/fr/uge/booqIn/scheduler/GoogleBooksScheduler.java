@@ -1,5 +1,6 @@
 package fr.uge.booqIn.scheduler;
 
+import org.springframework.context.annotation.Profile;
 import fr.uge.booqIn.adapter.bookApi.BookFetcher;
 import fr.uge.booqIn.adapter.bookApi.BookFetcherFactory;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.logging.Logger;
 
+@Profile("!demo")
 @Component
 public class GoogleBooksScheduler {
     private static final Logger logger = Logger.getLogger(GoogleBooksScheduler.class.getName());

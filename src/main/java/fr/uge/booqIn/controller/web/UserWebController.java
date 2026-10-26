@@ -1,8 +1,10 @@
 package fr.uge.booqIn.controller.web;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+@Profile("!demo")
 @Controller
 @RequestMapping("/")
 public class UserWebController {

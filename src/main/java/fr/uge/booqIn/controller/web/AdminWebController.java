@@ -1,5 +1,6 @@
 package fr.uge.booqIn.controller.web;
 
+import org.springframework.context.annotation.Profile;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionIndex;
 import fr.uge.booqIn.dto.user.UserIndex;
@@ -23,6 +24,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
 
+@Profile("!demo")
 @Controller
 @RequestMapping("/admin")
 @PreAuthorize("hasRole('ADMIN')")

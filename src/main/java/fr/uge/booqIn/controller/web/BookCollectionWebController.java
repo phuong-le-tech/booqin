@@ -1,5 +1,6 @@
 package fr.uge.booqIn.controller.web;
 
+import org.springframework.context.annotation.Profile;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.book.BookShow;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionCreate;
@@ -36,6 +37,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Profile("!demo")
 @Controller
 @RequestMapping("/collections")
 public class BookCollectionWebController {

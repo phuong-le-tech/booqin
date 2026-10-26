@@ -1,5 +1,6 @@
 package fr.uge.booqIn.controller.web;
 
+import org.springframework.context.annotation.Profile;
 import fr.uge.booqIn.dto.user.UserIndex;
 import fr.uge.booqIn.dto.book.BookIndex;
 import fr.uge.booqIn.dto.bookCollection.BookCollectionIndex;
@@ -21,6 +22,7 @@ import java.security.Principal;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Profile("!demo")
 @Controller
 @RequestMapping("/following")
 public class FollowWebController {

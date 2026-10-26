@@ -1,5 +1,6 @@
 package fr.uge.booqIn.controller.web;
 
+import org.springframework.context.annotation.Profile;
 import fr.uge.booqIn.dto.user.UserShow;
 import fr.uge.booqIn.dto.user.UserUpdate;
 import fr.uge.booqIn.entity.User;
@@ -19,6 +20,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.security.Principal;
 import java.util.Optional;
 
+@Profile("!demo")
 @Controller
 @RequestMapping("/profile")
 public class ProfileWebController {

@@ -1,5 +1,6 @@
 package fr.uge.booqIn.controller.web;
 
+import org.springframework.context.annotation.Profile;
 import fr.uge.booqIn.entity.Notification;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.enums.UserRole;
@@ -17,6 +18,7 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 
+@Profile("!demo")
 @Controller
 public class HomeWebController {
 

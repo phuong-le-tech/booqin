@@ -1,5 +1,6 @@
 package fr.uge.booqIn.controller.web;
 
+import org.springframework.context.annotation.Profile;
 
 import fr.uge.booqIn.dto.lending.LendingResponseDTO;
 import fr.uge.booqIn.entity.User;
@@ -18,6 +19,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.io.IOException;
 import java.security.Principal;
 
+@Profile("!demo")
 @Controller
 @RequestMapping("/loans")
 public class BookLendingWebController {

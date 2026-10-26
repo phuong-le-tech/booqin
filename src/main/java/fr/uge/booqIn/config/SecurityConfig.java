@@ -4,6 +4,7 @@ import fr.uge.booqIn.filter.JwtAuthFilter;
 import fr.uge.booqIn.service.impl.UserDetailsServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -65,6 +66,7 @@ public class SecurityConfig {
    */
   @Bean
   @Order(2)
+  @Profile("!demo")
   public SecurityFilterChain webSecurityFilterChain(HttpSecurity http,
                                                     AuthenticationProvider authenticationProvider) throws Exception {
     http
@@ -93,6 +95,20 @@ public class SecurityConfig {
                     .permitAll())
             .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable));
 
+    return http.build();
+  }
+
+  /**
+   * Profil demo : tout ce qui n'est pas /api/** est le front React (fichiers statiques).
+   */
+  @Bean
+  @Order(2)
+  @Profile("demo")
+  public SecurityFilterChain spaSecurityFilterChain(HttpSecurity http) throws Exception {
+    http
+            .securityMatcher("/**")
+            .csrf(AbstractHttpConfigurer::disable)
+            .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
     return http.build();
   }
 

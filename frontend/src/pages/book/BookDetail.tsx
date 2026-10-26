@@ -20,8 +20,7 @@ export const BookDetail: React.FC = () => {
     const [imageError, setImageError] = useState<boolean>(false);
     const { user } = useAuth();
 
-    const API_BASE_URL = 'http://localhost:8080'; // URL de base de votre API
-    const IMAGE_BASE_URL = `${API_BASE_URL}/api/v1/books/images`;
+    const IMAGE_BASE_URL = '/api/v1/books/images';
 
     useEffect(() => {
         const fetchBookDetails = async () => {

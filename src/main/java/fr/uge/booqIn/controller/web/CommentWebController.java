@@ -1,5 +1,6 @@
 package fr.uge.booqIn.controller.web;
 
+import org.springframework.context.annotation.Profile;
 import fr.uge.booqIn.dto.comment.CommentCreateDTO;
 import fr.uge.booqIn.dto.comment.CommentDTO;
 import fr.uge.booqIn.dto.comment.CommentUpdateDTO;
@@ -16,6 +17,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+@Profile("!demo")
 @Controller
 @RequestMapping("/comments")
 public class CommentWebController {

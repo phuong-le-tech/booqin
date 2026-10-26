@@ -1,5 +1,6 @@
 package fr.uge.booqIn.controller.web;
 
+import org.springframework.context.annotation.Profile;
 import fr.uge.booqIn.dto.notification.BookNotificationDTO;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.service.interfaces.BookServiceInterface;
@@ -17,6 +18,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.List;
 import java.util.logging.Logger;
 
+@Profile("!demo")
 @Controller
 @RequestMapping("/book-queue")
 public class BookWaitingQueueWebController {

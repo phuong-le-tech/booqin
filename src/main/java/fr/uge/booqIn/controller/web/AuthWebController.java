@@ -1,5 +1,6 @@
 package fr.uge.booqIn.controller.web;
 
+import org.springframework.context.annotation.Profile;
 import fr.uge.booqIn.dto.auth.LoginDto;
 import fr.uge.booqIn.dto.auth.RegisterDto;
 import fr.uge.booqIn.service.interfaces.AuthServiceInterface;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 
+@Profile("!demo")
 @Controller
 @RequestMapping("/auth")
 public class AuthWebController {

@@ -1,5 +1,6 @@
 package fr.uge.booqIn.controller.web;
 
+import org.springframework.context.annotation.Profile;
 import fr.uge.booqIn.entity.Notification;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.service.interfaces.NotificationServiceInterface;
@@ -18,6 +19,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.security.Principal;
 import java.util.logging.Logger;
 
+@Profile("!demo")
 @Controller
 @RequestMapping("/notifications")
 public class NotificationWebController {

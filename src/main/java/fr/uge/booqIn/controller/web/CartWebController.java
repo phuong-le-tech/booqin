@@ -1,5 +1,6 @@
 package fr.uge.booqIn.controller.web;
 
+import org.springframework.context.annotation.Profile;
 import fr.uge.booqIn.dto.cart.ShopCartDto;
 import fr.uge.booqIn.entity.User;
 import fr.uge.booqIn.service.impl.CartServiceImpl;
@@ -18,6 +19,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.security.Principal;
 import java.util.Optional;
 
+@Profile("!demo")
 @Controller
 @RequestMapping("/cart")
 public class CartWebController {

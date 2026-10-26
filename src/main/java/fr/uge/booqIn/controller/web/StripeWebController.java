@@ -1,5 +1,6 @@
 package fr.uge.booqIn.controller.web;
 
+import org.springframework.context.annotation.Profile;
 import com.stripe.model.checkout.Session;
 import fr.uge.booqIn.entity.Cart;
 import fr.uge.booqIn.service.StripeService;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Optional;
 
+@Profile("!demo")
 @Controller
 @RequestMapping("/payment")
 public class StripeWebController {
