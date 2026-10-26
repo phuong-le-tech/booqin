@@ -1,17 +1,15 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import { User, Book as BookIcon, List, BookOpen } from "lucide-react";
+import { User } from "lucide-react";
 import { Layout } from "../Layout";
 import UserService from "../../services/UserService";
 import FollowButton from "../../components/follow/FollowButton";
 import type { User as UserType } from "../../model/User";
-import type { BookCollectionIndex } from "../../model/BookCollection";
 
 const UserProfile = () => {
     const { id } = useParams<{ id: string }>();
     const [user, setUser] = useState<UserType | null>(null);
-    const [publicCollections, setPublicCollections] = useState<BookCollectionIndex[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -76,7 +74,7 @@ const UserProfile = () => {
                             </div>
 
                             <FollowButton
-                                entityId={parseInt(id)}
+                                entityId={parseInt(id!)}
                                 entityType="USER"
                                 showFollowersCount={true}
                                 size="lg"

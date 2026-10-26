@@ -90,7 +90,7 @@ export const Profile = () => {
                 address: formData.address
             }
 
-            const updatedUser = await UserService.updateUser(user.id, userData)
+            await UserService.updateUser(user.id, userData)
 
             // After updating user in backend, refresh the session to update auth context
 

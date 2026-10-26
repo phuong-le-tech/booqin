@@ -33,7 +33,7 @@ class BookCollectionService {
             });
 
             if (response.data?.success) {
-                return response.data.data;
+                return response.data.data!;
             }
 
             throw new Error(response.data?.message || 'Failed to fetch collections');
@@ -61,7 +61,7 @@ class BookCollectionService {
             });
 
             if (response.data?.success) {
-                return response.data.data;
+                return response.data.data!;
             }
 
             throw new Error(response.data?.message || 'Failed to fetch public collections');
@@ -79,7 +79,7 @@ class BookCollectionService {
             const response = await axiosInstance.get<ApiResponse<BookCollectionShow>>(`${API_URL}/${id}`);
 
             if (response.data?.success) {
-                return response.data.data;
+                return response.data.data!;
             }
 
             throw new Error(response.data?.message || 'Failed to fetch collection');
@@ -97,7 +97,7 @@ class BookCollectionService {
             const response = await axiosInstance.post<ApiResponse<BookCollectionShow>>(`${API_URL}`, collectionData);
 
             if (response.data?.success) {
-                return response.data.data;
+                return response.data.data!;
             }
 
             throw new Error(response.data?.message || 'Failed to create collection');
@@ -115,7 +115,7 @@ class BookCollectionService {
             const response = await axiosInstance.patch<ApiResponse<BookCollectionShow>>(`${API_URL}/${id}`, updateData);
 
             if (response.data?.success) {
-                return response.data.data;
+                return response.data.data!;
             }
 
             throw new Error(response.data?.message || 'Failed to update collection');
@@ -188,7 +188,7 @@ class BookCollectionService {
                     sortDirection
                 }
             });
-            return response.data.data;
+            return response.data.data!;
         } catch (error) {
             console.error('Error fetching user public collections:', error);
             throw error;
@@ -210,7 +210,7 @@ class BookCollectionService {
                     sortDirection
                 }
             });
-            return response.data.data;
+            return response.data.data!;
         } catch (error) {
             console.error('Error fetching user private collections:', error);
             throw error;
@@ -232,7 +232,7 @@ class BookCollectionService {
                 }
             });
 
-            return response.data.data;
+            return response.data.data!;
         } catch (error) {
             console.error('Error fetching user public collections:', error);
             throw error;

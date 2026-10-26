@@ -44,7 +44,7 @@ const PublicCollections: React.FC = () => {
             });
             setSortField(field);
             setSortDirection(direction);
-        } catch (err) {
+        } catch (err: any) {
             console.error("Error fetching public collections:", err);
             setError(err.message);
         } finally {
@@ -58,12 +58,6 @@ const PublicCollections: React.FC = () => {
 
     const handlePageChange = (page: number, size?: number) => {
         fetchCollections(page, size || pageInfo.size, sortField, sortDirection);
-    };
-
-    const handleSortChange = (field: string) => {
-        // Toggle direction if clicking the same field, otherwise use ascending
-        const direction = field === sortField && sortDirection === "asc" ? "desc" : "asc";
-        fetchCollections(pageInfo.number, pageInfo.size, field, direction);
     };
 
     if (loading) {

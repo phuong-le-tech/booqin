@@ -49,7 +49,7 @@ const CreateCollection: React.FC = () => {
                 // Ne pas inclure owner ici, il sera défini côté serveur
             };
 
-            const createdCollection = await BookCollectionService.createBookCollection(collectionData);
+            await BookCollectionService.createBookCollection(collectionData);
 
             navigate(`/collections/user`);
         } catch (err: any) {

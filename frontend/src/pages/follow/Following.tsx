@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Layout } from "../Layout";
 import { useAuth } from "../../context/AuthContext";
 import FollowService from "../../services/FollowService";
@@ -57,17 +57,17 @@ export const Following: React.FC = () => {
 
             if (tab === "users") {
                 const usersData = await Promise.all(
-                    followedIds.map(id => UserService.getUserById(id))
+                    followedIds.map((id: number) => UserService.getUserById(id))
                 );
                 setFollowedUsers(usersData.filter(Boolean));
             } else if (tab === "books") {
                 const booksData = await Promise.all(
-                    followedIds.map(id => BookService.getBookById(id.toString()))
+                    followedIds.map((id: number) => BookService.getBookById(id.toString()))
                 );
                 setFollowedBooks(booksData.filter(Boolean));
             } else if (tab === "collections") {
                 const collectionsData = await Promise.all(
-                    followedIds.map(id => BookCollectionService.getBookCollectionById(id))
+                    followedIds.map((id: number) => BookCollectionService.getBookCollectionById(id))
                 );
                 setFollowedCollections(collectionsData.filter(Boolean));
             }

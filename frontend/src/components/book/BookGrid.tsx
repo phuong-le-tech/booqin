@@ -5,7 +5,6 @@ import {BookIndex} from '../../model/Book.ts';
 import axiosInstance from "../../services/AxiosInstance.ts";
 import {useAuth} from "../../context/AuthContext.tsx";
 import {LendStatus} from "../../model/LendStatus";
-import {toast} from "react-toastify";
 
 interface LoanInfo {
     bookId: number;

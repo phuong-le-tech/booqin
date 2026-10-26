@@ -15,9 +15,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Auth event types to handle in useEffect
-type AuthEvent = 'auth:refreshStart' | 'auth:refreshSuccess' | 'auth:refreshError' | 'auth:logout';
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -54,7 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const checkAuth = async () => {
             try {
                 setIsLoading(true);
-                const user = await fetchCurrentUser();
+                await fetchCurrentUser();
                 setIsLoading(false);
             } catch (error) {
                 console.error("Initial auth check failed:", error);
@@ -96,7 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
             setIsLoading(true);
 
-            const loginResponse = await axiosInstance.post<ApiResponse<any>>(
+            await axiosInstance.post<ApiResponse<any>>(
                 "/v1/auth/login",
                 { login: email, password }
             );

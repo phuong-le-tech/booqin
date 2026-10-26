@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom"
-import { LayoutDashboard, Book, LogOut, LibraryBigIcon, Library, Settings, Users, Loader } from "lucide-react"
+import { LayoutDashboard, Book, LogOut, LibraryBigIcon, Library, Settings, Users } from "lucide-react"
 import { useAuth } from "../context/AuthContext"
 
 interface SidebarNavProps {
@@ -20,7 +20,7 @@ const authenticatedNavItems = [
 ]
 
 export function SidebarNav({ onCloseSidebar = () => {} }: SidebarNavProps) {
-    const { user, isAuthenticated, isRefreshing, logout } = useAuth();
+    const { user, isAuthenticated, logout } = useAuth();
     const location = useLocation();
 
     const handleLogout = async () => {

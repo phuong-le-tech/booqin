@@ -40,7 +40,7 @@ export const NotificationsMenu: React.FC<NotificationsMenuProps> = ({ notificati
                             }`}
                         >
                             <div className="font-medium">{notification.message}</div>
-                            <div className="text-xs text-gray-500">{notification.date.toLocaleString()}</div>
+                            <div className="text-xs text-gray-500">{new Date(notification.createdAt).toLocaleString()}</div>
                         </div>
                     ))
                 )}

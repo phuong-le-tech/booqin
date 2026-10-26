@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {BookCollectionIndex} from "../../model/BookCollection";
 import { useAuth } from "../../context/AuthContext";
@@ -15,7 +15,6 @@ type TabType = "ALL" | "PRIVATE" | "PUBLIC" | "SMART" | "GLOBAL";
 
 const Collections: React.FC = () => {
     const { user } = useAuth();
-    const [collections, setCollections] = useState<BookCollectionIndex[]>([]);
     const [allCollections, setAllCollections] = useState<BookCollectionIndex[]>([]);
     const [privateCollections, setPrivateCollections] = useState<BookCollectionIndex[]>([]);
     const [publicCollections, setPublicCollections] = useState<BookCollectionIndex[]>([]);
@@ -120,10 +119,10 @@ const Collections: React.FC = () => {
     // Sort collections helper
     const sortCollections = (collections: BookCollectionIndex[], field: string, direction: string) => {
         return [...collections].sort((a, b) => {
-            if (a[field] < b[field]) {
+            if (a[field as keyof BookCollectionIndex] < b[field as keyof BookCollectionIndex]) {
                 return direction === 'asc' ? -1 : 1;
             }
-            if (a[field] > b[field]) {
+            if (a[field as keyof BookCollectionIndex] > b[field as keyof BookCollectionIndex]) {
                 return direction === 'asc' ? 1 : -1;
             }
             return 0;
@@ -145,9 +144,7 @@ const Collections: React.FC = () => {
                     // Include private collections of any type (NORMAL, SMART, RECENT, AUTHOR)
                     return !collection.isPublic &&
                         // But exclude GLOBAL type as they are system collections
-                        (collection.type !== "GLOBAL" ||
-                            collection.type === "RECENT" ||
-                            collection.type === "AUTHOR");
+                        collection.type !== "GLOBAL";
                 });
                 break;
 
@@ -157,9 +154,7 @@ const Collections: React.FC = () => {
                     // Include public collections of any type (NORMAL, SMART, RECENT, AUTHOR)
                     return collection.isPublic &&
                         // But exclude GLOBAL type as they are system collections
-                        (collection.type !== "GLOBAL" ||
-                            collection.type === "RECENT" ||
-                            collection.type === "AUTHOR");
+                        collection.type !== "GLOBAL";
                 });
                 break;
 

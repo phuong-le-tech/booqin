@@ -150,7 +150,7 @@ export const refreshToken = async (): Promise<boolean> => {
         isRefreshing = false;
         dispatchAuthEvent('auth:refreshSuccess');
         return true;
-    } catch (error) {
+    } catch (error: any) {
         isRefreshing = false;
         dispatchAuthEvent('auth:refreshError');
 

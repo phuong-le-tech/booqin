@@ -1,5 +1,5 @@
 import { useState, type ChangeEvent, type FormEvent, useEffect } from "react"
-import { useNavigate, Link, useLocation } from "react-router-dom"
+import { useNavigate, Link } from "react-router-dom"
 import { toast } from "react-toastify"
 import { useAuth } from "../../context/AuthContext"
 import AuthService from "../../services/AuthService.ts"
@@ -46,10 +46,9 @@ export const Register = () => {
     const [isLoading, setIsLoading] = useState<boolean>(false)
     const [touched, setTouched] = useState<Record<string, boolean>>({})
     const navigate = useNavigate()
-    const location = useLocation()
 
     // Use our enhanced auth hook instead of context
-    const { login, isAuthenticated } = useAuth()
+    const { isAuthenticated } = useAuth()
 
     // If already authenticated, redirect to home
     useEffect(() => {
@@ -204,7 +203,7 @@ export const Register = () => {
                 };
 
                 // Use AuthService directly to avoid issues with the login function from context
-                const userData = await AuthService.login(loginCredentials);
+                await AuthService.login(loginCredentials);
 
                 // After successful login, navigate to home or saved redirect URL
                 const redirectUrl = localStorage.getItem('redirectAfterLogin') || "/"

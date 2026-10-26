@@ -6,7 +6,7 @@ export interface BookIndex {
     id: number;
     title: string;
     authorNames: string[];
-    publicationDate: Date;
+    publicationDate: string;
     thumbnailPath: string | null;
 }
 
@@ -15,7 +15,7 @@ export interface BookDetails {
     title: string;
     description: string;
     authorNames: string[];
-    publicationDate: Date;
+    publicationDate: string;
     thumbnailPath: string | null;
 }
 

@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Layout from "../../pages/Layout";
 import BookCollectionService from "../../services/BookCollectionService";
@@ -58,7 +58,7 @@ const CreateSmartCollection: React.FC = () => {
       };
 
       // Créer la collection
-      const createdCollection = await BookCollectionService.createBookCollection(data);
+      await BookCollectionService.createBookCollection(data);
 
       // Rediriger vers la page de la collection nouvellement créée
       navigate(`/collections/user`);

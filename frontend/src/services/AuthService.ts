@@ -67,20 +67,6 @@ const notifyListeners = () => {
     listeners.forEach(listener => listener(authState));
 };
 
-// Convert from frontend RegisterForm to backend RegisterDto format if needed
-const transformRegisterData = (userData: any) => {
-    // Create a copy of userData to avoid mutating the original
-    const transformedData = { ...userData };
-
-    // If userData has 'email' but backend expects 'login', map it
-    // Note: This depends on your actual backend DTO structure
-    if (transformedData.email && !transformedData.login) {
-        transformedData.login = transformedData.email;
-    }
-
-    return transformedData;
-};
-
 const AuthService = {
     /**
      * Login with credentials
@@ -89,7 +75,7 @@ const AuthService = {
     login: async (credentials: Credentials): Promise<User> => {
         try {
 
-            const response = await axiosInstance.post<ApiResponse<any>>(
+            await axiosInstance.post<ApiResponse<any>>(
                 "/v1/auth/login",
                 credentials
             );

@@ -186,7 +186,7 @@ export const ShoppingCart: () => JSX.Element = () => {
     };
 
     const subtotal = calculateSubtotal();
-    const deliveryFee = 6 * cart?.books?.length || 0;
+    const deliveryFee = 6 * (cart?.books?.length ?? 0);
     const total = subtotal + deliveryFee;
 
     return (

@@ -9,6 +9,7 @@ import BookService from "../../services/BookService"
 
 // Extended interface to add display properties
 interface BookForDisplay extends BookIndex {
+    isbns?: string[];
     collection?: string;  // Using collection instead of category
     displayIsbn?: string; // Single ISBN for display (renamed to avoid confusion)
 }
@@ -42,7 +43,7 @@ export const BooksTable: React.FC = () => {
             if (response) {
 
                 // Map BookIndex to BookForDisplay with additional display info
-                setBooks(response.content.map(book => {
+                setBooks(response.content.map((book: BookForDisplay) => {
                     return {
                         ...book,
                         // Default collection name if there's no data

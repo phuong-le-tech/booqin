@@ -1,6 +1,6 @@
 // In CollectionDetails.tsx
 import React, { useEffect, useState} from "react";
-import {useParams, Link, useNavigate} from "react-router-dom";
+import {useParams, Link} from "react-router-dom";
 import { BookCollectionShow} from "../../model/BookCollection";
 import Layout from "../../pages/Layout";
 import {useAuth} from "../../context/AuthContext.tsx";
@@ -15,12 +15,11 @@ import {PageInfo} from "../../model/Pagination.ts";
 import {Pagination} from "../Pagination.tsx";
 
 const CollectionDetails: React.FC = () => {
-    const navigate = useNavigate();
     const { user } = useAuth();
     const { id } = useParams<{ id: string }>();
     const [collection, setCollection] = useState<BookCollectionShow | null>(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [, setError] = useState<string | null>(null);
     const urlSearchParams = new URLSearchParams(location.search);
     const origin = urlSearchParams.get('origin');
 
@@ -208,15 +207,6 @@ const CollectionDetails: React.FC = () => {
         }
     };
 
-    // Fonction pour gérer l'ajout ou le retrait d'un livre de la liste de prêt
-    const handleLendingToggle = (bookId: number) => {
-        if (lentBooks.includes(bookId)) {
-            removeFromLoanable(bookId);
-        } else {
-            addToLoanable(bookId);
-        }
-    };
-
     // Nouvelle fonction pour ouvrir le modal et charger les livres
     const openAddBookModal = async () => {
         try {
@@ -365,7 +355,7 @@ const CollectionDetails: React.FC = () => {
                                                         <p className="text-sm text-gray-500">Published: {book.publicationDate}</p>
                                                         {book.authorNames.length > 0 && (
                                                             <p className="text-sm text-gray-500">
-                                                                Authors: {book.authorNames.map((author) => `${author}`).join(", ")}
+                                                                Authors: {book.authorNames.map((author: string) => `${author}`).join(", ")}
                                                             </p>
                                                         )}
                                                     </div>

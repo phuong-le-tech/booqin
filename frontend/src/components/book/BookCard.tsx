@@ -55,7 +55,7 @@ export const BookCard: React.FC<BookCardProps> = ({
     const [showCollectionModal, setShowCollectionModal] = useState<boolean>(false);
     const [queuePosition, setQueuePosition] = useState<number>(-1);
     const [notificationId, setNotificationId] = useState<number | null>(null);
-    const [userNotifications, setUserNotifications] = useState<BookNotification[]>([]);
+    const [, setUserNotifications] = useState<BookNotification[]>([]);
     const cardRef = useRef<HTMLDivElement>(null);
 
     const isBookBorrowed = loanStates.some(loan => {
@@ -269,7 +269,7 @@ export const BookCard: React.FC<BookCardProps> = ({
             } else {
                 toast.error(response.data?.message || "You are already subscribed to notifications");
             }
-        } catch (error) {
+        } catch (error: any) {
             toast.error(error.response?.data?.message || "Error subscribing to notifications");
         } finally {
             setLoading(false);

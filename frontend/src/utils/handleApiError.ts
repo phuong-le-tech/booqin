@@ -1,5 +1,4 @@
 import { toast } from 'react-toastify';
-import AuthService from '../services/AuthService';
 
 /**
  * Custom error handler for API errors with special handling for auth errors
@@ -29,32 +28,12 @@ export const handleApiError = async (
 
     // Handle authentication errors (401/403)
     if (status === 401 || status === 403) {
-        try {
-            // Try to recover with auto-login
-            const loginSuccess = await AuthService.handleAuthError(status);
-
-            if (loginSuccess) {
-                // Auth recovered, don't show error
-                if (!silent) {
-                    toast.info('Your session has been refreshed. Please try again.');
-                }
-                return 'Session refreshed';
-            } else if (status === 401) {
-                // Auth failed, show login required message
-                if (!silent) {
-                    toast.error('Your session has expired. Please log in again.');
-                }
-                return 'Authentication required';
-            } else if (status === 403) {
-                // Permission issue, show access denied
-                if (!silent) {
-                    toast.error('You don\'t have permission to perform this action.');
-                }
-                return 'Access denied';
-            }
-        } catch (handlingError) {
-            console.error('Error handling auth issue:', handlingError);
+        if (!silent) {
+            toast.error(status === 401
+                ? 'Your session has expired. Please log in again.'
+                : 'You don\'t have permission to perform this action.');
         }
+        return status === 401 ? 'Authentication required' : 'Access denied';
     }
 
     // Show error toast for non-auth errors or auth errors that couldn't be recovered
