@@ -21,7 +21,7 @@ cd booqin-le
 
 1. Assurez-vous d'avoir [Docker](https://www.docker.com/products/docker-desktop) et [Docker Compose](https://docs.docker.com/compose/install/) installés sur votre machine.
 
-2. Créez un fichier `.env` à la racine du projet avec le contenu suivant :
+2. Compilez le jar (`mvn -DskipTests package`), puis créez un fichier `.env` à la racine du projet avec le contenu suivant :
 ```
 JWT_SECRET=votre_jwt_secret
 STRIPE_SECRET_KEY=votre_clé_secrète_stripe
@@ -48,8 +48,10 @@ Comment obtenir les clés nécessaires :
 
 3. Lancez les conteneurs Docker :
 ```
-docker-compose up -d
+docker-compose -f src/docker-compose.yml --env-file .env up -d
 ```
+
+Sans Docker, les mêmes variables peuvent simplement être exportées dans le shell avant `java -jar target/booqIn-1.0.0-SNAPSHOT.jar` (copiez d'abord `docker/data` vers `data` pour avoir les données d'exemple).
 
 Cette commande va :
 - Démarrer l'application Spring Boot avec l'API REST
@@ -98,6 +100,22 @@ Par exemple :
 ```
 java -jar target/booqin-le-1.0.0-SNAPSHOT.jar
 ```
+
+## Demo en ligne (Railway)
+
+Le `Dockerfile` à la racine construit une image unique : Spring Boot (profil `demo`) sert l'API et le front React, avec la base H2 d'exemple (`docker/data`). Stripe reste en mode test (carte `4242 4242 4242 4242`), aucun vrai paiement.
+
+Sur Railway : créer un service depuis le dépôt, attacher un volume monté sur `/app/data`, générer un domaine public, puis définir :
+```
+JWT_SECRET=...
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PUBLIC_KEY=pk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...   (ou une valeur factice si le webhook n'est pas configuré)
+PUBLIC_URL=https://<votre-domaine>.up.railway.app
+```
+Comptes de démo : `user@booqin.com` / `user123` et `admin@booqin.com` / `admin123`.
+
+Test en local : `docker build -t booqin-demo .` puis `docker run -p 8081:8080 --env-file .env -e PUBLIC_URL=http://localhost:8081 booqin-demo`.
 
 ## Liens URL du projet
 Après que l'application est bien lancée !
